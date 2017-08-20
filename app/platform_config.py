@@ -1,5 +1,7 @@
 import os
 import yaml
+import hashlib
+import time
 
 class PlatformConfig:
 
@@ -11,12 +13,11 @@ class PlatformConfig:
 
     PLATFORM_ROUTES_PATH = ".platform/routes.yaml"
 
-    PLATFORM_LOCAL_DATA_PATH = ".platform/.pshlocaldata"
+    PLATFORM_LOCAL_DATA_PATH = ".platform/.pcclocal"
 
     PLATFORM_DOCKER_IMAGES = {
-        "php:5.6":          "php:5.6-fpm",
-        "php:7.0":          "php:7.0-fpm",
-        "php:7.1":          "php:7.1-fpm"
+        "php:5.4":          "php:5.4-fpm",
+        "php:5.6":          "php:5.6-fpm"
     }
 
     def __init__(self, projectPath = ""):
@@ -84,3 +85,18 @@ class PlatformConfig:
             self.projectPath,
             self.PLATFORM_LOCAL_DATA_PATH
         )
+
+    def getVariables(self):
+        return self._platformConfig.get("variables", {})
+
+    def getEntropy(self):
+        entropyPath = os.path.join(self.getDataPath(), ".entropy")
+        if not os.path.exists(entropyPath):
+            entropy = hashlib.sha256(
+                self.projectPath + yaml.dump(self._platformConfig) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
+            ).hexdigest()
+            with open(entropyPath, "w") as f:
+                f.write(entropy)
+            return entropy
+        with open(entropyPath, "r") as f:
+            return f.read()

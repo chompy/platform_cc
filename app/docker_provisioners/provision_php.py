@@ -1,6 +1,7 @@
 import os
 import difflib
 import io
+import hashlib
 from provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
@@ -86,10 +87,23 @@ class DockerProvision(DockerProvisionBase):
         )
         print "done."
 
+        # php conf file configure
+        print "  - Additional PHP configuration...",
+        self.container.exec_run(
+            ["sed", "-i", "s/user = .*/user = web/g", "/usr/local/etc/php-fpm.d/www.conf"]
+        )
+        self.container.exec_run(
+            ["sed", "-i", "s/group = .*/group = web/g", "/usr/local/etc/php-fpm.d/www.conf"]
+        )
+        print "done."
+
         # rsync app
         print "  - Copy application to container...",
         self.container.exec_run(
             ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
+        )
+        self.container.exec_run(
+            ["chown", "-R", "web:web", "/app"]
         )
         print "done."
 
@@ -119,17 +133,18 @@ class DockerProvision(DockerProvisionBase):
         print "done."
 
         # composer install
-        print "  - Install composer...",
-        self.container.exec_run(
-            ["php", "-r", "copy('https://getcomposer.org/installer', 'composer-setup.php');"]
-        )
-        self.container.exec_run(
-            ["php", "composer-setup.php", "--install-dir=/usr/local/bin"]
-        )
-        self.container.exec_run(
-            ["rm", "composer-setup.php"]
-        )
-        print "done."
+        if self.platformConfig.getBuildFlavor() == "composer":
+            print "  - Install composer...",
+            self.container.exec_run(
+                ["php", "-r", "copy('https://getcomposer.org/installer', 'composer-setup.php');"]
+            )
+            self.container.exec_run(
+                ["php", "composer-setup.php", "--install-dir=/usr/local/bin"]
+            )
+            self.container.exec_run(
+                ["rm", "composer-setup.php"]
+            )
+            print "done."
 
         # install extensions
         print "  - Install extensions..."
@@ -146,7 +161,7 @@ class DockerProvision(DockerProvisionBase):
             depCmdKey = difflib.get_close_matches(
                 self.image,
                 extensionDeps.keys(),
-                1  
+                1
             )
             if not depCmdKey:
                 print "not available."
@@ -165,3 +180,22 @@ class DockerProvision(DockerProvisionBase):
                 ["rm", "/php_install_ext"]
             )
             print "done."
+
+    def preBuild(self):
+        if self.platformConfig.getBuildFlavor() == "composer":
+            print "  - Running 'composer install'...",
+            self.container.exec_run(
+                ["php", "-d", "memory_limit=-1", "/usr/local/bin/composer.phar", "install", "-n", "-d", "/app"],
+                user="web"
+            )
+            print "done."
+
+    def getUid(self):
+        """ Generate unique id based on configuration. """
+        hashStr = self.image
+        hashStr += str(self.platformConfig.getBuildFlavor())
+        extensions = self.platformConfig.getRuntime().get("extensions", [])
+        for extension in extensions:
+            if extension not in self.PHP_EXTENSION_CORE and extension in self.PHP_EXTENSION_DEPENDENCIES:
+                hashStr += extension
+        return hashlib.sha256(hashStr).hexdigest()

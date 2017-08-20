@@ -5,6 +5,7 @@ import docker
 import tarfile
 import time
 import io
+import hashlib
 
 class DockerProvisionBase:
 
@@ -59,3 +60,15 @@ class DockerProvisionBase:
             os.path.dirname(containerDest),
             data=tarData
         ) 
+
+    def provision(self):
+        """ Provision the container. """
+        return
+
+    def preBuild(self):
+        """ Prebuild commands. """
+        return
+
+    def getUid(self):
+        """ Generate unique id based on configuration. """
+        return hashlib.sha256(self.image).hexdigest()
