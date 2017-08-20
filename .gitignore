@@ -3,3 +3,4 @@
 /include
 /local
 pip-selfcheck.json
+*.pyc
