@@ -36,6 +36,7 @@ class PlatformApp:
 
     def start(self):
         """ Start app. """
+        print "> Starting '%s' app." % self.config.getName()
         baseImage = self.config.getDockerImage()
         if not baseImage:
             raise PlatformNoAvailableDockerImageException(
@@ -49,6 +50,7 @@ class PlatformApp:
 
     def stop(self):
         """ Stop app. """
+        print "> Stopping '%s' app." % self.config.getName()
         baseImage = self.config.getDockerImage()
         if not baseImage:
             raise PlatformNoAvailableDockerImageException(
@@ -59,3 +61,4 @@ class PlatformApp:
             self.config.getDockerImage()
         )
         baseDocker.stop()
+        print "> Done."

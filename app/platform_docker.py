@@ -20,6 +20,7 @@ class PlatformDocker:
     
     def start(self):
         """ Start docker container. """
+        print "> Starting '%s' container..." % (self.image),
         # get network for docker container
         network = None
         try:
@@ -33,16 +34,25 @@ class PlatformDocker:
         container = None
         try:
             container = self.dockerClient.containers.get(self.containerId)
+            print "already running."
         except docker.errors.NotFound:
             # create container
             container = self.dockerClient.containers.run(
                 self.image,
                 name=self.containerId,
-                detach=True
+                detach=True,
+                volumes={
+                    os.path.realpath(self.platformConfig.projectPath) : {
+                        "bind" : "/mnt/app",
+                        "mode" : "ro"
+                    }
+                }
             )
             # add to network
             network.connect(container)
+            print "done."
             # provision container
+            print "> Provisioning '%s' container..." % (self.image)
             provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
             provisioner = provisionModule.DockerProvision(
                 container,
@@ -51,7 +61,13 @@ class PlatformDocker:
             provisioner.provision()
 
     def stop(self):
-        container = self.dockerClient.containers.get(self.containerId)
-        container.stop()
-        container.wait()
-        container.remove()
+        print "> Stopping '%s' container..." % (self.image),
+        try:
+            container = self.dockerClient.containers.get(self.containerId)
+            container.stop()
+            container.wait()
+            container.remove()
+            print "done."
+        except docker.errors.NotFound:
+            print "not running, skipping."
+

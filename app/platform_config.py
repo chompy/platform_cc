@@ -20,10 +20,10 @@ class PlatformConfig:
     }
 
     def __init__(self, projectPath = ""):
-        self._projectPath = projectPath
+        self.projectPath = projectPath
         self._platformConfig = {}
         pathToPlatformYaml = os.path.join(
-            self._projectPath,
+            self.projectPath,
             self.PLATFORM_FILENAME
         )
         with open(pathToPlatformYaml, "r") as f:
@@ -58,7 +58,7 @@ class PlatformConfig:
         serviceConf = {}
         serviceList = []
         pathToServicesYaml = os.path.join(
-            self._projectPath,
+            self.projectPath,
             self.PLATFORM_SERVICES_PATH
         )
         with open(pathToServicesYaml, "r") as f:
@@ -78,6 +78,6 @@ class PlatformConfig:
 
     def getDataPath(self):
         return os.path.join(
-            self._projectPath,
+            self.projectPath,
             self.PLATFORM_LOCAL_DATA_PATH
         )

@@ -6,8 +6,10 @@ class DockerProvision(DockerProvisionBase):
     """ Provision a PHP container. """
 
     def provision(self):
+        
         # install ssh key
-        print self.container.exec_run(
+        print "  - Install SSH key file...",
+        self.container.exec_run(
             ["mkdir", "/creds"]
         )
         self.copyFile(
@@ -17,18 +19,19 @@ class DockerProvision(DockerProvisionBase):
             ),
             "/creds/id_rsa"
         )
-        # install git
-        password = self.randomString(10)
-        print self.container.exec_run(
-            ["apt-get", "update"]
-        )
-        print self.container.exec_run(
-            ["apt-get", "install", "-y", "git"]
-        )
-        print self.container.exec_run(
-            ["apt-get", "clean"]
-        )
+        print "done."
+
         # add 'web' user
-        print self.container.exec_run(
+        print "  - Create 'web' user...",
+        password = self.randomString(10)
+        self.container.exec_run(
             ["useradd", "-d", "/app", "-m", "-p", password, "web"]
         )
+        print "done."
+
+        # rsync app
+        print "  - Copy application to container...",
+        self.container.exec_run(
+            ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
+        )
+        print "done."
