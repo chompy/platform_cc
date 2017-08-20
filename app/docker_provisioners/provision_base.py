@@ -10,9 +10,10 @@ class DockerProvisionBase:
 
     """ Base docker container provisioning class. """
 
-    def __init__(self, container, platformConfig):
+    def __init__(self, container, platformConfig, image):
         self.container = container
         self.platformConfig = platformConfig
+        self.image = image
 
     def randomString(self, length):
         """ Utility method. Generate random string. """
@@ -28,7 +29,6 @@ class DockerProvisionBase:
             tarFileInfo = tarfile.TarInfo(name=containerFilename)
             tarFileInfo.size = os.path.getsize(localSrc)
             tarFileInfo.mtime = time.time()
-            #tarFileInfo.mode = 0600
             with open(localSrc, mode="rb") as f:
                 tar.addfile(
                     tarFileInfo,
@@ -39,3 +39,23 @@ class DockerProvisionBase:
             os.path.dirname(containerDest),
             data=tarData
         )
+
+    def copyStringToFile(self, stringData, containerDest):
+        """ Copy a string to a file inside the container. """
+        tarData = io.BytesIO()
+        with tarfile.open(fileobj=tarData, mode="w") as tar:
+            containerFilename = os.path.basename(containerDest)
+            if not containerFilename:
+                containerFilename = os.path.basename(localSrc)
+            tarFileInfo = tarfile.TarInfo(name=containerFilename)
+            tarFileInfo.size = len(stringData)
+            tarFileInfo.mtime = time.time()
+            tar.addfile(
+                tarFileInfo,
+                io.BytesIO(stringData)
+            )
+        tarData.seek(0)
+        self.container.put_archive(
+            os.path.dirname(containerDest),
+            data=tarData
+        ) 

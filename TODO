@@ -1,0 +1,16 @@
+TODO:
+
+    - PHP
+        - Extension install
+        - Composer install
+        - Mount points
+        - Build/deploy hooks
+    - Nginx
+        - Container
+        - Parse routes.yaml, convert to nginx.conf
+        - Copy or mount application to Nginx.
+    - Services - Mysql
+        - Create docker container
+        - Configure schemas
+        - Configure users
+        

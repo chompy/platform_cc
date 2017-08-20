@@ -25,7 +25,7 @@ class PlatformApp:
     def generateSshKey(self):
         """ Generate SSH key for use inside containers. """
         key = RSA.generate(2048)
-        sshKeyPath = os.path.join(self.config.getDataPath(), ".id_rsa")
+        sshKeyPath = os.path.join(self.config.getDataPath(), "id_rsa")
         with open(sshKeyPath, 'w') as f:
             os.chmod(sshKeyPath, 0600)
             f.write(key.exportKey('PEM'))

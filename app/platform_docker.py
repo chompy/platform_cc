@@ -56,7 +56,8 @@ class PlatformDocker:
             provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
             provisioner = provisionModule.DockerProvision(
                 container,
-                self.platformConfig
+                self.platformConfig,
+                self.image
             )
             provisioner.provision()
 

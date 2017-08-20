@@ -53,6 +53,9 @@ class PlatformConfig:
     def getMounts(self):
         return self._platformConfig.get("mounts", {})
 
+    def getRuntime(self):
+        return self._platformConfig.get("runtime", {})
+
     def getServices(self):
         """ Get list of service dependencies for app. """
         serviceConf = {}
