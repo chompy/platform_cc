@@ -173,6 +173,18 @@ class PlatformDocker:
         except docker.errors.NotFound:
             print_stdout("not running, skipped.")
 
+    def syncApp(self):
+        """ Sync application files in to container. """
+        print_stdout("  - Sync application files...", False)
+        container = self.getContainer()
+        container.exec_run(
+            ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
+        )
+        container.exec_run(
+            ["chown", "-R", "web:web", "/app"]
+        )
+        print_stdout("done.")
+
     def provision(self):
         """ Provision current container. """
         print_stdout("> Provisioning '%s' container..." % (self.image))

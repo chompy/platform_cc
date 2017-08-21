@@ -71,6 +71,7 @@ class PlatformApp:
             self.config,
             self.config.getDockerImage()
         )
+        baseDocker.syncApp()
         baseDocker.preBuild()
         print_stdout("  - Build hooks.")
         results = baseDocker.getContainer().exec_run(
