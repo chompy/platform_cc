@@ -3,9 +3,7 @@ TODO:
     - PHP
         - Deploy hooks
     - Nginx
-        - Container
-        - Parse routes.yaml, convert to nginx.conf
-        - Copy or mount application to Nginx.
+        - Generate nginx.conf <!IN PROGRESS!>
     - Services
         - Service provisioning
     - Services - Mysql
@@ -14,3 +12,6 @@ TODO:
         - Configure users
     - Services - Memcached
         - Configure container
+    - Services - Solr
+        - Configure container
+        - Configure cores

@@ -30,16 +30,28 @@ class PlatformDocker:
             os.getuid(),
             self.platformConfig.getName()
         )
-    
-    def getTag(self):
-        """ Get unique tag name for this container's configuration. """
+
+    def getContainer(self):
+        """ Get docker container. """
+        return self.dockerClient.containers.get(self.containerId)
+
+    def getProvisioner(self):
+        """ Get provisoner object for this docker container. """
+        container = None
+        try:
+            container = self.getContainer()
+        except docker.errors.NotFound:
+            pass
         provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
-        provisioner = provisionModule.DockerProvision(
-            None,
+        return provisionModule.DockerProvision(
+            container,
             self.platformConfig,
             self.image
         )
-        return provisioner.getUid()[:10]
+
+    def getTag(self):
+        """ Get unique tag name for this container's configuration. """
+        return self.getProvisioner().getUid()[:10]
 
     def getVariables(self):
         """ Get project variables. """
@@ -93,8 +105,10 @@ class PlatformDocker:
         }
         mounts["/"] = "app"
         for mountDest in mounts:
-            volumeKey = ("%s_%s" % (
-                self.containerId,
+            volumeKey = ("%s_%s_%s_%s" % (
+                self.DOCKER_CONTAINER_NAME_PREFIX,
+                os.getuid(),
+                self.platformConfig.getName(),
                 os.path.basename(mounts[mountDest])
             )).rstrip("_")
             try:
@@ -106,10 +120,6 @@ class PlatformDocker:
                 "mode" : "rw"
             }
         return volumes
-
-    def getContainer(self):
-        """ Get docker container. """
-        return self.dockerClient.containers.get(self.containerId)
 
     def start(self):
         """ Start docker container. """
@@ -145,7 +155,8 @@ class PlatformDocker:
                         detach=True,
                         volumes=self.getVolumes(),
                         environment=self.getEnvironmentVariables(),
-                        working_dir="/app"
+                        working_dir="/app",
+                        hostname=self.containerId
                     )
                 except docker.errors.ImageNotFound as e:
                     lastExcept = e
@@ -188,26 +199,12 @@ class PlatformDocker:
     def provision(self):
         """ Provision current container. """
         print_stdout("> Provisioning '%s' container..." % (self.image))
-        container = self.getContainer()
-        provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
-        provisioner = provisionModule.DockerProvision(
-            container,
-            self.platformConfig,
-            self.image
-        )
-        provisioner.provision()
-        container.restart()
+        self.getProvisioner().provision()
+        self.getContainer().restart()
 
     def preBuild(self):
         """ Run pre build commands. """
-        container = self.getContainer()
-        provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
-        provisioner = provisionModule.DockerProvision(
-            container,
-            self.platformConfig,
-            self.image
-        )
-        provisioner.preBuild()
+        self.getProvisioner().preBuild()
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """

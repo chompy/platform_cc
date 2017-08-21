@@ -4,6 +4,7 @@ from Crypto.PublicKey import RSA
 from platform_config import PlatformConfig
 from platform_service import PlatformService
 from platform_docker import PlatformDocker
+from platform_web import PlatformWeb
 from platform_utils import print_stdout
 
 class PlatformNoAvailableDockerImageException(Exception):
@@ -48,6 +49,9 @@ class PlatformApp:
             self.config.getDockerImage()
         )
         baseDocker.start()
+        # web handler
+        webHandler = PlatformWeb(self)
+        webHandler.start()
 
     def stop(self):
         """ Stop app. """
@@ -62,7 +66,9 @@ class PlatformApp:
             self.config.getDockerImage()
         )
         baseDocker.stop()
-        print_stdout("> Done.")
+        # web handler
+        webHandler = PlatformWeb(self)
+        webHandler.stop()
 
     def build(self):
         """ Run build and deploy hooks. """

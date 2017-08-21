@@ -1,0 +1,31 @@
+Platform.CC (Platform.ContextualCode)
+By Nathan Ogden / Contextual Code
+======================================================
+
+Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.
+
+----
+
+Current Planned Functionality:
+
+- Web access / router via Nginx <!IN PROGRESS!>
+- Services <!TODO!>
+    - MySQL / MariaDB <!TODO!>
+    - Memcached <!TODO!>
+    - Solr 4 <!TODO!>
+- PHP app support
+    - Composer build flavors
+- Storage volumes
+- Cron tasks <!TODO!>
+
+Unsupported Functionality:
+
+- Non PHP apps.
+- Multi-app setup (Multiple .platform.app.yaml)
+- Workers
+- Limiting app size and disk space (currently ignores these parameters)
+
+Quirks / Differences from Platform.sh:
+
+- File system is always read/write (Platform.sh is read only.)
+    - Non volumes will be reset/erased upon restarting the app.

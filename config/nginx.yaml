@@ -1,0 +1,23 @@
+provision:
+    -
+        desc: "Create 'web' user."
+        cmd: |
+            useradd -d /app -m -p 'secret~' web
+
+nginx.conf: |
+    user web;
+    worker_processes 1;
+    events {
+        worker_connections  1024;
+    }
+    http {
+        include mime.types;
+        default_type application/octet-stream;
+        sendfile on;
+        keepalive_timeout 65;
+        server {
+            listen 80;
+            server_name localhost;
+            {{APP_WEB}}
+        }
+    }

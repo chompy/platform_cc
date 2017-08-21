@@ -11,8 +11,6 @@ class PlatformConfig:
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
 
-    PLATFORM_ROUTES_PATH = ".platform/routes.yaml"
-
     PLATFORM_LOCAL_DATA_PATH = ".platform/.pcclocal"
 
     PLATFORM_DOCKER_IMAGES = {
@@ -91,6 +89,9 @@ class PlatformConfig:
 
     def getMounts(self):
         return self._platformConfig.get("mounts", {})
+
+    def getWeb(self):
+        return self._platformConfig.get("web", {})
 
     def getEntropy(self):
         entropyPath = os.path.join(self.getDataPath(), ".entropy")

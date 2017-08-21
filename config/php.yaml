@@ -1,7 +1,3 @@
-images:
-    "php:5.4": "php:5.4-fpm"
-    "php:5.6": "php:5.6-fpm"
-
 provision:
     -
         desc: "Create 'web' user."
