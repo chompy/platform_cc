@@ -3,6 +3,7 @@ import difflib
 import io
 import hashlib
 from provision_base import DockerProvisionBase
+from ..platform_utils import print_stdout
 
 class DockerProvision(DockerProvisionBase):
 
@@ -30,7 +31,7 @@ class DockerProvision(DockerProvisionBase):
         },
         "imagick" : {
             "php:5.6" : """
-                apt-get install -y libmagickcore-dev libmagickwand-dev
+                apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev
                 print '\n' | pecl install imagick
                 docker-php-ext-enable imagick
             """
@@ -68,47 +69,90 @@ class DockerProvision(DockerProvisionBase):
     PHP_EXTENSION_CORE = ["curl", "json", "sqlite3"]
 
     def provision(self):
-
         # add 'web' user
-        print "  - Create 'web' user...",
+        print_stdout("  - Create 'web' user...", False)
         password = self.randomString(10)
         self.container.exec_run(
             ["useradd", "-d", "/app", "-m", "-p", password, "web"]
         )
-        print "done."
+        print_stdout("done.")
 
         # install additional dependencies
-        print "  - Install additional dependencies...",
+        print_stdout("  - Install additional dependencies...", False)
         self.container.exec_run(
             ["apt-get", "update"]
         )
         self.container.exec_run(
             ["apt-get", "install", "-y", "rsync", "git", "unzip"]
         )
-        print "done."
+        print_stdout("done.")
 
         # php conf file configure
-        print "  - Additional PHP configuration...",
+        print_stdout("  - Additional PHP configuration...", False)
         self.container.exec_run(
             ["sed", "-i", "s/user = .*/user = web/g", "/usr/local/etc/php-fpm.d/www.conf"]
         )
         self.container.exec_run(
             ["sed", "-i", "s/group = .*/group = web/g", "/usr/local/etc/php-fpm.d/www.conf"]
         )
-        print "done."
+        self.copyStringToFile(
+            "date.timezone = UTC",
+            "/usr/local/etc/php/conf.d/timezone.ini"
+        )
+        print_stdout("done.")
 
+        # composer install
+        if self.platformConfig.getBuildFlavor() == "composer":
+            print_stdout("  - Install composer...", False)
+            self.container.exec_run(
+                ["php", "-r", "copy('https://getcomposer.org/installer', 'composer-setup.php');"]
+            )
+            self.container.exec_run(
+                ["php", "composer-setup.php", "--install-dir=/usr/local/bin"]
+            )
+            self.container.exec_run(
+                ["rm", "composer-setup.php"]
+            )
+            print_stdout("done.")
+
+        # install extensions
+        print_stdout("  - Install extensions...")
+        extensions = self.platformConfig.getRuntime().get("extensions", [])
+        for extension in extensions:
+            print_stdout("    - %s..." % (extension), False)
+            if extension in self.PHP_EXTENSION_CORE:
+                print_stdout("already installed (core extension).")
+                continue
+            if extension not in self.PHP_EXTENSION_DEPENDENCIES:
+                print_stdout("not available.")
+                continue
+            extensionDeps = self.PHP_EXTENSION_DEPENDENCIES[extension]
+            depCmdKey = difflib.get_close_matches(
+                self.image,
+                extensionDeps.keys(),
+                1
+            )
+            if not depCmdKey:
+                print_stdout("not available.")
+                continue
+            self.container.exec_run(
+                ["sh", "-c", extensionDeps[depCmdKey[0]]]
+            )
+            print_stdout("done.")
+
+    def preBuild(self):
         # rsync app
-        print "  - Copy application to container...",
+        print_stdout("  - Copy application to container...", False)
         self.container.exec_run(
             ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
         )
         self.container.exec_run(
             ["chown", "-R", "web:web", "/app"]
         )
-        print "done."
+        print_stdout("done.")
 
         # install ssh key
-        print "  - Install SSH key file...",
+        print_stdout("  - Install SSH key file...", False)
         self.container.exec_run(
             ["mkdir", "-p", "/app/.ssh"]
         )
@@ -130,65 +174,16 @@ class DockerProvision(DockerProvisionBase):
                 ),
                 "/app/.ssh/known_hosts"
             ) 
-        print "done."
+        print_stdout("done.")
 
-        # composer install
+        # run 'composer install'
         if self.platformConfig.getBuildFlavor() == "composer":
-            print "  - Install composer...",
-            self.container.exec_run(
-                ["php", "-r", "copy('https://getcomposer.org/installer', 'composer-setup.php');"]
-            )
-            self.container.exec_run(
-                ["php", "composer-setup.php", "--install-dir=/usr/local/bin"]
-            )
-            self.container.exec_run(
-                ["rm", "composer-setup.php"]
-            )
-            print "done."
-
-        # install extensions
-        print "  - Install extensions..."
-        extensions = self.platformConfig.getRuntime().get("extensions", [])
-        for extension in extensions:
-            print "    - %s..." % (extension),
-            if extension in self.PHP_EXTENSION_CORE:
-                print "already installed (core extension)."
-                continue
-            if extension not in self.PHP_EXTENSION_DEPENDENCIES:
-                print "not available."
-                continue
-            extensionDeps = self.PHP_EXTENSION_DEPENDENCIES[extension]
-            depCmdKey = difflib.get_close_matches(
-                self.image,
-                extensionDeps.keys(),
-                1
-            )
-            if not depCmdKey:
-                print "not available."
-                continue
-            self.copyStringToFile(
-                extensionDeps[depCmdKey[0]],
-                "/php_install_ext"
-            )
-            self.container.exec_run(
-                ["chmod", "+x", "/php_install_ext"]
-            )
-            self.container.exec_run(
-                ["sh", "/php_install_ext"]
-            )
-            self.container.exec_run(
-                ["rm", "/php_install_ext"]
-            )
-            print "done."
-
-    def preBuild(self):
-        if self.platformConfig.getBuildFlavor() == "composer":
-            print "  - Running 'composer install'...",
+            print_stdout("  - Running composer...", False)
             self.container.exec_run(
                 ["php", "-d", "memory_limit=-1", "/usr/local/bin/composer.phar", "install", "-n", "-d", "/app"],
                 user="web"
             )
-            print "done."
+            print_stdout("done.")
 
     def getUid(self):
         """ Generate unique id based on configuration. """

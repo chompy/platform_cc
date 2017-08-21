@@ -4,6 +4,8 @@ import importlib
 import yaml
 import json
 import base64
+import hashlib
+from platform_utils import print_stdout
 
 class PlatformDocker:
 
@@ -80,9 +82,38 @@ class PlatformDocker:
             envVars[key.replace("env:", "")] = projVars[key]
         return envVars
 
+    def getVolumes(self):
+        """ Get volumes to mount to container. """
+        mounts = self.platformConfig.getMounts()
+        volumes = {
+            os.path.realpath(self.platformConfig.projectPath) : {
+                "bind" : "/mnt/app",
+                "mode" : "ro"
+            }
+        }
+        mounts["/"] = "app"
+        for mountDest in mounts:
+            volumeKey = ("%s_%s" % (
+                self.containerId,
+                os.path.basename(mounts[mountDest])
+            )).rstrip("_")
+            try:
+                self.dockerClient.volumes.get(volumeKey)
+            except docker.errors.NotFound:
+                self.dockerClient.volumes.create(volumeKey)
+            volumes[volumeKey] = {
+                "bind" : ("/app/%s" % mountDest.lstrip("/")).rstrip("/"),
+                "mode" : "rw"
+            }
+        return volumes
+
+    def getContainer(self):
+        """ Get docker container. """
+        return self.dockerClient.containers.get(self.containerId)
+
     def start(self):
         """ Start docker container. """
-        print "> Starting '%s' container..." % (self.image),
+        print_stdout("> Starting '%s' container..." % (self.image), False)
         # get network for docker container
         network = None
         try:
@@ -95,8 +126,8 @@ class PlatformDocker:
         # start container
         container = None
         try:
-            container = self.dockerClient.containers.get(self.containerId)
-            print "already running."
+            container = self.getContainer()
+            print_stdout("already running.")
         except docker.errors.NotFound:
             # create container
             # first look for committed provisioned container, if not found use unprovisioned image
@@ -112,12 +143,7 @@ class PlatformDocker:
                         image,
                         name=self.containerId,
                         detach=True,
-                        volumes={
-                            os.path.realpath(self.platformConfig.projectPath) : {
-                                "bind" : "/mnt/app",
-                                "mode" : "ro"
-                            }
-                        },
+                        volumes=self.getVolumes(),
                         environment=self.getEnvironmentVariables(),
                         working_dir="/app"
                     )
@@ -130,27 +156,27 @@ class PlatformDocker:
                 return
             # add to network
             network.connect(container)
-            print "done."
+            print_stdout("done.")
             # provision container
             if needProvision:
                 self.provision()
                 self.commit()
 
     def stop(self):
-        print "> Stopping '%s' container..." % (self.image),
+        print_stdout("> Stopping '%s' container..." % (self.image), False)
         try:
-            container = self.dockerClient.containers.get(self.containerId)
+            container = self.getContainer()
             container.stop()
             container.wait()
             container.remove()
-            print "done."
+            print_stdout("done.")
         except docker.errors.NotFound:
-            print "not running, skipping."
+            print_stdout("not running, skipped.")
 
     def provision(self):
         """ Provision current container. """
-        print "> Provisioning '%s' container..." % (self.image)
-        container = self.dockerClient.containers.get(self.containerId)
+        print_stdout("> Provisioning '%s' container..." % (self.image))
+        container = self.getContainer()
         provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
         provisioner = provisionModule.DockerProvision(
             container,
@@ -158,17 +184,29 @@ class PlatformDocker:
             self.image
         )
         provisioner.provision()
+        container.restart()
+
+    def preBuild(self):
+        """ Run pre build commands. """
+        container = self.getContainer()
+        provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
+        provisioner = provisionModule.DockerProvision(
+            container,
+            self.platformConfig,
+            self.image
+        )
+        provisioner.preBuild()
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """
-        print "> Commit '%s' container..." % (self.image),
+        print_stdout("> Commit '%s' container..." % (self.image), False)
         try:
-            container = self.dockerClient.containers.get(self.containerId)
+            container = self.getContainer()
             container.commit(
                 self.DOCKER_COMMIT_REPO,
                 self.getTag()
             )
         except Exception as e:
-            print "error."
+            print_stdout("error.")
             raise e
-        print "done."
+        print_stdout("done.")

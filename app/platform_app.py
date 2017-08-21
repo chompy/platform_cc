@@ -4,6 +4,7 @@ from Crypto.PublicKey import RSA
 from platform_config import PlatformConfig
 from platform_service import PlatformService
 from platform_docker import PlatformDocker
+from platform_utils import print_stdout
 
 class PlatformNoAvailableDockerImageException(Exception):
     """ 
@@ -36,7 +37,7 @@ class PlatformApp:
 
     def start(self):
         """ Start app. """
-        print "> Starting '%s' app." % self.config.getName()
+        print_stdout("> Starting '%s' app." % self.config.getName())
         baseImage = self.config.getDockerImage()
         if not baseImage:
             raise PlatformNoAvailableDockerImageException(
@@ -50,7 +51,7 @@ class PlatformApp:
 
     def stop(self):
         """ Stop app. """
-        print "> Stopping '%s' app." % self.config.getName()
+        print_stdout("> Stopping '%s' app." % self.config.getName())
         baseImage = self.config.getDockerImage()
         if not baseImage:
             raise PlatformNoAvailableDockerImageException(
@@ -61,4 +62,21 @@ class PlatformApp:
             self.config.getDockerImage()
         )
         baseDocker.stop()
-        print "> Done."
+        print_stdout("> Done.")
+
+    def build(self):
+        """ Run build and deploy hooks. """
+        print_stdout("> Building application...")
+        baseDocker = PlatformDocker(
+            self.config,
+            self.config.getDockerImage()
+        )
+        baseDocker.preBuild()
+        print_stdout("  - Build hooks...", False)
+        baseDocker.getContainer().exec_run(
+            ["sh", "-c", self.config.getBuildHooks()],
+            user="web"
+        )
+        print_stdout("done.")
+        # TODO Deploy hooks
+        

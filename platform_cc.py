@@ -21,3 +21,5 @@ if action == "start":
     platform.start()
 elif action == "stop":
     platform.stop()
+elif action == "build":
+    platform.build()

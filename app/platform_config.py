@@ -89,6 +89,9 @@ class PlatformConfig:
     def getVariables(self):
         return self._platformConfig.get("variables", {})
 
+    def getMounts(self):
+        return self._platformConfig.get("mounts", {})
+
     def getEntropy(self):
         entropyPath = os.path.join(self.getDataPath(), ".entropy")
         if not os.path.exists(entropyPath):
