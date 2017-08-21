@@ -6,15 +6,45 @@ import tarfile
 import time
 import io
 import hashlib
+import yaml
+from ..platform_utils import print_stdout
 
 class DockerProvisionBase:
 
     """ Base docker container provisioning class. """
 
+    CONFIG_DIRECTORY = "%s/../../config" % (os.path.dirname(__file__))
+
     def __init__(self, container, platformConfig, image):
         self.container = container
+        self.config = {}
+        configPath = os.path.join(
+            self.CONFIG_DIRECTORY,
+            "%s.yaml" % (image.split(":")[0])
+        )
+        if os.path.isfile(configPath):
+            with open(configPath, "r") as f:
+                self.config = yaml.load(f)
         self.platformConfig = platformConfig
         self.image = image
+
+    def runCommands(self, cmdList):
+        """ Run commands in container. """
+        for cmd in cmdList:
+            requiredBuildFlavor = cmd.get("build_flavor", "")
+            if requiredBuildFlavor and requiredBuildFlavor != self.platformConfig.getBuildFlavor():
+                continue
+            print_stdout(
+                "  - %s" % (
+                    cmd.get("desc", "Run command in '%s' container." % self.image)
+                )
+            )
+            results = self.container.exec_run(
+                ["sh", "-c", cmd.get("cmd", "")],
+                user=cmd.get("user", "root")
+            )
+            if results:
+                print_stdout("=======================================\n%s\n=======================================" % results)
 
     def randomString(self, length):
         """ Utility method. Generate random string. """
@@ -63,11 +93,15 @@ class DockerProvisionBase:
 
     def provision(self):
         """ Provision the container. """
-        return
+        self.runCommands(
+            self.config.get("provision", {})
+        )
 
     def preBuild(self):
         """ Prebuild commands. """
-        return
+        self.runCommands(
+            self.config.get("pre_build", {})
+        )
 
     def getUid(self):
         """ Generate unique id based on configuration. """

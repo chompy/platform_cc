@@ -1,0 +1,75 @@
+images:
+    "php:5.4": "php:5.4-fpm"
+    "php:5.6": "php:5.6-fpm"
+
+provision:
+    -
+        desc: "Create 'web' user."
+        cmd: |
+            useradd -d /app -m -p 'secret~' web
+    -
+        desc: "Install additional dependencies."
+        cmd: |
+            apt-get update
+            apt-get install -y rsync git unzip
+    -
+        desc: "Additional PHP configuration."
+        cmd: |
+            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/timezone.ini
+    -
+        desc: "Install composer."
+        cmd: |
+            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            php composer-setup.php --install-dir=/usr/local/bin
+            rm composer-setup.php
+
+pre_build:
+    -
+        desc: "Running composer."
+        build_flavor: "composer"
+        cmd: |
+            php -d memory_limit=-1 /usr/local/bin/composer.phar install -n -d /app
+        user: web
+
+extensions:
+    curl:
+        core: true
+    json:
+        core: true
+    sqlite3:
+        core: true
+    memcached:
+        "php:5": |
+            apt-get install -y libmemcached-dev zlib1g-dev
+            print '\n' | pecl install memcached-2.2.0
+            docker-php-ext-enable memcached
+    gd:
+        "php:5": |
+            apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng12-dev
+            docker-php-ext-configure --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+            docker-php-ext-install -j$(nproc) gd
+    imagick:
+        "php:5": |
+            apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev
+            print '\n' | pecl install imagick
+            docker-php-ext-enable imagick
+    intl:
+        "php:5": |
+            apt-get install -y libicu-dev
+            docker-php-ext-install -j$(nproc) intl
+    pdo_mysql:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) pdo_mysql
+    mcrypt:
+        "php:5": |
+            apt-get install -y libmcrypt-dev
+            docker-php-ext-install -j$(nproc) mcyrpt
+    xsl:
+        "php:5": |
+            apt-get install -y libxslt1-dev
+            docker-php-ext-install -j$(nproc) xsl
+    zip:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) zip

@@ -72,11 +72,11 @@ class PlatformApp:
             self.config.getDockerImage()
         )
         baseDocker.preBuild()
-        print_stdout("  - Build hooks...", False)
-        baseDocker.getContainer().exec_run(
+        print_stdout("  - Build hooks.")
+        results = baseDocker.getContainer().exec_run(
             ["sh", "-c", self.config.getBuildHooks()],
             user="web"
         )
-        print_stdout("done.")
+        print_stdout("=======================================\n%s\n=======================================" % results)
         # TODO Deploy hooks
         
