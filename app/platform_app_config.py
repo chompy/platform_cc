@@ -3,9 +3,9 @@ import yaml
 import hashlib
 import time
 
-class PlatformConfig:
+class PlatformAppConfig:
 
-    """ Provide configuration for the application. """
+    """ Provide configuration for application. """
 
     PLATFORM_FILENAME = ".platform.app.yaml"
 
@@ -18,49 +18,50 @@ class PlatformConfig:
         "php:5.6":          "php:5.6-fpm"
     }
 
-    def __init__(self, projectPath = ""):
-        self.projectPath = projectPath
-        self._platformConfig = {}
+    def __init__(self, projectHash, appPath = ""):
+        self.projectHash = projectHash
+        self.appPath = appPath
+        self._config = {}
         pathToPlatformYaml = os.path.join(
-            self.projectPath,
+            self.appPath,
             self.PLATFORM_FILENAME
         )
         with open(pathToPlatformYaml, "r") as f:
-            self._platformConfig = yaml.load(f)
+            self._config = yaml.load(f)
 
     def getName(self):
-        return self._platformConfig.get("name", "default")
+        return self._config.get("name", "default")
 
     def getType(self):
-        return self._platformConfig.get("type", "php:7.0")
+        return self._config.get("type", "php:7.0")
 
     def getBuildFlavor(self):
-        build = self._platformConfig.get("build", {})
+        build = self._config.get("build", {})
         return build.get("flavor", None)
 
     def getRelationships(self):
         return {}
 
     def getBuildHooks(self):
-        hooks = self._platformConfig.get("hooks", {})
+        hooks = self._config.get("hooks", {})
         return hooks.get("build", "")
 
     def getDeployHooks(self):
-        hooks = self._platformConfig.get("hooks", {})
+        hooks = self._config.get("hooks", {})
         return hooks.get("deploy", "")
 
     def getMounts(self):
-        return self._platformConfig.get("mounts", {})
+        return self._config.get("mounts", {})
 
     def getRuntime(self):
-        return self._platformConfig.get("runtime", {})
+        return self._config.get("runtime", {})
 
     def getServices(self):
         """ Get list of service dependencies for app. """
         serviceConf = {}
         serviceList = []
         pathToServicesYaml = os.path.join(
-            self.projectPath,
+            self.appPath,
             self.PLATFORM_SERVICES_PATH
         )
         with open(pathToServicesYaml, "r") as f:
@@ -80,24 +81,24 @@ class PlatformConfig:
 
     def getDataPath(self):
         return os.path.join(
-            self.projectPath,
+            self.appPath,
             self.PLATFORM_LOCAL_DATA_PATH
         )
 
     def getVariables(self):
-        return self._platformConfig.get("variables", {})
+        return self._config.get("variables", {})
 
     def getMounts(self):
-        return self._platformConfig.get("mounts", {})
+        return self._config.get("mounts", {})
 
     def getWeb(self):
-        return self._platformConfig.get("web", {})
+        return self._config.get("web", {})
 
     def getEntropy(self):
         entropyPath = os.path.join(self.getDataPath(), ".entropy")
         if not os.path.exists(entropyPath):
             entropy = hashlib.sha256(
-                self.projectPath + yaml.dump(self._platformConfig) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
+                self.appPath + yaml.dump(self._config) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
             ).hexdigest()
             with open(entropyPath, "w") as f:
                 f.write(entropy)

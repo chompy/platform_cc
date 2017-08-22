@@ -15,20 +15,23 @@ class PlatformDocker:
 
     DOCKER_COMMIT_REPO = "platform_cc"
 
-    def __init__(self, platformConfig, image):
+    def __init__(self, appConfig, image, name = ""):
         self.dockerClient = docker.from_env()
-        self.platformConfig = platformConfig
+        self.appConfig = appConfig
         self.image = str(image).strip()
+        self.name = name
+        if not self.name:
+            self.name = self.image.split(":")[0]
         self.containerId = "%s_%s_%s_%s" % (
             self.DOCKER_CONTAINER_NAME_PREFIX,
-            os.getuid(),
-            self.platformConfig.getName(),
-            self.image.split(":")[0]
+            self.appConfig.projectHash[:6],
+            self.appConfig.getName(),
+            self.name
         )
         self.networkId = "%s_%s_%s_network" % (
             self.DOCKER_CONTAINER_NAME_PREFIX,
-            os.getuid(),
-            self.platformConfig.getName()
+            self.appConfig.projectHash[:6],
+            self.appConfig.getName()
         )
 
     def getContainer(self):
@@ -45,22 +48,25 @@ class PlatformDocker:
         provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
         return provisionModule.DockerProvision(
             container,
-            self.platformConfig,
+            self.appConfig,
             self.image
         )
 
     def getTag(self):
         """ Get unique tag name for this container's configuration. """
-        return self.getProvisioner().getUid()[:10]
+        return "%s_%s" % (
+            self.image.split(":")[0],
+            self.getProvisioner().getUid()[:6]
+        )
 
     def getVariables(self):
         """ Get project variables. """
-        varPath = os.path.join(self.platformConfig.getDataPath(), "vars.yaml")
+        varPath = os.path.join(self.appConfig.getDataPath(), "vars.yaml")
         varConf = {}
         if os.path.exists(varPath):
             with open(varPath, "r") as f:
                 varConf = yaml.load(f)
-        varConf.update(self.platformConfig.getVariables())
+        varConf.update(self.appConfig.getVariables())
         finalVar = {}
         for key in varConf:
             if type(varConf) is dict:
@@ -76,7 +82,7 @@ class PlatformDocker:
         envVars = {
             "PLATFORM_APP_DIR" : "/app",
             "PLATFORM_APPLICATION" : {},
-            "PLATFORM_APPLICATION_NAME" : self.platformConfig.getName(),
+            "PLATFORM_APPLICATION_NAME" : self.appConfig.getName(),
             "PLATFORM_BRANCH" : "",
             "PLATFORM_DOCUMENT_ROOT" : "/",
             "PLATFORM_ENVIRONMENT" : "",
@@ -85,9 +91,9 @@ class PlatformDocker:
             "PLATFORM_ROUTES" : "", # TODO
             "PLATFORM_TREE_ID" : "",
             "PLATFORM_VARIABLES" : base64.b64encode(json.dumps(projVars)),
-            "PLATFORM_PROJECT_ENTROPY" : self.platformConfig.getEntropy()
+            "PLATFORM_PROJECT_ENTROPY" : self.appConfig.getEntropy()
         }
-        varPath = os.path.join(self.platformConfig.getDataPath(), "vars.yaml")
+        varPath = os.path.join(self.appConfig.getDataPath(), "vars.yaml")
         varConf = {}
         for key in projVars:
             if "env:" not in key: continue
@@ -96,26 +102,26 @@ class PlatformDocker:
 
     def getVolumes(self):
         """ Get volumes to mount to container. """
-        mounts = self.platformConfig.getMounts()
+        mounts = self.appConfig.getMounts()
         volumes = {
-            os.path.realpath(self.platformConfig.projectPath) : {
+            os.path.realpath(self.appConfig.appPath) : {
                 "bind" : "/mnt/app",
                 "mode" : "ro"
             }
         }
-        mounts["/"] = "app"
+        mounts["/"] = "%s_app" % self.appConfig.getName()
         for mountDest in mounts:
-            volumeKey = ("%s_%s_%s_%s" % (
+            mountKey = mounts[mountDest]
+            dockerVolumeKey = ("%s_%s_%s" % (
                 self.DOCKER_CONTAINER_NAME_PREFIX,
-                os.getuid(),
-                self.platformConfig.getName(),
-                os.path.basename(mounts[mountDest])
+                self.appConfig.projectHash[:6],
+                os.path.basename(mountKey)
             )).rstrip("_")
             try:
-                self.dockerClient.volumes.get(volumeKey)
+                self.dockerClient.volumes.get(dockerVolumeKey)
             except docker.errors.NotFound:
-                self.dockerClient.volumes.create(volumeKey)
-            volumes[volumeKey] = {
+                self.dockerClient.volumes.create(dockerVolumeKey)
+            volumes[dockerVolumeKey] = {
                 "bind" : ("/app/%s" % mountDest.lstrip("/")).rstrip("/"),
                 "mode" : "rw"
             }

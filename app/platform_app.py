@@ -1,7 +1,7 @@
 import os
 import yaml
 from Crypto.PublicKey import RSA
-from platform_config import PlatformConfig
+from platform_app_config import PlatformAppConfig
 from platform_service import PlatformService
 from platform_docker import PlatformDocker
 from platform_web import PlatformWeb
@@ -16,13 +16,19 @@ class PlatformNoAvailableDockerImageException(Exception):
 
 class PlatformApp:
 
-    """ Base class for platform.sh application. """
+    """ Base class for application. """
 
-    def __init__(self, projectPath = ""):
-        self.config = PlatformConfig(projectPath)
+    def __init__(self, projectHash, appPath = ""):
+        self.config = PlatformAppConfig(projectHash, appPath)
         if not os.path.exists(self.config.getDataPath()):
             os.mkdir(self.config.getDataPath())
             self.generateSshKey()
+        self.docker = PlatformDocker(
+            self.config,
+            self.config.getDockerImage(),
+            "app"
+        )
+        self.web = PlatformWeb(self)
 
     def generateSshKey(self):
         """ Generate SSH key for use inside containers. """
@@ -44,14 +50,8 @@ class PlatformApp:
             raise PlatformNoAvailableDockerImageException(
                 "No Docker image available for app type '%s.'" % self.getType()
             )
-        baseDocker = PlatformDocker(
-            self.config,
-            self.config.getDockerImage()
-        )
-        baseDocker.start()
-        # web handler
-        webHandler = PlatformWeb(self)
-        webHandler.start()
+        self.docker.start()
+        self.web.start()
 
     def stop(self):
         """ Stop app. """
@@ -61,26 +61,16 @@ class PlatformApp:
             raise PlatformNoAvailableDockerImageException(
                 "No Docker image available for app type '%s.'" % self.getType()
             )
-        baseDocker = PlatformDocker(
-            self.config,
-            self.config.getDockerImage()
-        )
-        baseDocker.stop()
-        # web handler
-        webHandler = PlatformWeb(self)
-        webHandler.stop()
+        self.docker.stop()
+        self.web.stop()
 
     def build(self):
         """ Run build and deploy hooks. """
         print_stdout("> Building application...")
-        baseDocker = PlatformDocker(
-            self.config,
-            self.config.getDockerImage()
-        )
-        baseDocker.syncApp()
-        baseDocker.preBuild()
+        self.docker.syncApp()
+        self.docker.preBuild()
         print_stdout("  - Build hooks.")
-        results = baseDocker.getContainer().exec_run(
+        results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getBuildHooks()],
             user="web"
         )
