@@ -29,8 +29,17 @@ class PlatformWeb:
         webProvisionConfig = self.docker.getProvisioner().config
         baseNginxConfig = webProvisionConfig.get("nginx.conf", "")
         appNginxConf = ""
-        for path in locations:
 
+        def addFastCgi(scriptName = ""):
+            if not scriptName: scriptName = "$fastcgi_script_name"
+            conf = ""
+            conf += "\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
+            conf += "\t\t\tfastcgi_pass %s:9000;\n" % (self.app.docker.containerId)
+            conf += "\t\t\tfastcgi_param SCRIPT_FILENAME $document_root%s;\n" % scriptName
+            conf += "\t\t\tinclude fastcgi_params;\n"
+            return conf
+
+        for path in locations:
             appNginxConf += "location %s {\n" % path
             
             # root
@@ -38,41 +47,88 @@ class PlatformWeb:
                 "/app/%s" % (locations[path].get("root", "").strip("/"))
             )
 
+            # headers
+            headers = locations[path].get("headers", {})
+            for headerName in headers:
+                appNginxConf += "\t\tadd_header %s %s;\n" % (
+                    headerName,
+                    headers[headerName]
+                )
+
             # passthru
-            passthru = False
-            if "passthru" in locations[path]:
-                passthru = locations[path]["passthru"].strip()
-                if not passthru: passthru = "/index.php"
-                appNginxConf += "\t\tlocation ~ /%s {\n" % (passthru.strip("/"))
-                appNginxConf += "\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
-                appNginxConf += "\t\t\tfastcgi_pass %s:9000;\n" % (self.app.docker.containerId)
-                appNginxConf += "\t\t\tfastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n"
-                appNginxConf += "\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
-                appNginxConf += "\t\t\tinclude fastcgi_params;\n"
+            passthru = locations[path].get("passthru", False)
+            if passthru:
+                appNginxConf += "\t\tlocation ~ /%s {\n" % passthru.strip("/")
+                appNginxConf += "\t\t\tallow all;\n"
+                appNginxConf += addFastCgi(passthru)
                 appNginxConf += "\t\t}\n"
                 appNginxConf += "\t\tlocation / {\n"
-                if passthru:
-                    appNginxConf += "\t\t\ttry_files $uri /%s$is_args$args;\n" % (passthru.strip("/"))
+                appNginxConf += "\t\t\ttry_files $uri /index.php$is_args$args;\n"
                 appNginxConf += "\t\t}\n"
 
             # scripts
-            scripts = False
-            if "scripts" in locations[path]:
-                scripts = locations[path]["scripts"]
+            scripts = locations[path].get("scripts", False)
             appNginxConf += "\t\tlocation ~ [^/]\.php(/|$) {\n"
             if scripts:
-                appNginxConf += "\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
-                appNginxConf += "\t\t\tfastcgi_pass %s:9000;\n" % (self.app.docker.containerId)
-                appNginxConf += "\t\t\tfastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n"
+                appNginxConf += addFastCgi()
                 if passthru:
                     appNginxConf += "\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
-                appNginxConf += "\t\t\tinclude fastcgi_params;\n"
             else:
                 appNginxConf += "\t\t\tdeny all;\n"
             appNginxConf += "\t\t}\n"
-            appNginxConf += "\t}\n"
 
-        # TODO rules, expire, allow, headers
+            # allow
+            allow = locations[path].get("allow", False)
+            # TODO!
+            # allow = false should deny access when requesting a file that does exist but
+            # does not match a rule
+
+            # rules
+            rules = locations[path].get("rules", {})
+            if rules:
+                for ruleRegex in rules:
+                    rule = rules[ruleRegex]
+                    appNginxConf += "\t\tlocation ~ %s {\n" % (ruleRegex)
+
+                    # allow
+                    if not rule.get("allow", True):
+                        appNginxConf += "\t\t\tdeny all;\n"
+                    else:
+                        appNginxConf += "\t\t\tallow all;\n"
+
+                    # passthru
+                    passthru = rule.get("passthru", False)
+                    if passthru:
+                        appNginxConf += addFastCgi(passthru)
+
+                    # expires
+                    expires = rule.get("expires", False)
+                    if expires:
+                        appNginxConf += "\t\t\texpires %s;\n" % expires
+
+                    # headers
+                    headers = rule.get("headers", {})
+                    for headerName in headers:
+                        appNginxConf += "\t\t\tadd_header %s %s;\n" % (
+                            headerName,
+                            headers[headerName]
+                        )
+
+                    # scripts
+                    scripts = rule.get("scripts", False)
+                    appNginxConf += "\t\t\tlocation ~ [^/]\.php(/|$) {\n"
+                    if scripts:
+                        appNginxConf += addFastCgi()
+                        if passthru:
+                            appNginxConf += "\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
+                    else:
+                        appNginxConf += "\t\t\t\tdeny all;\n"
+                    appNginxConf += "\t\t\t}\n"
+
+                    appNginxConf += "\t\t}\n"
+
+        appNginxConf += "\t}\n"
+
         return baseNginxConfig.replace("{{APP_WEB}}", appNginxConf)
 
     def start(self):
