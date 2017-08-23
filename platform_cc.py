@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 from app.platform_project import PlatformProject
+from app.platform_utils import log_stdout
 
 # get args
 parser = argparse.ArgumentParser()
@@ -21,7 +22,8 @@ args = parser.parse_args()
 project = PlatformProject()
 apps = project.getApplications()
 if not apps:
-    sys.exit("> No apps available.")
+    log_stdout("No apps available.")
+    sys.exit()
 
 # perform action
 action = args.action.strip().lower()
@@ -33,7 +35,8 @@ if appsArg:
         if app.config.getName().lower() not in appsArg:
             apps.remove(app)
     if not apps:
-        sys.exit("> No apps available.")
+        log_stdout("No apps available.")
+        sys.exit()
 
 if action == "start":
     for app in apps: app.start()

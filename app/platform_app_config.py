@@ -2,21 +2,18 @@ import os
 import yaml
 import hashlib
 import time
+from platform_config import PlatformConfig
 
-class PlatformAppConfig:
+class PlatformAppConfig(PlatformConfig):
 
     """ Provide configuration for application. """
-
-    PLATFORM_FILENAME = ".platform.app.yaml"
-
-    PLATFORM_SERVICES_PATH = ".platform/services.yaml"
-
-    PLATFORM_LOCAL_DATA_PATH = ".platform/.pcclocal"
 
     PLATFORM_DOCKER_IMAGES = {
         "php:5.4":          "php:5.4-fpm",
         "php:5.6":          "php:5.6-fpm"
     }
+
+    PLATFORM_FILENAME = ".platform.app.yaml"
 
     def __init__(self, projectHash, appPath = ""):
         self.projectHash = projectHash
@@ -31,9 +28,6 @@ class PlatformAppConfig:
 
     def getName(self):
         return self._config.get("name", "default")
-
-    def getType(self):
-        return self._config.get("type", "php:7.0")
 
     def getBuildFlavor(self):
         build = self._config.get("build", {})
@@ -56,34 +50,9 @@ class PlatformAppConfig:
     def getRuntime(self):
         return self._config.get("runtime", {})
 
-    def getServices(self):
-        """ Get list of service dependencies for app. """
-        serviceConf = {}
-        serviceList = []
-        pathToServicesYaml = os.path.join(
-            self.appPath,
-            self.PLATFORM_SERVICES_PATH
-        )
-        with open(pathToServicesYaml, "r") as f:
-            serviceConf = yaml.load(f)
-        for serviceName in serviceConf:
-            serviceList.append(
-                PlatformService(
-                    serviceName,
-                    serviceConf[serviceName]
-                )
-            )
-        return serviceList
-
     def getDockerImage(self):
         """ Get name of docker image for app. """
         return self.PLATFORM_DOCKER_IMAGES.get(self.getType(), None)
-
-    def getDataPath(self):
-        return os.path.join(
-            self.appPath,
-            self.PLATFORM_LOCAL_DATA_PATH
-        )
 
     def getVariables(self):
         return self._config.get("variables", {})
@@ -93,15 +62,3 @@ class PlatformAppConfig:
 
     def getWeb(self):
         return self._config.get("web", {})
-
-    def getEntropy(self):
-        entropyPath = os.path.join(self.getDataPath(), ".entropy")
-        if not os.path.exists(entropyPath):
-            entropy = hashlib.sha256(
-                self.appPath + yaml.dump(self._config) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
-            ).hexdigest()
-            with open(entropyPath, "w") as f:
-                f.write(entropy)
-            return entropy
-        with open(entropyPath, "r") as f:
-            return f.read()

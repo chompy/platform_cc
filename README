@@ -26,7 +26,4 @@ Unsupported Functionality:
 - Limiting app size and disk space (currently ignores these parameters)
 - Web upstream,socket_family  (PHP doesn't really need this?)
 
-Quirks / Differences from Platform.sh:
 
-- File system is always read/write (Platform.sh is read only.)
-    - Non volumes will be reset/erased upon restarting the app.

@@ -7,7 +7,7 @@ import time
 import io
 import hashlib
 import yaml
-from ..platform_utils import print_stdout
+from ..platform_utils import log_stdout, print_stdout, seperator_stdout
 
 class DockerProvisionBase:
 
@@ -15,36 +15,41 @@ class DockerProvisionBase:
 
     CONFIG_DIRECTORY = "%s/../../config" % (os.path.dirname(__file__))
 
-    def __init__(self, container, platformConfig, image):
+    DOCKER_VOLUME_NAME_PREFIX = "pcc"
+
+    def __init__(self, dockerClient, container, appConfig, image = None):
+        self.dockerClient = dockerClient
         self.container = container
-        self.config = {}
+        self.provisionConfig = {}
+        self.image = image if image else appConfig.getDockerImage()
         configPath = os.path.join(
             self.CONFIG_DIRECTORY,
-            "%s.yaml" % (image.split(":")[0])
+            "%s.yaml" % (self.image.split(":")[0])
         )
+        self.config = {}
         if os.path.isfile(configPath):
             with open(configPath, "r") as f:
                 self.config = yaml.load(f)
-        self.platformConfig = platformConfig
-        self.image = image
+        self.appConfig = appConfig
 
     def runCommands(self, cmdList):
         """ Run commands in container. """
         for cmd in cmdList:
             requiredBuildFlavor = cmd.get("build_flavor", "")
-            if requiredBuildFlavor and requiredBuildFlavor != self.platformConfig.getBuildFlavor():
+            if requiredBuildFlavor and requiredBuildFlavor != self.appConfig.getBuildFlavor():
                 continue
-            print_stdout(
-                "  - %s" % (
-                    cmd.get("desc", "Run command in '%s' container." % self.image)
-                )
+            log_stdout(
+                cmd.get("desc", "Run command in '%s' container." % self.image),
+                2
             )
             results = self.container.exec_run(
                 ["sh", "-c", cmd.get("cmd", "")],
                 user=cmd.get("user", "root")
             )
             if results:
-                print_stdout("=======================================\n%s\n=======================================" % results)
+                seperator_stdout()
+                print_stdout(results)
+                seperator_stdout()
 
     def randomString(self, length):
         """ Utility method. Generate random string. """
@@ -98,11 +103,46 @@ class DockerProvisionBase:
         )
 
     def preBuild(self):
-        """ Prebuild commands. """
+        """ Prebuild commands. (Run prior to build hooks.) """
         self.runCommands(
             self.config.get("pre_build", {})
         )
 
+    def runtime(self):
+        """ Runtime commands. """
+        self.runCommands(
+            self.config.get("runtime", {})
+        )
+
+    def getVolumes(self):
+        """ Get/create volumes to mount. """
+        mounts = self.appConfig.getMounts()
+        mounts.update(self.config.get("mounts", {}))
+        volumes = {}
+        for mountDest in mounts:
+            mountKey = mounts[mountDest]
+            dockerVolumeKey = ("%s_%s_%s_%s" % (
+                self.DOCKER_VOLUME_NAME_PREFIX,
+                self.appConfig.projectHash[:6],
+                self.appConfig.getName(),
+                os.path.basename(mountKey)
+            )).rstrip("_")
+            try:
+                self.dockerClient.volumes.get(dockerVolumeKey)
+            except docker.errors.NotFound:
+                self.dockerClient.volumes.create(dockerVolumeKey)
+            volumes[dockerVolumeKey] = {
+                "bind" : ("/app/%s" % mountDest.lstrip("/")).rstrip("/"),
+                "mode" : "rw"
+            }
+        return volumes
+
+    def getEnvironmentVariables(self):
+        """ Get environment variables for container. """
+        return {}
+
     def getUid(self):
         """ Generate unique id based on configuration. """
-        return hashlib.sha256(self.image).hexdigest()
+        hashStr = self.image
+        hashStr += str(self.appConfig.getBuildFlavor())
+        return hashlib.sha256(hashStr).hexdigest()

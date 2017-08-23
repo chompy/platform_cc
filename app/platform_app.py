@@ -3,16 +3,10 @@ import yaml
 from Crypto.PublicKey import RSA
 from platform_app_config import PlatformAppConfig
 from platform_service import PlatformService
+from platform_service_config import PlatformServiceConfig
 from platform_docker import PlatformDocker
 from platform_web import PlatformWeb
-from platform_utils import print_stdout
-
-class PlatformNoAvailableDockerImageException(Exception):
-    """ 
-    Exception that signifies that the current 
-    app has no available docker image.
-    """
-    pass
+from app.platform_utils import log_stdout, print_stdout, seperator_stdout
 
 class PlatformApp:
 
@@ -25,7 +19,6 @@ class PlatformApp:
             self.generateSshKey()
         self.docker = PlatformDocker(
             self.config,
-            self.config.getDockerImage(),
             "app"
         )
         self.web = PlatformWeb(self)
@@ -42,38 +35,56 @@ class PlatformApp:
         with open(pubkeyPath, 'w') as f:
             f.write(pubkey.exportKey('OpenSSH'))
 
+    def getServices(self):
+        """ Get list of service dependencies for app. """
+        serviceConf = {}
+        serviceList = []
+        pathToServicesYaml = os.path.join(
+            self.config.appPath,
+            PlatformServiceConfig.PLATFORM_SERVICES_PATH
+        )
+        with open(pathToServicesYaml, "r") as f:
+            serviceConf = yaml.load(f)
+        for serviceName in serviceConf:
+            serviceList.append(
+                PlatformService(
+                    self.config,
+                    serviceName
+                )
+            )
+        return serviceList
+
     def start(self):
         """ Start app. """
-        print_stdout("> Starting '%s' app." % self.config.getName())
-        baseImage = self.config.getDockerImage()
-        if not baseImage:
-            raise PlatformNoAvailableDockerImageException(
-                "No Docker image available for app type '%s.'" % self.getType()
-            )
+        log_stdout("Starting '%s' application." % self.config.getName())
         self.docker.start()
         self.web.start()
+        for service in self.getServices():
+            service.start()
 
     def stop(self):
         """ Stop app. """
-        print_stdout("> Stopping '%s' app." % self.config.getName())
-        baseImage = self.config.getDockerImage()
-        if not baseImage:
-            raise PlatformNoAvailableDockerImageException(
-                "No Docker image available for app type '%s.'" % self.getType()
-            )
+        log_stdout("Stopping '%s' application." % self.config.getName())
         self.docker.stop()
         self.web.stop()
+        for service in self.getServices():
+            service.stop()
 
     def build(self):
         """ Run build and deploy hooks. """
-        print_stdout("> Building application...")
+        log_stdout("Building '%s' application." % self.config.getName())
         self.docker.syncApp()
         self.docker.preBuild()
-        print_stdout("  - Build hooks.")
+        for service in self.getServices():
+            service.docker.preBuild()
+        log_stdout("Build hooks.", 1)
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getBuildHooks()],
             user="web"
         )
-        print_stdout("=======================================\n%s\n=======================================" % results)
+        seperator_stdout()
+        print_stdout(results)
+        seperator_stdout()
+
         # TODO Deploy hooks
         

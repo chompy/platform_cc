@@ -5,7 +5,7 @@ import yaml
 import json
 import base64
 import hashlib
-from platform_utils import print_stdout
+from app.platform_utils import log_stdout, print_stdout
 
 class PlatformDocker:
 
@@ -15,23 +15,20 @@ class PlatformDocker:
 
     DOCKER_COMMIT_REPO = "platform_cc"
 
-    def __init__(self, appConfig, image, name = ""):
+    def __init__(self, config, name = None, image = None):
         self.dockerClient = docker.from_env()
-        self.appConfig = appConfig
-        self.image = str(image).strip()
-        self.name = name
-        if not self.name:
-            self.name = self.image.split(":")[0]
+        self.config = config
+        self.name = name if name else self.config.getName()
+        self.image = image if image else self.config.getDockerImage()
         self.containerId = "%s_%s_%s_%s" % (
             self.DOCKER_CONTAINER_NAME_PREFIX,
-            self.appConfig.projectHash[:6],
-            self.appConfig.getName(),
+            self.config.projectHash[:6],
+            self.image.split(":")[0],
             self.name
         )
-        self.networkId = "%s_%s_%s_network" % (
+        self.networkId = "%s_%s_network" % (
             self.DOCKER_CONTAINER_NAME_PREFIX,
-            self.appConfig.projectHash[:6],
-            self.appConfig.getName()
+            self.config.projectHash[:6]
         )
 
     def getContainer(self):
@@ -47,8 +44,9 @@ class PlatformDocker:
             pass
         provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
         return provisionModule.DockerProvision(
+            self.dockerClient,
             container,
-            self.appConfig,
+            self.config,
             self.image
         )
 
@@ -61,12 +59,12 @@ class PlatformDocker:
 
     def getVariables(self):
         """ Get project variables. """
-        varPath = os.path.join(self.appConfig.getDataPath(), "vars.yaml")
+        varPath = os.path.join(self.config.getDataPath(), "vars.yaml")
         varConf = {}
         if os.path.exists(varPath):
             with open(varPath, "r") as f:
                 varConf = yaml.load(f)
-        varConf.update(self.appConfig.getVariables())
+        varConf.update(self.config.getVariables())
         finalVar = {}
         for key in varConf:
             if type(varConf) is dict:
@@ -82,7 +80,7 @@ class PlatformDocker:
         envVars = {
             "PLATFORM_APP_DIR" : "/app",
             "PLATFORM_APPLICATION" : {},
-            "PLATFORM_APPLICATION_NAME" : self.appConfig.getName(),
+            "PLATFORM_APPLICATION_NAME" : self.config.getName(),
             "PLATFORM_BRANCH" : "",
             "PLATFORM_DOCUMENT_ROOT" : "/",
             "PLATFORM_ENVIRONMENT" : "",
@@ -91,45 +89,19 @@ class PlatformDocker:
             "PLATFORM_ROUTES" : "", # TODO
             "PLATFORM_TREE_ID" : "",
             "PLATFORM_VARIABLES" : base64.b64encode(json.dumps(projVars)),
-            "PLATFORM_PROJECT_ENTROPY" : self.appConfig.getEntropy()
+            "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy()
         }
-        varPath = os.path.join(self.appConfig.getDataPath(), "vars.yaml")
+        envVars.update(self.getProvisioner().getEnvironmentVariables())
+        varPath = os.path.join(self.config.getDataPath(), "vars.yaml")
         varConf = {}
         for key in projVars:
             if "env:" not in key: continue
             envVars[key.replace("env:", "")] = projVars[key]
         return envVars
 
-    def getVolumes(self):
-        """ Get volumes to mount to container. """
-        mounts = self.appConfig.getMounts()
-        volumes = {
-            os.path.realpath(self.appConfig.appPath) : {
-                "bind" : "/mnt/app",
-                "mode" : "ro"
-            }
-        }
-        mounts["/"] = "%s_app" % self.appConfig.getName()
-        for mountDest in mounts:
-            mountKey = mounts[mountDest]
-            dockerVolumeKey = ("%s_%s_%s" % (
-                self.DOCKER_CONTAINER_NAME_PREFIX,
-                self.appConfig.projectHash[:6],
-                os.path.basename(mountKey)
-            )).rstrip("_")
-            try:
-                self.dockerClient.volumes.get(dockerVolumeKey)
-            except docker.errors.NotFound:
-                self.dockerClient.volumes.create(dockerVolumeKey)
-            volumes[dockerVolumeKey] = {
-                "bind" : ("/app/%s" % mountDest.lstrip("/")).rstrip("/"),
-                "mode" : "rw"
-            }
-        return volumes
-
     def start(self):
         """ Start docker container. """
-        print_stdout("> Starting '%s' container..." % (self.image), False)
+        log_stdout("Starting '%s' container..." % (self.image), 1, False)
         # get network for docker container
         network = None
         try:
@@ -159,7 +131,7 @@ class PlatformDocker:
                         image,
                         name=self.containerId,
                         detach=True,
-                        volumes=self.getVolumes(),
+                        volumes=self.getProvisioner().getVolumes(),
                         environment=self.getEnvironmentVariables(),
                         working_dir="/app",
                         hostname=self.containerId
@@ -178,9 +150,12 @@ class PlatformDocker:
             if needProvision:
                 self.provision()
                 self.commit()
+        # runtime commands
+        log_stdout("Execute runtime commands for '%s' container..." % (self.image), 1)
+        self.getProvisioner().runtime()
 
     def stop(self):
-        print_stdout("> Stopping '%s' container..." % (self.image), False)
+        log_stdout("Stopping '%s' container..." % (self.image), 1, False)
         try:
             container = self.getContainer()
             container.stop()
@@ -192,7 +167,7 @@ class PlatformDocker:
 
     def syncApp(self):
         """ Sync application files in to container. """
-        print_stdout("  - Sync application files...", False)
+        log_stdout("Sync application files...", 1, False)
         container = self.getContainer()
         container.exec_run(
             ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
@@ -204,7 +179,7 @@ class PlatformDocker:
 
     def provision(self):
         """ Provision current container. """
-        print_stdout("> Provisioning '%s' container..." % (self.image))
+        log_stdout("Provisioning '%s' container..." % (self.image), 1)
         self.getProvisioner().provision()
         self.getContainer().restart()
 
@@ -214,7 +189,7 @@ class PlatformDocker:
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """
-        print_stdout("> Commit '%s' container..." % (self.image), False)
+        log_stdout("Commit '%s' container..." % (self.image), 1, False)
         try:
             container = self.getContainer()
             container.commit(

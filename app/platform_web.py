@@ -2,7 +2,7 @@ import os
 import yaml
 from platform_config import PlatformConfig
 from platform_docker import PlatformDocker
-from platform_utils import print_stdout
+from app.platform_utils import log_stdout, print_stdout
 
 class PlatformWeb:
 
@@ -14,12 +14,9 @@ class PlatformWeb:
         self.app = app
         self.docker = PlatformDocker(
             self.app.config,
-            self.WEB_DOCKER_IMAGE,
-            "web"
+            "web",
+            self.WEB_DOCKER_IMAGE
         )
-
-    def getDocker(self):
-        return Pl
 
     def generateNginxConfig(self):
         """ Generate nginx config file for application. """

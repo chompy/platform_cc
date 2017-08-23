@@ -1,0 +1,2 @@
+mounts:
+    "/var/lib/mysql" : "data"
