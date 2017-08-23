@@ -6,24 +6,16 @@ Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml
 
 ----
 
-Current Planned Functionality:
+See TODO for list of features the still need to be implementd.
 
-- Multi-app (Multiple .platform.app.yaml) <!NOT TESTED!>
-- Web access / router via Nginx <!IN PROGRESS!>
-- Services <!TODO!>
-    - MySQL / MariaDB <!TODO!>
-    - Memcached <!TODO!>
-    - Solr 4 <!TODO!>
-- PHP app support
-    - Composer build flavors
-- Storage volumes
-- Cron tasks <!TODO!>
+Currently Unsupported Functionality:
 
-Unsupported Functionality:
+- Main router
+- Cron tasks
 
-- Non PHP apps.
+Currently Unplanned Functionality:
+
+- Non PHP applications
 - Workers
-- Limiting app size and disk space (currently ignores these parameters)
-- Web upstream,socket_family  (PHP doesn't really need this?)
-
-
+- Limiting app size and disk space
+- Web upstream,socket_family (PHP doesn't really need this?)

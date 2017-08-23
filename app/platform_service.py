@@ -34,10 +34,3 @@ class PlatformService:
             log_stdout("No docker image available, skipping", 1)
             return
         self.docker.stop()
-
-    def getRelationShipType(self):
-        return self.docker.getProvisioner().getRelationshipType()
-
-    def getRelationships(self):
-        """ Get service relationships to expose to application. """
-        return self.docker.getProvisioner().getRelationships()

@@ -30,6 +30,7 @@ class DockerProvisionBase:
         if os.path.isfile(configPath):
             with open(configPath, "r") as f:
                 self.config = yaml.load(f)
+                if not self.config: self.config = {}
         self.appConfig = appConfig
 
     def runCommands(self, cmdList):
@@ -144,12 +145,8 @@ class DockerProvisionBase:
         """ Get environment variables for container. """
         return {}
 
-    def getRelationshipType(self):
-        """ Category that service relationship goes under. """
-        return self.config.get("relationship_type", None)
-
-    def getRelationships(self):
-        """ Used by services to expose credientials. """
+    def getServiceRelationship(self):
+        """ Get service configuration to expose to application via PLATFORM_RELATIONSHIPS. """
         return []
 
     def getUid(self):

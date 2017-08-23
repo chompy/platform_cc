@@ -34,7 +34,7 @@ class PlatformAppConfig(PlatformConfig):
         return build.get("flavor", None)
 
     def getRelationships(self):
-        return {}
+        return self._config.get("relationships", {})
 
     def getBuildHooks(self):
         hooks = self._config.get("hooks", {})

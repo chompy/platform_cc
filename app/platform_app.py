@@ -56,13 +56,18 @@ class PlatformApp:
 
     def buildServiceRelationships(self):
         """ Build service relationship list. """
-        relationships = {}
-        for service in self.getServices():
-            rlType = service.getRelationShipType()
-            if rlType not in relationships:
-                relationships[rlType] = []
-            relationships[rlType] += service.getRelationships()
-        return relationships
+        services = self.getServices()
+        relationships = self.config.getRelationships()
+        output = {}
+        for relationship in relationships:
+            value = relationships[relationship]
+            for service in services:
+                serviceTypeName = service.config.getType().split(":")[0]
+                if value != ("%s:%s" % (service.config.getName(), serviceTypeName)):
+                    continue
+                output[relationship] = service.docker.getProvisioner().getServiceRelationship()
+                break
+        return output
 
     def start(self):
         """ Start app. """

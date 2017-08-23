@@ -23,7 +23,7 @@ class DockerProvision(DockerProvisionBase):
             "MYSQL_ROOT_PASSWORD" : self.getRootPassword()
         }
 
-    def getRelationships(self):
+    def getServiceRelationship(self):
         return [
             {
                 "host" : self.container.attrs.get("Config", {}).get("Hostname", ""),

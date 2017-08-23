@@ -13,7 +13,7 @@ class DockerProvision(DockerProvisionBase):
     def getVolumes(self):
         return {}
 
-    def getRelationships(self):
+    def getServiceRelationship(self):
         return [
             {
                 "host" : self.container.attrs.get("NetworkSettings", {}).get("IPAddress", ""),
