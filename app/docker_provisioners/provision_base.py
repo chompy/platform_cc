@@ -114,7 +114,7 @@ class DockerProvisionBase:
             self.config.get("runtime", {})
         )
 
-    def getVolumes(self):
+    def getVolumes(self, destPrefix = ""):
         """ Get/create volumes to mount. """
         mounts = self.appConfig.getMounts()
         mounts.update(self.config.get("mounts", {}))
@@ -132,7 +132,10 @@ class DockerProvisionBase:
             except docker.errors.NotFound:
                 self.dockerClient.volumes.create(dockerVolumeKey)
             volumes[dockerVolumeKey] = {
-                "bind" : ("/app/%s" % mountDest.lstrip("/")).rstrip("/"),
+                "bind" : ("%s/%s" % (
+                    destPrefix,
+                    mountDest.lstrip("/")
+                )).rstrip("/"),
                 "mode" : "rw"
             }
         return volumes
@@ -140,6 +143,14 @@ class DockerProvisionBase:
     def getEnvironmentVariables(self):
         """ Get environment variables for container. """
         return {}
+
+    def getRelationshipType(self):
+        """ Category that service relationship goes under. """
+        return self.config.get("relationship_type", None)
+
+    def getRelationships(self):
+        """ Used by services to expose credientials. """
+        return []
 
     def getUid(self):
         """ Generate unique id based on configuration. """

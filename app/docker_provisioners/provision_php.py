@@ -40,7 +40,7 @@ class DockerProvision(DockerProvisionBase):
             print_stdout("done.")
 
     def getVolumes(self):
-        volumes = DockerProvisionBase.getVolumes(self)
+        volumes = DockerProvisionBase.getVolumes(self, "/app")
         volumes[os.path.realpath(self.appConfig.appPath)] = {
             "bind" : "/mnt/app",
             "mode" : "ro"
@@ -56,7 +56,7 @@ class DockerProvision(DockerProvisionBase):
             self.dockerClient.volumes.create(appVolumeKey)
         volumes[appVolumeKey] = {
             "bind" : "/app",
-            "mode" : "ro"
+            "mode" : "rw"
         }
         return volumes
 

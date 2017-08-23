@@ -1,17 +1,21 @@
 TODO:
 
+    - !!! Relationships are 'hardcoded' and do not respect .platform.app.yaml, need to fix this!
+
     - PHP
+        - Allow setting php.ini from vars
         - Deploy hooks
+        - Install all default platform.sh extensions during provision
+        - Add support for more extensions (on going as needed)
     - Nginx
-        - Generate nginx.conf <!IN PROGRESS!>
-    - Services
-        - Service provisioning
+        - Improve app nginx conf
+        - Main app router
     - Services - Mysql
-        - Configure container
-        - Configure schemas
-        - Configure users
-    - Services - Memcached
-        - Configure container
+        - Auto configure schemas
+        - Auto configure users and expose relationships
     - Services - Solr
         - Configure container
         - Configure cores
+    - Commands
+        - Force re-provision command
+        - Container shell command.

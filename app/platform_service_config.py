@@ -6,7 +6,7 @@ class PlatformServiceConfig(PlatformConfig):
 
     """ Provide configuration for service. """
 
-    PLATFORM_SERVER_DOCKER_IMAGES = {
+    PLATFORM_SERVICE_DOCKER_IMAGES = {
         "mysql":                   "mariadb:10.2",
         "mysql:10.2":              "mariadb:10.2",
         "mysql:10.1":              "mariadb:10.1",
@@ -36,12 +36,10 @@ class PlatformServiceConfig(PlatformConfig):
         return self.name
 
     def getMounts(self):
-        return {
-            "/data" : self.name
-        }
+        return {}
 
     def getDockerImage(self):
-        return self.PLATFORM_SERVER_DOCKER_IMAGES.get(self.getType(), None)
+        return self.PLATFORM_SERVICE_DOCKER_IMAGES.get(self.getType(), None)
 
     def getConfiguration(self):
         return self._config.get("configuration", {})

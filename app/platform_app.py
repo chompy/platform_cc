@@ -54,13 +54,24 @@ class PlatformApp:
             )
         return serviceList
 
+    def buildServiceRelationships(self):
+        """ Build service relationship list. """
+        relationships = {}
+        for service in self.getServices():
+            rlType = service.getRelationShipType()
+            if rlType not in relationships:
+                relationships[rlType] = []
+            relationships[rlType] += service.getRelationships()
+        return relationships
+
     def start(self):
         """ Start app. """
         log_stdout("Starting '%s' application." % self.config.getName())
-        self.docker.start()
-        self.web.start()
         for service in self.getServices():
             service.start()
+        self.docker.relationships = self.buildServiceRelationships()
+        self.docker.start()
+        self.web.start()
 
     def stop(self):
         """ Stop app. """
@@ -73,6 +84,7 @@ class PlatformApp:
     def build(self):
         """ Run build and deploy hooks. """
         log_stdout("Building '%s' application." % self.config.getName())
+        self.docker.relationships = self.buildServiceRelationships()
         self.docker.syncApp()
         self.docker.preBuild()
         for service in self.getServices():
@@ -86,5 +98,13 @@ class PlatformApp:
         print_stdout(results)
         seperator_stdout()
 
-        # TODO Deploy hooks
+        # TODO move to stand alone function
+        log_stdout("Deploy hooks.", 1)
+        results = self.docker.getContainer().exec_run(
+            ["sh", "-c", self.config.getDeployHooks()],
+            user="web"
+        )
+        seperator_stdout()
+        print_stdout(results)
+        seperator_stdout()
         

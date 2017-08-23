@@ -13,7 +13,8 @@ provision:
         cmd: |
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/timezone.ini
+            echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/this_app.ini
+            echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/this_app.ini
     -
         desc: "Install composer."
         cmd: |
@@ -62,6 +63,12 @@ extensions:
         "php:5": |
             apt-get install -y libmcrypt-dev
             docker-php-ext-install -j$(nproc) mcyrpt
+    mysql:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) mysql
+    mysqli:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) mysqli
     xsl:
         "php:5": |
             apt-get install -y libxslt1-dev

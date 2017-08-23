@@ -1,2 +1,3 @@
+relationship_type: database
 mounts:
     "/var/lib/mysql" : "data"

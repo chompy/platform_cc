@@ -4,17 +4,7 @@ from app.platform_utils import log_stdout
 
 class PlatformService:
 
-    """ Platform service definition. """
-
-    PLATFORM_SERVICE_DOCKER_IMAGES = {
-        "mysql":                   "mariadb:10.2",
-        "mysql:10.2":              "mariadb:10.2",
-        "mysql:10.1":              "mariadb:10.1",
-        "mysql:10.0":              "mariadb:10.0",
-        "mysql:5.5":               "mariadb:5.5",
-        "memcached":               "memcached:1",
-        "memcached:1.4":           "memcached:1"
-    }
+    """ Platform service handler. """
 
     def __init__(self, appConfig, name):
         self.name = str(name).strip()
@@ -38,8 +28,16 @@ class PlatformService:
         self.docker.start()
 
     def stop(self):
+        """ Stop service. """
         log_stdout("Stopping '%s' service." % self.config.getName())
         if not self.config.getDockerImage():
             log_stdout("No docker image available, skipping", 1)
             return
         self.docker.stop()
+
+    def getRelationShipType(self):
+        return self.docker.getProvisioner().getRelationshipType()
+
+    def getRelationships(self):
+        """ Get service relationships to expose to application. """
+        return self.docker.getProvisioner().getRelationships()

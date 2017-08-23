@@ -12,3 +12,12 @@ class DockerProvision(DockerProvisionBase):
 
     def getVolumes(self):
         return {}
+
+    def getRelationships(self):
+        return [
+            {
+                "host" : self.container.attrs.get("NetworkSettings", {}).get("IPAddress", ""),
+                "scheme" : "memcached",
+                "port" : "11211",
+            }
+        ]

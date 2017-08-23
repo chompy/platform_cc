@@ -10,7 +10,7 @@ class DockerProvision(DockerProvisionBase):
     """ Provision a web/nginx container. """
 
     def getVolumes(self):
-        volumes = DockerProvisionBase.getVolumes(self)
+        volumes = DockerProvisionBase.getVolumes(self, "/app")
         volumes[os.path.realpath(self.appConfig.appPath)] = {
             "bind" : "/mnt/app",
             "mode" : "ro"

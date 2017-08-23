@@ -30,6 +30,7 @@ class PlatformDocker:
             self.DOCKER_CONTAINER_NAME_PREFIX,
             self.config.projectHash[:6]
         )
+        self.relationships = {}
 
     def getContainer(self):
         """ Get docker container. """
@@ -85,7 +86,7 @@ class PlatformDocker:
             "PLATFORM_DOCUMENT_ROOT" : "/",
             "PLATFORM_ENVIRONMENT" : "",
             "PLATFORM_PROJECT" : self.containerId,
-            "PLATFORM_RELATIONSHIPS" : "", # TODO
+            "PLATFORM_RELATIONSHIPS" : base64.b64encode(json.dumps(self.relationships)),
             "PLATFORM_ROUTES" : "", # TODO
             "PLATFORM_TREE_ID" : "",
             "PLATFORM_VARIABLES" : base64.b64encode(json.dumps(projVars)),
