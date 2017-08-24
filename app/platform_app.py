@@ -71,11 +71,12 @@ class PlatformApp:
 
     def start(self):
         """ Start app. """
-        log_stdout("Starting '%s' application." % self.config.getName())
         for service in self.getServices():
             service.start()
         self.docker.relationships = self.buildServiceRelationships()
+        log_stdout("Starting '%s' application." % self.config.getName())
         self.docker.start()
+        log_stdout("Starting web handler for '%s' application." % self.config.getName())
         self.web.start()
 
     def stop(self):

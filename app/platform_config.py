@@ -1,6 +1,7 @@
 import os
 import time
 import hashlib
+import json
 
 class PlatformConfig:
 
@@ -41,7 +42,7 @@ class PlatformConfig:
         entropyPath = os.path.join(self.getDataPath(), ".entropy")
         if not os.path.exists(entropyPath):
             entropy = hashlib.sha256(
-                self.appPath + yaml.dump(self._config) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
+                self.appPath + json.dumps(self._config) + self.PLATFORM_LOCAL_DATA_PATH + str(time.time())
             ).hexdigest()
             with open(entropyPath, "w") as f:
                 f.write(entropy)

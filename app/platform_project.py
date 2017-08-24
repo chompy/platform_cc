@@ -17,14 +17,14 @@ class PlatformProject:
             projectPath,
             PlatformAppConfig.PLATFORM_LOCAL_DATA_PATH
         )
-        if os.path.exists(projectPath):
+        if os.path.exists(os.path.realpath(projectPath)):
             if not os.path.exists(dataPath):
-                os.makedirs(dataPath)
+                os.mkdirs(dataPath)
         projectHashPath = os.path.join(dataPath, ".projectId")
         self.projectHash = ""
         if not os.path.isfile(projectHashPath):
             self.projectHash = hashlib.sha256(
-                self.HASH_SECRET + os.getuid() + str(time.time())
+                self.HASH_SECRET + str(os.getuid()) + str(time.time())
             ).hexdigest()
             with open(projectHashPath, "w") as f:
                 f.write(self.projectHash)
