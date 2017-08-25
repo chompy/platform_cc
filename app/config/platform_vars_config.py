@@ -16,7 +16,7 @@ class PlatformVarsConfig(PlatformConfig):
 
     def getMounts(self):
         return {
-            "/data" : "_vars"
+            "/data" : "data"
         }
 
     def getDockerImage(self):

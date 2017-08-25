@@ -43,6 +43,9 @@ class PlatformVars:
 
     def all(self):
         self.docker.start(self.DOCKER_CMD)
+        self.docker.getContainer().exec_run(
+            ["touch", self.VAR_PATH]
+        )
         results = self.docker.getProvisioner().fetchFile(self.VAR_PATH)
         self.docker.stop()
         if not results: return {}
