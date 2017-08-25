@@ -15,8 +15,8 @@ class PlatformAppConfig(PlatformConfig):
 
     PLATFORM_FILENAME = ".platform.app.yaml"
 
-    def __init__(self, projectHash, appPath = ""):
-        self.projectHash = projectHash
+    def __init__(self, projectHash, appPath = "", projectVars = {}):
+        PlatformConfig.__init__(self, projectHash)
         self.appPath = appPath
         self._config = {}
         pathToPlatformYaml = os.path.join(
@@ -25,6 +25,7 @@ class PlatformAppConfig(PlatformConfig):
         )
         with open(pathToPlatformYaml, "r") as f:
             self._config = yaml.load(f)
+        self.projectVars = projectVars
 
     def getName(self):
         return self._config.get("name", "default")
@@ -55,7 +56,19 @@ class PlatformAppConfig(PlatformConfig):
         return self.PLATFORM_DOCKER_IMAGES.get(self.getType(), None)
 
     def getVariables(self):
-        return self._config.get("variables", {})
+        allVars = {}
+        allVars.update(self.projectVars)
+        appVars = self._config.get("variables", {})
+        for key in appVars:
+            if type(appVars[key]) is dict:
+                for subKey in appVars[key]:
+                    allVars["%s:%s" % (key, subKey)] = appVars[key][subKey]
+                continue
+            allVars[key] = appVars[key]
+        allVars.update(
+            self._config.get("variables", {})
+        )
+        return allVars
 
     def getMounts(self):
         return self._config.get("mounts", {})

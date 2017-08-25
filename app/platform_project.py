@@ -1,9 +1,13 @@
 import os
 import time
 import hashlib
-
+from Crypto.PublicKey import RSA
 from platform_app import PlatformApp
-from platform_app_config import PlatformAppConfig
+from config.platform_app_config import PlatformAppConfig
+from platform_vars import PlatformVars
+
+class ProjectNotFoundException(Exception):
+    pass
 
 class PlatformProject:
 
@@ -13,14 +17,9 @@ class PlatformProject:
 
     def __init__(self, projectPath = ""):
         self.projectPath = projectPath
-        dataPath = os.path.join(
-            projectPath,
-            PlatformAppConfig.PLATFORM_LOCAL_DATA_PATH
-        )
-        if os.path.exists(os.path.realpath(projectPath)):
-            if not os.path.exists(dataPath):
-                os.mkdirs(dataPath)
-        projectHashPath = os.path.join(dataPath, ".projectId")
+        if not os.path.isdir(os.path.realpath(projectPath)):
+            raise ProjectNotFoundException("Could not find project at '%s.'" % os.path.realpath(projectPath))
+        projectHashPath = os.path.join(projectPath, ".pcc_project_id")
         self.projectHash = ""
         if not os.path.isfile(projectHashPath):
             self.projectHash = hashlib.sha256(
@@ -31,12 +30,14 @@ class PlatformProject:
         if not self.projectHash:
             with open(projectHashPath, "r") as f:
                 self.projectHash = f.read()
+        self.vars = PlatformVars(self.projectHash)
 
     def getApplications(self):
         """ Get all applications in project. """
         topPlatformAppConfigPath = os.path.join(self.projectPath, PlatformAppConfig.PLATFORM_FILENAME)
+        projectVars = self.vars.all()
         if os.path.exists(topPlatformAppConfigPath):
-            return [PlatformApp(self.projectHash, self.projectPath)]
+            return [PlatformApp(self.projectHash, self.projectPath, projectVars)]
         apps = []
         for path in os.listdir(self.projectPath):
             path = os.path.join(self.projectPath, path)
@@ -46,3 +47,15 @@ class PlatformProject:
                     apps.append(PlatformApp(self.projectHash, self.projectPath))
         return apps
 
+    def generateSshKey(self):
+        """ Generate SSH key for use inside containers. """
+        key = RSA.generate(2048)
+        self.vars.set(
+            "private_key",
+            key.exportKey('PEM')
+        )
+        pubkey = key.publickey()
+        self.vars.set(
+            "public_key",
+            pubkey.exportKey('OpenSSH')
+        )

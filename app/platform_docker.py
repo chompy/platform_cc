@@ -60,20 +60,7 @@ class PlatformDocker:
 
     def getVariables(self):
         """ Get project variables. """
-        varPath = os.path.join(self.config.getDataPath(), "vars.yaml")
-        varConf = {}
-        if os.path.exists(varPath):
-            with open(varPath, "r") as f:
-                varConf = yaml.load(f)
-        varConf.update(self.config.getVariables())
-        finalVar = {}
-        for key in varConf:
-            if type(varConf) is dict:
-                for subKey in varConf[key]:
-                    finalVar["%s:%s" % (key, subKey)] = varConf[key][subKey]
-                continue
-            finalVar[key] = varConf[key]
-        return finalVar
+        return self.config.getVariables()
 
     def getEnvironmentVariables(self):
         """ Get environment variables to use with container. """
@@ -93,14 +80,13 @@ class PlatformDocker:
             "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy()
         }
         envVars.update(self.getProvisioner().getEnvironmentVariables())
-        varPath = os.path.join(self.config.getDataPath(), "vars.yaml")
         varConf = {}
         for key in projVars:
             if "env:" not in key: continue
             envVars[key.replace("env:", "")] = projVars[key]
         return envVars
 
-    def start(self):
+    def start(self, cmd = ""):
         """ Start docker container. """
         log_stdout("Starting '%s' container..." % (self.image), 1, False)
         # get network for docker container
@@ -131,6 +117,7 @@ class PlatformDocker:
                     container = self.dockerClient.containers.run(
                         image,
                         name=self.containerId,
+                        command=cmd if cmd else None,
                         detach=True,
                         volumes=self.getProvisioner().getVolumes(),
                         environment=self.getEnvironmentVariables(),

@@ -1,6 +1,6 @@
 import os
 import yaml
-from platform_config import PlatformConfig
+from config.platform_config import PlatformConfig
 from platform_docker import PlatformDocker
 from app.platform_utils import log_stdout, print_stdout
 

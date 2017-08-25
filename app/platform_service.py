@@ -1,4 +1,4 @@
-from platform_service_config import PlatformServiceConfig
+from config.platform_service_config import PlatformServiceConfig
 from platform_docker import PlatformDocker
 from app.platform_utils import log_stdout
 
