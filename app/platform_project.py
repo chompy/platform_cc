@@ -32,10 +32,12 @@ class PlatformProject:
                 self.projectHash = f.read()
         self.vars = PlatformVars(self.projectHash)
 
-    def getApplications(self):
+    def getApplications(self, withVars = True):
         """ Get all applications in project. """
         topPlatformAppConfigPath = os.path.join(self.projectPath, PlatformAppConfig.PLATFORM_FILENAME)
-        projectVars = self.vars.all()
+        projectVars = {}
+        if withVars:
+            projectVars = self.vars.all()
         if os.path.exists(topPlatformAppConfigPath):
             return [PlatformApp(self.projectHash, self.projectPath, projectVars)]
         apps = []

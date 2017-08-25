@@ -12,6 +12,7 @@ def log_stdout(string, level = 0, newLine = True):
     Print string to stdout but prefix it based on level.
     Used to show different levels of sub tasks.
     """
+    if level < 0: return
     levelStr = ">"
     if level > 0:
         levelStr = "-".rjust(level * 3)

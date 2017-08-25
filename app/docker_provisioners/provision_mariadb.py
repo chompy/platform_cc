@@ -11,11 +11,13 @@ class DockerProvision(DockerProvisionBase):
 
     """ Provision a maria db container. """
 
+    PASSWORD_SALT = "dsf3$cb33FFhgkl4@567405-#@ldlUKJ^#lk43"
+
     # !!! TODO actually create users and passwords based on services.yaml !!!
 
     def getRootPassword(self):
         return hashlib.sha256(
-            self.image + json.dumps(self.config) + self.appConfig.getName() + self.appConfig.getEntropy()
+            self.PASSWORD_SALT + self.appConfig.getEntropy()
         ).hexdigest()
 
     def getEnvironmentVariables(self):

@@ -31,6 +31,7 @@ class PlatformDocker:
             self.config.projectHash[:6]
         )
         self.relationships = {}
+        self.logIndent = 1
 
     def getContainer(self):
         """ Get docker container. """
@@ -83,12 +84,12 @@ class PlatformDocker:
         varConf = {}
         for key in projVars:
             if "env:" not in key: continue
-            envVars[key.replace("env:", "")] = projVars[key]
+            envVars[key.replace("env:", "").strip().upper()] = projVars[key]
         return envVars
 
     def start(self, cmd = ""):
         """ Start docker container. """
-        log_stdout("Starting '%s' container..." % (self.image), 1, False)
+        log_stdout("Starting '%s' container..." % (self.image), self.logIndent, False)
         # get network for docker container
         network = None
         try:
@@ -133,29 +134,29 @@ class PlatformDocker:
                 return
             # add to network
             network.connect(container)
-            print_stdout("done.")
+            if self.logIndent >= 0: print_stdout("done.")
             # provision container
             if needProvision:
                 self.provision()
                 self.commit()
         # runtime commands
-        log_stdout("Execute runtime commands for '%s' container..." % (self.image), 1)
+        log_stdout("Execute runtime commands for '%s' container..." % (self.image), self.logIndent)
         self.getProvisioner().runtime()
 
     def stop(self):
-        log_stdout("Stopping '%s' container..." % (self.image), 1, False)
+        log_stdout("Stopping '%s' container..." % (self.image), self.logIndent, False)
         try:
             container = self.getContainer()
             container.stop()
             container.wait()
             container.remove()
-            print_stdout("done.")
+            if self.logIndent >= 0: print_stdout("done.")
         except docker.errors.NotFound:
             print_stdout("not running, skipped.")
 
     def syncApp(self):
         """ Sync application files in to container. """
-        log_stdout("Sync application files...", 1, False)
+        log_stdout("Sync application files...", self.logIndent, False)
         container = self.getContainer()
         container.exec_run(
             ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
@@ -163,11 +164,11 @@ class PlatformDocker:
         container.exec_run(
             ["chown", "-R", "web:web", "/app"]
         )
-        print_stdout("done.")
+        if self.logIndent >= 0: print_stdout("done.")
 
     def provision(self):
         """ Provision current container. """
-        log_stdout("Provisioning '%s' container..." % (self.image), 1)
+        log_stdout("Provisioning '%s' container..." % (self.image), self.logIndent)
         self.getProvisioner().provision()
         self.getContainer().restart()
 
@@ -177,7 +178,7 @@ class PlatformDocker:
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """
-        log_stdout("Commit '%s' container..." % (self.image), 1, False)
+        log_stdout("Commit '%s' container..." % (self.image), self.logIndent, False)
         try:
             container = self.getContainer()
             container.commit(
@@ -187,4 +188,4 @@ class PlatformDocker:
         except Exception as e:
             print_stdout("error.")
             raise e
-        print_stdout("done.")
+        if self.logIndent >= 0: print_stdout("done.")

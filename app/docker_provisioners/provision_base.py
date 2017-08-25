@@ -95,7 +95,18 @@ class DockerProvisionBase:
         self.container.put_archive(
             os.path.dirname(containerDest),
             data=tarData
-        ) 
+        )
+
+    def fetchFile(self, containerDest):
+        """ Retrieve contents of file from within container. """
+        tarData, stat = self.container.get_archive(containerDest)
+        tarData = io.BytesIO(tarData.read())
+        results = ""
+        with tarfile.open(fileobj=tarData, mode="r") as tar:
+            f = tar.extractfile(os.path.basename(containerDest))
+            results = f.read()
+            f.close()
+        return results
 
     def provision(self):
         """ Provision the container. """
