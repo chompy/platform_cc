@@ -76,8 +76,10 @@ if appsArg:
 
 if action == "start":
     for app in apps: app.start()
+    project.router.start()
 elif action == "stop":
     for app in apps: app.stop()
+    project.router.stop()
 elif action == "build":
     for app in apps: app.build()
 elif action == "var:set":

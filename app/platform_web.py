@@ -130,7 +130,7 @@ class PlatformWeb:
 
     def start(self):
         """ Start app web handler. """
-        print_stdout("> Starting web handler for '%s' app." % self.app.config.getName())
+        log_stdout("Starting web handler for '%s' app." % self.app.config.getName())
         self.docker.start()
         self.docker.getProvisioner().copyStringToFile(
             self.generateNginxConfig(),
@@ -140,5 +140,5 @@ class PlatformWeb:
 
     def stop(self):
         """ Stop app web handler. """
-        print_stdout("> Stopping web handler for '%s' app." % self.app.config.getName())
+        log_stdout("Stopping web handler for '%s' app." % self.app.config.getName())
         self.docker.stop()

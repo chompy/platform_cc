@@ -5,6 +5,7 @@ from Crypto.PublicKey import RSA
 from platform_app import PlatformApp
 from config.platform_app_config import PlatformAppConfig
 from platform_vars import PlatformVars
+from platform_router import PlatformRouter
 
 class ProjectNotFoundException(Exception):
     pass
@@ -31,6 +32,10 @@ class PlatformProject:
             with open(projectHashPath, "r") as f:
                 self.projectHash = f.read()
         self.vars = PlatformVars(self.projectHash)
+        self.router = PlatformRouter(
+            self.projectHash,
+            self.projectPath
+        )
 
     def getApplications(self, withVars = True):
         """ Get all applications in project. """

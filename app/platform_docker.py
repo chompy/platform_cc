@@ -129,6 +129,8 @@ class PlatformDocker:
                     lastExcept = e
                 except docker.errors.NotFound as e:
                     lastExcept = e
+                except docker.errors.APIError as e:
+                    lastExcept = e
             if not container:
                 if lastExcept: raise lastExcept
                 return
