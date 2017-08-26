@@ -24,7 +24,7 @@ class PlatformWeb:
         locations = webConfig.get("locations", {})
 
         webProvisionConfig = self.docker.getProvisioner().config
-        baseNginxConfig = webProvisionConfig.get("nginx.conf", "")
+        baseNginxConfig = webProvisionConfig.get("web_conf", "")
         appNginxConf = ""
 
         def addFastCgi(scriptName = ""):

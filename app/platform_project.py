@@ -34,7 +34,9 @@ class PlatformProject:
         self.vars = PlatformVars(self.projectHash)
         self.router = PlatformRouter(
             self.projectHash,
-            self.projectPath
+            self.projectPath,
+            self.vars,
+            self.getApplications(False)
         )
 
     def getApplications(self, withVars = True):

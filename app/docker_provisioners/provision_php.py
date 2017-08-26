@@ -70,6 +70,6 @@ class DockerProvision(DockerProvisionBase):
         for extension in extensions:
             extensionConfig = extensionConfigs.get(extension, {})
             if not extensionConfig: continue
-            if not extensionConfig.get("core", False): continue
+            if extensionConfig.get("core", False): continue
             hashStr += extension
         return hashlib.sha256(hashStr).hexdigest()

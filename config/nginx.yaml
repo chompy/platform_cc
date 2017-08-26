@@ -4,7 +4,7 @@ provision:
         cmd: |
             useradd -d /app -m -p 'secret~' web
 
-nginx.conf: |
+web_conf: |
     user web;
     worker_processes 1;
     events {
@@ -20,4 +20,18 @@ nginx.conf: |
             server_name localhost;
             {{APP_WEB}}
         }
+    }
+
+router_conf: |
+    user web;
+    worker_processes 1;
+    events {
+        worker_connections  1024;
+    }
+    http {
+        include mime.types;
+        default_type application/octet-stream;
+        sendfile on;
+        keepalive_timeout 65;
+        {{ROUTER_SERVERS}}
     }
