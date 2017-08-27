@@ -42,6 +42,18 @@ class PlatformVars:
             None
         )
 
+    def delete(self, key):
+        allVars = self.all()
+        key = self._sanitizeKey(key)
+        if key not in allVars: return
+        del allVars[key]
+        self.docker.start(self.DOCKER_CMD)
+        self.docker.getProvisioner().copyStringToFile(
+            json.dumps(allVars),
+            self.VAR_PATH
+        )
+        self.docker.stop() 
+
     def all(self):
         if self.vars: return self.vars
         self.docker.start(self.DOCKER_CMD)

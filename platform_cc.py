@@ -1,40 +1,29 @@
-import os
-import sys
-from app.platform_project import PlatformProject
-from app.platform_utils import log_stdout
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-# get args
-args = sys.argv[1:]
+from cleo import Application
+from app.commands.project_commands import ProjectStart, ProjectStop, ProjectBuild, ProjectDeploy
+from app.commands.var_commands import VarSet, VarGet, VarDelete, VarList
 
-print "Platform.CC (v0.01) -- By Contextual Code"
+cleoApp = Application(
+    "Platform.CC -- By Contextual Code",
+    "0.01"
+)
+cleoApp.add(ProjectStart())
+cleoApp.add(ProjectStop())
+cleoApp.add(ProjectBuild())
+cleoApp.add(ProjectDeploy())
+cleoApp.add(VarSet())
+cleoApp.add(VarGet())
+cleoApp.add(VarDelete())
+cleoApp.add(VarList())
 
-def print_help():
-    print ""
-    print "Usage:"
-    print "  command [options] [arguments]"
-    print ""
-    print "Options:"
-    print "  -a, --apps              Target just the specified apps (comma delimited)."
-    print ""
-    print "Available commands:"
-    print " start                    Start application(s)."
-    print " stop                     Stop application(s)."
-    print " build                    Build running application(s)."
-    print " var"
-    print "  var:set                 Set a project variable."
-    print "  var:get                 Get a project variable."
-    print "  var:list                List all project variables."
+if __name__ == '__main__':
+    cleoApp.run()
 
-# no action, display help and exit
-if len(args) == 0:
-    print_help()
-    sys.exit()
-
-# get action
-action = args[0].strip().lower()
-
-# 'help' action
-if action in ["help", "-h", "--help"]:
+"""
+# display command list
+if args.action == "list":
     print_help()
     sys.exit()
 
@@ -47,25 +36,10 @@ if not apps:
     log_stdout("No apps available.")
     sys.exit()
 
-# parse remaining arguments and options
-OPTION_KEYS = {
-    "apps" : ["-a", "--apps=", "--apps "]
-}
-options = {}
-additionalArguments = []
-if len(args) > 1:
-    for arg in args[1:]:
-        for key in OPTION_KEYS:
-            for argOption in OPTION_KEYS[key]:
-                if arg[:len(argOption)] == argOption:
-                    options[key] = arg[len(argOption):]
-        if arg[0] != "-":
-            additionalArguments.append(arg)
-
 # perform action
 appsArg = []
-if options.get("apps", []):
-    appsArg = options["apps"].strip().lower().split(",")
+if args.apps:
+    appsArg = args.apps.strip().lower().split(",")
 if appsArg:
     for app in apps:
         if app.config.getName().lower() not in appsArg:
@@ -74,28 +48,29 @@ if appsArg:
         log_stdout("No apps available.")
         sys.exit()
 
-if action == "start":
+if args.action == "start":
     for app in apps: app.start()
     project.router.start()
-elif action == "stop":
+elif args.action == "stop":
     for app in apps: app.stop()
     project.router.stop()
-elif action == "build":
+elif args.action == "build":
     for app in apps: app.build()
-elif action == "var:set":
-    if len(additionalArguments) < 2:
-        log_stdout("You must provide a key and value pair to set a variable.")
-        sys.exit()
-    project.vars.set(
-        additionalArguments[0],
-        additionalArguments[1]
-    )
-elif action == "var:get":
-    if len(additionalArguments) < 1:
-        log_stdout("You must provide a key to get a variable.")
-        sys.exit()
-    print project.vars.get(
-        additionalArguments[0]
-    )
-elif action == "var:list":
+elif args.action == "deploy":
+    for app in apps: app.deploy()
+
+# vars
+elif args.action == "var:list":
     print project.vars.all()
+elif args.action[:3] == "var":
+    print varArgs
+    if args.action == "var:set":
+        project.vars.set(
+            varArgs.key,
+            varArgs.value
+        )
+    elif args.action == "var:get":
+        print project.vars.get(varArgs.key)
+    elif args.action == "var:delete":
+        project.vars.delete(varArgs.key)
+"""

@@ -1,3 +1,4 @@
 pyaml
 docker>=2.5
 pycrypto
+cleo

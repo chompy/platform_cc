@@ -12,7 +12,7 @@ class PlatformApp:
 
     """ Base class for application. """
 
-    def __init__(self, projectHash, appPath = "", projectVars = {}):
+    def __init__(self, projectHash, appPath = "", projectVars = {}, command = None):
         self.projectVars = projectVars
         self.config = PlatformAppConfig(projectHash, appPath, projectVars)
         self.docker = PlatformDocker(
@@ -20,6 +20,7 @@ class PlatformApp:
             "%s_app" % self.config.getName(),
         )
         self.web = PlatformWeb(self)
+        self.command = command
         self.logIndent = 0
 
     def getServices(self):
@@ -118,7 +119,7 @@ class PlatformApp:
             service.stop()
 
     def build(self):
-        """ Run build and deploy hooks. """
+        """ Run prebuild commands and build hooks. """
         log_stdout(
             "Building '%s' application." % self.config.getName(),
             self.logIndent
@@ -139,8 +140,15 @@ class PlatformApp:
         seperator_stdout()
         print_stdout(results)
         seperator_stdout()
+        self.deleteSshKey()
 
-        # TODO move to stand alone function
+    def deploy(self):
+        """ Run deploy hooks. """
+        log_stdout(
+            "Deploying '%s' application." % self.config.getName(),
+            self.logIndent
+        )
+        self.docker.syncApp()
         log_stdout("Deploy hooks.", self.logIndent)
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getDeployHooks()],
@@ -150,4 +158,4 @@ class PlatformApp:
         print_stdout(results)
         seperator_stdout()
 
-        self.deleteSshKey()
+        

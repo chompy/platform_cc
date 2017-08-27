@@ -70,6 +70,8 @@ class PlatformRouter:
                                 app.web.docker.containerId
                             )
                             break
+                elif paths[path]["type"] == "redirect":
+                    pass
                 nginxConf += "\t}\n"
             nginxConf += "}\n"
 

@@ -16,8 +16,9 @@ class PlatformProject:
 
     HASH_SECRET = "4bcc181ab1f9fcc64a8c935686b55ca794e76d63"
 
-    def __init__(self, projectPath = ""):
+    def __init__(self, projectPath = "", logger = None):
         self.projectPath = projectPath
+        self.logger = logger
         if not os.path.isdir(os.path.realpath(projectPath)):
             raise ProjectNotFoundException("Could not find project at '%s.'" % os.path.realpath(projectPath))
         projectHashPath = os.path.join(projectPath, ".pcc_project_id")
@@ -48,7 +49,7 @@ class PlatformProject:
         if os.path.exists(topPlatformAppConfigPath):
             return [PlatformApp(self.projectHash, self.projectPath, projectVars)]
         apps = []
-        for path in os.listdir(self.projectPath):
+        for path in os.listdir(os.path.realpath(self.projectPath)):
             path = os.path.join(self.projectPath, path)
             if os.path.isdir(path):
                 platformAppConfigPath = os.path.join(path, PlatformAppConfig.PLATFORM_FILENAME)
