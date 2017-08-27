@@ -45,12 +45,14 @@ class PlatformDocker:
         except docker.errors.NotFound:
             pass
         provisionModule = importlib.import_module("app.docker_provisioners.provision_%s" % self.image.split(":")[0])
-        return provisionModule.DockerProvision(
+        provisioner = provisionModule.DockerProvision(
             self.dockerClient,
             container,
             self.config,
             self.image
         )
+        provisioner.logIndent = self.logIndent
+        return provisioner
 
     def getTag(self):
         """ Get unique tag name for this container's configuration. """

@@ -14,11 +14,11 @@ class DockerProvision(DockerProvisionBase):
         # parent method
         DockerProvisionBase.provision(self)
         # install extensions
-        log_stdout("Install extensions.", 2)
+        log_stdout("Install extensions.", self.logIndent)
         extensions = self.appConfig.getRuntime().get("extensions", [])
         extensionConfigs = self.config.get("extensions", {})
         for extensionName in extensions:
-            log_stdout("%s..." % (extensionName), 3, False)
+            log_stdout("%s..." % (extensionName), self.logIndent + 1, False)
             extensionConfig = extensionConfigs.get(extensionName, {})
             if not extensionConfig:
                 print_stdout("not available.")

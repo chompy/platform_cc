@@ -32,6 +32,7 @@ class DockerProvisionBase:
                 self.config = yaml.load(f)
                 if not self.config: self.config = {}
         self.appConfig = appConfig
+        self.logIndent = 1
 
     def runCommands(self, cmdList):
         """ Run commands in container. """
@@ -41,7 +42,7 @@ class DockerProvisionBase:
                 continue
             log_stdout(
                 cmd.get("desc", "Run command in '%s' container." % self.image),
-                2
+                self.logIndent
             )
             results = self.container.exec_run(
                 ["sh", "-c", cmd.get("cmd", "")],
