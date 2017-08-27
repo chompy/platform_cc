@@ -17,7 +17,7 @@ class PlatformApp:
         self.config = PlatformAppConfig(projectHash, appPath, projectVars)
         self.docker = PlatformDocker(
             self.config,
-            "app",
+            "%s_app" % self.config.getName(),
         )
         self.web = PlatformWeb(self)
         self.logIndent = 0
@@ -64,6 +64,7 @@ class PlatformApp:
             False
         )
         sshKey = self.projectVars.get("ssh:id_rsa")
+        knownHosts = self.projectVars.get("ssh:known_hosts")
         if not sshKey:
             print_stdout("not set.")
             return
@@ -74,11 +75,16 @@ class PlatformApp:
             base64.b64decode(sshKey),
             "/app/.ssh/id_rsa"
         )
+        if knownHosts:
+            self.docker.getProvisioner().copyStringToFile(
+                base64.b64decode(knownHosts),
+                "/app/.ssh/known_hosts"
+            )
         self.docker.getContainer().exec_run(
-            ["chmod", "0600", "/app/.ssh/id_rsa"]
+            ["chmod", "0600", "/app/.ssh/*"]
         )
         self.docker.getContainer().exec_run(
-            ["chown", "web:web", "/app/.ssh/id_rsa"]
+            ["chown", "web:web", "/app/.ssh/*"]
         )
         print_stdout("done.")
 

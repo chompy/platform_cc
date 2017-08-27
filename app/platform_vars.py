@@ -20,6 +20,7 @@ class PlatformVars:
             PlatformVarsConfig.VARS_DOCKER_IMAGE
         )
         self.docker.logIndent = -1
+        self.vars = {}
 
     def _sanitizeKey(self, key):
         return key.replace(" ", "_").strip().lower()
@@ -42,6 +43,7 @@ class PlatformVars:
         )
 
     def all(self):
+        if self.vars: return self.vars
         self.docker.start(self.DOCKER_CMD)
         self.docker.getContainer().exec_run(
             ["touch", self.VAR_PATH]
@@ -49,4 +51,5 @@ class PlatformVars:
         results = self.docker.getProvisioner().fetchFile(self.VAR_PATH)
         self.docker.stop()
         if not results: return {}
-        return json.loads(results)
+        self.vars = json.loads(results)
+        return self.vars

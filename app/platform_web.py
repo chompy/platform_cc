@@ -14,7 +14,7 @@ class PlatformWeb:
         self.app = app
         self.docker = PlatformDocker(
             self.app.config,
-            "web",
+            "%s_web" % self.app.config.getName(),
             self.WEB_DOCKER_IMAGE
         )
 
