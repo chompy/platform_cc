@@ -7,7 +7,6 @@ import time
 import io
 import hashlib
 import yaml
-from ..platform_utils import log_stdout, print_stdout, seperator_stdout
 
 class DockerProvisionBase:
 
@@ -17,7 +16,7 @@ class DockerProvisionBase:
 
     DOCKER_VOLUME_NAME_PREFIX = "pcc"
 
-    def __init__(self, dockerClient, container, appConfig, image = None):
+    def __init__(self, dockerClient, container, appConfig, image = None, logger = None):
         self.dockerClient = dockerClient
         self.container = container
         self.provisionConfig = {}
@@ -32,6 +31,7 @@ class DockerProvisionBase:
                 self.config = yaml.load(f)
                 if not self.config: self.config = {}
         self.appConfig = appConfig
+        self.logger = logger
         self.logIndent = 1
 
     def runCommands(self, cmdList):
@@ -40,18 +40,19 @@ class DockerProvisionBase:
             requiredBuildFlavor = cmd.get("build_flavor", "")
             if requiredBuildFlavor and requiredBuildFlavor != self.appConfig.getBuildFlavor():
                 continue
-            log_stdout(
-                cmd.get("desc", "Run command in '%s' container." % self.image),
-                self.logIndent
-            )
+            if self.logger:
+                self.logger.logEvent(
+                    cmd.get("desc", "Run command in '%s' container." % self.image),
+                    self.logIndent    
+                )
             results = self.container.exec_run(
                 ["sh", "-c", cmd.get("cmd", "")],
                 user=cmd.get("user", "root")
             )
-            if results:
-                seperator_stdout()
-                print_stdout(results)
-                seperator_stdout()
+            if results and self.logger:
+                self.log.printContainerOutput(
+                    results
+                )
 
     def randomString(self, length):
         """ Utility method. Generate random string. """

@@ -1,21 +1,5 @@
 from cleo import Command
-from app.platform_project import PlatformProject
-
-def getProject(command):
-    projectPath = command.option("path")
-    return PlatformProject(
-        projectPath if projectPath else ""
-    )
-
-def getAppsToInvoke(command):
-    appInvokeList = command.option("apps")
-    project = getProject(command)
-    apps = project.getApplications()
-    filteredApps = []
-    for app in apps:
-        if not appInvokeList or app.config.getName().lower() in appInvokeList:
-            filteredApps.append(app)
-    return filteredApps
+from app.commands import getProject, getAppsToInvoke
 
 class ProjectStart(Command):
     """

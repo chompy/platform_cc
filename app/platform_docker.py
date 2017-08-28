@@ -5,7 +5,6 @@ import yaml
 import json
 import base64
 import hashlib
-from app.platform_utils import log_stdout, print_stdout
 
 class PlatformDocker:
 
@@ -15,7 +14,7 @@ class PlatformDocker:
 
     DOCKER_COMMIT_REPO = "platform_cc"
 
-    def __init__(self, config, name = None, image = None):
+    def __init__(self, config, name = None, image = None, logger = None):
         self.dockerClient = docker.from_env()
         self.config = config
         self.name = name if name else self.config.getName()
@@ -31,6 +30,7 @@ class PlatformDocker:
             self.config.projectHash[:6]
         )
         self.relationships = {}
+        self.logger = logger
         self.logIndent = 1
 
     def getContainer(self):
@@ -91,7 +91,11 @@ class PlatformDocker:
 
     def start(self, cmd = ""):
         """ Start docker container. """
-        log_stdout("Starting '%s' container..." % (self.image), self.logIndent, False)
+        if self.logger:
+            self.logger.logEvent(
+                "Starting '%s' container." % (self.image),
+                self.logIndent
+            )
         # get network for docker container
         network = None
         try:
@@ -105,7 +109,8 @@ class PlatformDocker:
         container = None
         try:
             container = self.getContainer()
-            print_stdout("already running.")
+            if container.status != "running":
+                container.start()
         except docker.errors.NotFound:
             # create container
             # first look for committed provisioned container, if not found use unprovisioned image
@@ -138,29 +143,39 @@ class PlatformDocker:
                 return
             # add to network
             network.connect(container)
-            if self.logIndent >= 0: print_stdout("done.")
             # provision container
             if needProvision:
                 self.provision()
                 self.commit()
         # runtime commands
-        log_stdout("Execute runtime commands for '%s' container..." % (self.image), self.logIndent)
+        if self.logger:
+            self.logger.logEvent(
+                "Execute runtime commands for '%s' container." % (self.image), 
+                self.logIndent
+            )
         self.getProvisioner().runtime()
 
     def stop(self):
-        log_stdout("Stopping '%s' container..." % (self.image), self.logIndent, False)
+        if self.logger:
+            self.logger.logEvent(
+                "Stopping '%s' container." % (self.image),
+                self.logIndent
+            )
         try:
             container = self.getContainer()
             container.stop()
             container.wait()
             container.remove()
-            if self.logIndent >= 0: print_stdout("done.")
         except docker.errors.NotFound:
-            print_stdout("not running, skipped.")
+            pass
 
     def syncApp(self):
         """ Sync application files in to container. """
-        log_stdout("Sync application files...", self.logIndent, False)
+        if self.logger:
+            self.logger.logEvent(
+                "Sync application files.",
+                self.logIndent
+            )
         container = self.getContainer()
         container.exec_run(
             ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
@@ -168,11 +183,14 @@ class PlatformDocker:
         container.exec_run(
             ["chown", "-R", "web:web", "/app"]
         )
-        if self.logIndent >= 0: print_stdout("done.")
 
     def provision(self):
         """ Provision current container. """
-        log_stdout("Provisioning '%s' container..." % (self.image), self.logIndent)
+        if self.logger:
+            self.logger.logEvent(
+                "Provisioning '%s' container." % (self.image),
+                self.logIndent
+            )
         self.getProvisioner().provision()
         self.getContainer().restart()
 
@@ -182,14 +200,13 @@ class PlatformDocker:
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """
-        log_stdout("Commit '%s' container..." % (self.image), self.logIndent, False)
-        try:
-            container = self.getContainer()
-            container.commit(
-                self.DOCKER_COMMIT_REPO,
-                self.getTag()
+        if self.logger:
+            self.logger.logEvent(
+                "Commit '%s' container." % (self.image),
+                self.logIndent
             )
-        except Exception as e:
-            print_stdout("error.")
-            raise e
-        if self.logIndent >= 0: print_stdout("done.")
+        container = self.getContainer()
+        container.commit(
+            self.DOCKER_COMMIT_REPO,
+            self.getTag()
+        )

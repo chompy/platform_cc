@@ -4,7 +4,6 @@ import io
 import hashlib
 import docker
 from provision_base import DockerProvisionBase
-from ..platform_utils import log_stdout, print_stdout
 
 class DockerProvision(DockerProvisionBase):
 
@@ -14,17 +13,33 @@ class DockerProvision(DockerProvisionBase):
         # parent method
         DockerProvisionBase.provision(self)
         # install extensions
-        log_stdout("Install extensions.", self.logIndent)
+        if self.logger:
+            self.logger.logEvent(
+                "Install extensions.",
+                self.logIndent
+            )
         extensions = self.appConfig.getRuntime().get("extensions", [])
         extensionConfigs = self.config.get("extensions", {})
         for extensionName in extensions:
-            log_stdout("%s..." % (extensionName), self.logIndent + 1, False)
+            if self.logger:
+                self.logger.logEvent(
+                    "%s." % (extensionName),
+                    self.logIndent + 1
+                )
             extensionConfig = extensionConfigs.get(extensionName, {})
             if not extensionConfig:
-                print_stdout("not available.")
+                if self.logger:
+                    self.logger.logEvent(
+                        "Extension not available.",
+                        self.logIndent + 2
+                    )
                 continue
             if extensionConfig.get("core", False):
-                print_stdout("already installed (core extension).")
+                if self.logger:
+                    self.logger.logEvent(
+                        "No additional configuration nessacary.",
+                        self.logIndent + 2
+                    )
                 continue
             depCmdKey = difflib.get_close_matches(
                 self.image,
@@ -32,12 +47,15 @@ class DockerProvision(DockerProvisionBase):
                 1
             )
             if not depCmdKey:
-                print_stdout("not available.")
+                if self.logger:
+                    self.logger.logEvent(
+                        "Extension not available.",
+                        self.logIndent + 2
+                    )
                 continue
             self.container.exec_run(
                 ["sh", "-c", extensionConfig[depCmdKey[0]]]
             )
-            print_stdout("done.")
 
     def getVolumes(self):
         volumes = DockerProvisionBase.getVolumes(self, "/app")

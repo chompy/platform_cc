@@ -2,9 +2,9 @@ TODO:
 
     - Application / PHP
         - Allow setting php.ini from vars
-        - Deploy hooks
         - Install all default platform.sh extensions during provision
         - Add support for more extensions (on going as needed)
+        - Cron jobs
     - Web Handler / Nginx
         - Improve app nginx conf
     - Router / Nginx

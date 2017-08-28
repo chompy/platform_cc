@@ -2,7 +2,6 @@ import os
 import yaml
 from config.platform_config import PlatformConfig
 from platform_docker import PlatformDocker
-from app.platform_utils import log_stdout, print_stdout
 
 class PlatformWeb:
 
@@ -12,11 +11,15 @@ class PlatformWeb:
 
     def __init__(self, app):
         self.app = app
+        self.logger = self.app.logger
         self.docker = PlatformDocker(
             self.app.config,
             "%s_web" % self.app.config.getName(),
-            self.WEB_DOCKER_IMAGE
+            self.WEB_DOCKER_IMAGE,
+            self.logger
         )
+        self.logIndent = 1
+        self.docker.logIndent = self.logIndent + 1
 
     def generateNginxConfig(self):
         """ Generate nginx config file for application. """
@@ -130,7 +133,11 @@ class PlatformWeb:
 
     def start(self):
         """ Start app web handler. """
-        log_stdout("Starting web handler for '%s' app." % self.app.config.getName())
+        if self.logger:
+            self.logger.logEvent(
+                "Starting web handler for '%s' app." % self.app.config.getName(),
+                self.logIndent
+            )
         self.docker.start()
         self.docker.getProvisioner().copyStringToFile(
             self.generateNginxConfig(),
@@ -140,5 +147,9 @@ class PlatformWeb:
 
     def stop(self):
         """ Stop app web handler. """
-        log_stdout("Stopping web handler for '%s' app." % self.app.config.getName())
+        if self.logger:
+            self.logger.logEvent(
+                "Stopping web handler for '%s' app." % self.app.config.getName(),
+                self.logIndent
+            )
         self.docker.stop()

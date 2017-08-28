@@ -6,22 +6,23 @@ from platform_service import PlatformService
 from config.platform_service_config import PlatformServiceConfig
 from platform_docker import PlatformDocker
 from platform_web import PlatformWeb
-from app.platform_utils import log_stdout, print_stdout, seperator_stdout
 
 class PlatformApp:
 
     """ Base class for application. """
 
-    def __init__(self, projectHash, appPath = "", projectVars = {}, command = None):
+    def __init__(self, projectHash, appPath = "", projectVars = {}, logger = None):
         self.projectVars = projectVars
         self.config = PlatformAppConfig(projectHash, appPath, projectVars)
         self.docker = PlatformDocker(
             self.config,
             "%s_app" % self.config.getName(),
+            self.config.getDockerImage(),
+            logger
         )
-        self.web = PlatformWeb(self)
-        self.command = command
+        self.logger = logger
         self.logIndent = 0
+        self.web = PlatformWeb(self)
 
     def getServices(self):
         """ Get list of service dependencies for app. """
@@ -37,7 +38,8 @@ class PlatformApp:
             serviceList.append(
                 PlatformService(
                     self.config,
-                    serviceName
+                    serviceName,
+                    self.logger
                 )
             )
         return serviceList
@@ -59,15 +61,19 @@ class PlatformApp:
 
     def copySshKey(self):
         """ Copy ssh key in to container. """
-        log_stdout(
-            "Copy SSH key...",
-            self.logIndent,
-            False
-        )
+        if self.logger:
+            self.logger.logEvent(
+                "Copy SSH key.",
+                self.logIndent
+            )
         sshKey = self.projectVars.get("ssh:id_rsa")
         knownHosts = self.projectVars.get("ssh:known_hosts")
         if not sshKey:
-            print_stdout("not set.")
+            if self.logger:
+                self.logger.logEvent(
+                    "SSH key is not set.",
+                    self.logIndent + 1
+                )
             return
         self.docker.getContainer().exec_run(
             ["mkdir", "-p", "/app/.ssh"]
@@ -87,7 +93,6 @@ class PlatformApp:
         self.docker.getContainer().exec_run(
             ["chown", "web:web", "/app/.ssh/*"]
         )
-        print_stdout("done.")
 
     def deleteSshKey(self):
         """ Delete ssh key in container. """
@@ -97,22 +102,24 @@ class PlatformApp:
 
     def start(self):
         """ Start app. """
+        if self.logger:
+            self.logger.logEvent(
+                "Starting '%s' application." % self.config.getName(),
+                self.logIndent
+            )
         for service in self.getServices():
             service.start()
         self.docker.relationships = self.buildServiceRelationships()
-        log_stdout(
-            "Starting '%s' application." % self.config.getName(),
-            self.logIndent
-        )
         self.docker.start()
         self.web.start()
 
     def stop(self):
         """ Stop app. """
-        log_stdout(
-            "Stopping '%s' application." % self.config.getName(),
-            self.logIndent
-        )
+        if self.logger:
+            self.logger.logEvent(
+                "Stopping '%s' application." % self.config.getName(),
+                self.logIndent
+            )
         self.docker.stop()
         self.web.stop()
         for service in self.getServices():
@@ -120,10 +127,11 @@ class PlatformApp:
 
     def build(self):
         """ Run prebuild commands and build hooks. """
-        log_stdout(
-            "Building '%s' application." % self.config.getName(),
-            self.logIndent
-        )
+        if self.logger:
+            self.logger.logEvent(
+                "Building '%s' application." % self.config.getName(),
+                self.logIndent
+            )
         self.docker.relationships = self.buildServiceRelationships()
         self.docker.syncApp()
         self.logIndent += 1
@@ -132,30 +140,39 @@ class PlatformApp:
         self.docker.preBuild()
         for service in self.getServices():
             service.docker.preBuild()
-        log_stdout("Build hooks.", self.logIndent)
+        if self.logger:
+            self.logger.logEvent(
+                "Build hooks.",
+                self.logIndent + 1
+            )
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getBuildHooks()],
             user="web"
         )
-        seperator_stdout()
-        print_stdout(results)
-        seperator_stdout()
+        if results and self.logger:
+            self.logger.printContainerOutput(
+                results
+            )
         self.deleteSshKey()
 
     def deploy(self):
         """ Run deploy hooks. """
-        log_stdout(
-            "Deploying '%s' application." % self.config.getName(),
-            self.logIndent
-        )
+        if self.logger:
+            self.logger.logEvent(
+                "Deploying '%s' application." % self.config.getName(),
+                self.logIndent
+            )
         self.docker.syncApp()
-        log_stdout("Deploy hooks.", self.logIndent)
+        if self.logger:
+            self.logger.logEvent(
+                "Deploy hooks.",
+                self.logIndent + 1
+            )
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getDeployHooks()],
             user="web"
         )
-        seperator_stdout()
-        print_stdout(results)
-        seperator_stdout()
-
-        
+        if results and self.logger:
+            self.logger.printContainerOutput(
+                results
+            )

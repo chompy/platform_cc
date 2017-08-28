@@ -3,7 +3,6 @@ import base64
 import json
 from platform_docker import PlatformDocker
 from config.platform_vars_config import PlatformVarsConfig
-from app.platform_utils import log_stdout
 
 class PlatformVars:
 

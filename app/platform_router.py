@@ -2,21 +2,27 @@ import collections
 from urlparse import urlparse
 from config.platform_router_config import PlatformRouterConfig
 from platform_docker import PlatformDocker
-from app.platform_utils import log_stdout
 
 class PlatformRouter:
     """ Provide router to route request to specific app. """
 
     ROUTE_DOMAIN_REPLACE = "{default}"
 
-    def __init__(self, projectHash, projectPath, projectVars, projectApps):
+    def __init__(self, projectHash, projectPath, projectVars, projectApps, logger = None):
         self.config = PlatformRouterConfig(
             projectHash,
             projectPath
         )
         self.projectVars = projectVars
         self.projectApps = projectApps
-        self.docker = PlatformDocker(self.config)
+        self.docker = PlatformDocker(
+            self.config,
+            self.config.getName(),
+            self.config.getDockerImage(),
+            logger
+        )
+        self.logger = logger
+        self.logIndent = 0
 
     def generateNginxConfig(self):
         """ Generate nginx config file for application. """
@@ -84,7 +90,11 @@ class PlatformRouter:
 
     def start(self):
         """ Start router. """
-        log_stdout("Starting router.")
+        if self.logger:
+            self.logger.logEvent(
+                "Starting router.",
+                self.logIndent
+            )
         self.docker.start()
         self.docker.getProvisioner().copyStringToFile(
             self.generateNginxConfig(),
@@ -94,5 +104,9 @@ class PlatformRouter:
 
     def stop(self):
         """ Stop router. """
-        log_stdout("Stopping router.")
+        if self.logger:
+            self.logger.logEvent(
+                "Stopping router.",
+                self.logIndent
+            )
         self.docker.stop()        

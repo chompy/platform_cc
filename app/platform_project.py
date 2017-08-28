@@ -37,7 +37,8 @@ class PlatformProject:
             self.projectHash,
             self.projectPath,
             self.vars,
-            self.getApplications(False)
+            self.getApplications(False),
+            logger
         )
 
     def getApplications(self, withVars = True):
@@ -47,14 +48,14 @@ class PlatformProject:
         if withVars:
             projectVars = self.vars.all()
         if os.path.exists(topPlatformAppConfigPath):
-            return [PlatformApp(self.projectHash, self.projectPath, projectVars)]
+            return [PlatformApp(self.projectHash, self.projectPath, projectVars, self.logger)]
         apps = []
         for path in os.listdir(os.path.realpath(self.projectPath)):
             path = os.path.join(self.projectPath, path)
             if os.path.isdir(path):
                 platformAppConfigPath = os.path.join(path, PlatformAppConfig.PLATFORM_FILENAME)
                 if os.path.isfile(platformAppConfigPath):
-                    apps.append(PlatformApp(self.projectHash, self.projectPath))
+                    apps.append(PlatformApp(self.projectHash, self.projectPath, projectVars, self.logger))
         return apps
 
     def generateSshKey(self):

@@ -1,12 +1,7 @@
 import json
 from cleo import Command
+from app.commands import getProject
 from app.platform_project import PlatformProject
-
-def getProject(command):
-    projectPath = command.option("path")
-    return PlatformProject(
-        projectPath if projectPath else ""
-    )
 
 class VarSet(Command):
     """
