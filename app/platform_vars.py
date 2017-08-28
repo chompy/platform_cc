@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+import time
 import docker
 
 class PlatformVars:
@@ -44,8 +45,10 @@ class PlatformVars:
             self.dockerClient.volumes.get(dockerVolumeKey)
         except docker.errors.NotFound:
             self.dockerClient.volumes.create(dockerVolumeKey)
+        containerId = "pcc_%s_vars_%s" % (self.projectHash[:6], time.time())
         results = self.dockerClient.containers.run(
             self.VARS_DOCKER_IMAGE,
+            name=containerId,
             command="%s %s%s%s" % (
                 self.CONTAINER_CMD,
                 action.strip().lower(),
@@ -61,7 +64,7 @@ class PlatformVars:
             remove=True
         )
         self.dockerClient.containers.prune({
-            "image" : self.VARS_DOCKER_IMAGE
+            "label" : containerId
         })
         return results
 
