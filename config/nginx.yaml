@@ -33,5 +33,5 @@ router_conf: |
         default_type application/octet-stream;
         sendfile on;
         keepalive_timeout 65;
-        {{ROUTER_SERVERS}}
+    {{ROUTER_SERVERS}}
     }

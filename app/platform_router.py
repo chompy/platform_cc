@@ -27,6 +27,11 @@ class PlatformRouter:
     def generateNginxConfig(self):
         """ Generate nginx config file for application. """
 
+        projectDomains = self.projectVars.get(
+            "project:domains"
+        ).strip().lower().split(",")
+        projectDomains += ["%s.local" % self.config.projectHash[:6]]
+
         serverList = collections.OrderedDict()
         routes = self.config.getRoutes()
         for routeSyntax in routes:
@@ -43,7 +48,6 @@ class PlatformRouter:
                     "hostname" :            parseRouteSyntax.hostname,
                     "paths" :               {}
                 }
-
             if parseRouteSyntax.path not in serverList[serverKey]["paths"]:
                 serverList[serverKey]["paths"][parseRouteSyntax.path] = {
                     "type" :                routes[routeSyntax].get("type", "upstream"),
@@ -53,19 +57,24 @@ class PlatformRouter:
         
         nginxConf = ""
         for serverName in serverList:
-            nginxConf += "server {\n"
-            nginxConf += "\tserver_name %s;\n" % (
-                serverList[serverName]["hostname"].replace(
+            nginxConf += "\tserver {\n"
+            hostnames = []
+            for projectDomain in projectDomains:
+                hostname = serverList[serverName]["hostname"].replace(
                     self.ROUTE_DOMAIN_REPLACE,
-                    "_"
+                    projectDomain
                 )
+                if hostname not in hostnames:
+                    hostnames.append(hostname)
+            nginxConf += "\t\tserver_name %s;\n" % (
+                str(" ".join(hostnames))
             )
             # TODO HTTPS
-            nginxConf += "\tlisten 80;\n"
+            nginxConf += "\t\tlisten 80;\n"
 
             paths = serverList[serverName]["paths"]
             for path in paths:
-                nginxConf += "\tlocation %s {\n" % (
+                nginxConf += "\t\tlocation %s {\n" % (
                     path
                 )
                 if paths[path]["type"] == "upstream":
@@ -77,9 +86,16 @@ class PlatformRouter:
                             )
                             break
                 elif paths[path]["type"] == "redirect":
-                    pass
-                nginxConf += "\t}\n"
-            nginxConf += "}\n"
+                    to = paths[path].get("to", None)
+                    if to:
+                        nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
+                            to.replace(
+                                self.ROUTE_DOMAIN_REPLACE,
+                                str(projectDomains[0])
+                            )
+                        )
+                nginxConf += "\t\t}\n"
+            nginxConf += "\t}\n"
 
         routerProvisionConfig = self.docker.getProvisioner().config
         baseNginxConfig = routerProvisionConfig.get("router_conf", "")
@@ -96,6 +112,7 @@ class PlatformRouter:
                 self.logIndent
             )
         self.docker.start()
+        print self.generateNginxConfig()
         self.docker.getProvisioner().copyStringToFile(
             self.generateNginxConfig(),
             "/etc/nginx/nginx.conf"

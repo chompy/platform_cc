@@ -13,8 +13,7 @@ TODO:
         - Certificate generation? (probably just a self signed ssl certificate for now)
             - LetsEncrypt?
     - Service / Mysql
-        - Auto configure schemas
-        - Auto configure users and expose relationships
+        - Configure endpoints with appropiate privileges.
     - Service / Solr
         - Configure container
         - Configure cores
