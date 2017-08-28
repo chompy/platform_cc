@@ -50,7 +50,7 @@ class DockerProvisionBase:
                 user=cmd.get("user", "root")
             )
             if results and self.logger:
-                self.log.printContainerOutput(
+                self.logger.printContainerOutput(
                     results
                 )
 

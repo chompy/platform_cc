@@ -22,14 +22,18 @@ class DockerProvision(DockerProvisionBase):
         config = self.appConfig.getConfiguration()
         for schema in config.get("schemas", []):
             cmds.append({
-                "cmd" :     "mysql -e \"CREATE SCHEMA IF NOT EXISTS %s CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % schema,
+                "cmd" :     "mysql -uroot --password='%s' -e \"CREATE SCHEMA IF NOT EXISTS %s CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % (
+                    self.getPassword(),
+                    schema
+                ),
                 "desc" :    "Create schema '%s.'" % schema
             })
         endpoints = config.get("endpoints", {})
         for endpointName in endpoints:
             endpoint = endpoints[endpointName]
             cmds.append({
-                "cmd" :     "mysql -e \"DROP USER IF EXISTS '%s'@'%%'; CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';\"" % (
+                "cmd" :     "mysql -uroot --password='%s' -e \"DROP USER IF EXISTS '%s'@'%%'; CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';\"" % (
+                    self.getPassword(),
                     endpointName,
                     endpointName,
                     self.getPassword(endpointName)
@@ -40,7 +44,8 @@ class DockerProvision(DockerProvisionBase):
             for schema in endpoint.get("privileges", {}):
                 # !!TODO grant only specified permissions!!!
                 cmds.append({
-                    "cmd" :     "mysql -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';\"" % (
+                    "cmd" :     "mysql -uroot --password='%s' -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';\"" % (
+                        self.getPassword(),
                         schema,
                         endpointName
                     ),
@@ -48,8 +53,7 @@ class DockerProvision(DockerProvisionBase):
                         endpointName,
                         schema
                     )
-                })
-
+                })  
         self.runCommands(cmds)
 
     def getEnvironmentVariables(self):

@@ -5,3 +5,5 @@
 pip-selfcheck.json
 *.pyc
 .pcc_project_id
+*.sublime-project
+*.sublime-workspace

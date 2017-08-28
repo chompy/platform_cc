@@ -29,7 +29,8 @@ class PlatformRouter:
 
         projectDomains = self.projectVars.get(
             "project:domains"
-        ).strip().lower().split(",")
+        )
+        projectDomains = projectDomains.strip().lower().split(",") if projectDomains else []
         projectDomains += ["%s.local" % self.config.projectHash[:6]]
 
         serverList = collections.OrderedDict()
@@ -81,7 +82,7 @@ class PlatformRouter:
                     upstream = paths[path]["upstream"].split(":")[0]
                     for app in self.projectApps:
                         if app.config.getName() == upstream:
-                            nginxConf += "\t\tproxy_pass http://%s;\n" % (
+                            nginxConf += "\t\t\tproxy_pass http://%s;\n" % (
                                 app.web.docker.containerId
                             )
                             break
@@ -112,7 +113,6 @@ class PlatformRouter:
                 self.logIndent
             )
         self.docker.start()
-        print self.generateNginxConfig()
         self.docker.getProvisioner().copyStringToFile(
             self.generateNginxConfig(),
             "/etc/nginx/nginx.conf"

@@ -49,7 +49,8 @@ class PlatformDocker:
             self.dockerClient,
             container,
             self.config,
-            self.image
+            self.image,
+            self.logger
         )
         provisioner.logIndent = self.logIndent
         return provisioner

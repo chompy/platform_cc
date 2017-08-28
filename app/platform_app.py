@@ -66,8 +66,8 @@ class PlatformApp:
                 "Copy SSH key.",
                 self.logIndent
             )
-        sshKey = self.projectVars.get("ssh:id_rsa")
-        knownHosts = self.projectVars.get("ssh:known_hosts")
+        sshKey = self.projectVars.get("project:ssh_key")
+        knownHosts = self.projectVars.get("project:known_hosts")
         if not sshKey:
             if self.logger:
                 self.logger.logEvent(

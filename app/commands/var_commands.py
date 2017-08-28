@@ -31,7 +31,7 @@ class VarGet(Command):
 
     def handle(self):
         print getProject(self).vars.get(
-            self.argument("key"),
+            self.argument("key")
         )
 
 class VarDelete(Command):
