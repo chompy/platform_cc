@@ -131,7 +131,8 @@ class PlatformDocker:
                         volumes=self.getProvisioner().getVolumes(),
                         environment=self.getEnvironmentVariables(),
                         working_dir="/app",
-                        hostname=self.containerId
+                        hostname=self.containerId,
+                        stdin_open=True
                     )
                 except docker.errors.ImageNotFound as e:
                     lastExcept = e
@@ -210,4 +211,15 @@ class PlatformDocker:
         container.commit(
             self.DOCKER_COMMIT_REPO,
             self.getTag()
+        )
+
+    def shell(self, cmd = "sh", user = "root"):
+        """ Grant user access to shell inside container. """
+        container = self.getContainer()
+        os.system(
+            "docker exec -i -t --user='%s' %s %s" % (
+                user,
+                self.containerId,
+                cmd
+            )
         )

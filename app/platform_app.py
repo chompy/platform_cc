@@ -176,3 +176,12 @@ class PlatformApp:
             self.logger.printContainerOutput(
                 results
             )
+
+    def shell(self):
+        """ Shell in to application container. """
+        if self.logger:
+            self.logger.logEvent(
+                "Entering shell for '%s' application." % (self.config.getName()),
+                self.logIndent
+            )
+        self.docker.shell("bash", "web")
