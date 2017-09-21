@@ -13,7 +13,9 @@ class PlatformServiceConfig(PlatformConfig):
         "mysql:10.0":              "mariadb:10.0",
         "mysql:5.5":               "mariadb:5.5",
         "memcached":               "memcached:1",
-        "memcached:1.4":           "memcached:1"
+        "memcached:1.4":           "memcached:1",
+        "solr:6.6":                "solr:6.6",
+        "solr.6.3":                "solr:6.3"
     }
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
