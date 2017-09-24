@@ -54,3 +54,12 @@ class PlatformService:
                 )
             return
         self.docker.stop()
+
+    def preBuild(self):
+        """ Service prebuild. """
+        if self.logger:
+            self.logger.logEvent(
+                "Running '%s' pre build commands." % self.name,
+                self.logIndent
+            )
+        self.docker.preBuild()

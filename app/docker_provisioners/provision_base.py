@@ -47,7 +47,9 @@ class DockerProvisionBase:
                 )
             results = self.container.exec_run(
                 ["sh", "-c", cmd.get("cmd", "")],
-                user=cmd.get("user", "root")
+                user=cmd.get("user", "root"),
+                privileged=True,
+                environment=self.getEnvironmentVariables()
             )
             if results and self.logger:
                 self.logger.printContainerOutput(

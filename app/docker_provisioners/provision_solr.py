@@ -10,40 +10,61 @@ class DockerProvision(DockerProvisionBase):
 
     """ Provision a solr container. """
 
+    def getEnvironmentVariables(self):
+        return {
+            "SOLR_HOME" : "/data",
+            "INIT_SOLR_HOME" : "yes"
+        }
+
     def getVolumes(self):
         config = self.appConfig.getConfiguration()
-        volumes = {}
-        cores = config.get("cores", {}).keys()
-        if config.get("core_config", None):
-            cores.append("collection1")
-        for core in cores:
-            coreVolumeKey = "%s_%s_%s_solrcore_%s" % (
-                DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX,
-                self.appConfig.projectHash[:6],
-                self.appConfig.getName(),
-                core
-            )
-            try:
-                self.dockerClient.volumes.get(coreVolumeKey)
-            except docker.errors.NotFound:
-                self.dockerClient.volumes.create(coreVolumeKey)
-            volumes[coreVolumeKey] = {
-                "bind" : "/opt/solr/server/solr/%s" % core,
+        volumeKey = "%s_%s_%s_data" % (
+            DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX,
+            self.appConfig.projectHash[:6],
+            self.appConfig.getName()
+        )
+        volumes = {
+            volumeKey : {
+                "bind" : "/data",
                 "mode" : "rw"
             }
+        }
+        try:
+            self.dockerClient.volumes.get(volumeKey)
+        except docker.errors.NotFound:
+            self.dockerClient.volumes.create(volumeKey)
+        container = self.dockerClient.containers.run(
+            self.appConfig.getDockerImage(),
+            name="%s_%s_solr_provisioner" % (
+                DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX,
+                self.appConfig.projectHash[:6]
+            ),
+            command="chown -R solr:solr /data",
+            detach=True,
+            volumes=volumes,
+            hostname="%s_%s_solr_provisioner" % (
+                DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX,
+                self.appConfig.projectHash[:6]
+            ),
+            stdin_open=True,
+            user="root"
+        )
+        container.wait()
+        container.remove()
         return volumes
 
     def preBuild(self):
-        cmds = []
         config = self.appConfig.getConfiguration()
         cores = config.get("cores", {}).keys()
         if config.get("core_config", None):
             cores.append("collection1")
+        cmds = []
         # create solr cores
         for core in cores:
             cmds.append({
-                "cmd" : "solr create_core -c \"%s\"" % core,
-                "desc" : "Create SOLR core '%s.'" % core
+                "cmd" : "/opt/solr/bin/solr create_core -c '%s'" % core,
+                "desc" : "Create SOLR core '%s' if not exist." % core,
+                "user" : "solr"
             })
         # add config dir
         # TODO

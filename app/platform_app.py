@@ -139,7 +139,7 @@ class PlatformApp:
         self.logIndent -= 1
         self.docker.preBuild()
         for service in self.getServices():
-            service.docker.preBuild()
+            service.preBuild()
         if self.logger:
             self.logger.logEvent(
                 "Build hooks.",
