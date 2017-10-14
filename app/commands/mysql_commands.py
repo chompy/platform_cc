@@ -38,13 +38,18 @@ class MysqlSql(Command):
         if not service: return
         sqlExec = self.argument("sql")
         database = self.option("database")
+        password = service.docker.getProvisioner().getPassword()
         if sqlExec:
-            service.shell("mysql -e '%s'%s" % (
+            service.shell("mysql -uroot --password=\"%s\" -e '%s'%s" % (
+                password,
                 sqlExec,
                 ((" %s" % database) if database else "")
             ))
             return
-        service.shell("mysql%s" % (((" %s" % database) if database else "")))
+        service.shell("mysql -uroot --password=\"%s\"%s" % (
+            password,
+            ((" %s" % database) if database else ""))
+        )
 
 class MysqlDump(Command):
 
@@ -61,5 +66,9 @@ class MysqlDump(Command):
     def handle(self):
         service = findMysqlService(self)
         if not service: return
+        password = service.docker.getProvisioner().getPassword()
         database = self.argument("database")
-        service.shell("mysqldump %s" % database)
+        service.shell("mysqldump -uroot --password=\"%s\" %s" % (
+            database,
+            password
+        ))

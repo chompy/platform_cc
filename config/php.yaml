@@ -7,7 +7,7 @@ provision:
         desc: "Install additional dependencies."
         cmd: |
             apt-get update
-            apt-get install -y rsync git unzip
+            apt-get install -y rsync git unzip python-pip
     -
         desc: "Additional PHP configuration."
         cmd: |
