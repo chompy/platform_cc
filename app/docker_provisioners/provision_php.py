@@ -60,10 +60,10 @@ class DockerProvision(DockerProvisionBase):
     def getVolumes(self):
         volumes = DockerProvisionBase.getVolumes(self, "/app")
         volumes[os.path.realpath(self.appConfig.appPath)] = {
-            "bind" : "/mnt/app",
-            "mode" : "ro"
+            "bind" : "/app",
+            "mode" : "rw"
         }
-        appVolumeKey = "%s_%s_%s_app" % (
+        """appVolumeKey = "%s_%s_%s_app" % (
             DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX,
             self.appConfig.projectHash[:6],
             self.appConfig.getName()
@@ -75,7 +75,7 @@ class DockerProvision(DockerProvisionBase):
         volumes[appVolumeKey] = {
             "bind" : "/app",
             "mode" : "rw"
-        }
+        }"""
         return volumes
 
     def getUid(self):

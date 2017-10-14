@@ -70,8 +70,5 @@ class PlatformAppConfig(PlatformConfig):
         )
         return allVars
 
-    def getMounts(self):
-        return self._config.get("mounts", {})
-
     def getWeb(self):
         return self._config.get("web", {})
