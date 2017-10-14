@@ -4,11 +4,11 @@ from app.platform_logger import PlatformLogger
 def getLogger(command):
     return PlatformLogger(command)
 
-def getProject(command):
+def getProject(command, withLogger = True):
     projectPath = command.option("path")
     return PlatformProject(
         projectPath if projectPath else "",
-        getLogger(command)
+        getLogger(command) if withLogger else None
     )
 
 def getAppsToInvoke(command):

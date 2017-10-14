@@ -63,3 +63,12 @@ class PlatformService:
                 self.logIndent
             )
         self.docker.preBuild()
+
+    def shell(self, cmd = "bash"):
+        """ Shell in to application container. """
+        if self.logger:
+            self.logger.logEvent(
+                "Entering shell for '%s' service." % (self.config.getName()),
+                self.logIndent
+            )
+        self.docker.shell(cmd, "root")

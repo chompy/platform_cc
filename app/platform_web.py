@@ -44,7 +44,7 @@ class PlatformWeb:
             
             # root
             appNginxConf += "\t\troot \"%s\";\n" % (
-                "/app/%s" % (locations[path].get("root", "").strip("/"))
+                ("/app/%s" % (locations[path].get("root", "").strip("/"))).rstrip("/")
             )
 
             # headers
@@ -62,9 +62,9 @@ class PlatformWeb:
                 appNginxConf += "\t\t\tallow all;\n"
                 appNginxConf += addFastCgi(passthru)
                 appNginxConf += "\t\t}\n"
-                appNginxConf += "\t\tlocation / {\n"
-                appNginxConf += "\t\t\ttry_files $uri /index.php$is_args$args;\n"
-                appNginxConf += "\t\t}\n"
+                #appNginxConf += "\t\tlocation / {\n"
+                appNginxConf += "\t\ttry_files $uri /%s$is_args$args;\n" % passthru.strip("/")
+                #appNginxConf += "\t\t}\n"
 
             # scripts
             scripts = locations[path].get("scripts", False)
@@ -127,7 +127,7 @@ class PlatformWeb:
 
                     appNginxConf += "\t\t}\n"
 
-        appNginxConf += "\t}\n"
+            appNginxConf += "\t}\n"
 
         return baseNginxConfig.replace("{{APP_WEB}}", appNginxConf)
 
