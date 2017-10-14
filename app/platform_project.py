@@ -1,6 +1,7 @@
 import os
 import time
 import hashlib
+import base36
 from Crypto.PublicKey import RSA
 from platform_app import PlatformApp
 from config.platform_app_config import PlatformAppConfig
@@ -24,9 +25,14 @@ class PlatformProject:
         projectHashPath = os.path.join(projectPath, ".pcc_project_id")
         self.projectHash = ""
         if not os.path.isfile(projectHashPath):
-            self.projectHash = hashlib.sha256(
-                self.HASH_SECRET + str(os.getuid()) + str(time.time())
-            ).hexdigest()
+            self.projectHash =  base36.dumps(
+                int(
+                    hashlib.sha256(
+                        self.HASH_SECRET + str(os.getuid()) + str(time.time())
+                    ).hexdigest(),
+                    16
+                )
+            )
             with open(projectHashPath, "w") as f:
                 f.write(self.projectHash)
         if not self.projectHash:

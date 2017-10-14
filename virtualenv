@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-python2 -m virtualenv .
-./bin/python -m pip install -r requirements.txt
+python2 -m virtualenv ./env
+./env/bin/python -m pip install -r requirements.txt
 echo ""
 echo "###################################################"
-echo "Enter Virtualenv with: 'source bin/activate'!!"
+echo "Enter Virtualenv with: 'source env/bin/activate'!!"
 echo "###################################################"
 echo ""

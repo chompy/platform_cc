@@ -1,7 +1,4 @@
-/bin
-/lib
-/include
-/local
+/env
 pip-selfcheck.json
 *.pyc
 .pcc_project_id
