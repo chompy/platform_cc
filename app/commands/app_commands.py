@@ -7,13 +7,15 @@ class AppShell(Command):
 
     app:shell
         {app? : Application to shell in to. (First available if not provided.)}
+        {--c|command=? : Command to run.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         appName = self.argument("app")
+        command = self.option("command")
         project = getProject(self)
         for app in project.getApplications():
             if app.config.getName() == appName or not appName:
-                app.shell()
+                app.shell( command if command else "bash" )
                 break

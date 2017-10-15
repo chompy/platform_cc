@@ -22,7 +22,7 @@ class DockerProvision(DockerProvisionBase):
         config = self.appConfig.getConfiguration()
         for schema in config.get("schemas", []):
             cmds.append({
-                "cmd" :     "mysql -uroot --password=\"%s\" -e \"CREATE SCHEMA IF NOT EXISTS %s CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % (
+                "cmd" :     "mysql -uroot --password=\"%s\" -e \"CREATE SCHEMA %s CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % (
                     self.getPassword(),
                     schema
                 ),

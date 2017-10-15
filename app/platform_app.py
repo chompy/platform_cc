@@ -178,11 +178,6 @@ class PlatformApp:
                 results
             )
 
-    def shell(self):
+    def shell(self, cmd = "bash"):
         """ Shell in to application container. """
-        if self.logger:
-            self.logger.logEvent(
-                "Entering shell for '%s' application." % (self.config.getName()),
-                self.logIndent
-            )
-        self.docker.shell("bash", "web")
+        self.docker.shell(cmd, "web")
