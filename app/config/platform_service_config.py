@@ -1,5 +1,6 @@
 import os
 import yaml
+import yamlordereddictloader
 from platform_config import PlatformConfig
 
 class PlatformServiceConfig(PlatformConfig):
@@ -30,7 +31,7 @@ class PlatformServiceConfig(PlatformConfig):
         )
         serviceConfigs = {}
         with open(pathToServiceYaml, "r") as f:
-            serviceConfigs = yaml.load(f)
+            serviceConfigs = yaml.load(f, Loader=yamlordereddictloader.Loader)
         for serviceName in serviceConfigs:
             if serviceName == name:
                 self._config = serviceConfigs[serviceName]

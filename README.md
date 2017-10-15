@@ -35,9 +35,9 @@ This assumes that you have a project ready to go with all the appropiate configu
 
 4) Setup services. (Deploy MySql databases, etc).
 
-    You should know setup your services such as your database.
+    You should now setup your services such as your database.
 
-    ***TODO:*** Add commands to shell in to application container. Add command to access MySql.
+    You can use the 'mysql:sql' command to run SQL queries and gain access to the MySQL console.
 
 4) Deploy project.
 

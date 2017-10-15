@@ -1,5 +1,6 @@
 import os
 import yaml
+import yamlordereddictloader
 import hashlib
 import time
 from platform_config import PlatformConfig
@@ -24,7 +25,7 @@ class PlatformAppConfig(PlatformConfig):
             self.PLATFORM_FILENAME
         )
         with open(pathToPlatformYaml, "r") as f:
-            self._config = yaml.load(f)
+            self._config = yaml.load(f, Loader=yamlordereddictloader.Loader)
         self.projectVars = projectVars
 
     def getName(self):

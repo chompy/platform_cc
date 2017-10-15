@@ -76,3 +76,10 @@ extensions:
     zip:
         "php:5": |
             docker-php-ext-install -j$(nproc) zip
+
+# extensions to install by default
+default_extensions:
+    - intl
+    - xsl
+    - mysql
+    - mysqli

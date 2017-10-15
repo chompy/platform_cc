@@ -1,5 +1,6 @@
 import os
 import yaml
+import yamlordereddictloader
 from platform_config import PlatformConfig
 
 class PlatformRouterConfig(PlatformConfig):
@@ -17,7 +18,7 @@ class PlatformRouterConfig(PlatformConfig):
         )
         if os.path.exists(routeYamlPath):
             with open(routeYamlPath, "r") as f:
-                self.config = yaml.load(f)
+                self.config = yaml.load(f, Loader=yamlordereddictloader.Loader)
         self.appPath = None
 
     def getName(self):

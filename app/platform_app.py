@@ -1,5 +1,6 @@
 import os
 import yaml
+import yamlordereddictloader
 import base64
 from config.platform_app_config import PlatformAppConfig
 from platform_service import PlatformService
@@ -33,7 +34,7 @@ class PlatformApp:
             PlatformServiceConfig.PLATFORM_SERVICES_PATH
         )
         with open(pathToServicesYaml, "r") as f:
-            serviceConf = yaml.load(f)
+            serviceConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
         for serviceName in serviceConf:
             serviceList.append(
                 PlatformService(

@@ -1,3 +1,4 @@
+import os
 from cleo import Command
 from app.commands import getProject, getAppsToInvoke
 
@@ -26,29 +27,41 @@ class MysqlSql(Command):
     Run SQL on MySQL database
 
     mysql:sql
-        {sql? : SQL to run.}
         {--a|app=? : Application where database service resides. (First available if not provided.)}
         {--s|service=? : Database service. (First available if not provided.)}
         {--d|database=? : Database to select. }
+        {--dp|dumppath=? : Path to SQL dump to import.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         service = findMysqlService(self)
         if not service: return
-        sqlExec = self.argument("sql")
+        dumpPath = self.option("dumppath")
         database = self.option("database")
         password = service.docker.getProvisioner().getPassword()
-        if sqlExec:
-            service.shell("mysql -uroot --password=\"%s\" -e '%s'%s" % (
-                password,
-                sqlExec,
-                ((" %s" % database) if database else "")
-            ))
+        if dumpPath:
+
+            if not os.path.exists(dumpPath):
+                print "ERROR: SQL dump at '%s' does not exists." % dumpPath
+                return
+            service.docker.getProvisioner().copyFile(
+                dumpPath,
+                os.path.join("/", os.path.basename(dumpPath))
+            )
+            service.shell(
+                "bash -c 'mysql -uroot --password=\"%s\"%s < %s'" % (
+                    password,
+                    ((" %s" % database) if database else ""),
+                    os.path.join("/", os.path.basename(dumpPath))
+                )
+            )
             return
-        service.shell("mysql -uroot --password=\"%s\"%s" % (
-            password,
-            ((" %s" % database) if database else ""))
+        service.shell(
+            "mysql -uroot --password=\"%s\"%s" % (
+                password,
+                ((" %s" % database) if database else "")
+            )
         )
 
 class MysqlDump(Command):

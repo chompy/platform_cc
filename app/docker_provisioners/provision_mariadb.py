@@ -32,6 +32,13 @@ class DockerProvision(DockerProvisionBase):
         for endpointName in endpoints:
             endpoint = endpoints[endpointName]
             cmds.append({
+                "cmd" :     "mysql -uroot --password=\"%s\" -e \"DROP USER '%s'@'%%';\"" % (
+                    self.getPassword(),
+                    endpointName
+                ),
+                "desc" :    "Drop user '%s' (if exists)." % endpointName
+            })
+            cmds.append({
                 "cmd" :     "mysql -uroot --password=\"%s\" -e \"CREATE USER '%s'@'%%' IDENTIFIED BY '%s';\"" % (
                     self.getPassword(),
                     endpointName,
