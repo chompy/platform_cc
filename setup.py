@@ -70,7 +70,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        "platform_cc": ["config/*.yml", "containers/key_value_store/*"]
+        "platform_cc": ["config/*.yaml", "containers/key_value_store/*"]
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
