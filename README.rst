@@ -1,12 +1,13 @@
-# Platform.CC (Platform.ContextualCode)
+Platform.CC (Platform.ContextualCode)
+=====================================
 **By Nathan Ogden / Contextual Code**
 
 
 Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.
 
-----
 
-### Quick Start
+Quick Start
+-----------
 
 This assumes that you have a project ready to go with all the appropiate configuration files (.platform.app.yaml, etc).
 
@@ -46,7 +47,8 @@ This assumes that you have a project ready to go with all the appropiate configu
     This runs the deploy hooks defined in .platform.app.yaml.
 
 
-### Missing Features
+Missing Features
+----------------
 
 See TODO for list of features the still need to be implementd.
 
