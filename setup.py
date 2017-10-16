@@ -69,9 +69,9 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
+    package_dir={"platform_cc", "platform_cc"},
     package_data={
-        "config": ["platform_cc/config/mariadb.yml", "platform_cc/config/memcached.yml", "platform_cc/config/nginx.yaml", "platform_cc/config/php.yaml", "platform_cc/config/solr.yaml"],
-        "key_value_store" : ["platform_cc/containers/key_value_storage/Dockerfile", "platform_cc/containers/key_value_storage/key_value_store.py"]
+        "platform_cc": ["config/*.yml", "containers/*"]
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
