@@ -1,4 +1,6 @@
 /env
+/build
+/test
 pip-selfcheck.json
 *.pyc
 .pcc_project_id

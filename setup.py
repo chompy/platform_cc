@@ -69,9 +69,8 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
-    package_dir={"platform_cc", "platform_cc"},
     package_data={
-        "platform_cc": ["config/*.yml", "containers/*"]
+        "platform_cc": ["config/*.yml", "containers/key_value_store/*"]
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
