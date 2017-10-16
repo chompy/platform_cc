@@ -23,5 +23,8 @@ cleoApp.add(AppShell())
 cleoApp.add(MysqlSql())
 cleoApp.add(MysqlDump())
 
-if __name__ == '__main__':
+def main():
     cleoApp.run()
+
+if __name__ == '__main__':
+    main()

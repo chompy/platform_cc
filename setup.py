@@ -85,7 +85,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'platform_cc=platform_cc:main',
+            'platform_cc=platform_cc.__main__:main',
         ],
     },
 )
