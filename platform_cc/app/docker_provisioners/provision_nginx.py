@@ -19,16 +19,4 @@ class DockerProvision(DockerProvisionBase):
                 "bind" : "/app",
                 "mode" : "rw"
             }
-        # router volume
-        routerVolumeKey = "%s_router_data" % (
-            DockerProvisionBase.DOCKER_VOLUME_NAME_PREFIX
-        )
-        try:
-            self.dockerClient.volumes.get(routerVolumeKey)
-        except docker.errors.NotFound:
-            self.dockerClient.volumes.create(routerVolumeKey)
-        volumes[routerVolumeKey] = {
-            "bind" : "/router",
-            "mode" : "rw"
-        }
         return volumes

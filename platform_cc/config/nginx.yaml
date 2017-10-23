@@ -3,7 +3,12 @@ provision:
         desc: "Create 'web' user."
         cmd: |
             useradd -d /app -m -p 'secret~' web
-            
+
+    -
+        desc: "Prepare router directory."
+        cmd: |
+            mkdir /router
+
     -
         desc: "Create self signed SSL certificate."
         cmd: |
