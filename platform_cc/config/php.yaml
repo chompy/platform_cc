@@ -40,7 +40,7 @@ extensions:
     memcached:
         "php:5": |
             apt-get install -y libmemcached-dev zlib1g-dev
-            print '\n' | pecl install memcached-2.2.0
+            echo '\n' | pecl install memcached-2.2.0
             docker-php-ext-enable memcached
     gd:
         "php:5": |
@@ -50,7 +50,7 @@ extensions:
     imagick:
         "php:5": |
             apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev
-            print '\n' | pecl install imagick
+            echo '\n' | pecl install imagick
             docker-php-ext-enable imagick
     intl:
         "php:5": |
