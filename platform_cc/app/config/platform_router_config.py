@@ -8,17 +8,9 @@ class PlatformRouterConfig(PlatformConfig):
     """ Provide configuration for router. """
 
     ROUTER_DOCKER_IMAGE = "nginx:1.13"
-    PLATFORM_ROUTES_PATH = ".platform/routes.yaml"
-
-    def __init__(self, projectHash, projectPath):
-        PlatformConfig.__init__(self, projectHash)
-        routeYamlPath = os.path.join(
-            projectPath,
-            self.PLATFORM_ROUTES_PATH
-        )
-        if os.path.exists(routeYamlPath):
-            with open(routeYamlPath, "r") as f:
-                self.config = yaml.load(f, Loader=yamlordereddictloader.Loader)
+    
+    def __init__(self):
+        PlatformConfig.__init__(self, "global")
         self.appPath = None
 
     def getName(self):
@@ -32,6 +24,3 @@ class PlatformRouterConfig(PlatformConfig):
 
     def getBuildFlavor(self):
         return "_router"
-
-    def getRoutes(self):
-        return self.config

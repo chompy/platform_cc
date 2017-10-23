@@ -13,8 +13,6 @@ class ProjectStart(Command):
     def handle(self):
         for app in getAppsToInvoke(self):
             app.start()
-        getProject(self).router.start()
-
 
 class ProjectStop(Command):
     """
@@ -28,7 +26,6 @@ class ProjectStop(Command):
     def handle(self):
         for app in getAppsToInvoke(self):
             app.stop()
-        getProject(self).router.stop()
 
 class ProjectBuild(Command):
     """
@@ -55,15 +52,3 @@ class ProjectDeploy(Command):
     def handle(self):
         for app in getAppsToInvoke(self):
             app.deploy()
-
-class ProjectIp(Command):
-    """
-    Get ip address to main project router.
-
-    project:ip
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self, False)
-        print project.router.docker.getContainer().attrs.get("NetworkSettings", {}).get("Networks", {}).get("bridge", {}).get("IPAddress", "")

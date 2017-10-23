@@ -2,6 +2,7 @@ import os
 import yaml
 import yamlordereddictloader
 import base64
+import collections
 from config.platform_app_config import PlatformAppConfig
 from platform_service import PlatformService
 from config.platform_service_config import PlatformServiceConfig

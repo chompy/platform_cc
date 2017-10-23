@@ -24,7 +24,7 @@ class PlatformDocker:
             self.config.projectHash[:6],
             self.image.split(":")[0],
             self.name
-        )
+        )      
         self.networkId = "%s_%s_network" % (
             self.DOCKER_CONTAINER_NAME_PREFIX,
             self.config.projectHash[:6]
@@ -90,7 +90,7 @@ class PlatformDocker:
             envVars[key.replace("env:", "").strip().upper()] = projVars[key]
         return envVars
 
-    def start(self, cmd = ""):
+    def start(self, cmd = "", ports = {}):
         """ Start docker container. """
         if self.logger:
             self.logger.logEvent(
@@ -132,7 +132,8 @@ class PlatformDocker:
                         environment=self.getEnvironmentVariables(),
                         working_dir="/app",
                         hostname=self.containerId,
-                        stdin_open=True
+                        stdin_open=True,
+                        ports=ports
                     )
                 except docker.errors.ImageNotFound as e:
                     lastExcept = e
