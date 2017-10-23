@@ -141,6 +141,9 @@ class PlatformProject:
                         if app.config.getName() == upstream:
                             import json
                             ipAddress = str(app.web.docker.getContainer().attrs.get("NetworkSettings", {}).get("IPAddress", None)).strip()
+                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
+                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
                             nginxConf += "\t\t\tproxy_pass http://%s;\n" % (
                                 ipAddress
                             )
