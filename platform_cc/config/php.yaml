@@ -83,3 +83,5 @@ default_extensions:
     - xsl
     - mysql
     - mysqli
+    - gd
+    - pdo_mysql
