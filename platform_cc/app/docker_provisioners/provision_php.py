@@ -18,7 +18,9 @@ class DockerProvision(DockerProvisionBase):
                 "Install extensions.",
                 self.logIndent
             )
-        extensions = self.config.get("default_extensions", []) + self.appConfig.getRuntime().get("extensions", [])
+        default_exts = self.config.get("default_extensions", [])
+        app_exts = self.appConfig.getRuntime().get("extensions", [])
+        extensions = default_exts + list(set(app_exts) - set(default_exts))
         extensionConfigs = self.config.get("extensions", {})
         for extensionName in extensions:
             if self.logger:
