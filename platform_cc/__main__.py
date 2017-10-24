@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from cleo import Application
-from app.commands.project_commands import ProjectStart, ProjectStop, ProjectBuild, ProjectDeploy
+from app.commands.project_commands import ProjectStart, ProjectStop, ProjectBuild, ProjectDeploy, ProjectInfo
 from app.commands.router_commands import RouterStart, RouterStop, RouterAdd, RouterRemove
 from app.commands.var_commands import VarSet, VarGet, VarDelete, VarList
 from app.commands.app_commands import AppShell
@@ -16,6 +16,7 @@ cleoApp.add(ProjectStart())
 cleoApp.add(ProjectStop())
 cleoApp.add(ProjectBuild())
 cleoApp.add(ProjectDeploy())
+cleoApp.add(ProjectInfo())
 cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
 cleoApp.add(RouterAdd())

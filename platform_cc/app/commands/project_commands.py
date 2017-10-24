@@ -1,5 +1,6 @@
 from cleo import Command
-from app.commands import getProject, getAppsToInvoke
+from app.commands import getProject, getAppsToInvoke, getLogger
+from app.platform_router import PlatformRouter
 
 class ProjectStart(Command):
     """
@@ -13,6 +14,9 @@ class ProjectStart(Command):
     def handle(self):
         for app in getAppsToInvoke(self):
             app.start()
+        router = PlatformRouter(getLogger(self))
+        router.start()
+        router.addProject(getProject(self))
 
 class ProjectStop(Command):
     """
@@ -24,6 +28,8 @@ class ProjectStop(Command):
     """
 
     def handle(self):
+        router = PlatformRouter(getLogger(self))
+        router.removeProject(getProject(self))
         for app in getAppsToInvoke(self):
             app.stop()
 
@@ -52,3 +58,18 @@ class ProjectDeploy(Command):
     def handle(self):
         for app in getAppsToInvoke(self):
             app.deploy()
+
+class ProjectInfo(Command):
+
+    """
+    Display information about the project.
+
+    project:info
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+    def handle(self):
+        project = getProject(
+            self,
+            True
+        )
+        project.outputInfo()

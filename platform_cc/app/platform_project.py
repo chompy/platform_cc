@@ -5,8 +5,10 @@ import base36
 import yaml
 import yamlordereddictloader
 import collections
+import docker
 from urlparse import urlparse
 from Crypto.PublicKey import RSA
+from terminaltables import AsciiTable
 from platform_app import PlatformApp
 from config.platform_app_config import PlatformAppConfig
 from platform_vars import PlatformVars
@@ -140,7 +142,7 @@ class PlatformProject:
                     for app in self.getApplications():
                         if app.config.getName() == upstream:
                             import json
-                            ipAddress = str(app.web.docker.getContainer().attrs.get("NetworkSettings", {}).get("IPAddress", None)).strip()
+                            ipAddress = app.web.docker.getIpAddress()
                             nginxConf += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
                             nginxConf += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
                             nginxConf += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
@@ -161,3 +163,25 @@ class PlatformProject:
             nginxConf += "\t}\n"
 
         return nginxConf
+
+    def outputInfo(self):
+        """ Output information about project. """
+        if not self.logger: return
+
+        tableData = [
+            ["Application Name", "Status", "IP Address (Web)", "Services"]
+        ]
+        for app in self.getApplications():
+
+            serviceNames = ""
+            for service in app.getServices():
+                serviceNames += "%s, " % (service.config.getName())
+
+            tableData.append([
+                app.config.getName(),
+                app.docker.status(),
+                app.web.docker.getIpAddress() or "n/a",
+                serviceNames.strip().rstrip(",")
+            ])
+        table = AsciiTable(tableData, "Project '%s'" % self.projectHash[:6])
+        self.logger.command.line(table.table)

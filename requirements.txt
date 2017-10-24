@@ -5,4 +5,4 @@ cleo
 base36
 boto3
 yamlordereddictloader
-
+terminaltables

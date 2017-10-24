@@ -172,6 +172,19 @@ class PlatformDocker:
         except docker.errors.NotFound:
             pass
 
+    def status(self):
+        try:
+            return self.getContainer().status
+        except docker.errors.NotFound:
+            return "stopped"
+
+    def getIpAddress(self):
+        """ Get container local IP address. """
+        try:
+            return str(self.getContainer().attrs.get("NetworkSettings", {}).get("IPAddress", None)).strip()
+        except docker.errors.NotFound:
+            return None
+
     def syncApp(self):
         """ Sync application files in to container. """
         if self.logger:
