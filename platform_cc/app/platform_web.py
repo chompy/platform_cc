@@ -43,8 +43,9 @@ class PlatformWeb:
             appNginxConf += "location %s {\n" % path
             
             # root
+            root = locations[path].get("root", "") or ""
             appNginxConf += "\t\troot \"%s\";\n" % (
-                ("/app/%s" % (locations[path].get("root", "").strip("/"))).rstrip("/")
+                ("/app/%s" % (root.strip("/"))).rstrip("/")
             )
 
             # headers
