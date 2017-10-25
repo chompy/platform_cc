@@ -53,11 +53,12 @@ class PlatformApp:
         output = {}
         for relationship in relationships:
             value = relationships[relationship]
+            relationshipServiceTypeName = value.split(":")[0]
             for service in services:
-                serviceTypeName = service.config.getType().split(":")[0]
-                if value != ("%s:%s" % (service.config.getName(), serviceTypeName)):
+                if relationshipServiceTypeName != service.config.getName():
                     continue
-                output[relationship] = service.docker.getProvisioner().getServiceRelationship()
+                endpointName = value.split(":")[1]
+                output[relationship] = service.docker.getProvisioner().getServiceRelationship(endpointName)
                 break
         return output
 

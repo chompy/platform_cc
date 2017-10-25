@@ -67,9 +67,11 @@ class DockerProvision(DockerProvisionBase):
             "MYSQL_ROOT_PASSWORD" : self.getPassword()
         }
 
-    def getServiceRelationship(self):
+    def getServiceRelationship(self, endpointName = None):
         config = self.appConfig.getConfiguration()
         endpoints = config.get("endpoints", {})
+        if endpointName != None and endpointName in endpoints.keys():
+            endpoints = { endpointName: endpoints[endpointName] }
         relationships = []
         for endpointName in endpoints:
             endpoint = endpoints[endpointName]
