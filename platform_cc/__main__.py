@@ -5,7 +5,7 @@ from cleo import Application
 from app.commands.project_commands import ProjectStart, ProjectStop, ProjectBuild, ProjectDeploy, ProjectInfo
 from app.commands.router_commands import RouterStart, RouterStop, RouterAdd, RouterRemove
 from app.commands.var_commands import VarSet, VarGet, VarDelete, VarList
-from app.commands.app_commands import AppShell
+from app.commands.app_commands import AppShell, AppPlatformShImport
 from app.commands.mysql_commands import MysqlSql, MysqlDump
 
 cleoApp = Application(
@@ -26,6 +26,7 @@ cleoApp.add(VarGet())
 cleoApp.add(VarDelete())
 cleoApp.add(VarList())
 cleoApp.add(AppShell())
+cleoApp.add(AppPlatformShImport())
 cleoApp.add(MysqlSql())
 cleoApp.add(MysqlDump())
 

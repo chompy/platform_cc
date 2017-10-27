@@ -229,7 +229,6 @@ class PlatformDocker:
 
     def shell(self, cmd = "sh", user = "root"):
         """ Grant user access to shell inside container. """
-        container = self.getContainer()
         os.system(
             "docker exec -i -t --user='%s' %s %s" % (
                 user,

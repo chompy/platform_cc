@@ -77,23 +77,48 @@ class PlatformApp:
                     self.logIndent + 1
                 )
             return
-        self.docker.getContainer().exec_run(
-            ["mkdir", "-p", "/app/.ssh"]
+        self.docker.getProvisioner().runCommands(
+            [
+                {
+                    "desc" : "Create .ssh directory.",
+                    "cmd" : "mkdir -p /app/.ssh",
+                    "user" : "web"
+                }
+            ]
         )
+
+        if self.logger:
+            self.logger.logEvent(
+                "Copy SSH key in to container.",
+                self.logIndent + 1
+            )
         self.docker.getProvisioner().copyStringToFile(
             base64.b64decode(sshKey),
             "/app/.ssh/id_rsa"
         )
         if knownHosts:
+            if self.logger:
+                self.logger.logEvent(
+                    "Copy known hosts file in to container.",
+                    self.logIndent + 1
+                )
             self.docker.getProvisioner().copyStringToFile(
                 base64.b64decode(knownHosts),
                 "/app/.ssh/known_hosts"
             )
-        self.docker.getContainer().exec_run(
-            ["chmod", "0600", "/app/.ssh/*"]
-        )
-        self.docker.getContainer().exec_run(
-            ["chown", "web:web", "/app/.ssh/*"]
+        self.docker.getProvisioner().runCommands(
+            [
+                {
+                    "desc" : "Chmod .ssh directory.",
+                    "cmd" : "chmod -R 0600 /app/.ssh/*",
+                    "user" : "root"
+                },
+                {
+                    "desc" : "Chown .ssh directory.",
+                    "cmd" : "chown -R web:web /app/.ssh/*",
+                    "user" : "root"
+                }
+            ]
         )
 
     def deleteSshKey(self):
