@@ -58,7 +58,11 @@ class PlatformApp:
                 if relationshipServiceTypeName != service.config.getName():
                     continue
                 endpointName = value.split(":")[1]
-                output[relationship] = service.docker.getProvisioner().getServiceRelationship(endpointName)
+                if service.config.getName == "mysqldb":
+                    serviceRelationship = service.docker.getProvisioner().getServiceRelationship(endpointName)
+                else:
+                    serviceRelationship = service.docker.getProvisioner().getServiceRelationship()
+                output[relationship] = serviceRelationship
                 break
         return output
 
