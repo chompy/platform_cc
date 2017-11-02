@@ -116,8 +116,16 @@ class PlatformApp:
             )
         for service in self.getServices():
             service.start()
+
+        if self.logger:
+            self.logger.logEvent(
+                "Starting main application container.",
+                self.logIndent + 1
+            )
+        self.docker.logIndent += 1
         self.docker.relationships = self.buildServiceRelationships()
         self.docker.start()
+        self.docker.logIndent -= 1
         self.web.start()
 
     def stop(self):
@@ -127,7 +135,13 @@ class PlatformApp:
                 "Stopping '%s' application." % self.config.getName(),
                 self.logIndent
             )
+            self.logger.logEvent(
+                "Stopping main application container.",
+                self.logIndent + 1
+            )
+        self.docker.logIndent += 1
         self.docker.stop()
+        self.docker.logIndent -= 1
         self.web.stop()
         for service in self.getServices():
             service.stop()

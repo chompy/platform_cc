@@ -27,7 +27,7 @@ class PlatformService:
         """ Start service. """
         if self.logger:
             self.logger.logEvent(
-                "Starting '%s' service..." % self.config.getName(),
+                "Starting '%s' service." % self.config.getName(),
                 self.logIndent
             )
         if not self.config.getDockerImage():

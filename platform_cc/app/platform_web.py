@@ -136,7 +136,7 @@ class PlatformWeb:
         """ Start app web handler. """
         if self.logger:
             self.logger.logEvent(
-                "Starting web handler for '%s' app." % self.app.config.getName(),
+                "Starting web server.",
                 self.logIndent
             )
         self.docker.start()
@@ -150,7 +150,7 @@ class PlatformWeb:
         """ Stop app web handler. """
         if self.logger:
             self.logger.logEvent(
-                "Stopping web handler for '%s' app." % self.app.config.getName(),
+                "Stopping web server.",
                 self.logIndent
             )
         self.docker.stop()
