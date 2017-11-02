@@ -36,11 +36,7 @@ class PlatformVars:
                 ),
                 tag=self.VARS_DOCKER_IMAGE
             )
-        dockerVolumeKey = "%s%s%s" % (
-            self.DOCKER_VOLUME_PREFIX,
-            self.projectHash[:6],
-            self.DOCKER_VOLUME_SUFFIX
-        )
+        dockerVolumeKey = self.getVolumeKey()
         try:
             self.dockerClient.volumes.get(dockerVolumeKey)
         except docker.errors.NotFound:
@@ -67,6 +63,13 @@ class PlatformVars:
             "label" : containerId
         })
         return results
+
+    def getVolumeKey(self):
+        return "%s%s%s" % (
+            self.DOCKER_VOLUME_PREFIX,
+            self.projectHash[:6],
+            self.DOCKER_VOLUME_SUFFIX
+        )
 
     def set(self, key, value):
         return self._runCmd(

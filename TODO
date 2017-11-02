@@ -8,8 +8,6 @@ TODO:
     - Web Handler / Nginx
         - Improve app nginx conf
     - Router / Nginx
-        - Parse routes.yaml
-        - Generate nginx config that proxy's to web nginx containers
         - Certificate generation? (probably just a self signed ssl certificate for now)
             - LetsEncrypt?
     - Service / Mysql
@@ -19,6 +17,3 @@ TODO:
         - Configure cores
     - Commands
         - Force re-provision command
-        - Container shell command.
-        - Application deploy options (local mount, rsync, pull from git?)
-        - Deploy command

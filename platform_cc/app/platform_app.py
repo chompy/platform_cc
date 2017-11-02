@@ -3,6 +3,7 @@ import yaml
 import yamlordereddictloader
 import base64
 import collections
+import docker
 from config.platform_app_config import PlatformAppConfig
 from platform_service import PlatformService
 from config.platform_service_config import PlatformServiceConfig
@@ -201,3 +202,39 @@ class PlatformApp:
     def shell(self, cmd = "bash"):
         """ Shell in to application container. """
         self.docker.shell(cmd, "web")
+
+    def purge(self):
+        """ Purge application. """
+        self.stop()
+
+        if self.logger:
+            self.logger.logEvent(
+                "Delete volumes.",
+                self.logIndent + 1
+            )
+
+        # get all docker instances
+        dockerInstances = [self.docker]
+        for service in self.getServices():
+            dockerInstances.append(service.docker)
+        # itterate docker instances and get all volumes
+        volumes = {}
+        for docker in dockerInstances:
+            volumes.update(
+                docker.getProvisioner().getVolumes()
+            )
+        # itterate volumes and delete
+        for name in volumes:
+            if os.path.exists(name): continue
+            volume = None
+            try:
+                volume = self.docker.dockerClient.volumes.get(name)
+            except docker.errors.NotFound:
+                continue
+            if not volume: continue
+            if self.logger:
+                self.logger.logEvent(
+                    "Delete '%s'" % name,
+                    self.logIndent + 2
+                )
+            volume.remove()

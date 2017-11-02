@@ -73,3 +73,15 @@ class ProjectInfo(Command):
             True
         )
         project.outputInfo()
+
+class ProjectPurge(Command):
+
+    """
+    Purge project. Stop all containers and delete all volumes.
+
+    project:purge
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+    def handle(self):
+        project = getProject(self, True)
+        project.purge()

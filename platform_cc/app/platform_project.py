@@ -6,6 +6,7 @@ import yaml
 import yamlordereddictloader
 import collections
 import docker
+import time
 from urlparse import urlparse
 from Crypto.PublicKey import RSA
 from terminaltables import AsciiTable
@@ -185,3 +186,28 @@ class PlatformProject:
             ])
         table = AsciiTable(tableData, "Project '%s'" % self.projectHash[:6])
         self.logger.command.line(table.table)
+
+    def purge(self):
+        """ Purge all project data (including app volumes). """
+        if self.logger:
+            self.logger.logEvent(
+                "Purge project '%s.' Waiting 5 seconds... (Press CTRL+C to cancel.)" % (
+                     self.projectHash[:6]
+                )
+            )
+        time.sleep(5)
+        if self.logger:
+            self.logger.logEvent("Purge start.")
+        # itterate apps
+        for app in self.getApplications():
+            app.purge()
+        # purge vars
+        if self.logger:
+            self.logger.logEvent("Delete vars.")
+        try:
+            varsVolume = docker.from_env().volumes.get(self.vars.getVolumeKey())
+            varsVolume.remove()
+        except docker.errors.NotFound:
+            pass
+
+        
