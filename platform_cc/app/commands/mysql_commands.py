@@ -41,19 +41,17 @@ class MysqlSql(Command):
         database = self.option("database")
         password = service.docker.getProvisioner().getPassword()
         if dumpPath:
-
             if not os.path.exists(dumpPath):
                 print "ERROR: SQL dump at '%s' does not exists." % dumpPath
                 return
             service.docker.getProvisioner().copyFile(
                 dumpPath,
-                os.path.join("/", os.path.basename(dumpPath))
+                "/dump.sql"
             )
             service.shell(
-                "bash -c 'mysql -uroot --password=\"%s\"%s < %s'" % (
+                "bash -c 'mysql -uroot --password=\"%s\"%s < /dump.sql'" % (
                     password,
-                    ((" %s" % database) if database else ""),
-                    os.path.join("/", os.path.basename(dumpPath))
+                    ((" %s" % database) if database else "")
                 )
             )
             return
