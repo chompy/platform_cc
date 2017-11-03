@@ -10,14 +10,18 @@ class DockerProvision(DockerProvisionBase):
     """ Provision a PHP container. """
 
     def provision(self):
-        # parent method
-        DockerProvisionBase.provision(self)
         # install extensions
         if self.logger:
             self.logger.logEvent(
                 "Install extensions.",
                 self.logIndent
             )
+
+        # apt-get update
+        self.container.exec_run(
+            ["apt-get", "update"]
+        )
+
         defaultExts = self.config.get("default_extensions", [])
         appExts = self.appConfig.getRuntime().get("extensions", [])
 
@@ -64,6 +68,8 @@ class DockerProvision(DockerProvisionBase):
             self.container.exec_run(
                 ["sh", "-c", extensionConfig[depCmdKey[0]]]
             )
+        # parent method
+        DockerProvisionBase.provision(self)
 
     def runtime(self):
         DockerProvisionBase.runtime(self)
@@ -78,7 +84,7 @@ class DockerProvision(DockerProvisionBase):
             phpIniOutput += "%s = %s\n" % (key, value)
         self.copyStringToFile(
             phpIniOutput,
-            "/usr/local/etc/php/conf.d/this_app_3.ini"
+            "/usr/local/etc/php/conf.d/app.ini"
         )
         self.container.restart()
 

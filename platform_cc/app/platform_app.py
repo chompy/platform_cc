@@ -182,7 +182,9 @@ class PlatformApp:
             self.logger.printContainerOutput(
                 results
             )
-        self.deleteSshKey()
+        
+        # TODO not very helpful for debug but deleting is good for security?
+        #self.deleteSshKey()
 
     def deploy(self):
         """ Run deploy hooks. """

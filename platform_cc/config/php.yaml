@@ -7,8 +7,7 @@ provision:
     -
         desc: "Install additional dependencies."
         cmd: |
-            apt-get update
-            apt-get install -y rsync git unzip python-pip python-dev ruby ruby-dev gem nodejs npm
+            apt-get install -y rsync git unzip python-pip python-dev ruby ruby-dev gem nodejs npm libyaml-dev
             apt-get clean
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
@@ -18,8 +17,8 @@ provision:
         cmd: |
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            echo "date.timezone = UTC" >> /usr/local/etc/php/conf.d/this_app.ini
-            echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/this_app.ini
+            echo "date.timezone = UTC" >> /usr/local/etc/php/php.ini
+            echo "memory_limit = 512M" >> /usr/local/etc/php/php.ini
     -
         desc: "Install composer."
         cmd: |
@@ -28,12 +27,11 @@ provision:
             rm composer-setup.php
             ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
 
-runtime:
     -
-        desc: "Symlink php.ini from site root."
+        desc: "Compile php.ini."
         cmd: |
-            [ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/this_app_2.ini
-        user: root
+            cat /usr/local/etc/php/conf.d/*.ini >> /usr/local/etc/php/php.ini
+            rm /usr/local/etc/php/conf.d/*.ini
 
 pre_build:
     -
