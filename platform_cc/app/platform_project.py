@@ -161,8 +161,6 @@ class PlatformProject:
                         )
                 nginxConf += "\t\t}\n"
             nginxConf += "\t}\n"
-
-        print nginxConf
         return nginxConf
 
     def outputInfo(self):
