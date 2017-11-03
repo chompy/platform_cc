@@ -65,8 +65,8 @@ class DockerProvision(DockerProvisionBase):
                 ["sh", "-c", extensionConfig[depCmdKey[0]]]
             )
 
-    def preBuild(self):
-        DockerProvisionBase.preBuild(self)
+    def runtime(self):
+        DockerProvisionBase.runtime(self)
         if self.logger:
             self.logger.logEvent(
                 "Copy php config from vars.",
@@ -80,6 +80,7 @@ class DockerProvision(DockerProvisionBase):
             phpIniOutput,
             "/usr/local/etc/php/conf.d/this_app_3.ini"
         )
+        self.container.restart()
 
     def getVolumes(self):
         volumes = DockerProvisionBase.getVolumes(self, "/app")

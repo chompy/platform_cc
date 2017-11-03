@@ -10,6 +10,8 @@ TODO:
     - Router / Nginx
         - Certificate generation? (probably just a self signed ssl certificate for now)
             - LetsEncrypt?
+    - Service / ALL
+        - Services are incorrectly bound to application when they should be bound to project (no issues with single app project)
     - Service / Mysql
         - Configure endpoints with appropiate privileges.
     - Service / Solr

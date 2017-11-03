@@ -28,6 +28,13 @@ provision:
             rm composer-setup.php
             ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
 
+runtime:
+    -
+        desc: "Symlink php.ini from site root."
+        cmd: |
+            [ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/this_app_2.ini
+        user: root
+
 pre_build:
     -
         desc: "Running composer."
@@ -35,12 +42,6 @@ pre_build:
         cmd: |
             php -d memory_limit=-1 /usr/local/bin/composer.phar install -n -d /app
         user: web
-
-    -
-        desc: "Copy php.ini from site root."
-        cmd: |
-            [ -f /app/php.ini ] && cat /app/php.ini > /usr/local/etc/php/conf.d/this_app_2.ini
-        user: root
 
 extensions:
     curl:
