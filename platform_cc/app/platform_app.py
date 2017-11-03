@@ -167,6 +167,7 @@ class PlatformApp:
                 "Build hooks.",
                 self.logIndent + 1
             )
+        self.docker.getContainer().restart()
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getBuildHooks()],
             user="web"

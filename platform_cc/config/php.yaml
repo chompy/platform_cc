@@ -3,11 +3,16 @@ provision:
         desc: "Create 'web' user."
         cmd: |
             useradd -d /app -m -p 'secret~' web
+            usermod -a -G staff web
     -
         desc: "Install additional dependencies."
         cmd: |
             apt-get update
-            apt-get install -y rsync git unzip python-pip
+            apt-get install -y rsync git unzip python-pip python-dev ruby ruby-dev gem nodejs npm
+            apt-get clean
+            mkdir -p /var/lib/gems
+            chown -R web:web /var/lib/gems
+            ln -s /usr/bin/nodejs /usr/bin/node
     -
         desc: "Additional PHP configuration."
         cmd: |
@@ -21,6 +26,7 @@ provision:
             php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
             php composer-setup.php --install-dir=/usr/local/bin
             rm composer-setup.php
+            ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
 
 pre_build:
     -
@@ -29,6 +35,12 @@ pre_build:
         cmd: |
             php -d memory_limit=-1 /usr/local/bin/composer.phar install -n -d /app
         user: web
+
+    -
+        desc: "Copy php.ini from site root."
+        cmd: |
+            [ -f /app/php.ini ] && cat /app/php.ini > /usr/local/etc/php/conf.d/this_app_2.ini
+        user: root
 
 extensions:
     curl:
@@ -76,6 +88,13 @@ extensions:
     zip:
         "php:5": |
             docker-php-ext-install -j$(nproc) zip
+    sockets:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) sockets
+    exif:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) exif
+
 
 # extensions to install by default
 default_extensions:
@@ -85,3 +104,6 @@ default_extensions:
     - mysqli
     - gd
     - pdo_mysql
+    - sockets
+    - exif
+    - mcrypt

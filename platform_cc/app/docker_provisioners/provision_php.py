@@ -65,6 +65,22 @@ class DockerProvision(DockerProvisionBase):
                 ["sh", "-c", extensionConfig[depCmdKey[0]]]
             )
 
+    def preBuild(self):
+        DockerProvisionBase.preBuild(self)
+        if self.logger:
+            self.logger.logEvent(
+                "Copy php config from vars.",
+                self.logIndent
+            )
+        phpConfig = self.appConfig.getVariables().get("php", {})
+        phpIniOutput = ""
+        for key, value in phpConfig.items():
+            phpIniOutput += "%s = %s\n" % (key, value)
+        self.copyStringToFile(
+            phpIniOutput,
+            "/usr/local/etc/php/conf.d/this_app_3.ini"
+        )
+
     def getVolumes(self):
         volumes = DockerProvisionBase.getVolumes(self, "/app")
         volumes[os.path.realpath(self.appConfig.appPath)] = {
@@ -102,7 +118,6 @@ class DockerProvision(DockerProvisionBase):
         return hashlib.sha256(hashStr).hexdigest()
 
     def generateNginxConfig(self):
-
         webConfig = self.appConfig.getWeb()
         locations = webConfig.get("locations", {})
         appNginxConf = ""
