@@ -237,3 +237,35 @@ class PlatformDocker:
                 cmd
             )
         )
+
+    def purge(self):
+        """ Purge volumes and images. """
+
+        # delete volumes
+        volumes = self.getProvisioner().getVolumes()
+        for name in volumes:
+            if os.path.exists(name): continue
+            try:
+                volume = self.dockerClient.volumes.get(name)
+                volume.remove()
+                if self.logger:
+                    self.logger.logEvent(
+                        "Delete volume '%s.'" % name,
+                        self.logIndent
+                    )                
+            except docker.errors.NotFound:
+                pass
+        # delete image (maybe not...could be used by other projects/apps, decide later)
+        """imageName = "%s:%s" % (self.DOCKER_COMMIT_REPO, self.getTag())
+        try:
+            self.dockerClient.images.remove(
+                image=imageName
+            )
+            if self.logger:
+                self.logger.logEvent(
+                    "Delete image '%s.'" % imageName,
+                    self.logIndent
+                )
+        except docker.errors.ImageNotFound:
+            pass
+        """

@@ -132,11 +132,10 @@ class PlatformProject:
             
             # TODO HTTPS
             nginxConf += "\t\tlisten 80;\n"
-
             paths = serverList[serverName]["paths"]
             for path in paths:
                 nginxConf += "\t\tlocation %s {\n" % (
-                    path
+                    path if path else "/"
                 )
                 if paths[path]["type"] == "upstream":
                     upstream = paths[path]["upstream"].split(":")[0]
@@ -163,6 +162,7 @@ class PlatformProject:
                 nginxConf += "\t\t}\n"
             nginxConf += "\t}\n"
 
+        print nginxConf
         return nginxConf
 
     def outputInfo(self):

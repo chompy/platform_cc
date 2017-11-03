@@ -1,3 +1,4 @@
+import docker
 from config.platform_router_config import PlatformRouterConfig
 from platform_docker import PlatformDocker
 
@@ -47,16 +48,18 @@ class PlatformRouter:
                 ),
                 self.logIndent
             )
-
-        container = self.docker.getContainer()
-        if not container: return
-        self.docker.getProvisioner().copyStringToFile(
-            project.generateRouterConfig(),
-            "/router/project_%s.conf" % (
-                project.projectHash
+        try:
+            container = self.docker.getContainer()
+            if not container: return
+            self.docker.getProvisioner().copyStringToFile(
+                project.generateRouterConfig(),
+                "/router/project_%s.conf" % (
+                    project.projectHash
+                )
             )
-        )
-        self.docker.getContainer().restart()            
+            self.docker.getContainer().restart()
+        except docker.errors.NotFound:
+            pass     
 
     def removeProject(self, project):
         """ Remove project from router. """
@@ -67,15 +70,19 @@ class PlatformRouter:
                 ),
                 self.logIndent
             )
-
-        self.docker.getContainer().exec_run(
-                [
-                    "rm",
-                    "-f",
-                    "/router/project_%s.conf" % (
-                        project.projectHash,
-                    )
-                ],
-                privileged=True
-            )
-        self.docker.getContainer().restart()
+        try:
+            container = self.docker.getContainer()
+            if not container: return
+            container.exec_run(
+                    [
+                        "rm",
+                        "-f",
+                        "/router/project_%s.conf" % (
+                            project.projectHash,
+                        )
+                    ],
+                    privileged=True
+                )
+            self.docker.getContainer().restart()
+        except docker.errors.NotFound:
+            pass

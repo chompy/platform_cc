@@ -169,3 +169,7 @@ class DockerProvisionBase:
         hashStr = self.image
         hashStr += str(self.appConfig.getBuildFlavor())
         return hashlib.sha256(hashStr).hexdigest()
+
+    def generateNginxConfig(self):
+        """ Generate Nginx config to access this app/service. """
+        return ""
