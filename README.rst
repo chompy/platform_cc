@@ -42,7 +42,7 @@ This assumes that you have a project ready to go with all the appropiate configu
 
 4) Deploy project.
 
-        $ platform_cc.py project:hook    
+        $ platform_cc.py project:deploy   
 
     This runs the deploy hooks defined in .platform.app.yaml.
 
