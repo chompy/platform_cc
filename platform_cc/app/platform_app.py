@@ -90,17 +90,23 @@ class PlatformApp:
             base64.b64decode(sshKey),
             "/app/.ssh/id_rsa"
         )
+        self.docker.getContainer().exec_run(
+            ["chmod", "0600", "/app/.ssh/id_rsa"]
+        )
+        self.docker.getContainer().exec_run(
+            ["chown", "web:web", "/app/.ssh/id_rsa"]
+        )
         if knownHosts:
             self.docker.getProvisioner().copyStringToFile(
                 base64.b64decode(knownHosts),
                 "/app/.ssh/known_hosts"
             )
-        self.docker.getContainer().exec_run(
-            ["chmod", "0600", "/app/.ssh/*"]
-        )
-        self.docker.getContainer().exec_run(
-            ["chown", "web:web", "/app/.ssh/*"]
-        )
+            self.docker.getContainer().exec_run(
+                ["chmod", "0600", "/app/.ssh/known_hosts"]
+            )
+            self.docker.getContainer().exec_run(
+                ["chown", "web:web", "/app/.ssh/known_hosts"]
+            )
 
     def deleteSshKey(self):
         """ Delete ssh key in container. """
