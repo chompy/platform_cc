@@ -169,10 +169,20 @@ class PlatformDocker:
             pass
 
     def status(self):
+        """ Get a string that indicates status of container. """
+        # determine if container is running
         try:
-            return self.getContainer().status
+            running = self.getContainer().status == "running"
         except docker.errors.NotFound:
-            return "stopped"
+            running = False
+        # determine if container is considered healthy
+        healthy = self.getProvisioner().healthcheck()
+        # output status
+        if running and healthy:
+            return "running (healthy)"
+        if running and not healthy:
+            return "running (unhealthy)"
+        return "stopped"
 
     def getIpAddress(self):
         """ Get container local IP address. """

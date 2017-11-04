@@ -20,20 +20,8 @@ class DockerProvision(DockerProvisionBase):
 
     def runtime(self):
         # wait for mysqld to be ready
-        ready = False
-        while not ready:
+        while not self.healthcheck():
             time.sleep(1)
-            ready = self.container.exec_run(
-                [
-                    "sh",
-                    "-c", 
-                    "/usr/bin/mysqladmin ping -uroot --password='%s' --silent" % (
-                        self.getPassword()
-                    )
-                ],
-                user="root",
-                privileged=True,
-            )
         # provision databases
         cmds = []
         config = self.appConfig.getConfiguration()
@@ -105,3 +93,20 @@ class DockerProvision(DockerProvisionBase):
                 "username" : endpointName
             })
         return relationships
+
+
+    def healthcheck(self):
+        if not self.container or not self.container.status == "running":
+            return False
+        pingResult = self.container.exec_run(
+            [
+                "sh",
+                "-c", 
+                "/usr/bin/mysqladmin ping -uroot --password='%s' --silent" % (
+                    self.getPassword()
+                )
+            ],
+            user="root",
+            privileged=True,
+        )
+        return True if pingResult else False

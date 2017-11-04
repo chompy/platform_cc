@@ -1,21 +1,13 @@
 import os
 from cleo import Command
-from app.commands import getProject, getAppsToInvoke
+from app.commands import getProject
 
 def findMysqlService(command):
     appName = command.option("app")
     serviceName = command.option("service")
     project = getProject(command, False)
-    application = None
-    for app in project.getApplications():
-        if app.config.getName() == appName or not appName:
-            application = app
-            break
-    if not application:
-        print "ERROR: Application '%s' does not exist." % appName
-        return None
     service = None
-    for sv in application.getServices():
+    for sv in project.getServices():
         if sv.config.getType()[:5] == "mysql" and (sv.config.getName() == serviceName or not serviceName):
             service = sv
     if not service:

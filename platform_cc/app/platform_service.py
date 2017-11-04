@@ -5,23 +5,21 @@ class PlatformService:
 
     """ Platform service handler. """
 
-    def __init__(self, appConfig, name, logger = None):
+    def __init__(self, projectHash, projectPath, name, logger = None):
         self.name = str(name).strip()
-        self.appConfig = appConfig
         self.config = PlatformServiceConfig(
-            self.appConfig.projectHash,
-            self.appConfig.appPath,
+            projectHash,
+            projectPath,
             name
         )
         self.docker = PlatformDocker(
             self.config,
-            "%s_%s" % (appConfig.getName(), self.config.getName()),
+            "%s" % (self.config.getName()),
             self.config.getDockerImage(),
             logger
         )
-        self.docker.logIndent += 1
         self.logger = logger
-        self.logIndent = 1
+        self.logIndent = 0
 
     def start(self):
         """ Start service. """

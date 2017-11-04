@@ -1,5 +1,5 @@
 from cleo import Command
-from app.commands import getProject, getAppsToInvoke, getLogger
+from app.commands import getProject, getLogger
 from app.platform_router import PlatformRouter
 
 class RouterStart(Command):

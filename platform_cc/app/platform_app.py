@@ -5,8 +5,6 @@ import base64
 import collections
 import docker
 from config.platform_app_config import PlatformAppConfig
-from platform_service import PlatformService
-from config.platform_service_config import PlatformServiceConfig
 from platform_docker import PlatformDocker
 from platform_web import PlatformWeb
 
@@ -14,7 +12,8 @@ class PlatformApp:
 
     """ Base class for application. """
 
-    def __init__(self, projectHash, appPath = "", projectVars = {}, logger = None):
+    def __init__(self, projectHash, appPath = "", services = [], projectVars = {}, logger = None):
+        self.services = services
         self.projectVars = projectVars
         self.config = PlatformAppConfig(projectHash, appPath, projectVars)
         self.docker = PlatformDocker(
@@ -27,35 +26,14 @@ class PlatformApp:
         self.logIndent = 0
         self.web = PlatformWeb(self)
 
-    def getServices(self):
-        """ Get list of service dependencies for app. """
-        serviceConf = {}
-        serviceList = []
-        pathToServicesYaml = os.path.join(
-            self.config.appPath,
-            PlatformServiceConfig.PLATFORM_SERVICES_PATH
-        )
-        with open(pathToServicesYaml, "r") as f:
-            serviceConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
-        for serviceName in serviceConf:
-            serviceList.append(
-                PlatformService(
-                    self.config,
-                    serviceName,
-                    self.logger
-                )
-            )
-        return serviceList
-
     def buildServiceRelationships(self):
         """ Build service relationship list. """
-        services = self.getServices()
         relationships = self.config.getRelationships()
         output = {}
         for relationship in relationships:
             value = relationships[relationship]
             relationshipServiceTypeName = value.split(":")[0]
-            for service in services:
+            for service in self.services:
                 if relationshipServiceTypeName != service.config.getName():
                     continue
                 endpointName = value.split(":")[1]
@@ -121,9 +99,6 @@ class PlatformApp:
                 "Starting '%s' application." % self.config.getName(),
                 self.logIndent
             )
-        for service in self.getServices():
-            service.start()
-
         if self.logger:
             self.logger.logEvent(
                 "Starting main application container.",
@@ -150,8 +125,6 @@ class PlatformApp:
         self.docker.stop()
         self.docker.logIndent -= 1
         self.web.stop()
-        for service in self.getServices():
-            service.stop()
 
     def provision(self):
         """ Provision app and run build hooks. """
@@ -171,10 +144,6 @@ class PlatformApp:
         self.logIndent -= 1
         # provision app
         self.docker.provision(False) # no commit
-        # provision services
-        for service in self.getServices():
-            service.docker.logIndent -= 1
-            service.docker.provision()
         # build hooks
         if self.logger:
             self.logger.logEvent(
@@ -190,6 +159,12 @@ class PlatformApp:
             self.logger.printContainerOutput(
                 results
             )
+        # hack to make sites that rely on binaries being in /usr/bin
+        # to work
+        self.docker.getContainer().exec_run(
+            ["ln", "-s", "/usr/local/bin/*", "/usr/bin/"],
+            user="root"
+        )
         # commit provisioned app container
         self.docker.commit()
 
@@ -215,15 +190,12 @@ class PlatformApp:
                 results
             )
 
-    def shell(self, cmd = "bash"):
+    def shell(self, cmd = "bash", user = "web"):
         """ Shell in to application container. """
-        self.docker.shell(cmd, "web")
+        self.docker.shell(cmd, user)
 
     def purge(self):
         """ Purge application. """
         self.stop()
         # purge all docker instances
         self.docker.purge()
-        for service in self.getServices():
-            service.docker.logIndent -= 1
-            service.docker.purge()

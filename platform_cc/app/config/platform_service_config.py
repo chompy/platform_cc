@@ -21,12 +21,12 @@ class PlatformServiceConfig(PlatformConfig):
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
 
-    def __init__(self, projectHash, appPath = "", name = ""):
+    def __init__(self, projectHash, projectPath = "", name = ""):
         self.name = name.strip()
-        self.appPath = appPath
+        self.projectPath = projectPath
         PlatformConfig.__init__(self, projectHash)
         pathToServiceYaml = os.path.join(
-            self.appPath,
+            self.projectPath,
             self.PLATFORM_SERVICES_PATH
         )
         serviceConfigs = {}

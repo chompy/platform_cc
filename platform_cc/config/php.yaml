@@ -43,13 +43,6 @@ provision:
             php -d memory_limit=-1 /usr/local/bin/composer.phar install -n -d /app
         user: web
 
-runtime:
-    -
-        desc: "Symlink php.ini from site root."
-        cmd: |
-            [ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/app.ini
-        user: root
-
 extensions:
     curl:
         core: true

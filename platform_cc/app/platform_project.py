@@ -10,6 +10,8 @@ import time
 from urlparse import urlparse
 from Crypto.PublicKey import RSA
 from terminaltables import AsciiTable
+from config.platform_service_config import PlatformServiceConfig
+from platform_service import PlatformService
 from platform_app import PlatformApp
 from config.platform_app_config import PlatformAppConfig
 from platform_vars import PlatformVars
@@ -48,21 +50,43 @@ class PlatformProject:
                 self.projectHash = f.read()
         self.vars = PlatformVars(self.projectHash)
 
+    def getServices(self):
+        """ Get list of service dependencies for project. """
+        serviceConf = {}
+        serviceList = []
+        pathToServicesYaml = os.path.join(
+            self.projectPath,
+            PlatformServiceConfig.PLATFORM_SERVICES_PATH
+        )
+        with open(pathToServicesYaml, "r") as f:
+            serviceConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+        for serviceName in serviceConf:
+            serviceList.append(
+                PlatformService(
+                    self.projectHash,
+                    self.projectPath,
+                    serviceName,
+                    self.logger
+                )
+            )
+        return serviceList
+
     def getApplications(self, withVars = True):
         """ Get all applications in project. """
+        services = self.getServices()
         topPlatformAppConfigPath = os.path.join(self.projectPath, PlatformAppConfig.PLATFORM_FILENAME)
         projectVars = {}
         if withVars:
             projectVars = self.vars.all()
         if os.path.exists(topPlatformAppConfigPath):
-            return [PlatformApp(self.projectHash, self.projectPath, projectVars, self.logger)]
+            return [PlatformApp(self.projectHash, self.projectPath, services, projectVars, self.logger)]
         apps = []
         for path in os.listdir(os.path.realpath(self.projectPath)):
             path = os.path.join(self.projectPath, path)
             if os.path.isdir(path):
                 platformAppConfigPath = os.path.join(path, PlatformAppConfig.PLATFORM_FILENAME)
                 if os.path.isfile(platformAppConfigPath):
-                    apps.append(PlatformApp(self.projectHash, self.projectPath, projectVars, self.logger))
+                    apps.append(PlatformApp(self.projectHash, self.projectPath, services, projectVars, self.logger))
         return apps
 
     def generateSshKey(self):
@@ -80,7 +104,6 @@ class PlatformProject:
 
     def generateRouterConfig(self):
         """ Generate vhost config for nginx router. """
-
         routeYamlPath = os.path.join(
             self.projectPath,
             self.PLATFORM_ROUTES_PATH
@@ -163,27 +186,75 @@ class PlatformProject:
             nginxConf += "\t}\n"
         return nginxConf
 
-    def outputInfo(self):
+    def outputInfo(self, services = True, applications = True):
         """ Output information about project. """
         if not self.logger: return
 
-        tableData = [
-            ["Application Name", "Status", "IP Address (Web)", "Services"]
-        ]
+        self.logger.command.line(
+            "\n======== Project '%s' =========\n" % self.projectHash[:6]
+        )
+
+        # display info about services
+        if services:
+            tableData = [
+                ["Name", "Type", "Status", "IP Address"]
+            ]
+            for service in self.getServices():
+                tableData.append([
+                    service.config.getName(),
+                    service.config.getType(),
+                    service.docker.status(),
+                    service.docker.getIpAddress() or "n/a"
+                ])
+            table = AsciiTable(tableData, "Services")
+            self.logger.command.line(table.table)
+            self.logger.command.line("")
+
+        # display info about applications
+        if applications:
+            tableData = [
+                ["Name", "Type", "Status", "IP Address (Web)"]
+            ]
+            for app in self.getApplications():
+                tableData.append([
+                    app.config.getName(),
+                    app.config.getType(),
+                    app.docker.status(),
+                    app.web.docker.getIpAddress() or "n/a"
+                ])
+            table = AsciiTable(tableData, "Applications")
+            self.logger.command.line(table.table)
+            self.logger.command.line("")
+
+    def start(self):
+        """ Start all services and apps. """
+        for service in self.getServices():
+            service.start()
         for app in self.getApplications():
+            app.start()
 
-            serviceNames = ""
-            for service in app.getServices():
-                serviceNames += "%s, " % (service.config.getName())
+    def stop(self):
+        """ Stop all services and apps. """
+        for app in self.getApplications():
+            app.stop()
+        for service in self.getServices():
+            service.stop()
 
-            tableData.append([
-                app.config.getName(),
-                app.docker.status(),
-                app.web.docker.getIpAddress() or "n/a",
-                serviceNames.strip().rstrip(",")
-            ])
-        table = AsciiTable(tableData, "Project '%s'" % self.projectHash[:6])
-        self.logger.command.line(table.table)
+    def provision(self):
+        """ Provision all services and apps. """
+        if self.logger:
+            self.logger.logEvent(
+                "Provision services."
+            )
+        for service in self.getServices():
+            service.docker.provision()
+        for app in self.getApplications():
+            app.provision()
+
+    def deploy(self):
+        """ Deploy all apps. """
+        for app in self.getApplications():
+            app.deploy()
 
     def purge(self):
         """ Purge all project data (including app volumes). """
@@ -199,6 +270,9 @@ class PlatformProject:
         # itterate apps
         for app in self.getApplications():
             app.purge()
+        # itterate services
+        for service in self.getServices():
+            service.docker.purge()
         # purge vars
         if self.logger:
             self.logger.logEvent("Delete vars.")

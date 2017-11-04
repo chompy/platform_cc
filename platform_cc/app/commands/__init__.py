@@ -13,13 +13,3 @@ def getProject(command, withLogger = True):
         projectPath if projectPath else "",
         getLogger(command) if withLogger else None
     )
-
-def getAppsToInvoke(command):
-    appInvokeList = command.option("apps")
-    project = getProject(command)
-    apps = project.getApplications()
-    filteredApps = []
-    for app in apps:
-        if not appInvokeList or app.config.getName().lower() in appInvokeList:
-            filteredApps.append(app)
-    return filteredApps

@@ -1,5 +1,5 @@
 from cleo import Command
-from app.commands import getProject, getAppsToInvoke, getLogger
+from app.commands import getProject, getLogger
 from app.platform_router import PlatformRouter
 
 class ProjectStart(Command):
@@ -7,57 +7,51 @@ class ProjectStart(Command):
     Start one or more applications in a project.
 
     project:start
-        {--a|apps=* : Comma delimited list of applications to start. (Default=all)}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
-        for app in getAppsToInvoke(self):
-            app.start()
+        project = getProject(self)
+        project.start()
         router = PlatformRouter(getLogger(self))
         router.start()
-        router.addProject(getProject(self))
+        router.addProject(project)
 
 class ProjectStop(Command):
     """
     Stop one or more applications in a project.
 
     project:stop
-        {--a|apps=* : Comma delimited list of applications to stop. (Default=all)}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
+        project = getProject(self)
         router = PlatformRouter(getLogger(self))
-        router.removeProject(getProject(self))
-        for app in getAppsToInvoke(self):
-            app.stop()
+        router.removeProject(project)
+        project.stop()
 
 class ProjectProvision(Command):
     """
     (Re)provisions all apps in a project.
 
     project:provision
-        {--a|apps=* : Comma delimited list of applications to build. (Default=all)}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
-        for app in getAppsToInvoke(self):
-            app.provision()
+        getProject(self).provision()
 
 class ProjectDeploy(Command):
     """
     Run deploy hooks.
 
     project:deploy
-        {--a|apps=* : Comma delimited list of applications to deploy. (Default=all)}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
-        for app in getAppsToInvoke(self):
-            app.deploy()
+        getProject(self).provision()
 
 class ProjectInfo(Command):
 
@@ -68,11 +62,7 @@ class ProjectInfo(Command):
         {--p|path=? : Path to project root. (Default=current directory)}
     """
     def handle(self):
-        project = getProject(
-            self,
-            True
-        )
-        project.outputInfo()
+        getProject(self).outputInfo()
 
 class ProjectPurge(Command):
 
@@ -83,5 +73,4 @@ class ProjectPurge(Command):
         {--p|path=? : Path to project root. (Default=current directory)}
     """
     def handle(self):
-        project = getProject(self, True)
-        project.purge()
+        getProject(self).purge()

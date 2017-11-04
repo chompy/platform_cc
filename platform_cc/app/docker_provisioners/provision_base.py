@@ -167,3 +167,8 @@ class DockerProvisionBase:
     def generateNginxConfig(self):
         """ Generate Nginx config to access this app/service. """
         return ""
+
+    def healthcheck(self):
+        """ Check that container is active. """
+        # TODO use docker's builtin healthcheck
+        return self.container and self.container.status == "running"
