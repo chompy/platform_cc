@@ -11,6 +11,7 @@ provision:
             apt-get clean
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
+            chown -R root:staff /usr/bin
             ln -s /usr/bin/nodejs /usr/bin/node
     -
         desc: "Additional PHP configuration."
@@ -40,6 +41,13 @@ pre_build:
         cmd: |
             php -d memory_limit=-1 /usr/local/bin/composer.phar install -n -d /app
         user: web
+
+runtime:
+    -
+        desc: "Symlink php.ini from site root."
+        cmd: |
+            [ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/app.ini
+        user: root
 
 extensions:
     curl:
