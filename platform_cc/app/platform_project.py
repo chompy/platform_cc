@@ -272,6 +272,7 @@ class PlatformProject:
             app.purge()
         # itterate services
         for service in self.getServices():
+            service.stop()
             service.docker.purge()
         # purge vars
         if self.logger:
