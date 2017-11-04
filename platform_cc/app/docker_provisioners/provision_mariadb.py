@@ -17,7 +17,7 @@ class DockerProvision(DockerProvisionBase):
             self.PASSWORD_SALT + self.appConfig.getEntropy() + username
         ).hexdigest()
 
-    def preBuild(self):
+    def runtime(self):
         cmds = []
         config = self.appConfig.getConfiguration()
         for schema in config.get("schemas", []):

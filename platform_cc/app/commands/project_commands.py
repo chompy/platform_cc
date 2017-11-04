@@ -33,18 +33,18 @@ class ProjectStop(Command):
         for app in getAppsToInvoke(self):
             app.stop()
 
-class ProjectBuild(Command):
+class ProjectProvision(Command):
     """
-    Perform pre-build actions and run build hooks.
+    (Re)provisions all apps in a project.
 
-    project:build
+    project:provision
         {--a|apps=* : Comma delimited list of applications to build. (Default=all)}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         for app in getAppsToInvoke(self):
-            app.build()
+            app.provision()
 
 class ProjectDeploy(Command):
     """

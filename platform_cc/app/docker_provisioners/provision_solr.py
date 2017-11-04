@@ -53,7 +53,7 @@ class DockerProvision(DockerProvisionBase):
         container.remove()
         return volumes
 
-    def preBuild(self):
+    def runtime(self):
         config = self.appConfig.getConfiguration()
         cores = config.get("cores", {}).keys()
         if config.get("core_config", None):

@@ -12,6 +12,7 @@ provision:
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
             chown -R root:staff /usr/bin
+            chmod -R g+rw /usr/bin
             ln -s /usr/bin/nodejs /usr/bin/node
     -
         desc: "Additional PHP configuration."
@@ -20,6 +21,13 @@ provision:
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
             echo "date.timezone = UTC" >> /usr/local/etc/php/php.ini
             echo "memory_limit = 512M" >> /usr/local/etc/php/php.ini
+
+    -
+        desc: "Compile php.ini."
+        cmd: |
+            cat /usr/local/etc/php/conf.d/*.ini >> /usr/local/etc/php/php.ini
+            rm /usr/local/etc/php/conf.d/*.ini
+
     -
         desc: "Install composer."
         cmd: |
@@ -28,13 +36,6 @@ provision:
             rm composer-setup.php
             ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
 
-    -
-        desc: "Compile php.ini."
-        cmd: |
-            cat /usr/local/etc/php/conf.d/*.ini >> /usr/local/etc/php/php.ini
-            rm /usr/local/etc/php/conf.d/*.ini
-
-pre_build:
     -
         desc: "Running composer."
         build_flavor: "composer"

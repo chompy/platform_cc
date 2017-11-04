@@ -118,12 +118,6 @@ class DockerProvisionBase:
             self.config.get("provision", {})
         )
 
-    def preBuild(self):
-        """ Prebuild commands. (Run prior to build hooks.) """
-        self.runCommands(
-            self.config.get("pre_build", {})
-        )
-
     def runtime(self):
         """ Runtime commands. """
         self.runCommands(

@@ -84,7 +84,7 @@ class DockerProvision(DockerProvisionBase):
             phpIniOutput += "%s = %s\n" % (key, value)
         self.copyStringToFile(
             phpIniOutput,
-            "/usr/local/etc/php/conf.d/app.ini"
+            "/usr/local/etc/php/conf.d/app2.ini"
         )
         self.container.restart()
 

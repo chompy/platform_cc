@@ -52,7 +52,7 @@ class PlatformDocker:
             self.image,
             self.logger
         )
-        provisioner.logIndent = self.logIndent
+        provisioner.logIndent = self.logIndent + 1
         return provisioner
 
     def getTag(self):
@@ -117,10 +117,8 @@ class PlatformDocker:
             # first look for committed provisioned container, if not found use unprovisioned image
             container = None
             lastExcept = None
-            needProvision = True
             for image in ["%s:%s" % (self.DOCKER_COMMIT_REPO, self.getTag()), self.image]:
                 if container:
-                    needProvision = False
                     break
                 try:
                     container = self.dockerClient.containers.run(
@@ -146,10 +144,6 @@ class PlatformDocker:
                 return
             # add to network
             network.connect(container)
-            # provision container
-            if needProvision:
-                self.provision()
-                self.commit()
         # runtime commands
         if self.logger:
             self.logger.logEvent(
@@ -185,22 +179,7 @@ class PlatformDocker:
         except docker.errors.NotFound:
             return None
 
-    def syncApp(self):
-        """ Sync application files in to container. """
-        if self.logger:
-            self.logger.logEvent(
-                "Sync application files.",
-                self.logIndent
-            )
-        container = self.getContainer()
-        """container.exec_run(
-            ["rsync", "-a", "--exclude", ".platform", "--exclude", ".git", "--exclude", ".platform.app.yaml", "/mnt/app/", "/app"]
-        )"""
-        container.exec_run(
-            ["chown", "-R", "web:web", "/app"]
-        )
-
-    def provision(self):
+    def provision(self, commit = True):
         """ Provision current container. """
         if self.logger:
             self.logger.logEvent(
@@ -209,10 +188,7 @@ class PlatformDocker:
             )
         self.getProvisioner().provision()
         self.getContainer().restart()
-
-    def preBuild(self):
-        """ Run pre build commands. """
-        self.getProvisioner().preBuild()
+        if commit: self.commit()
 
     def commit(self):
         """ Commit changes to container (useful after provisioning.) """

@@ -1,20 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import pkg_resources
 from cleo import Application
-from app.commands.project_commands import ProjectStart, ProjectStop, ProjectBuild, ProjectDeploy, ProjectInfo, ProjectPurge
+from app.commands.project_commands import ProjectStart, ProjectStop, ProjectProvision, ProjectDeploy, ProjectInfo, ProjectPurge
 from app.commands.router_commands import RouterStart, RouterStop, RouterAdd, RouterRemove
 from app.commands.var_commands import VarSet, VarGet, VarDelete, VarList
 from app.commands.app_commands import AppShell
 from app.commands.mysql_commands import MysqlSql, MysqlDump
 
+try:
+    version = pkg_resources.require("platform_cc")[0].version
+except pkg_resources.DistributionNotFound:
+    version = "vDEVELOPMENT"
+
 cleoApp = Application(
     "Platform.CC -- By Contextual Code",
-    "0.01"
+    version
 )
 cleoApp.add(ProjectStart())
 cleoApp.add(ProjectStop())
-cleoApp.add(ProjectBuild())
+cleoApp.add(ProjectProvision())
 cleoApp.add(ProjectDeploy())
 cleoApp.add(ProjectInfo())
 cleoApp.add(ProjectPurge())

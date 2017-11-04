@@ -153,21 +153,29 @@ class PlatformApp:
         for service in self.getServices():
             service.stop()
 
-    def build(self):
-        """ Run prebuild commands and build hooks. """
+    def provision(self):
+        """ Provision app and run build hooks. """
         if self.logger:
             self.logger.logEvent(
-                "Building '%s' application." % self.config.getName(),
+                "Provision '%s' application." % self.config.getName(),
                 self.logIndent
             )
+        # set app file permission
+        self.docker.getContainer().exec_run(
+            ["chown", "-R", "web:web", "/app"]
+        )
+        # set vars / copy ssh key
         self.docker.relationships = self.buildServiceRelationships()
-        self.docker.syncApp()
         self.logIndent += 1
         self.copySshKey()
         self.logIndent -= 1
-        self.docker.preBuild()
+        # provision app
+        self.docker.provision(False) # no commit
+        # provision services
         for service in self.getServices():
-            service.preBuild()
+            service.docker.logIndent -= 1
+            service.docker.provision()
+        # build hooks
         if self.logger:
             self.logger.logEvent(
                 "Build hooks.",
@@ -182,9 +190,8 @@ class PlatformApp:
             self.logger.printContainerOutput(
                 results
             )
-        
-        # TODO not very helpful for debug but deleting is good for security?
-        #self.deleteSshKey()
+        # commit provisioned app container
+        self.docker.commit()
 
     def deploy(self):
         """ Run deploy hooks. """
