@@ -15,7 +15,9 @@ class PlatformDocker:
     DOCKER_COMMIT_REPO = "platform_cc"
 
     def __init__(self, config, name = None, image = None, logger = None):
-        self.dockerClient = docker.from_env()
+        self.dockerClient = docker.from_env(
+            timeout=180 # 3 minutes
+        )
         self.config = config
         self.name = name if name else self.config.getName()
         self.image = image if image else self.config.getDockerImage()

@@ -113,6 +113,7 @@ class DockerProvision(DockerProvisionBase):
         """ Generate unique id based on configuration. """
         hashStr = self.image
         hashStr += str(self.appConfig.getBuildFlavor())
+        hashStr += str(self.appConfig.getBuildHooks())
         extensions = self.appConfig.getRuntime().get("extensions", [])
         extensions.sort()
         extensionConfigs = self.config.get("extensions", None)        
