@@ -15,7 +15,7 @@ This assumes that you have a project ready to go with all the appropiate configu
 
         $ platform_cc.py project:start
 
-    This will provision all the Docker containers needed for your project. It can take a while on the first run.
+    This will pull all the needed Docker images so it can take a while.
 
 2) Install SSH key and Composer auth files. (Needed for Composer projects.)
 
@@ -28,11 +28,11 @@ This assumes that you have a project ready to go with all the appropiate configu
 
     Note that 'project:ssh_key' and 'project:known_hosts' are base64 encoded.
 
-3) Build project.
+3) Provision project.
     
-        $ platform_cc.py project:build
+        $ platform_cc.py project:provision
 
-    This will run 'composer install' as well as run the build hooks defined in .platform.app.yaml.
+    This setups the Docker containers for your project. It will install dependencies for your project as well as run build hooks (composer install, etc).
 
 4) Setup services. (Deploy MySql databases, etc).
 
