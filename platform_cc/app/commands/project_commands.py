@@ -51,7 +51,7 @@ class ProjectDeploy(Command):
     """
 
     def handle(self):
-        getProject(self).provision()
+        getProject(self).deploy()
 
 class ProjectInfo(Command):
 

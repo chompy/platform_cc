@@ -175,12 +175,6 @@ class PlatformApp:
                 "Deploying '%s' application." % self.config.getName(),
                 self.logIndent
             )
-        self.docker.syncApp()
-        if self.logger:
-            self.logger.logEvent(
-                "Deploy hooks.",
-                self.logIndent + 1
-            )
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getDeployHooks()],
             user="web"
