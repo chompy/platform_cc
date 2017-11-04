@@ -4,6 +4,7 @@ import io
 import hashlib
 import docker
 import json
+import time
 from provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
@@ -18,6 +19,22 @@ class DockerProvision(DockerProvisionBase):
         ).hexdigest()
 
     def runtime(self):
+        # wait for mysqld to be ready
+        ready = False
+        while not ready:
+            time.sleep(1)
+            ready = self.container.exec_run(
+                [
+                    "sh",
+                    "-c", 
+                    "/usr/bin/mysqladmin ping -uroot --password='%s' --silent" % (
+                        self.getPassword()
+                    )
+                ],
+                user="root",
+                privileged=True,
+            )
+        # provision databases
         cmds = []
         config = self.appConfig.getConfiguration()
         for schema in config.get("schemas", []):
