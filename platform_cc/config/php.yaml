@@ -4,6 +4,7 @@ provision:
         cmd: |
             useradd -d /app -m -p 'secret~' web
             usermod -a -G staff web
+            chown -R web:web /app
     -
         desc: "Install additional dependencies."
         cmd: |

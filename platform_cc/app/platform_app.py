@@ -172,6 +172,12 @@ class PlatformApp:
                 "Deploying '%s' application." % self.config.getName(),
                 self.logIndent
             )
+        # fix permissions
+        self.docker.getContainer().exec_run(
+            ["chown", "-R", "web:web", "/app"],
+            user="root"
+        )
+        # run hooks
         results = self.docker.getContainer().exec_run(
             ["sh", "-c", self.config.getDeployHooks()],
             user="web"
