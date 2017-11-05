@@ -24,6 +24,16 @@ class PlatformRouter:
                 self.logIndent
             )
         self.docker.start(None, {"80/tcp" : 80, "443/tcp" : 443})
+
+        # provision if needed
+        commitImage = "%s:%s" % (self.docker.DOCKER_COMMIT_REPO, self.docker.getTag())
+        try:
+            image = self.docker.dockerClient.images.get(commitImage)
+        except docker.errors.NotFound:
+            image = None
+        if not image:
+            self.docker.provision()
+
         self.docker.getProvisioner().copyStringToFile(
             self.docker.getProvisioner().config.get("router_conf", ""),
             "/etc/nginx/nginx.conf"
