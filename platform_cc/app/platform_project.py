@@ -180,59 +180,53 @@ class PlatformProject:
             parseRoute = urlparse(route)
             isHttps = parseRoute.scheme == "https"
 
-            nginxConf += "\tserver {\n"
+            nginxConf += "server {\n"
             # server name
-            nginxConf += "\t\tserver_name %s;\n" % (
+            nginxConf += "\tserver_name %s;\n" % (
                 parseRoute.hostname
             )
             # https
             if isHttps:
-                nginxConf += "\t\tlisten 443 ssl;\n"
-                nginxConf += "\t\tssl_certificate /etc/nginx/ssl/server.crt;\n"
-                nginxConf += "\t\tssl_certificate_key /etc/nginx/ssl/server.key;\n"
+                nginxConf += "\tlisten 443 ssl;\n"
+                nginxConf += "\tssl_certificate /etc/nginx/ssl/server.crt;\n"
+                nginxConf += "\tssl_certificate_key /etc/nginx/ssl/server.key;\n"
             # http
             else:
-                nginxConf += "\t\tlisten 80;\n"
+                nginxConf += "\tlisten 80;\n"
             # main location
-            nginxConf += "\t\tlocation %s {\n" % (
+            nginxConf += "\tlocation %s {\n" % (
                 "/%s" % parseRoute.path.lstrip("/")
             )
             # upstream
             if config.get("type", None) == "upstream":
                 for app in apps:
                     if app.config.getName() == config.get("upstream", None):
-                        ipAddress = app.web.docker.getIpAddress()
-                        nginxConf += "\t\t\tproxy_set_header Forwarded \"for=$remote_addr; proto=$scheme\";\n"
-                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
-                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
-                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
-                        nginxConf += "\t\t\tproxy_pass http://%s;\n" % (
-                            ipAddress
-                        )
+                        # get app specific nginx config
+                        nginxConf += str(app.docker.getProvisioner().generateNginxConfig())
                         break
                 # redirects
                 redirectPaths = config.get("redirects", {}).get("paths", {})
                 if redirectPaths:
                     for location, redirectConfig in redirectPaths.items():
-                        nginxConf += "\t\t}\n"
-                        nginxConf += "\t\tlocation %s {\n" % (
+                        nginxConf += "\t}\n"
+                        nginxConf += "\tlocation %s {\n" % (
                             location
                         )
-                        nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
+                        nginxConf += "\t\treturn 301 %s$request_uri;\n" % (
                             redirectConfig.get("to", "/")
                         )
 
             # redirect
             elif config.get("type", None) == "redirect":
-                nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
+                nginxConf += "\t\treturn 301 %s$request_uri;\n" % (
                     config.get("to", "/").replace(
                         self.ROUTE_DOMAIN_REPLACE,
                         str(projectDomains[0])
                     )
                 )
             # end server block
-            nginxConf += "\t\t}\n"
             nginxConf += "\t}\n"
+            nginxConf += "}\n"
 
         return nginxConf
 

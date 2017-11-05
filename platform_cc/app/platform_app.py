@@ -6,7 +6,6 @@ import collections
 import docker
 from config.platform_app_config import PlatformAppConfig
 from platform_docker import PlatformDocker
-from platform_web import PlatformWeb
 
 class PlatformApp:
 
@@ -24,7 +23,6 @@ class PlatformApp:
         )
         self.logger = logger
         self.logIndent = 0
-        self.web = PlatformWeb(self)
 
     def buildServiceRelationships(self):
         """ Build service relationship list. """
@@ -109,7 +107,6 @@ class PlatformApp:
         self.docker.relationships = self.buildServiceRelationships()
         self.docker.start()
         self.docker.logIndent -= 1
-        self.web.start()
 
     def stop(self):
         """ Stop app. """
@@ -125,7 +122,6 @@ class PlatformApp:
         self.docker.logIndent += 1
         self.docker.stop()
         self.docker.logIndent -= 1
-        self.web.stop()
 
     def provision(self):
         """ Provision app and run build hooks. """
