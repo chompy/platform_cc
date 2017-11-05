@@ -230,7 +230,7 @@ class PlatformProject:
 
         return nginxConf
 
-    def outputInfo(self, services = True, applications = True):
+    def outputInfo(self, services = True, applications = True, routes = True):
         """ Output information about project. """
         if not self.logger: return
 
@@ -257,16 +257,35 @@ class PlatformProject:
         # display info about applications
         if applications:
             tableData = [
-                ["Name", "Type", "Status", "IP Address (Web)"]
+                ["Name", "Type", "Status", "IP Address"]
             ]
             for app in self.getApplications():
                 tableData.append([
                     app.config.getName(),
                     app.config.getType(),
                     app.docker.status(),
-                    app.web.docker.getIpAddress() or "n/a"
+                    app.docker.getIpAddress() or "n/a"
                 ])
             table = AsciiTable(tableData, "Applications")
+            self.logger.command.line(table.table)
+            self.logger.command.line("")
+
+        # display info about routes
+        if routes:
+            tableData = [
+                ["Route", "Type", "Upstream / Redirect", "Original Url"]
+            ]
+            for route, routeConfig in self.getRouterConfig().items():
+                to = routeConfig.get("to", "n/a")
+                if routeConfig.get("type", "n/a") == "upstream":
+                    to = routeConfig.get("upstream", "n/a")
+                tableData.append([
+                    route,
+                    routeConfig.get("type", "n/a"),
+                    to,
+                    routeConfig.get("original_url", "")
+                ])
+            table = AsciiTable(tableData, "Routes")
             self.logger.command.line(table.table)
             self.logger.command.line("")
 
