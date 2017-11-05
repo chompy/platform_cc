@@ -24,7 +24,7 @@ class PlatformWeb:
     def generateNginxConfig(self):
         """ Generate nginx config file for application. """
         baseNginxConfig = self.docker.getProvisioner().config.get("web_conf", "")
-        return baseNginxConfig.replace(\
+        return baseNginxConfig.replace(
             "{{APP_WEB}}",
             self.app.docker.getProvisioner().generateNginxConfig()
         )

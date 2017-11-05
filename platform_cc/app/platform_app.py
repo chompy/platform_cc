@@ -12,10 +12,10 @@ class PlatformApp:
 
     """ Base class for application. """
 
-    def __init__(self, projectHash, appPath = "", services = [], projectVars = {}, logger = None):
+    def __init__(self, projectHash, appPath = "", services = [], projectVars = {}, routerConfig = {}, logger = None):
         self.services = services
         self.projectVars = projectVars
-        self.config = PlatformAppConfig(projectHash, appPath, projectVars)
+        self.config = PlatformAppConfig(projectHash, appPath, projectVars, routerConfig)
         self.docker = PlatformDocker(
             self.config,
             "%s_app" % self.config.getName(),
@@ -104,6 +104,7 @@ class PlatformApp:
                 "Starting main application container.",
                 self.logIndent + 1
             )
+        
         self.docker.logIndent += 1
         self.docker.relationships = self.buildServiceRelationships()
         self.docker.start()

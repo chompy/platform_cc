@@ -68,6 +68,17 @@ class PlatformDocker:
         """ Get project variables. """
         return self.config.getVariables()
 
+    def getNetwork(self):
+        """ Get docker network for container. """
+        try:
+            network = self.dockerClient.networks.get(self.networkId)
+        except docker.errors.NotFound:
+            network = self.dockerClient.networks.create(
+                self.networkId,
+                driver="bridge"
+            )
+        return network
+
     def getEnvironmentVariables(self):
         """ Get environment variables to use with container. """
         projVars = self.getVariables()
@@ -80,10 +91,11 @@ class PlatformDocker:
             "PLATFORM_ENVIRONMENT" : "",
             "PLATFORM_PROJECT" : self.containerId,
             "PLATFORM_RELATIONSHIPS" : base64.b64encode(json.dumps(self.relationships)),
-            "PLATFORM_ROUTES" : "", # TODO
+            "PLATFORM_ROUTES" : base64.b64encode(json.dumps(self.config.getRouterConfig())),
             "PLATFORM_TREE_ID" : "",
             "PLATFORM_VARIABLES" : base64.b64encode(json.dumps(projVars)),
-            "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy()
+            "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy(),
+            "TRUSTED_PROXIES" : "172.0.0.0/8"
         }
         envVars.update(self.getProvisioner().getEnvironmentVariables())
         varConf = {}
@@ -100,14 +112,7 @@ class PlatformDocker:
                 self.logIndent
             )
         # get network for docker container
-        network = None
-        try:
-            network = self.dockerClient.networks.get(self.networkId)
-        except docker.errors.NotFound:
-            network = self.dockerClient.networks.create(
-                self.networkId,
-                driver="bridge"
-            )
+        network = self.getNetwork()
         # start container
         container = None
         try:

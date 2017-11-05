@@ -31,6 +31,9 @@ class PlatformConfig:
     def getVariables(self):
         return {}
 
+    def getRouterConfig(self):
+        return {}
+
     def getEntropy(self):
         return hashlib.sha256(
             self.projectHash + self.ENTROPY_SALT

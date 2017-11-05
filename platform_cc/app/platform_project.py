@@ -26,6 +26,7 @@ class PlatformProject:
     HASH_SECRET = "4bcc181ab1f9fcc64a8c935686b55ca794e76d63"
     PLATFORM_ROUTES_PATH = ".platform/routes.yaml"
     ROUTE_DOMAIN_REPLACE = "{default}"
+    ROUTE_INTERNAL_DOMAIN_DOT_REPLACE = "-"
 
     def __init__(self, projectPath = "", logger = None):
         self.projectPath = projectPath
@@ -73,20 +74,21 @@ class PlatformProject:
 
     def getApplications(self, withVars = True):
         """ Get all applications in project. """
+        routerConfig = self.getRouterConfig()
         services = self.getServices()
         topPlatformAppConfigPath = os.path.join(self.projectPath, PlatformAppConfig.PLATFORM_FILENAME)
         projectVars = {}
         if withVars:
             projectVars = self.vars.all()
         if os.path.exists(topPlatformAppConfigPath):
-            return [PlatformApp(self.projectHash, self.projectPath, services, projectVars, self.logger)]
+            return [PlatformApp(self.projectHash, self.projectPath, services, projectVars, routerConfig, self.logger)]
         apps = []
         for path in os.listdir(os.path.realpath(self.projectPath)):
             path = os.path.join(self.projectPath, path)
             if os.path.isdir(path):
                 platformAppConfigPath = os.path.join(path, PlatformAppConfig.PLATFORM_FILENAME)
                 if os.path.isfile(platformAppConfigPath):
-                    apps.append(PlatformApp(self.projectHash, self.projectPath, services, projectVars, self.logger))
+                    apps.append(PlatformApp(self.projectHash, self.projectPath, services, projectVars, routerConfig, self.logger))
         return apps
 
     def generateSshKey(self):
@@ -102,8 +104,18 @@ class PlatformProject:
             pubkey.exportKey('OpenSSH')
         )
 
-    def generateRouterConfig(self):
-        """ Generate vhost config for nginx router. """
+    def getProjectDomains(self):
+        """ Get domains to use for this project. """
+        projectDomains = self.vars.get(
+            "project:domains"
+        )
+        projectDomains = projectDomains.strip().lower().split(",") if projectDomains else []
+        projectDomains += [self.projectHash[:6]]
+        return projectDomains
+
+    def getRouterConfig(self, redirects = False):
+        """ Parse routes.yaml config. """
+        # open routes.yaml
         routeYamlPath = os.path.join(
             self.projectPath,
             self.PLATFORM_ROUTES_PATH
@@ -111,79 +123,117 @@ class PlatformProject:
         routes = {}
         if os.path.exists(routeYamlPath):
             with open(routeYamlPath, "r") as f:
-                routes = yaml.load(f, Loader=yamlordereddictloader.Loader)
-        projectDomains = self.vars.get(
-            "project:domains"
-        )
-        projectDomains = projectDomains.strip().lower().split(",") if projectDomains else []
-        projectDomains += ["%s.local" % self.projectHash[:6]]
-        serverList = collections.OrderedDict()
+                routes = yaml.load(f, Loader=yamlordereddictloader.Loader) 
+        # generate config
+        output = collections.OrderedDict()
+        projectDomains = self.getProjectDomains()
         for routeSyntax in routes:
             parseRouteSyntax = urlparse(routeSyntax)
             isHttps = parseRouteSyntax.scheme == "https"
-            serverKey = "%s:%s" % (
-                "https" if isHttps else "http",
-                parseRouteSyntax.hostname
-            )
-            if not serverKey in serverList:
-                serverList[serverKey] = {
-                    "scheme" :              "https" if isHttps else "http",
-                    "hostname" :            parseRouteSyntax.hostname,
-                    "paths" :               {}
-                }
-            if parseRouteSyntax.path not in serverList[serverKey]["paths"]:
-                serverList[serverKey]["paths"][parseRouteSyntax.path] = {
-                    "type" :                routes[routeSyntax].get("type", "upstream"),
-                    "upstream" :            routes[routeSyntax].get("upstream", "",),
-                    "to" :                  routes[routeSyntax].get("to", "")
-                }
-        
-        nginxConf = ""
-        for serverName in serverList:
-            nginxConf += "\tserver {\n"
-            hostnames = []
+            serverKeys = [
+                "%s://%s" % (
+                    "https" if isHttps else "http",
+                    parseRouteSyntax.hostname
+                )
+            ]
+            # replace {DEFAULT} with project:domains
             for projectDomain in projectDomains:
-                hostname = serverList[serverName]["hostname"].replace(
+                serverKey = serverKeys[0].replace(
                     self.ROUTE_DOMAIN_REPLACE,
                     projectDomain
                 )
-                if hostname not in hostnames:
-                    hostnames.append(hostname)
-            nginxConf += "\t\tserver_name %s;\n" % (
-                str(" ".join(hostnames))
-            )
-            
-            # TODO HTTPS
-            nginxConf += "\t\tlisten 80;\n"
-            paths = serverList[serverName]["paths"]
-            for path in paths:
-                nginxConf += "\t\tlocation %s {\n" % (
-                    path if path else "/"
+                if not serverKey in serverKeys:
+                    serverKeys.append(serverKey)
+            # generate internal domains for all server keys
+            generatedServerKeys = []
+            for serverKey in serverKeys:
+                parseServerKey = urlparse(serverKey)
+                generatedServerKeys.append(
+                    "%s://%s%s%s" % (
+                        "https" if parseServerKey.scheme == "https" else "http",
+                        parseServerKey.hostname.replace(".", self.ROUTE_INTERNAL_DOMAIN_DOT_REPLACE),
+                        self.ROUTE_INTERNAL_DOMAIN_DOT_REPLACE,
+                        self.projectHash[:6]
+                    )
                 )
-                if paths[path]["type"] == "upstream":
-                    upstream = paths[path]["upstream"].split(":")[0]
-                    for app in self.getApplications():
-                        if app.config.getName() == upstream:
-                            import json
-                            ipAddress = app.web.docker.getIpAddress()
-                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
-                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
-                            nginxConf += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
-                            nginxConf += "\t\t\tproxy_pass http://%s;\n" % (
-                                ipAddress
-                            )
-                            break
-                elif paths[path]["type"] == "redirect":
-                    to = paths[path].get("to", None)
-                    if to:
-                        nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
-                            to.replace(
-                                self.ROUTE_DOMAIN_REPLACE,
-                                str(projectDomains[0])
-                            )
+            for serverKey in serverKeys + generatedServerKeys:
+                if not serverKey in output:
+                    output[serverKey] = {
+                        "type" :                routes[routeSyntax].get("type", "upstream"),
+                        "upstream" :            routes[routeSyntax].get("upstream", "",).split(":")[0],
+                        "to" :                  routes[routeSyntax].get("to", ""),
+                        "cache" :               routes[routeSyntax].get("cache", {}),
+                        "ssi" :                 routes[routeSyntax].get("ssi", {}),
+                        "original_url" :        routeSyntax,
+                        "redirects" :           routes[routeSyntax].get("redirects", {}) if redirects else {},
+                        "is_platform_cc" :      True
+                    }
+        return output
+
+    def generateRouterNginxConfig(self):
+        """ Generate vhost config for nginx router. """
+        apps = self.getApplications()
+        projectDomains = self.getProjectDomains()
+        nginxConf = ""
+        for route, config in self.getRouterConfig(True).items():
+            
+            parseRoute = urlparse(route)
+            isHttps = parseRoute.scheme == "https"
+
+            nginxConf += "\tserver {\n"
+            # server name
+            nginxConf += "\t\tserver_name %s;\n" % (
+                parseRoute.hostname
+            )
+            # https
+            if isHttps:
+                nginxConf += "\t\tlisten 443 ssl;\n"
+                nginxConf += "\t\tssl_certificate /etc/nginx/ssl/server.crt;\n"
+                nginxConf += "\t\tssl_certificate_key /etc/nginx/ssl/server.key;\n"
+            # http
+            else:
+                nginxConf += "\t\tlisten 80;\n"
+            # main location
+            nginxConf += "\t\tlocation %s {\n" % (
+                "/%s" % parseRoute.path.lstrip("/")
+            )
+            # upstream
+            if config.get("type", None) == "upstream":
+                for app in apps:
+                    if app.config.getName() == config.get("upstream", None):
+                        ipAddress = app.web.docker.getIpAddress()
+                        nginxConf += "\t\t\tproxy_set_header Forwarded \"for=$remote_addr; proto=$scheme\";\n"
+                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
+                        nginxConf += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
+                        nginxConf += "\t\t\tproxy_pass http://%s;\n" % (
+                            ipAddress
                         )
-                nginxConf += "\t\t}\n"
+                        break
+                # redirects
+                redirectPaths = config.get("redirects", {}).get("paths", {})
+                if redirectPaths:
+                    for location, redirectConfig in redirectPaths.items():
+                        nginxConf += "\t\t}\n"
+                        nginxConf += "\t\tlocation %s {\n" % (
+                            location
+                        )
+                        nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
+                            redirectConfig.get("to", "/")
+                        )
+
+            # redirect
+            elif config.get("type", None) == "redirect":
+                nginxConf += "\t\t\treturn 301 %s$request_uri;\n" % (
+                    config.get("to", "/").replace(
+                        self.ROUTE_DOMAIN_REPLACE,
+                        str(projectDomains[0])
+                    )
+                )
+            # end server block
+            nginxConf += "\t\t}\n"
             nginxConf += "\t}\n"
+
         return nginxConf
 
     def outputInfo(self, services = True, applications = True):

@@ -52,7 +52,7 @@ class PlatformRouter:
             container = self.docker.getContainer()
             if not container: return
             self.docker.getProvisioner().copyStringToFile(
-                project.generateRouterConfig(),
+                project.generateRouterNginxConfig(),
                 "/router/project_%s.conf" % (
                     project.projectHash
                 )

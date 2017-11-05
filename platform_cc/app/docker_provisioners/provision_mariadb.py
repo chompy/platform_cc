@@ -94,7 +94,6 @@ class DockerProvision(DockerProvisionBase):
             })
         return relationships
 
-
     def healthcheck(self):
         if not self.container or not self.container.status == "running":
             return False

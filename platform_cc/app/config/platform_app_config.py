@@ -17,7 +17,7 @@ class PlatformAppConfig(PlatformConfig):
 
     PLATFORM_FILENAME = ".platform.app.yaml"
 
-    def __init__(self, projectHash, appPath = "", projectVars = {}):
+    def __init__(self, projectHash, appPath = "", projectVars = {}, routerConfig = {}):
         PlatformConfig.__init__(self, projectHash)
         self.appPath = appPath
         self._config = {}
@@ -28,6 +28,7 @@ class PlatformAppConfig(PlatformConfig):
         with open(pathToPlatformYaml, "r") as f:
             self._config = yaml.load(f, Loader=yamlordereddictloader.Loader)
         self.projectVars = projectVars
+        self.routerConfig = routerConfig
 
     def getName(self):
         return self._config.get("name", "default")
@@ -71,6 +72,9 @@ class PlatformAppConfig(PlatformConfig):
             self._config.get("variables", {})
         )
         return allVars
+
+    def getRouterConfig(self):
+        return self.routerConfig
 
     def getWeb(self):
         return self._config.get("web", {})
