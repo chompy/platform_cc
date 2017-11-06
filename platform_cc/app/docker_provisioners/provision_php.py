@@ -159,7 +159,7 @@ class DockerProvision(DockerProvisionBase):
 
             # passthru
             passthru = locations[path].get("passthru", False)
-            if passthru:
+            if passthru and not locations[path].get("scripts", False):
                 if passthru == True: passthru = "/index.php"
                 appNginxConf += "\t\t\tlocation ~ /%s {\n" % passthru.strip("/")
                 appNginxConf += "\t\t\t\tallow all;\n"
