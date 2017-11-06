@@ -38,7 +38,7 @@ web_conf: |
         server {
             listen 80;
             server_name localhost;
-            {{APP_WEB}}
+            include /etc/nginx/app.conf;
         }
     }
 

@@ -191,7 +191,7 @@ class DockerProvision(DockerProvisionBase):
             if rules:
                 for ruleRegex in rules:
                     rule = rules[ruleRegex]
-                    appNginxConf += "\tlocation ~ %s {\n" % (ruleRegex)
+                    appNginxConf += "\t\t\tlocation ~ %s {\n" % (ruleRegex)
 
                     # allow
                     if not rule.get("allow", True):
@@ -226,7 +226,7 @@ class DockerProvision(DockerProvisionBase):
                             appNginxConf += "\t\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
                     else:
                         appNginxConf += "\t\t\t\t\tdeny all;\n"
-                    appNginxConf += "\\t\tt\t}\n"
+                    appNginxConf += "\t\t\t\t}\n"
 
                     appNginxConf += "\t\t\t}\n"
 

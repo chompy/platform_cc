@@ -144,12 +144,15 @@ class PlatformProject:
                 )
                 if not serverKey in serverKeys:
                     serverKeys.append(serverKey)
+            if self.ROUTE_DOMAIN_REPLACE in routeSyntax:
+                serverKeys.remove(serverKeys[0])
             # generate internal domains for all server keys
             generatedServerKeys = []
             for serverKey in serverKeys:
                 parseServerKey = urlparse(serverKey)
+                if parseServerKey.hostname == self.projectHash[:6]: continue
                 generatedServerKeys.append(
-                    "%s://%s%s%s" % (
+                    "%s://%s%s%s.*" % (
                         "https" if parseServerKey.scheme == "https" else "http",
                         parseServerKey.hostname.replace(".", self.ROUTE_INTERNAL_DOMAIN_DOT_REPLACE),
                         self.ROUTE_INTERNAL_DOMAIN_DOT_REPLACE,
@@ -176,7 +179,6 @@ class PlatformProject:
         projectDomains = self.getProjectDomains()
         nginxConf = ""
         for route, config in self.getRouterConfig(True).items():
-            
             parseRoute = urlparse(route)
             isHttps = parseRoute.scheme == "https"
 
@@ -201,8 +203,14 @@ class PlatformProject:
             if config.get("type", None) == "upstream":
                 for app in apps:
                     if app.config.getName() == config.get("upstream", None):
-                        # get app specific nginx config
-                        nginxConf += str(app.docker.getProvisioner().generateNginxConfig())
+                        ipAddress = app.web.docker.getIpAddress()
+                        nginxConf += "\t\tproxy_set_header Forwarded \"for=$remote_addr; proto=$scheme\";\n"
+                        nginxConf += "\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                        nginxConf += "\t\tproxy_set_header X-Forwarded-Server $host;\n"
+                        nginxConf += "\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
+                        nginxConf += "\t\tproxy_pass http://%s;\n" % (
+                            ipAddress
+                        )
                         break
                 # redirects
                 redirectPaths = config.get("redirects", {}).get("paths", {})
