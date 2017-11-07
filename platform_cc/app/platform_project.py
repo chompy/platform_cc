@@ -353,5 +353,3 @@ class PlatformProject:
             varsVolume.remove()
         except docker.errors.NotFound:
             pass
-
-        

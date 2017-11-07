@@ -6,6 +6,7 @@ import tarfile
 import time
 import io
 import hashlib
+import base36
 import yaml
 
 class DockerProvisionBase:
@@ -162,7 +163,12 @@ class DockerProvisionBase:
         """ Generate unique id based on configuration. """
         hashStr = self.image
         hashStr += str(self.appConfig.getBuildFlavor())
-        return hashlib.sha256(hashStr).hexdigest()
+        return base36.dumps(
+            int(
+                hashlib.sha256(hashStr).hexdigest(),
+                16
+            )
+        )
 
     def generateNginxConfig(self):
         """ Generate Nginx config to access this app/service. """

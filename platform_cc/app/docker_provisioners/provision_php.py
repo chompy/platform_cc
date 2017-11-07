@@ -2,6 +2,7 @@ import os
 import difflib
 import io
 import hashlib
+import base36
 import docker
 from provision_base import DockerProvisionBase
 
@@ -110,20 +111,17 @@ class DockerProvision(DockerProvisionBase):
         return volumes
 
     def getUid(self):
-        """ Generate unique id based on configuration. """
+        # generate uid to be unique to the project/app (rather then to container) since
+        # 'build' hooks are committed
         hashStr = self.image
-        hashStr += str(self.appConfig.getBuildFlavor())
-        hashStr += str(self.appConfig.getBuildHooks())
-        extensions = self.appConfig.getRuntime().get("extensions", [])
-        extensions.sort()
-        extensionConfigs = self.config.get("extensions", None)        
-        for extension in extensions:
-            if type(extension) is not str: continue # TODO accept dict with additional configs?
-            extensionConfig = extensionConfigs.get(extension, {})
-            if not extensionConfig: continue
-            if extensionConfig.get("core", False): continue
-            hashStr += extension
-        return hashlib.sha256(hashStr).hexdigest()
+        hashStr += self.appConfig.projectHash
+        hashStr += self.appConfig.getName()
+        return base36.dumps(
+            int(
+                hashlib.sha256(hashStr).hexdigest(),
+                16
+            )
+        )
 
     def generateNginxConfig(self):
         webConfig = self.appConfig.getWeb()

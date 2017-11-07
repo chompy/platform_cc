@@ -248,17 +248,3 @@ class PlatformDocker:
                     )                
             except docker.errors.NotFound:
                 pass
-        # delete image (maybe not...could be used by other projects/apps, decide later)
-        """imageName = "%s:%s" % (self.DOCKER_COMMIT_REPO, self.getTag())
-        try:
-            self.dockerClient.images.remove(
-                image=imageName
-            )
-            if self.logger:
-                self.logger.logEvent(
-                    "Delete image '%s.'" % imageName,
-                    self.logIndent
-                )
-        except docker.errors.ImageNotFound:
-            pass
-        """

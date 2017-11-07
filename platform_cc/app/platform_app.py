@@ -200,3 +200,16 @@ class PlatformApp:
         self.stop()
         # purge all docker instances
         self.docker.purge()
+        # delete app image
+        imageName = "%s:%s" % (self.docker.DOCKER_COMMIT_REPO, self.docker.getTag())
+        try:
+            self.docker.dockerClient.images.remove(
+                image=imageName
+            )
+            if self.logger:
+                self.logger.logEvent(
+                    "Delete image '%s.'" % imageName,
+                    self.docker.logIndent
+                )
+        except docker.errors.ImageNotFound:
+            pass

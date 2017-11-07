@@ -8,7 +8,8 @@ provision:
     -
         desc: "Install additional dependencies."
         cmd: |
-            apt-get install -y rsync git unzip python-pip python-dev ruby ruby-dev gem nodejs npm libyaml-dev
+            apt-get install -y rsync git unzip python-pip python-dev ruby ruby-dev \
+                gem nodejs npm libyaml-dev nano less
             apt-get clean
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
