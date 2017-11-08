@@ -104,7 +104,7 @@ class PlatformDocker:
             envVars[key.replace("env:", "").strip().upper()] = projVars[key]
         return envVars
 
-    def start(self, cmd = "", ports = {}):
+    def start(self, cmd = "", ports = {}, extraHosts = {}):
         """ Start docker container. """
         if self.logger:
             self.logger.logEvent(
@@ -137,6 +137,7 @@ class PlatformDocker:
                         environment=self.getEnvironmentVariables(),
                         working_dir="/app",
                         hostname=self.containerId,
+                        extra_hosts=extraHosts,
                         stdin_open=True,
                         ports=ports
                     )

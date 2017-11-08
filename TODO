@@ -1,19 +1,17 @@
 TODO:
 
     - Application / PHP
-        - Allow setting php.ini from vars
-        - Install all default platform.sh extensions during provision
-        - Add support for more extensions (on going as needed)
         - Cron jobs
     - Web Handler / Nginx
-        - Improve app nginx conf
+        - Ongoing improvements and fixes
     - Router / Nginx
-        - Certificate generation? (probably just a self signed ssl certificate for now)
-            - LetsEncrypt?
+        - Ongoing improvements and fixs
+        - LetsEncrypt certificates?
     - Service / Mysql
-        - Configure endpoints with appropiate privileges.
+        - Configure endpoints with appropiate privileges
     - Service / Solr
         - Configure container
         - Configure cores
     - Commands
-        - Force re-provision command
+        - 'project:restart' command
+        - 'project:provision --build-hooks-only'?

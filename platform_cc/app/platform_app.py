@@ -2,6 +2,7 @@ import os
 import yaml
 import yamlordereddictloader
 import base64
+import json
 import collections
 import docker
 from config.platform_app_config import PlatformAppConfig
@@ -107,7 +108,16 @@ class PlatformApp:
         
         self.docker.logIndent += 1
         self.docker.relationships = self.buildServiceRelationships()
-        self.docker.start()
+        
+        # get hosts file
+        extraHosts = self.projectVars.get("project:hosts_file")
+        if extraHosts:
+            extraHosts = base64.b64decode(extraHosts)
+            extraHosts = json.loads(extraHosts)
+        else:
+            extraHosts = {}
+        
+        self.docker.start(None, {}, extraHosts)
         self.docker.logIndent -= 1
         self.web.start()
 
