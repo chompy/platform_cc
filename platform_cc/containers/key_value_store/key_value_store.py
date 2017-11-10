@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import sys
 import os
 import json
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     # LIST COMMAND
     if args.action == "list":
-        print json.dumps(list())
+        print(json.dumps(list()))
         sys.exit()
 
     # for all other commands a key is required
@@ -103,7 +104,7 @@ if __name__ == '__main__':
 
     # GET COMMAND
     if args.action == "get":
-        print get(args.key)
+        print(get(args.key))
 
     # DELETE COMMAND
     elif args.action == "delete":
