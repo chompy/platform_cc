@@ -1,8 +1,8 @@
 pyaml
 docker>=2.5
-pycrypto
 cleo
 base36
 boto3
 yamlordereddictloader
 terminaltables
+future

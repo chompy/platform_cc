@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import docker
-from config.platform_router_config import PlatformRouterConfig
-from platform_docker import PlatformDocker
+from .config.platform_router_config import PlatformRouterConfig
+from .platform_docker import PlatformDocker
 
 class PlatformRouter:
     """ Provide router to route request to specific app. """

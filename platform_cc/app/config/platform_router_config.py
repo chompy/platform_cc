@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import os
 import yaml
 import yamlordereddictloader
-from platform_config import PlatformConfig
+from .platform_config import PlatformConfig
 
 class PlatformRouterConfig(PlatformConfig):
 

@@ -49,7 +49,15 @@ class PlatformVars:
                 self.CONTAINER_CMD,
                 action.strip().lower(),
                 (" -k '%s'" % (self._sanitizeKey(key))) if key else "",
-                (" -v '%s'" % (base64.b64encode(value))) if value else ""
+                (
+                    " -v '%s'" % (
+                        base64.b64encode(
+                            bytes(
+                                str(value).encode("utf-8")
+                            )
+                        ).decode("utf-8")
+                    )
+                ) if value else ""
             ),
             volumes={
                 dockerVolumeKey : {
@@ -84,7 +92,7 @@ class PlatformVars:
             key
         )
         if results:
-            results = base64.b64decode(results)
+            results = base64.b64decode(results).decode("utf-8")
         return results
 
     def delete(self, key):
@@ -98,10 +106,12 @@ class PlatformVars:
             "list"
         )
         if results:
-            results = json.loads(results)
+            results = json.loads(
+                results.decode("utf-8")
+            )
             if results:
                 for key in results:
                     results[key] = base64.b64decode(
                         results[key]
-                    )
+                    ).decode("utf-8")
         return results

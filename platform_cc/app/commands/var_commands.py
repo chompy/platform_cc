@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import json
 from cleo import Command
-from app.commands import getProject
+from . import getProject
 from app.platform_project import PlatformProject
 
 class VarSet(Command):
@@ -30,8 +32,10 @@ class VarGet(Command):
     """
 
     def handle(self):
-        print getProject(self).vars.get(
-            self.argument("key")
+        print(
+            getProject(self).vars.get(
+                self.argument("key")
+            )
         )
 
 class VarDelete(Command):
@@ -57,4 +61,4 @@ class VarList(Command):
     """
 
     def handle(self):
-        print json.dumps(getProject(self).vars.all())
+        print(json.dumps(getProject(self).vars.all()))

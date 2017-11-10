@@ -1,5 +1,6 @@
-from config.platform_service_config import PlatformServiceConfig
-from platform_docker import PlatformDocker
+from __future__ import absolute_import
+from .config.platform_service_config import PlatformServiceConfig
+from .platform_docker import PlatformDocker
 
 class PlatformService:
 

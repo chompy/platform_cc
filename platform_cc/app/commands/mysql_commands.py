@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from cleo import Command
 from app.commands import getProject
@@ -11,7 +12,7 @@ def findMysqlService(command):
         if sv.config.getType()[:5] == "mysql" and (sv.config.getName() == serviceName or not serviceName):
             service = sv
     if not service:
-        print "ERROR: MySQL service '%s' does not exist." % serviceName
+        print("ERROR: MySQL service '%s' does not exist." % serviceName)
     return service
 
 class MysqlSql(Command):
@@ -34,7 +35,7 @@ class MysqlSql(Command):
         password = service.docker.getProvisioner().getPassword()
         if dumpPath:
             if not os.path.exists(dumpPath):
-                print "ERROR: SQL dump at '%s' does not exists." % dumpPath
+                print("ERROR: SQL dump at '%s' does not exists." % dumpPath)
                 return
             service.docker.getProvisioner().copyFile(
                 dumpPath,

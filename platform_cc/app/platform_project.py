@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import time
 import hashlib
@@ -7,14 +8,18 @@ import yamlordereddictloader
 import collections
 import docker
 import time
-from urlparse import urlparse
-from Crypto.PublicKey import RSA
+import random
+
+from future.standard_library import install_aliases
+install_aliases()
+from urllib.parse import urlparse
+
 from terminaltables import AsciiTable
-from config.platform_service_config import PlatformServiceConfig
-from platform_service import PlatformService
-from platform_app import PlatformApp
-from config.platform_app_config import PlatformAppConfig
-from platform_vars import PlatformVars
+from .config.platform_service_config import PlatformServiceConfig
+from .platform_service import PlatformService
+from .platform_app import PlatformApp
+from .config.platform_app_config import PlatformAppConfig
+from .platform_vars import PlatformVars
 
 class ProjectNotFoundException(Exception):
     pass
@@ -39,7 +44,7 @@ class PlatformProject:
             self.projectHash =  base36.dumps(
                 int(
                     hashlib.sha256(
-                        self.HASH_SECRET + str(os.getuid()) + str(time.time())
+                        str(self.HASH_SECRET + str(random.random()) + str(time.time())).encode("utf-8")
                     ).hexdigest(),
                     16
                 )
@@ -90,19 +95,6 @@ class PlatformProject:
                 if os.path.isfile(platformAppConfigPath):
                     apps.append(PlatformApp(self.projectHash, self.projectPath, services, projectVars, routerConfig, self.logger))
         return apps
-
-    def generateSshKey(self):
-        """ Generate SSH key for use inside containers. """
-        key = RSA.generate(2048)
-        self.vars.set(
-            "private_key",
-            key.exportKey('PEM')
-        )
-        pubkey = key.publickey()
-        self.vars.set(
-            "public_key",
-            pubkey.exportKey('OpenSSH')
-        )
 
     def getProjectDomains(self):
         """ Get domains to use for this project. """

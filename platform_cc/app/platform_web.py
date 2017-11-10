@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import os
 import yaml
 import docker
-from config.platform_config import PlatformConfig
-from platform_docker import PlatformDocker
+from .config.platform_config import PlatformConfig
+from .platform_docker import PlatformDocker
 
 class PlatformWeb:
 

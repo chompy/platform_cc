@@ -1,9 +1,9 @@
+from __future__ import absolute_import
 import os
 import yaml
 import yamlordereddictloader
-import hashlib
 import time
-from platform_config import PlatformConfig
+from .platform_config import PlatformConfig
 
 class PlatformAppConfig(PlatformConfig):
 

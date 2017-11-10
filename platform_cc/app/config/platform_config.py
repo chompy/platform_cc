@@ -36,5 +36,5 @@ class PlatformConfig:
 
     def getEntropy(self):
         return hashlib.sha256(
-            self.projectHash + self.ENTROPY_SALT
+            str(self.projectHash + self.ENTROPY_SALT).encode("utf-8")
         ).hexdigest()

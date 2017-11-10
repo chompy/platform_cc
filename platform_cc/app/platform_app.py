@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import yaml
 import yamlordereddictloader
@@ -5,9 +6,9 @@ import base64
 import json
 import collections
 import docker
-from config.platform_app_config import PlatformAppConfig
-from platform_docker import PlatformDocker
-from platform_web import PlatformWeb
+from .config.platform_app_config import PlatformAppConfig
+from .platform_docker import PlatformDocker
+from .platform_web import PlatformWeb
 
 class PlatformApp:
 

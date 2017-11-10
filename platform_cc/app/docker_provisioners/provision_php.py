@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import os
 import difflib
 import io
 import hashlib
 import base36
 import docker
-from provision_base import DockerProvisionBase
+from .provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
 
@@ -118,7 +119,7 @@ class DockerProvision(DockerProvisionBase):
         hashStr += self.appConfig.getName()
         return base36.dumps(
             int(
-                hashlib.sha256(hashStr).hexdigest(),
+                hashlib.sha256(hashStr.encode("utf-8")).hexdigest(),
                 16
             )
         )

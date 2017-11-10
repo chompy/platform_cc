@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import difflib
 import io
@@ -5,7 +6,7 @@ import hashlib
 import docker
 import json
 import time
-from provision_base import DockerProvisionBase
+from .provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
 
@@ -15,7 +16,7 @@ class DockerProvision(DockerProvisionBase):
 
     def getPassword(self, username = "root"):
         return hashlib.sha256(
-            self.PASSWORD_SALT + self.appConfig.getEntropy() + username
+            str(self.PASSWORD_SALT + self.appConfig.getEntropy() + username).encode("utf-8")
         ).hexdigest()
 
     def runtime(self):

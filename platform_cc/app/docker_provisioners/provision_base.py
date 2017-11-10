@@ -165,7 +165,7 @@ class DockerProvisionBase:
         hashStr += str(self.appConfig.getBuildFlavor())
         return base36.dumps(
             int(
-                hashlib.sha256(hashStr).hexdigest(),
+                hashlib.sha256(str(hashStr).encode("utf-8")).hexdigest(),
                 16
             )
         )

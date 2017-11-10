@@ -4,7 +4,6 @@ import importlib
 import yaml
 import json
 import base64
-import hashlib
 
 class PlatformDocker:
 
@@ -90,10 +89,16 @@ class PlatformDocker:
             "PLATFORM_DOCUMENT_ROOT" : "/",
             "PLATFORM_ENVIRONMENT" : "",
             "PLATFORM_PROJECT" : self.containerId,
-            "PLATFORM_RELATIONSHIPS" : base64.b64encode(json.dumps(self.relationships)),
-            "PLATFORM_ROUTES" : base64.b64encode(json.dumps(self.config.getRouterConfig())),
+            "PLATFORM_RELATIONSHIPS" : base64.b64encode(
+                bytes(str(json.dumps(self.relationships)).encode("utf-8"))
+            ),
+            "PLATFORM_ROUTES" : base64.b64encode(
+                bytes(str(json.dumps(self.config.getRouterConfig())).encode("utf-8"))
+            ),
             "PLATFORM_TREE_ID" : "",
-            "PLATFORM_VARIABLES" : base64.b64encode(json.dumps(projVars)),
+            "PLATFORM_VARIABLES" : base64.b64encode(
+                bytes(str(json.dumps(projVars)).encode("utf-8"))
+            ),
             "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy(),
             "TRUSTED_PROXIES" : "172.0.0.0/8"
         }
