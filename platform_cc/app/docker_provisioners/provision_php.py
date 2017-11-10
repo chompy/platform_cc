@@ -5,6 +5,7 @@ import io
 import hashlib
 import base36
 import docker
+import sys
 from .provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
@@ -92,7 +93,15 @@ class DockerProvision(DockerProvisionBase):
 
     def getVolumes(self):
         volumes = DockerProvisionBase.getVolumes(self, "/app")
-        volumes[os.path.realpath(self.appConfig.appPath)] = {
+        appPath = os.path.realpath(self.appConfig.appPath)
+        # hack for docker toolbox for windows, use unix path
+        if sys.platform in ["msys", "win32"]:
+            appPath = appPath.split(":")
+            appPath = "/%s/%s" % (
+                appPath[0].lower(),
+                ("/".join(appPath[1].split("\\"))).lstrip("/")
+            )
+        volumes[appPath] = {
             "bind" : "/app",
             "mode" : "rw"
         }

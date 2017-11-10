@@ -4,6 +4,7 @@ import importlib
 import yaml
 import json
 import base64
+import sys
 
 class PlatformDocker:
 
@@ -230,7 +231,8 @@ class PlatformDocker:
         """ Grant user access to shell inside container. """
         container = self.getContainer()
         os.system(
-            "docker exec -i -t --user='%s' %s %s" % (
+            "%sdocker exec -i -t --user='%s' %s %s" % (
+                "winpty " if sys.platform in ["msys", "win32"] else "", # hack for windows
                 user,
                 self.containerId,
                 cmd

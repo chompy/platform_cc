@@ -94,7 +94,9 @@ class DockerProvisionBase:
             tarFileInfo.mtime = time.time()
             tar.addfile(
                 tarFileInfo,
-                io.BytesIO(stringData)
+                io.BytesIO(
+                    bytes(str(stringData).encode("ascii"))
+                )
             )
         tarData.seek(0)
         self.container.put_archive(
