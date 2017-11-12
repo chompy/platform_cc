@@ -6,6 +6,7 @@ TODO:
         - Ongoing improvements and fixes
     - Router / Nginx
         - Ongoing improvements and fixs
+        - Caching
         - LetsEncrypt certificates?
     - Service / Mysql
         - Configure endpoints with appropiate privileges

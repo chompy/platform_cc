@@ -106,7 +106,7 @@ class PlatformProject:
         return projectDomains
 
     def getRouterConfig(self, redirects = False):
-        """ Parse routes.yaml config. """
+        """ Parse routes.yaml config for this project. """
         # open routes.yaml
         routeYamlPath = os.path.join(
             self.projectPath,
@@ -116,10 +116,29 @@ class PlatformProject:
         if os.path.exists(routeYamlPath):
             with open(routeYamlPath, "r") as f:
                 routes = yaml.load(f, Loader=yamlordereddictloader.Loader) 
+
+        # get aliases
+        # route names that start with '.' are aliases
+        aliases = {}
+        for key, value in routes.items():
+            if type(value) is not dict:
+                continue
+            if key[0] == ".":
+                aliases[key[1:]] = value
+
         # generate config
         output = collections.OrderedDict()
         projectDomains = self.getProjectDomains()
-        for routeSyntax in routes:
+        for routeSyntax, routeConfig in routes.items():
+            # is alias, skip
+            if routeSyntax[0] == ".": continue
+            # config points to alias
+            if type(routeConfig) is str and routeConfig[0] == "*" and routeConfig[1:] in aliases:
+                routeConfig = aliases[routeConfig[1:]]
+            # route config should be a dictionary
+            if type(routeConfig) is not collections.OrderedDict:
+                continue
+            # get route key
             parseRouteSyntax = urlparse(routeSyntax)
             isHttps = parseRouteSyntax.scheme == "https"
             serverKeys = [
@@ -151,18 +170,45 @@ class PlatformProject:
                         self.projectHash[:6]
                     )
                 )
+            def getConfigItem(key, default):
+                value = routeConfig.get(key, default)
+                if not value:
+                    return value
+                if type(value) is str and value[0] == "*" and value[1:] in aliases:
+                    return aliases[value[1:]]
+                return value
             for serverKey in serverKeys + generatedServerKeys:
                 if not serverKey in output:
                     output[serverKey] = {
-                        "type" :                routes[routeSyntax].get("type", "upstream"),
-                        "upstream" :            routes[routeSyntax].get("upstream", "",).split(":")[0],
-                        "to" :                  routes[routeSyntax].get("to", ""),
-                        "cache" :               routes[routeSyntax].get("cache", {}),
-                        "ssi" :                 routes[routeSyntax].get("ssi", {}),
+                        "type" :                getConfigItem("type", "upstream"),
+                        "upstream" :            getConfigItem("upstream", "",).split(":")[0],
+                        "to" :                  getConfigItem("to", ""),
+                        "cache" :               getConfigItem("cache", {}),
+                        "ssi" :                 getConfigItem("ssi", {}),
                         "original_url" :        routeSyntax,
-                        "redirects" :           routes[routeSyntax].get("redirects", {}) if redirects else {},
+                        "redirects" :           getConfigItem("redirects", {}) if redirects else {},
                         "is_platform_cc" :      True
                     }
+        # setup http to https redirects for https routes that
+        # do not have a matching http rout
+        for routeKey in output.keys():
+            parsedRouteKey = urlparse(routeKey)
+            if parsedRouteKey.scheme != "https" :
+                continue
+            newRouteKey = "http://%s" % (
+                routeKey[8:]
+            )
+            output[newRouteKey] = {
+                "type" :                        "redirect",
+                "upstream" :                    "",
+                "to" :                          "https://$host",
+                "cache" :                       {},
+                "ssi" :                         {},
+                "original_url" :                "",
+                "redirects" :                   {},
+                "is_platform_cc" :              True
+            }
+
         return output
 
     def generateRouterNginxConfig(self):
@@ -227,7 +273,6 @@ class PlatformProject:
             # end server block
             nginxConf += "\t}\n"
             nginxConf += "}\n"
-
         return nginxConf
 
     def outputInfo(self, services = True, applications = True, routes = True):
@@ -279,6 +324,9 @@ class PlatformProject:
                 to = routeConfig.get("to", "n/a")
                 if routeConfig.get("type", "n/a") == "upstream":
                     to = routeConfig.get("upstream", "n/a")
+                parsedRouteKey = urlparse(route)
+                print(parsedRouteKey)
+                to = to.replace("$host", str(parsedRouteKey.hostname))
                 tableData.append([
                     route,
                     routeConfig.get("type", "n/a"),
