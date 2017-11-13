@@ -190,8 +190,8 @@ class PlatformProject:
                         "is_platform_cc" :      True
                     }
         # setup http to https redirects for https routes that
-        # do not have a matching http rout
-        for routeKey in output.keys():
+        # do not have a matching http route
+        for routeKey in list(output.keys()):
             parsedRouteKey = urlparse(routeKey)
             if parsedRouteKey.scheme != "https" :
                 continue
