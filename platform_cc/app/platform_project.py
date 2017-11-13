@@ -204,7 +204,7 @@ class PlatformProject:
                 "to" :                          "https://$host",
                 "cache" :                       {},
                 "ssi" :                         {},
-                "original_url" :                "",
+                "original_url" :                output[routeKey]["original_url"],
                 "redirects" :                   {},
                 "is_platform_cc" :              True
             }
