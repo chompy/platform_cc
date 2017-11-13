@@ -325,7 +325,6 @@ class PlatformProject:
                 if routeConfig.get("type", "n/a") == "upstream":
                     to = routeConfig.get("upstream", "n/a")
                 parsedRouteKey = urlparse(route)
-                print(parsedRouteKey)
                 to = to.replace("$host", str(parsedRouteKey.hostname))
                 tableData.append([
                     route,
