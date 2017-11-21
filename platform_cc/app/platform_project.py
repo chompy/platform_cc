@@ -244,6 +244,7 @@ class PlatformProject:
                         ipAddress = app.web.docker.getIpAddress()
                         #nginxConf += "\t\tproxy_set_header Forwarded \"for=$remote_addr; host=$host; proto=$scheme\";\n"
                         nginxConf += "\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                        nginxConf += "\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
                         nginxConf += "\t\tproxy_set_header X-Forwarded-Server $host;\n"
                         nginxConf += "\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
                         nginxConf += "\t\tproxy_pass http://%s;\n" % (
