@@ -23,6 +23,9 @@ provision:
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
             echo "date.timezone = UTC" >> /usr/local/etc/php/php.ini
             echo "memory_limit = 512M" >> /usr/local/etc/php/php.ini
+            ln -s /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
+            ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
+            ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
 
     -
         desc: "Compile php.ini."

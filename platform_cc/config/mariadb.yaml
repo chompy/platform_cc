@@ -1,2 +1,2 @@
 mounts:
-    "/var/lib/mysql" : "data"
+    "/var/lib/mysql" : "shared:files/data"

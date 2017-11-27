@@ -139,7 +139,7 @@ class DockerProvisionBase:
             # we only know how to handle mount points with prefix "shared:files"
             if mountKey[0:len(self.MOUNT_KEY_PREFIX)] != self.MOUNT_KEY_PREFIX:
                 continue
-            mountKey = os.path.basename(mounts[mountDest]).strip()
+            mountKey = os.path.basename(mounts[mountDest]).strip()            
             if not mountKey or mountKey == self.MOUNT_KEY_PREFIX: mountKey = "_core"
             dockerVolumeKey = ("%s_%s_%s_%s" % (
                 self.DOCKER_VOLUME_NAME_PREFIX,
