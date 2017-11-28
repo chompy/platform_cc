@@ -119,7 +119,9 @@ class PlatformApp:
             extraHosts = {}
         
         # get command to run container with
-        command = "sh -c \"%s\"" % self.config.getWeb().get("commands", {}).get("start", None)
+        command = self.config.getWeb().get("commands", {}).get("start", None)
+        if command:
+            command = "sh -c \"%s\"" % command
 
         # start app container
         self.docker.start(command, {}, extraHosts)

@@ -79,7 +79,7 @@ class PlatformProject:
 
     def getApplications(self, withVars = True):
         """ Get all applications in project. """
-        routerConfig = self.getRouterConfig()
+        routerConfig = self.getRouterConfig(False, 25)
         services = self.getServices()
         topPlatformAppConfigPath = os.path.join(self.projectPath, PlatformAppConfig.PLATFORM_FILENAME)
         projectVars = {}
@@ -105,7 +105,7 @@ class PlatformProject:
         projectDomains += [self.projectHash[:6]]
         return projectDomains
 
-    def getRouterConfig(self, redirects = False):
+    def getRouterConfig(self, redirects = False, limit = -1):
         """ Parse routes.yaml config for this project. """
         # open routes.yaml
         routeYamlPath = os.path.join(
@@ -191,6 +191,7 @@ class PlatformProject:
                     }
         # setup http to https redirects for https routes that
         # do not have a matching http route
+        count = 0
         for routeKey in list(output.keys()):
             parsedRouteKey = urlparse(routeKey)
             if parsedRouteKey.scheme != "https" :
@@ -198,6 +199,8 @@ class PlatformProject:
             newRouteKey = "http://%s" % (
                 routeKey[8:]
             )
+            count += 1
+            if (limit > 0 and count >= limit): break
             output[newRouteKey] = {
                 "type" :                        "redirect",
                 "upstream" :                    "",
