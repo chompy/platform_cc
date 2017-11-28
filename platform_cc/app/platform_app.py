@@ -94,7 +94,7 @@ class PlatformApp:
             ["rm", "-rf", "/app/.ssh"]
         )
 
-    def start(self):
+    def start(self, useCommand = True):
         """ Start app. """
         if self.logger:
             self.logger.logEvent(
@@ -119,7 +119,9 @@ class PlatformApp:
             extraHosts = {}
         
         # get command to run container with
-        command = self.config.getWeb().get("commands", {}).get("start", None)
+        command = None
+        if useCommand:
+            command = self.config.getWeb().get("commands", {}).get("start", None)
         if command:
             command = "sh -c \"%s\"" % command
 
@@ -153,6 +155,12 @@ class PlatformApp:
                 "Provision '%s' application." % self.config.getName(),
                 self.logIndent
             )
+
+        # stop/start w/ no special commands
+        self.logIndent += 1
+        self.stop()
+        self.start(False)
+        self.logIndent -= 1
         # set app file permission
         self.docker.getContainer().exec_run(
             ["chown", "-R", "web:web", "/app"]
@@ -187,6 +195,11 @@ class PlatformApp:
         )
         # commit provisioned app container
         self.docker.commit()
+        # stop/start
+        self.logIndent += 1
+        self.stop()
+        self.start()
+        self.logIndent -= 1
 
     def deploy(self):
         """ Run deploy hooks. """
