@@ -17,7 +17,10 @@ class PlatformServiceConfig(PlatformConfig):
         "memcached":               "memcached:1",
         "memcached:1.4":           "memcached:1",
         "solr:6.6":                "solr:6.6",
-        "solr.6.3":                "solr:6.3"
+        "solr.6.3":                "solr:6.3",
+        "redis:2.8":                "redis:2.8",
+        "redis:3.0":                "redis:3.0",
+        "redis:3.2":                "redis:3.2"
     }
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
