@@ -67,6 +67,10 @@ extensions:
             apt-get install -y libmemcached-dev zlib1g-dev
             echo '\n' | pecl install memcached-2.2.0
             docker-php-ext-enable memcached
+    redis:
+        "php:5": |
+            echo '\n' | pecl install redis
+            docker-php-ext-enable redis
     gd:
         "php:5": |
             apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng12-dev

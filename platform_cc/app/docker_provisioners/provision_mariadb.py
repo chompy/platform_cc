@@ -88,7 +88,7 @@ class DockerProvision(DockerProvisionBase):
                 "path" : endpoint.get("default_schema", ""),
                 "port" : "3306",
                 "query": {
-                    "is_master" : True # uncertain what makes this true (maybe first endpoint is master?)
+                    "is_master" : True
                 },
                 "scheme" : "mysql",
                 "username" : endpointName

@@ -20,7 +20,9 @@ class PlatformServiceConfig(PlatformConfig):
         "solr.6.3":                "solr:6.3",
         "redis:2.8":                "redis:2.8",
         "redis:3.0":                "redis:3.0",
-        "redis:3.2":                "redis:3.2"
+        "redis:3.2":                "redis:3.2",
+        "redis-persistent:3.0":     "redis:3.0",
+        "redis-persistent:3.2":     "redis:3.2"
     }
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
