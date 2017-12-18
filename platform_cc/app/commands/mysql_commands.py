@@ -73,6 +73,6 @@ class MysqlDump(Command):
         password = service.docker.getProvisioner().getPassword()
         database = self.argument("database")
         service.shell("mysqldump -uroot --password=\"%s\" %s" % (
-            database,
-            password
+            password,
+            database
         ))
