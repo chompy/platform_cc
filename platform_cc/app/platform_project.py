@@ -236,46 +236,57 @@ class PlatformProject:
             # http
             else:
                 nginxConf += "\tlisten 80;\n"
-            # main location
-            nginxConf += "\tlocation %s {\n" % (
-                "/%s" % parseRoute.path.lstrip("/")
-            )
+
             # upstream
             if config.get("type", None) == "upstream":
-                for app in apps:
-                    if app.config.getName() == config.get("upstream", None):
-                        ipAddress = app.web.docker.getIpAddress()
-                        #nginxConf += "\t\tproxy_set_header Forwarded \"for=$remote_addr; host=$host; proto=$scheme\";\n"
-                        nginxConf += "\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
-                        nginxConf += "\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
-                        nginxConf += "\t\tproxy_set_header X-Forwarded-Server $host;\n"
-                        nginxConf += "\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
-                        nginxConf += "\t\tproxy_pass http://%s;\n" % (
-                            ipAddress
-                        )
-                        break
+
                 # redirects
+                redirectHasRootPath = False
                 redirectPaths = config.get("redirects", {}).get("paths", {})
                 if redirectPaths:
                     for location, redirectConfig in redirectPaths.items():
-                        nginxConf += "\t}\n"
+                        if location.strip() == "/":
+                            redirectHasRootPath = True
                         nginxConf += "\tlocation %s {\n" % (
                             location
                         )
                         nginxConf += "\t\treturn 301 %s$request_uri;\n" % (
                             redirectConfig.get("to", "/")
                         )
+                        nginxConf += "\t}\n"
+
+                # main location
+                if not redirectHasRootPath:
+                    nginxConf += "\tlocation %s {\n" % (
+                        "/%s" % parseRoute.path.lstrip("/")
+                    )                
+                    for app in apps:
+                        if app.config.getName() == config.get("upstream", None):
+                            ipAddress = app.web.docker.getIpAddress()
+                            #nginxConf += "\t\tproxy_set_header Forwarded \"for=$remote_addr; host=$host; proto=$scheme\";\n"
+                            nginxConf += "\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                            nginxConf += "\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
+                            nginxConf += "\t\tproxy_set_header X-Forwarded-Server $host;\n"
+                            nginxConf += "\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
+                            nginxConf += "\t\tproxy_pass http://%s;\n" % (
+                                ipAddress
+                            )
+                            nginxConf += "\t}\n"
+                            break
 
             # redirect
             elif config.get("type", None) == "redirect":
+                nginxConf += "\tlocation %s {\n" % (
+                    "/%s" % parseRoute.path.lstrip("/")
+                )
                 nginxConf += "\t\treturn 301 %s$request_uri;\n" % (
                     config.get("to", "/").replace(
                         self.ROUTE_DOMAIN_REPLACE,
                         str(projectDomains[0])
                     )
                 )
-            # end server block
-            nginxConf += "\t}\n"
+                nginxConf += "\t}\n"
+            # end server block 
             nginxConf += "}\n"
         return nginxConf
 
