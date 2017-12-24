@@ -9,9 +9,10 @@ class PlatformConfig:
 
     ENTROPY_SALT = "M0igz7x2nr0cCXitjPvbF5eQhsf01F#!"
 
-    def __init__(self, projectHash):
+    def __init__(self, projectHash, webUid = 1000):
         self.projectHash = projectHash
         self._config = {}
+        self.webUid = webUid # web user id for containers that need a 'web' user
 
     def getName(self):
         return "default"

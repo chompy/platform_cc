@@ -12,6 +12,19 @@ class DockerProvision(DockerProvisionBase):
 
     """ Provision a web/nginx container. """
 
+    def provision(self):
+        # add 'web' user
+        self.container.exec_run(
+            [
+                "useradd", "-d", "/app", "-m",
+                "-p", "secret~", "--uid",
+                self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID),
+                "web"
+            ]
+        )
+        # parent
+        DockerProvisionBase.provision(self)
+
     def getVolumes(self):
         volumes = {}
         # app volume

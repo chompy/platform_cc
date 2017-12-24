@@ -22,7 +22,7 @@ This assumes that you have a project ready to go with all the appropiate configu
     The 'var:set' command will allow you to install credientials needed by Composer for your project. Below
     are examples that will allow you to install credientials from your local machine.
 
-        $ platform_cc var:set env:COMPOSER_AUTH `cat ~/.composer/auth.json`
+        $ platform_cc var:set env:COMPOSER_AUTH `cat ~/.composer/auth.json | tr '\r' ' ' |  tr '\n' ' ' | sed 's/ \{3,\}/ /g' | sed 's/   / /g'`
         $ platform_cc var:set project:ssh_key `cat ~/.ssh/id_rsa | base64 -w 0`
         $ platform_cc var:set project:known_hosts `cat ~/.ssh/known_hosts | base64 -w 0`
 
@@ -59,6 +59,7 @@ project:ssh_key       SSH key (.ssh/id_rsa). Composer needs to checkout private 
 project:known_hosts   SSH known_hosts file (.ssh/known_hosts). Needed for non interactive.        Yes
 project:domains       Comma delimited list of domain names, replaces {DEFAULT} in routes.yml.     No
 project:hosts_file    Additional entries in hosts file. JSON encoded, key=hostname, value=ip.     Yes
+project:web_uid       UID to use for user 'web' when provisioning project.                        No
 env:*                 The prefix "env:" sets an environment variable inside the app container(s). No
 
 

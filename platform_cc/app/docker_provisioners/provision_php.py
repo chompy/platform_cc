@@ -12,6 +12,9 @@ class DockerProvision(DockerProvisionBase):
 
     """ Provision a PHP container. """
 
+    """ Default UID to assign for user 'web' """
+    DEFAULT_WEB_UID = 1000
+
     def provision(self):
         # install extensions
         if self.logger:
@@ -71,6 +74,17 @@ class DockerProvision(DockerProvisionBase):
             self.container.exec_run(
                 ["sh", "-c", extensionConfig[depCmdKey[0]]]
             )
+
+        # add 'web' user
+        self.container.exec_run(
+            [
+                "useradd", "-d", "/app", "-m",
+                "-p", "secret~", "--uid",
+                self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID),
+                "web"
+            ]
+        )
+
         # parent method
         DockerProvisionBase.provision(self)
 
