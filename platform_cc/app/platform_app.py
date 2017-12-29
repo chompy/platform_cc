@@ -113,7 +113,7 @@ class PlatformApp:
         # get hosts file
         extraHosts = self.projectVars.get("project:hosts_file")
         if extraHosts:
-            extraHosts = base64.b64decode(extraHosts)
+            extraHosts = base64.b64decode(extraHosts).decode("ascii")
             extraHosts = json.loads(extraHosts)
         else:
             extraHosts = {}

@@ -80,7 +80,7 @@ class DockerProvision(DockerProvisionBase):
             [
                 "useradd", "-d", "/app", "-m",
                 "-p", "secret~", "--uid",
-                self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID),
+                str(self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID)),
                 "web"
             ]
         )

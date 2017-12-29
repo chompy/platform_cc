@@ -12,13 +12,16 @@ class DockerProvision(DockerProvisionBase):
 
     """ Provision a web/nginx container. """
 
+    """ Default UID to assign for user 'web' """
+    DEFAULT_WEB_UID = 1000
+
     def provision(self):
         # add 'web' user
         self.container.exec_run(
             [
                 "useradd", "-d", "/app", "-m",
                 "-p", "secret~", "--uid",
-                self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID),
+                str(self.appConfig.getVariables().get("project:web_uid", self.DEFAULT_WEB_UID)),
                 "web"
             ]
         )
