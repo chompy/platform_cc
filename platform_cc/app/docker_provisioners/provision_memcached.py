@@ -16,7 +16,8 @@ class DockerProvision(DockerProvisionBase):
     def getServiceRelationship(self):
         return [
             {
-                "host" : self.container.attrs.get("NetworkSettings", {}).get("IPAddress", ""),
+                "host" : self.container.attrs.get("Config", {}).get("Hostname", ""),
+                "ip" : self.container.attrs.get("NetworkSettings", {}).get("IPAddress", ""),
                 "scheme" : "memcached",
                 "port" : "11211",
             }

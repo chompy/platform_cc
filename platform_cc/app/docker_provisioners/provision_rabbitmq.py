@@ -3,14 +3,16 @@ from .provision_base import DockerProvisionBase
 
 class DockerProvision(DockerProvisionBase):
 
-    """ Provision a redis container. """
+    """ Provision a rabbitmq container. """
 
     def getServiceRelationship(self):
         return [
             {
                 "host" : self.container.attrs.get("Config", {}).get("Hostname", ""),
                 "ip" : self.container.attrs.get("NetworkSettings", {}).get("IPAddress", ""),
-                "scheme" : "redis",
-                "port" : "6379",
+                "scheme" : "amqp",
+                "port" : "5672",
+                "username" : "guest",
+                "password" : "guest"
             }
         ]

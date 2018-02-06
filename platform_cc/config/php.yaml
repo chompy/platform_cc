@@ -110,10 +110,13 @@ extensions:
     exif:
         "php:5": |
             docker-php-ext-install -j$(nproc) exif
-
+    bcmath:
+        "php:5": |
+            docker-php-ext-install -j$(nproc) bcmath
 
 # extensions to install by default
 default_extensions:
+    - bcmath
     - intl
     - xsl
     - mysql

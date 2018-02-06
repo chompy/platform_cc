@@ -22,7 +22,9 @@ class PlatformServiceConfig(PlatformConfig):
         "redis:3.0":                "redis:3.0",
         "redis:3.2":                "redis:3.2",
         "redis-persistent:3.0":     "redis:3.0",
-        "redis-persistent:3.2":     "redis:3.2"
+        "redis-persistent:3.2":     "redis:3.2",
+        "rabbitmq:3.5":             "rabbitmq:3",
+        "rabbitmq:3":               "rabbitmq:3",
     }
 
     PLATFORM_SERVICES_PATH = ".platform/services.yaml"
