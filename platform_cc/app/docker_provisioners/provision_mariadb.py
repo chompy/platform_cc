@@ -65,7 +65,7 @@ class DockerProvision(DockerProvisionBase):
                         endpointName,
                         schema
                     )
-                })  
+                })
         self.runCommands(cmds)
 
     def getEnvironmentVariables(self):

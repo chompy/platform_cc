@@ -26,6 +26,6 @@ class PlatformLogger:
         if verbosity > self.command.output.get_verbosity(): return
         self.command.line(
             "= COMMAND OUTPUT =========================================\n%s\n========================================================" % (
-                results
+                str(results)
             )
         )
