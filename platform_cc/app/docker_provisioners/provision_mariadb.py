@@ -23,6 +23,7 @@ class DockerProvision(DockerProvisionBase):
         # wait for mysqld to be ready
         while not self.healthcheck():
             time.sleep(1)
+        time.sleep(1)
         # provision databases
         cmds = []
         config = self.appConfig.getConfiguration()
