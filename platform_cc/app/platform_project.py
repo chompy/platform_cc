@@ -271,8 +271,8 @@ class PlatformProject:
                             nginxConf += "\t\tproxy_pass http://%s;\n" % (
                                 ipAddress
                             )
-                            nginxConf += "\t}\n"
                             break
+                    nginxConf += "\t}\n"
 
             # redirect
             elif config.get("type", None) == "redirect":
