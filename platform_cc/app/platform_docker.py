@@ -101,7 +101,7 @@ class PlatformDocker:
                 bytes(str(json.dumps(projVars)).encode("utf-8"))
             ),
             "PLATFORM_PROJECT_ENTROPY" : self.config.getEntropy(),
-            "TRUSTED_PROXIES" : "172.0.0.0/8"
+            "TRUSTED_PROXIES" : "172.0.0.0/8, 127.0.0.1"
         }
         envVars.update(self.getProvisioner().getEnvironmentVariables())
         varConf = {}
