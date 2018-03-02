@@ -6,3 +6,4 @@ boto3
 yamlordereddictloader
 terminaltables
 future
+dockerpty

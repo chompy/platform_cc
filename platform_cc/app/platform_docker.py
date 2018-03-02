@@ -1,5 +1,6 @@
 import os
 import docker
+from dockerpty import PseudoTerminal, ExecOperation
 import importlib
 import yaml
 import json
@@ -145,7 +146,8 @@ class PlatformDocker:
                         hostname=self.containerId,
                         extra_hosts=extraHosts,
                         stdin_open=True,
-                        ports=ports
+                        ports=ports,
+                        tty=True
                     )
                 except docker.errors.ImageNotFound as e:
                     lastExcept = e
@@ -229,15 +231,15 @@ class PlatformDocker:
 
     def shell(self, cmd = "sh", user = "root"):
         """ Grant user access to shell inside container. """
-        container = self.getContainer()
-        os.system(
-            "%sdocker exec -i -t --user='%s' %s %s" % (
-                "winpty " if sys.platform in ["msys", "win32"] else "", # hack for windows
-                user,
-                self.containerId,
-                cmd
-            )
+        execId = self.dockerClient.api.exec_create(
+            self.containerId,
+            cmd,
+            tty=True,
+            stdin=True,
+            user=user
         )
+        operation = ExecOperation(self.dockerClient.api, execId)
+        PseudoTerminal(self.dockerClient.api, operation).start()
 
     def purge(self):
         """ Purge volumes and images. """
