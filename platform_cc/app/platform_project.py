@@ -237,6 +237,9 @@ class PlatformProject:
             else:
                 nginxConf += "\tlisten 80;\n"
 
+            # additional server config
+            nginxConf += "\tclient_max_body_size 200M;\n"
+
             # upstream
             if config.get("type", None) == "upstream":
 
