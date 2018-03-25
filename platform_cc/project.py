@@ -5,6 +5,7 @@ import hashlib
 import base36
 import random
 from variables import getVariableStorage
+from variables.json import JsonVariables
 
 class PlatformProject:
     """
@@ -28,14 +29,18 @@ class PlatformProject:
         # set project path
         self.path = str(path)
 
-        # load config
-        self.config = {}
-        self._loadConfig()
+        # load config (use JsonVariables class to do this
+        # as it already contains the functionality)
+        self.config = JsonVariables(
+            self.path,
+            {
+                "variables_json_filename" : self.PROJECT_CONFIG_FILE
+            }
+        )
 
         # generate uid if it does not exist
-        if "uid" not in self.config:
-            self.config["uid"] = self._generateUid()
-            self._saveConfig()
+        if not self.config.get("uid"):
+            self.config.set("uid", self._generateUid())
 
         # get variable storage
         self.variables = getVariableStorage(
@@ -66,38 +71,3 @@ class PlatformProject:
                 16
             )
         )
-
-    def _loadConfig(self):
-        """
-        Open config json file and overwrite config currently
-        in memory.
-        """
-        # validate path
-        if not os.path.isdir(self.path):
-            raise ValueError("Project path '%s' is invalid." % self.path)
-        # get path to config
-        configPath = os.path.join(self.path, self.PROJECT_CONFIG_FILE)
-        # open+parse config
-        if os.path.isfile(configPath):
-            with open(configPath, "r") as f:
-                self.config = json.load(f)
-
-    def _saveConfig(self):
-        """
-        Open config json file to store config currently in
-        memory.
-        """
-        # validate path
-        if not os.path.isdir(self.path):
-            raise ValueError("Project path '%s' is invalid." % self.path)
-        # get path to config
-        configPath = os.path.join(self.path, self.PROJECT_CONFIG_FILE)
-        # open+write to config
-        with open(configPath, "w") as f:
-            json.dump(
-                self.config,
-                f,
-                sort_keys=True,
-                indent=4,
-                separators=(',', ': ')
-            )

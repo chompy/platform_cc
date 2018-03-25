@@ -1,6 +1,6 @@
 from .json import JsonVariables
 
-def getVariableStorage(projectPath, projectConfig = {}):
+def getVariableStorage(projectPath, projectConfig = None):
     """
     Init a variable storage class from project configuration.
     """
@@ -9,9 +9,10 @@ def getVariableStorage(projectPath, projectConfig = {}):
     variableStorageName = "json"
 
     # retrieve storage method from project config
-    if "variable_storage" in projectConfig:
-        variableStorageName = str(projectConfig["variable_storage"])
-
+    variableStorageName = str(
+        projectConfig.get("variable_storage", variableStorageName)
+    )
+    
     # json
     if variableStorageName == "json":
         return JsonVariables(
