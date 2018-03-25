@@ -66,7 +66,8 @@ setup(
         "yamlordereddictloader",
         "terminaltables",
         "future",
-        "dockerpty"
+        "dockerpty",
+        "git+https://github.com/approximatenumber/pickledb.git@my_branch"
     ],
 
     # List additional groups of dependencies here (e.g. development

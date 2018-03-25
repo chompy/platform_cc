@@ -7,3 +7,4 @@ yamlordereddictloader
 terminaltables
 future
 dockerpty
+git+https://github.com/approximatenumber/pickledb.git@my_branch
