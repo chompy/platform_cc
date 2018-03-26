@@ -6,8 +6,13 @@ class BasePlatformParser:
     Base class for Platform.sh configuration parser.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, projectPath):
+        """
+        Constructor.
+
+        :param projectPath: Path to project root
+        """
+        self.projectPath = str(projectPath)
 
     def _readYaml(self, path):
         """

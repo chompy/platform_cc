@@ -29,6 +29,10 @@ class PlatformProject:
         # set project path
         self.path = str(path)
 
+        # validate project path
+        if not os.path.isdir(self.path):
+            raise ValueError("Invalid project path.")
+
         # load config (use JsonVariables class to do this
         # as it already contains the functionality)
         self.config = JsonVariables(

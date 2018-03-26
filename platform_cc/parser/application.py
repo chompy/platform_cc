@@ -1,4 +1,4 @@
-from base import BasePlatformParser
+from .base import BasePlatformParser
 
 class ApplicationParser(BasePlatformParser):
     """
