@@ -37,7 +37,9 @@ class ServicesParser(BasePlatformParser):
         """
         name = str(name)
         if not name in self.services:
-            raise ValueError("Service '%s' is not defined." % name)
+            raise ParserError(
+                "Service '%s' is not defined." % name
+            )
         # ensure 'type' parameter is present
         if not "type" in self.services[name]:
             raise ParserError(
@@ -59,7 +61,7 @@ class ServicesParser(BasePlatformParser):
         """
         name = str(name)
         if not name in self.services:
-            raise ValueError("Service '%s' is not defined." % name)
+            raise ParserError("Service '%s' is not defined." % name)
         serviceConf = self.services[name].get("configuration", {}).copy()
         serviceConf["_name"] = name
         serviceConf["_type"] = self.getServiceType(name)
