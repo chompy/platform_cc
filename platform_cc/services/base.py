@@ -1,5 +1,6 @@
 import docker
-import dockerpty
+from dockerpty import PseudoTerminal, ExecOperation
+from exception.state_error import StateError
 
 class BasePlatformService:
     """
@@ -223,12 +224,22 @@ class BasePlatformService:
             )
         ).strip()
 
+    def getPlatformRelationship(self):
+        """
+        Get relationship data which is passed to the application.
+
+        :return: Dictionary containing relationship data
+        :rtype: dict
+        """
+        return {}
+
     def start(self):
         """
         Start Docker container for service.
         """
         container = self.getContainer()
         if not container:
+            self.getNetwork() # instantiate if not created
             container = self.docker.containers.create(
                 self.getDockerImage(),
                 name = self.getContainerName(),
@@ -262,3 +273,23 @@ class BasePlatformService:
         """
         self.stop()
         self.start()
+
+    def shell(self, cmd = "bash", user = "root"):
+        """
+        Create an interactive shell inside container.
+
+        :param cmd: Command to run
+        :param user: User to run as
+        """
+        if not self.isRunning():
+            raise StateError("Service '%s' is not running." % self.getName())
+        container = self.getContainer()
+        execId = self.docker.api.exec_create(
+            container.id,
+            cmd,
+            tty = True,
+            stdin = True,
+            user = user
+        )
+        operation = ExecOperation(self.docker.api, execId)
+        PseudoTerminal(self.docker.api, operation).start()

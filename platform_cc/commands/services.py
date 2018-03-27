@@ -84,11 +84,12 @@ class ServiceList(Command):
             )
             serviceContainer = service.getContainer()
             serviceData[serviceName] = {
-                "id" :                  serviceContainer.id if serviceContainer else "",
-                "name" :                service.getContainerName(),
-                "image" :               service.getDockerImage(),
-                "status" :              serviceContainer.status if serviceContainer else "stopped",
-                "ip_address" :          service.getContainerIpAddress()
+                "id"                  : serviceContainer.id if serviceContainer else "",
+                "name"                : service.getName(),
+                "container_name"      : service.getContainerName(),
+                "docker_image"        : service.getDockerImage(),
+                "status"              : serviceContainer.status if serviceContainer else "stopped",
+                "ip_address"          : service.getContainerIpAddress()
             }
 
         # json output
@@ -101,13 +102,14 @@ class ServiceList(Command):
         
         # terminal tables output
         tableData = [
-            ("Name", "Image", "Status", "IP"),
+            ("Name", "Container", "Image", "Status", "IP"),
         ]
         for service in serviceData:
             tableData.append(
                 (
                     serviceData[service]["name"],
-                    serviceData[service]["image"],
+                    serviceData[service]["container_name"],
+                    serviceData[service]["docker_image"],
                     serviceData[service]["status"],
                     serviceData[service]["ip_address"] if serviceData[service]["ip_address"] else "N/A"
                 )
@@ -117,3 +119,28 @@ class ServiceList(Command):
             "Project '%s' - Services" % project.getUid()[0:6],
             tableData
         )
+
+class ServiceShell(Command):
+    """
+    Shell in to a service.
+
+    service:shell
+        {name : Name of service.}
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--c|command=? : Command to run. (Default=bash)}
+        {--u|user=? : User to run command as. (Default=root)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        service = project.getService(
+            self.argument("name")
+        )
+        command = self.option("command")
+        if not command: command = "bash"
+        user = self.option("user")
+        if not user: user = "root"
+        service.shell(
+            command,
+            user
+        )        
