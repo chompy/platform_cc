@@ -154,39 +154,60 @@ class BasePlatformService:
 
     def getContainer(self):
         """
-        Build Docker container for service. Retrieves container
-        if it already exists.
+        Get service Docker container if it exists.
 
         :return: Docker container
         :rtype: docker.client.containers.Container
         """
-        containerName = self.getContainerName()
-        # fetch container if already exists
         try:
-            return self.docker.containers.get(containerName)
+            return self.docker.containers.get(
+                self.getContainerName()
+            )
         except docker.errors.NotFound:
             pass
-        self.getNetwork() # instantiate network if it does not exist
-        return self.docker.containers.create(
-            self.getDockerImage(),
-            name = containerName,
-            command = self.getContainerCommand(),
-            detach = True,
-            stdin_open = True,
-            tty=True,
-            environment = self.getContainerEnvironmentVariables(),
-            extra_hosts = self.getContainerHosts(),
-            network = self.getNetworkName(),
-            ports = self.getContainerPorts(),
-            volumes = self.getContainerVolumes(),
-            working_dir = self.getContainerWorkingDirectory()
-        )
+        return None
+
+    def isRunning(self):
+        """
+        Determine if service container is currently running.
+
+        :return: True if running
+        :rtype: bool
+        """
+        container = self.getContainer()
+        return container and container.status == "running"
+
+    def getContainerIpAddress(self):
+        """
+        Get container local IP address.
+        
+        :return: Container IP address
+        :rtype: str
+        """
+        container = self.getContainer()
+        if not container: return ""
+        return str(container.attrs.get("NetworkSettings", {}).get("IPAddress", None)).strip()
 
     def start(self):
         """
         Start Docker container for service.
         """
         container = self.getContainer()
+        if not container:
+            container = self.docker.containers.create(
+                self.getDockerImage(),
+                name = self.getContainerName(),
+                command = self.getContainerCommand(),
+                detach = True,
+                stdin_open = True,
+                tty=True,
+                environment = self.getContainerEnvironmentVariables(),
+                extra_hosts = self.getContainerHosts(),
+                network = self.getNetworkName(),
+                ports = self.getContainerPorts(),
+                volumes = self.getContainerVolumes(),
+                working_dir = self.getContainerWorkingDirectory()
+            )
         if container.status == "running": return
         container.start()
 
@@ -194,9 +215,8 @@ class BasePlatformService:
         """
         Stop Docker container for service.
         """
-        container = self.docker.containers.get(
-            self.getContainerName()
-        )
+        container = self.getContainer()
+        if not container: return
         container.stop()
         container.wait()
         container.remove()
@@ -205,8 +225,5 @@ class BasePlatformService:
         """
         Restart Docker container for service.
         """
-        try:
-            self.stop()
-        except docker.errors.NotFound:
-            pass
+        self.stop()
         self.start()

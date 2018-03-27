@@ -1,5 +1,5 @@
 from cleo import Command
-from commands import getProject
+from commands import getProject, outputJson, outputTable
 
 class VariableSet(Command):
     """
@@ -29,7 +29,7 @@ class VariableGet(Command):
 
     def handle(self):
         project = getProject(self)
-        print(
+        self.line(
             project.variables.get(
                 self.argument("key")
             )
@@ -56,10 +56,28 @@ class VariableList(Command):
 
     variable:list
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--j|json : If set output in JSON.}
     """
 
     def handle(self):
         project = getProject(self)
-        print(
-            project.variables.all()
+        allVars = project.variables.all()
+
+        # json output
+        if self.option("json"):
+            outputJson(self, allVars)
+            return
+
+        # terminal tables output
+        tableData = [
+            ("Key", "Value")
+        ]
+        for key in allVars:
+            tableData.append(
+                (key, allVars[key])
+            )
+        outputTable(
+            self,
+            "Project '%s' - Variables" % project.getUid()[0:6],
+            tableData
         )
