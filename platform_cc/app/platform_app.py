@@ -67,7 +67,7 @@ class PlatformApp:
             ["mkdir", "-p", "/app/.ssh"]
         )
         self.docker.getProvisioner().copyStringToFile(
-            base64.b64decode(sshKey),
+            base64.b64decode(sshKey).decode("ascii"),
             "/app/.ssh/id_rsa"
         )
         self.docker.getContainer().exec_run(
@@ -78,7 +78,7 @@ class PlatformApp:
         )
         if knownHosts:
             self.docker.getProvisioner().copyStringToFile(
-                base64.b64decode(knownHosts),
+                base64.b64decode(knownHosts).decode("ascii"),
                 "/app/.ssh/known_hosts"
             )
             self.docker.getContainer().exec_run(
