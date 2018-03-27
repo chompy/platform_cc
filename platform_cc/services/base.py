@@ -167,6 +167,31 @@ class BasePlatformService:
             pass
         return None
 
+    def getVolume(self, name = ""):
+        """
+        Get a Docker volume to use with this service.
+
+        :return: Docker volume
+        :rtype: docker.client.volumes.Volume
+        """
+        volumeId = "%s%s_%s" %(
+            self.CONTAINER_NAME_PREFIX,
+            self.project.get("uid")[0:6],
+            self.getName()
+        )
+        if name:
+            volumeId = "%s_%s" % (
+                volumeId,
+                str(name)
+            )
+        try:
+            return self.docker.volumes.get(volumeId)
+        except docker.errors.NotFound:
+            pass
+        return self.docker.volumes.create(
+            volumeId
+        )
+
     def isRunning(self):
         """
         Determine if service container is currently running.
@@ -186,7 +211,17 @@ class BasePlatformService:
         """
         container = self.getContainer()
         if not container: return ""
-        return str(container.attrs.get("NetworkSettings", {}).get("IPAddress", None)).strip()
+        return str(
+            container.attrs.get(
+                "NetworkSettings", {}
+            ).get(
+                "Networks", {}
+            ).get(
+                self.getNetworkName(), {}
+            ).get(
+                "IPAddress", ""
+            )
+        ).strip()
 
     def start(self):
         """

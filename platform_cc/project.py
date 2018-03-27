@@ -93,6 +93,33 @@ class PlatformProject:
         """
         return self.config.get("uid")
 
+    def getEntropy(self):
+        """
+        Get entropy value for project.
+
+        :return: Unique random string
+        :rtype: str
+        """
+        entropy = self.config.get("entropy")
+        if entropy: return entropy
+        entropy = base36.dumps(
+            int(
+                hashlib.sha256(
+                    (
+                        "%s-%s-%s-%s" % (
+                            self.getUid(),
+                            str(random.random()),
+                            str(time.time()),
+                            self.HASH_SALT
+                        )
+                    ).encode("utf-8")
+                ).hexdigest(),
+                16
+            )
+        )
+        self.config.set("entropy", entropy)
+        return entropy
+
     def _getProjectData(self):
         """
         Get dictionary containing project data
@@ -103,7 +130,8 @@ class PlatformProject:
         """
         return {
             "path"      : self.path,
-            "uid"       : self.getUid()
+            "uid"       : self.getUid(),
+            "entropy"   : self.getEntropy()
         }
 
     def getService(self, name):
