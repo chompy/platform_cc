@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(__file__))
 import pkg_resources
 from cleo import Application
 from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
+from commands.services import ServiceStart
 
 try:
     version = pkg_resources.require("platform_cc")[0].version
@@ -22,6 +23,7 @@ cleoApp.add(VariableSet())
 cleoApp.add(VariableGet())
 cleoApp.add(VariableDelete())
 cleoApp.add(VariableList())
+cleoApp.add(ServiceStart())
 
 def main():
     cleoApp.run()

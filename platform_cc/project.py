@@ -6,6 +6,8 @@ import base36
 import random
 from variables import getVariableStorage
 from variables.json import JsonVariables
+from parser.services import ServicesParser
+from services import getService
 
 class PlatformProject:
     """
@@ -52,6 +54,12 @@ class PlatformProject:
             self.config
         )
 
+        # init services parser
+        self.servicesParser = ServicesParser(self.path)
+
+        # list of initialized services
+        self._services = []
+
     def _generateUid(self):
         """
         Generate a unique id for the project.
@@ -75,3 +83,45 @@ class PlatformProject:
                 16
             )
         )
+
+    def getUid(self):
+        """ 
+        Get project unique id.
+
+        :return: Project unique id
+        :rtype: str
+        """
+        return self.config.get("uid")
+
+    def _getProjectData(self):
+        """
+        Get dictionary containing project data
+        needed by other child objects.
+
+        :return: Dictionary of project data
+        :rtype: dict
+        """
+        return {
+            "path"      : self.path,
+            "uid"       : self.getUid()
+        }
+
+    def getService(self, name):
+        """
+        Get a service handler.
+
+        :param name: Service name
+        :return: Service handler
+        :rtype: BasePlatformService
+        """
+        name = str(name)
+        for service in self._services:
+            if service and service.getName() == name:
+                return service
+        serviceConfig = self.servicesParser.getServiceConfiguration(name)
+        service = getService(
+            self._getProjectData(),
+            serviceConfig
+        )
+        self._services.append(service)
+        return service
