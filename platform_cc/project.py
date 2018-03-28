@@ -9,6 +9,7 @@ from variables.json import JsonVariables
 from parser.services import ServicesParser
 from parser.applications import ApplicationsParser
 from services import getService
+from application import getApplication
 
 class PlatformProject:
     """
@@ -194,11 +195,15 @@ class PlatformProject:
         :return: Application handler
         :rtype: .application.base.BasePlatformApplication
         """
-        name = str(name)
-
         applicationsParser = self.getApplicationsParser()
-        print(applicationsParser.applications)
-        raise NotImplementedError("Applications have not yet been implemented.")
+        name = str(name)
+        """for application in self._applications:
+            if application and application.getName()
+        
+
+        getApplication
+        print(applicationsParser.getApplicationConfiguration(name))"""
+        #raise NotImplementedError("Applications have not yet been implemented.")
         
         """for app in self._applications:
             if app and app.getName() == name:

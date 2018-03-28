@@ -15,7 +15,7 @@ def getService(project, config):
     :param project: Dictionary containing project data
     :param config: Dictionary containing service configuration
     :return: Service handler object
-    :rtype: BasePlatformService
+    :rtype: .base.BasePlatformService
     """
 
     # validate config

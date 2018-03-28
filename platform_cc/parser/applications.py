@@ -50,3 +50,27 @@ class ApplicationsParser(BasePlatformParser):
             elif name == self.YAML_FILENAME:
                 yamlList.append(fullPath)
         return yamlList
+
+    def getApplicationNames(self):
+        """
+        Get list of names of all applications.
+
+        :return: List of application names
+        :rtype: list
+        """
+        return list(self.applications.keys())
+
+    def getApplicationConfiguration(self, name):
+        """
+        Get dictionary containing configuration for a
+        given application.
+
+        :param name: Application name
+        :return: Dictionary with application configuration
+        :rtype: dict
+        """
+        name = str(name)
+        if not name in self.applications:
+            raise ParserError("Application '%s' is not defined." % name)
+        applicationConfig = self.applications[name].copy()
+        return applicationConfig
