@@ -7,6 +7,7 @@ import random
 from variables import getVariableStorage
 from variables.json import JsonVariables
 from parser.services import ServicesParser
+from parser.applications import ApplicationsParser
 from services import getService
 
 class PlatformProject:
@@ -54,11 +55,17 @@ class PlatformProject:
             self.config
         )
 
-        # init services parser
-        self.servicesParser = ServicesParser(self.path)
+        # define services parser
+        self._servicesParser = None
 
         # list of initialized services
         self._services = []
+
+        # define applications parser
+        self._applicationsParser = None
+
+        # list of initialized applications
+        self._applications = []
 
     def _generateUid(self):
         """
@@ -134,22 +141,72 @@ class PlatformProject:
             "entropy"   : self.getEntropy()
         }
 
+    def getServicesParser(self):
+        """
+        Get services parser.
+
+        :return: Services parser
+        :rtype: .parser.services.ServicesParser
+        """
+        if self._servicesParser:
+            return self._servicesParser
+        self._servicesParser = ServicesParser(self.path)
+        return self._servicesParser
+
+    def getApplicationsParser(self):
+        """
+        Get applications parser.
+
+        :return: Applications parser
+        :rtype: .parser.applications.ApplicationsParser
+        """
+        if self._applicationsParser:
+            return self._applicationsParser
+        self._applicationsParser = ApplicationsParser(self.path)
+        return self._applicationsParser
+
     def getService(self, name):
         """
         Get a service handler.
 
         :param name: Service name
         :return: Service handler
-        :rtype: BasePlatformService
+        :rtype: .service.base.BasePlatformService
         """
+        servicesParser = self.getServicesParser()
         name = str(name)
         for service in self._services:
             if service and service.getName() == name:
                 return service
-        serviceConfig = self.servicesParser.getServiceConfiguration(name)
+        serviceConfig = servicesParser.getServiceConfiguration(name)
         service = getService(
             self._getProjectData(),
             serviceConfig
         )
         self._services.append(service)
         return service
+
+    def getApplication(self, name):
+        """
+        Get an application handler.
+
+        :param name: Application name
+        :return: Application handler
+        :rtype: .application.base.BasePlatformApplication
+        """
+        name = str(name)
+
+        applicationsParser = self.getApplicationsParser()
+        print(applicationsParser.applications)
+        raise NotImplementedError("Applications have not yet been implemented.")
+        
+        """for app in self._applications:
+            if app and app.getName() == name:
+                return app
+        appConfig = self.servicesParser.getApplicationConfiguration(name)
+        service = getService(
+            self._getProjectData(),
+            serviceConfig
+        )
+        self._services.append(service)
+        return service"""

@@ -9,6 +9,7 @@ import pkg_resources
 from cleo import Application
 from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
+from commands.applications import ApplicationStart
 
 try:
     version = pkg_resources.require("platform_cc")[0].version
@@ -28,6 +29,7 @@ cleoApp.add(ServiceStop())
 cleoApp.add(ServiceRestart())
 cleoApp.add(ServiceList())
 cleoApp.add(ServiceShell())
+cleoApp.add(ApplicationStart())
 
 def main():
     cleoApp.run()

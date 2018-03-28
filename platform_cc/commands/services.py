@@ -2,66 +2,53 @@ import os
 from cleo import Command
 from commands import getProject, outputJson, outputTable
 
-def getService(command):
-    """
-    Get service from command.
-    """
-    project = getProject(command)
-    serviceName = command.argument("name")
-    project.servicesParser
-
-    return getService()
-
 class ServiceStart(Command):
     """
-    Start a service.
+    Start one or more services.
 
     service:start
-        {name : Name of service.}
+        {name* : Name(s) of service.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         project = getProject(self)
-        service = project.getService(
-            self.argument("name")
-        )
-        service.start()
-        self.line(service.getContainerName())
+        for name in self.argument("name"):
+            service = project.getService(name)
+            service.start()
+            self.line(service.getContainerName())
 
 class ServiceStop(Command):
     """
-    Stop a service.
+    Stop one or more services.
 
     service:stop
-        {name : Name of service.}
+        {name* : Name(s) of service.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         project = getProject(self)
-        service = project.getService(
-            self.argument("name")
-        )
-        service.stop()
-        self.line(service.getContainerName())
+        for name in self.argument("name"):
+            service = project.getService(name)
+            service.stop()
+            self.line(service.getContainerName())
 
 class ServiceRestart(Command):
     """
-    Restart a service.
+    Restart one or more services.
 
     service:restart
-        {name : Name of service.}
+        {name* : Name(s) of service.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
     def handle(self):
         project = getProject(self)
-        service = project.getService(
-            self.argument("name")
-        )
-        service.restart()
-        self.line(service.getContainerName())
+        for name in self.argument("name"):
+            service = project.getService(name)
+            service.restart()
+            self.line(service.getContainerName())
 
 class ServiceList(Command):
     """
@@ -74,7 +61,7 @@ class ServiceList(Command):
 
     def handle(self):
         project = getProject(self)
-        serviceNames = project.servicesParser.getServiceNames()
+        serviceNames = project.getServicesParser().getServiceNames()
 
         # build service data
         serviceData = {}

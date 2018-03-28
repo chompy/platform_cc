@@ -56,7 +56,7 @@ class MariaDbService(BasePlatformService):
 
     def getContainerEnvironmentVariables(self):
         return {
-            "MYSQL_ROOT_PASSWORD" :         self.getPassword()
+            "MYSQL_ROOT_PASSWORD"       : self.getPassword()
         }
 
     def getContainerVolumes(self):
