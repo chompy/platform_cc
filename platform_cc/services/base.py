@@ -5,12 +5,13 @@ class BasePlatformService(Container):
     Base class for Platform.sh services.
     """
 
-    def __init__(self, project, config):
+    def __init__(self, project, config, dockerClient = None):
         """
         Constructor.
 
         :param project: Project data
         :param config: Service configuration
+        :param dockerClient: Docker client
         """
         self.config = dict(config)
         Container.__init__(
@@ -21,7 +22,8 @@ class BasePlatformService(Container):
                 self.config.get(
                     "_type"
                 )
-            )
+            ),
+            dockerClient
         )
 
     def getType(self):

@@ -10,16 +10,19 @@ class Container:
     """ Name prefix to use for all service containers. """
     CONTAINER_NAME_PREFIX = "pcc_"
 
-    def __init__(self, project, name):
+    def __init__(self, project, name, dockerClient = None):
         """
         Constructor.
 
         :param project: Project data
         :param name: Name of this container
+        :param dockerClient: Docker client
         """        
         self.project = dict(project)
         self.name = str(name)
-        self.docker = docker.from_env()
+        self.docker = dockerClient
+        if not self.docker:
+            self.docker = docker.from_env()
 
     def getName(self):
         """
