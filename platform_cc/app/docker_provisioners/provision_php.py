@@ -193,14 +193,12 @@ class DockerProvision(DockerProvisionBase):
 
             # scripts
             scripts = locations[path].get("scripts", False)
-            appNginxConf += "\t\t\tlocation ~ [^/]\.php(/|$) {\n"
             if scripts:
+                appNginxConf += "\t\t\tlocation ~ [^/]\.php(/|$) {\n"
                 appNginxConf += addFastCgi()
                 if passthru:
                     appNginxConf += "\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
-            else:
-                appNginxConf += "\t\t\t\tdeny all;\n"
-            appNginxConf += "\t\t\t}\n"
+                appNginxConf += "\t\t\t}\n"
 
             # allow
             allow = locations[path].get("allow", False)
