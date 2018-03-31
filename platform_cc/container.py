@@ -40,7 +40,7 @@ class Container:
         :return: Docker image name
         :rtype: str
         """
-        return ""
+        return "busybox"
 
     def getContainerName(self):
         """

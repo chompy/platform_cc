@@ -24,6 +24,6 @@ class BaseTest(TestCase):
     """ Sample project data. """
     PROJECT_DATA = {
         "path"      : PROJECT_PATH,
-        "uid"       : "123-ABC-456-DEF",
+        "uid"       : "123abc456def",
         "entropy"   : "123random"
     }

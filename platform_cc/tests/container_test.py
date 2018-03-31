@@ -57,3 +57,48 @@ class ContainerTest(BaseTest):
             self.container.getNetworkName(),
             network.attrs.get("Name")
         )
+        
+    def testGetVolume(self):
+        """ Test that it's possible to obtain volumes for container. """
+        defaultVolume = self.container.getVolume()
+        self.assertIsInstance(
+            defaultVolume,
+            docker.models.volumes.Volume
+        )
+        self.assertEqual(
+            "%s%s_%s" % (
+                self.container.CONTAINER_NAME_PREFIX,
+                self.PROJECT_DATA["uid"][0:6],
+                self.CONTAINER_NAME
+            ),
+            defaultVolume.name
+        )
+        defaultVolume.remove()
+        namedVolume = self.container.getVolume("test")
+        self.assertIsInstance(
+            namedVolume,
+            docker.models.volumes.Volume
+        )
+        self.assertEqual(
+            "%s%s_%s_test" % (
+                self.container.CONTAINER_NAME_PREFIX,
+                self.PROJECT_DATA["uid"][0:6],
+                self.CONTAINER_NAME
+            ),
+            namedVolume.name
+        )
+        namedVolume.remove()
+
+    def testStartContainer(self):
+        """ Perform tests against running container. """
+        self.assertIsNone(self.container.getContainer())
+        self.assertFalse(self.container.isRunning())
+        self.container.start()
+        container = self.container.getContainer()
+        self.assertIsInstance(
+            container,
+            docker.models.containers.Container
+        )
+        self.assertTrue(self.container.isRunning())
+        self.assertIsNotNone(self.container.getContainerIpAddress())
+        self.container.stop()
