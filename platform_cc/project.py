@@ -5,7 +5,7 @@ import hashlib
 import base36
 import random
 from variables import getVariableStorage
-from variables.json import JsonVariables
+from variables.var_json import JsonVariables
 from parser.services import ServicesParser
 from parser.applications import ApplicationsParser
 from services import getService

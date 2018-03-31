@@ -1,4 +1,4 @@
-from .json import JsonVariables
+from .var_json import JsonVariables
 
 def getVariableStorage(projectPath, projectConfig = None):
     """
