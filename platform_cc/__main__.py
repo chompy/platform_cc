@@ -10,7 +10,7 @@ import pkg_resources
 from cleo import Application
 from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
-from commands.applications import ApplicationStart
+from commands.applications import ApplicationStart, ApplicationStop
 
 # fetch version
 try:
@@ -37,6 +37,7 @@ cleoApp.add(ServiceRestart())
 cleoApp.add(ServiceList())
 cleoApp.add(ServiceShell())
 cleoApp.add(ApplicationStart())
+cleoApp.add(ApplicationStop())
 
 def main():
     cleoApp.run()

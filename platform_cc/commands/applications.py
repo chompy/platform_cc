@@ -17,3 +17,19 @@ class ApplicationStart(Command):
             application = project.getApplication(name)
             application.start()
             self.line(application.getContainerName())
+
+class ApplicationStop(Command):
+    """
+    Stop one or more applications.
+
+    application:stop
+        {name* : Name(s) of application.}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        for name in self.argument("name"):
+            application = project.getApplication(name)
+            application.stop()
+            self.line(application.getContainerName())

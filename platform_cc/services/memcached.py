@@ -13,3 +13,13 @@ class MemcachedService(BasePlatformService):
 
     def getDockerImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
+
+    def getServiceData(self):
+        data = BasePlatformService.getServiceData(self)
+        data["platform_relationships"]["memcached"] = {
+            "host"          : data.get("ip", ""),
+            "ip"            : data.get("ip", ""),
+            "scheme"        : "memcached",
+            "port"          : 11211
+        }
+        return data

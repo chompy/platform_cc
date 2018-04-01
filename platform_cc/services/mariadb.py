@@ -68,18 +68,27 @@ class MariaDbService(BasePlatformService):
             }
         }
 
-    def getPlatformRelationship(self):
-        return {
-            "host"          : self.getContainerIpAddress(),
-            "ip"            : self.getContainerIpAddress(),
-            "query"         : {
-                "is_master"     : True
-            },
-            "scheme"        : "mysql",
-            "path"          : "main",
-            "password"      : "",
-            "username"      : ""
-        }
+    def getServiceData(self):
+        data = BasePlatformService.getServiceData(self)
+        endpoints = self.config.get("endpoints", {})
+        for name, config in endpoints.items():
+            data["platform_relationships"][name.strip()] = {                
+                "host"          : data.get("ip", ""),
+                "ip"            : data.get("ip", ""),
+                "port"          : 3306,
+                "path"          : config.get(
+                                    "default_schema",
+                                    list(config.get("privileges", {}).keys())[0]
+                                )
+                ,
+                "query"         : {
+                    "is_master"     : True
+                },
+                "scheme"        : "mysql",
+                "password"      : self.getPassword(name.strip()),
+                "username"      : name.strip()
+            }
+        return data
 
     def start(self):
         BasePlatformService.start(self)

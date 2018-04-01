@@ -136,13 +136,18 @@ class PlatformProject:
         :return: Dictionary of project data
         :rtype: dict
         """
+        serviceData = {}
+        for service in self._services:
+            if not service: continue
+            serviceData[service.getName()] = service.getServiceData()
         return {
             "path"      : self.path,
             "uid"       : self.getUid(),
             "short_uid" : self.getUid()[0:6],
             "entropy"   : self.getEntropy(),
             "config"    : self.config.all(),
-            "variables" : self.variables.all()
+            "variables" : self.variables.all(),
+            "services"  : serviceData
         }
 
     def getServicesParser(self):
@@ -204,6 +209,11 @@ class PlatformProject:
             if application and application.getName() == name:
                 return application       
         appConfig = applicationsParser.getApplicationConfiguration(name)
+        # init all service dependencies for app
+        appServiceDependencies = list(appConfig.get("relationships", {}).values())
+        for serivceName in appServiceDependencies:
+            self.getService(serivceName.split(":")[0])
+        # get app
         application = getApplication(
             self._getProjectData(),
             appConfig

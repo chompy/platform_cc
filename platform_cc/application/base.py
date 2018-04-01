@@ -1,6 +1,9 @@
 import os
+import json
+import base64
 import docker
 from container import Container
+from exception.state_error import StateError
 
 class BasePlatformApplication(Container):
 
@@ -62,6 +65,47 @@ class BasePlatformApplication(Container):
                 "mode" : "rw"
             }
         }
+
+    def getContainerEnvironmentVariables(self):
+        # get platform relationships
+        platformRelationships = {}
+        for key, value in self.config.get("relationships", {}).items():
+            value = value.strip().split(":")
+            platformRelationships[key] = [
+                self.project.get("services", {})
+                    .get(value[0], {})
+                    .get("platform_relationships", {})
+                    .get(value[1])
+            ]
+        envVars = {
+            "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
+            "PLATFORM_APPLICATION"      : "",
+            "PLATFORM_APPLICATION_NAME" : self.getName(),
+            "PLATFORM_BRANCH"           : "",
+            "PLATFORM_DOCUMENT_ROOT"    : "/",
+            "PLATFORM_ENVIRONMENT"      : "",
+            "PLATFORM_PROJECT"          : self.project.get("uid", ""),
+            "PLATFORM_RELATIONSHIPS"    : base64.b64encode(
+                bytes(str(json.dumps(platformRelationships)).encode("utf-8"))
+            ).decode("utf-8"),
+            "PLATFORM_ROUTES"           : "", # TODO
+            "PLATFORM_TREE_ID"          : "",
+            "PLATFORM_VARIABLES"        : base64.b64encode(
+                bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))
+            ).decode("utf-8"),
+            "PLATFORM_PROJECT_ENTROPY"  : self.project.get("entropy", ""),
+            "TRUSTED_PROXIES"           : "172.0.0.0/8,127.0.0.1"
+        }
+        # set env vars from app variables
+        for key, value in self.config.get("variables", {}).get("env", {}).items():
+            envVars[key.strip().upper()] = str(value)
+        # set env vars from project variables
+        for key, value in self.project.get("variables", {}).items():
+            if not key.startswith("env:"): continue
+            key = key[4:]
+            envVars[key.strip().upper()] = str(value)
+        
+        return envVars
 
     def getContainerWorkingDirectory(self):
         return self.APPLICATION_DIRECTORY
@@ -137,3 +181,19 @@ class BasePlatformApplication(Container):
         commit the container.
         """
         pass
+
+    def start(self):
+        # ensure all required services are available
+        projectServices = self.project.get("services", {})
+        serviceNames = list(self.config.get("relationships", {}).values())
+        for serviceName in serviceNames:
+            serviceName = serviceName.strip().split(":")[0]
+            projectService = projectServices.get(serviceName)
+            if not projectService or not projectService.get("running"):
+                raise StateError(
+                    "Application '%s' depends on service '%s' which is not available." % (
+                        self.getName(),
+                        serviceName
+                    )
+                )            
+        Container.start(self)

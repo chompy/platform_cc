@@ -37,11 +37,15 @@ class BasePlatformService(Container):
             "_type"
         )
 
-    def getPlatformRelationship(self):
+    def getServiceData(self):
         """
-        Get relationship data which is passed to the application.
+        Get data needed to access service for use by applications.
 
-        :return: Dictionary containing relationship data
+        :return: Dictionary containing service data
         :rtype: dict
         """
-        return {}
+        return {
+            "running"                   : self.isRunning(),
+            "ip"                        : self.getContainerIpAddress(),
+            "platform_relationships"    : {}
+        }
