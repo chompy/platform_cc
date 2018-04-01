@@ -1,6 +1,11 @@
+import os
+import io
+import time
+import tarfile
 import docker
 from dockerpty import PseudoTerminal, ExecOperation
 from exception.state_error import StateError
+from exception.container_command_error import ContainerCommandError
 
 class Container:
     """
@@ -23,6 +28,7 @@ class Container:
         self.docker = dockerClient
         if not self.docker:
             self.docker = docker.from_env()
+        self._container = None
 
     def getName(self):
         """
@@ -40,7 +46,7 @@ class Container:
         :return: Docker image name
         :rtype: str
         """
-        return "busybox"
+        return "busybox:latest"
 
     def getContainerName(self):
         """
@@ -146,10 +152,12 @@ class Container:
         :return: Docker container
         :rtype: docker.client.containers.Container
         """
+        if self._container: return self._container
         try:
-            return self.docker.containers.get(
+            self._container = self.docker.containers.get(
                 self.getContainerName()
             )
+            return self._container
         except docker.errors.NotFound:
             pass
         return None
@@ -210,27 +218,108 @@ class Container:
             )
         ).strip()
 
+    def runCommand(self, command, user = "root"):
+        """
+        Run a command inside container.
+
+        :param command: Command to run
+        :param user: User to run command as
+        :return: Output of command
+        :rtype: str
+        """
+        if not self.isRunning():
+            raise StateError(
+                "Container '%s' must be running in order to execute a command." % (
+                    self.getContainerName()
+                )
+            )
+        container = self.getContainer()
+        if not container:
+            raise StateError(
+                "Unable to get container '%s.'" % (
+                    self.getContainerName()
+                )
+            )
+        (exitCode, output) = container.exec_run(
+            [
+                "sh", "-c", command
+            ],
+            user = user
+        )
+        if exitCode:
+            print(command)
+            print(output)
+            raise ContainerCommandError(
+                "Command on container '%s' failed with exit code '%s.'" % (
+                    self.getContainerName(),
+                    exitCode
+                )
+            )
+        return output
+
+    def uploadFile(self, fileObj, path):
+        """
+        Upload a file to container.
+
+        :param fileObj: File object with data to push to container
+        :param path: Path inside container to push data to
+        """
+        if not self.isRunning():
+            raise StateError(
+                "Container '%s' must be running in order to upload a file." % (
+                    self.getContainerName()
+                )
+            )
+        container = self.getContainer()
+        if not container:
+            raise StateError(
+                "Unable to get container '%s.'" % (
+                    self.getContainerName()
+                )
+            )
+        tarData = io.BytesIO()
+        with tarfile.open(fileobj=tarData, mode="w") as tar:
+            tarFileInfo = tarfile.TarInfo(
+                name=os.path.basename(path)
+            )
+            tarFileInfo.mtime = time.time()
+            tar.addfile(
+                tarFileInfo,
+                fileObj
+            )
+        tarData.seek(0)
+        container.put_archive(
+            os.path.dirname(path),
+            data=tarData
+        )
+
     def start(self):
         """
         Start Docker container for service.
         """
+        self._container = None
         container = self.getContainer()
         if not container:
             self.getNetwork() # instantiate if not created
-            container = self.docker.containers.create(
-                self.getDockerImage(),
-                name = self.getContainerName(),
-                command = self.getContainerCommand(),
-                detach = True,
-                stdin_open = True,
-                tty=True,
-                environment = self.getContainerEnvironmentVariables(),
-                extra_hosts = self.getContainerHosts(),
-                network = self.getNetworkName(),
-                ports = self.getContainerPorts(),
-                volumes = self.getContainerVolumes(),
-                working_dir = self.getContainerWorkingDirectory()
-            )
+            try:
+                container = self.docker.containers.create(
+                    self.getDockerImage(),
+                    name = self.getContainerName(),
+                    command = self.getContainerCommand(),
+                    detach = True,
+                    stdin_open = True,
+                    tty=True,
+                    environment = self.getContainerEnvironmentVariables(),
+                    extra_hosts = self.getContainerHosts(),
+                    network = self.getNetworkName(),
+                    ports = self.getContainerPorts(),
+                    volumes = self.getContainerVolumes(),
+                    working_dir = self.getContainerWorkingDirectory(),
+                    cap_add = ["SYS_ADMIN"]
+                )
+            except docker.errors.ImageNotFound:
+                self.docker.images.pull(self.getDockerImage())
+                return self.start()
         if container.status == "running": return
         container.start()
 
@@ -243,6 +332,7 @@ class Container:
         container.stop()
         container.wait()
         container.remove()
+        self._container = None
 
     def restart(self):
         """
@@ -259,7 +349,7 @@ class Container:
         :param user: User to run as
         """
         if not self.isRunning():
-            raise StateError("Service '%s' is not running." % self.getName())
+            raise StateError("Container '%s' is not running." % self.getDockerImage())
         container = self.getContainer()
         execId = self.docker.api.exec_create(
             container.id,

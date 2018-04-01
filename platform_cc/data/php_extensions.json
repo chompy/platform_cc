@@ -1,0 +1,26 @@
+{
+    "__default__" : [
+        {
+            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "command" : "docker-php-ext-install -j$(nproc) __EXT_NAME__"
+        }
+    ],
+    "memcached" : [
+        {
+            "images" : ["php:5.4-fpm", "php:5.6-fpm"],
+            "command" : "apt-get install -y libmemcached-dev zlib1g-dev && echo '\n' | pecl install memcached-2.2.0 || true && docker-php-ext-enable memcached"
+        }
+    ],
+    "redis" : [
+        {
+            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "command" : "echo '\n' | pecl install redis && docker-php-ext-enable redis"
+        }
+    ],
+    "imagick" : [
+        {
+            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "command" : "apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev && echo '\n' | pecl install imagick || true && docker-php-ext-enable imagick"
+        }
+    ]
+}

@@ -15,8 +15,5 @@ class ApplicationStart(Command):
         project = getProject(self)
         for name in self.argument("name"):
             application = project.getApplication(name)
-            print(application)
-
-            #service = project.getService(name)
-            #service.start()
-            #self.line(service.getContainerName())
+            application.start()
+            self.line(application.getContainerName())

@@ -27,11 +27,11 @@ class VariablesTest(BaseTest):
         """ Test to ensure variables can be set correctly. """
         self.jsonVariables.set("test", "1")
         self.jsonVariables.set("test2", "hello")
-        self.assertEquals(
+        self.assertEqual(
             "1",
             self.jsonVariables.get("test")
         )
-        self.assertEquals(
+        self.assertEqual(
             "hello",
             self.jsonVariables.get("test2")
         )

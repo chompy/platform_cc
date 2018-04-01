@@ -1,5 +1,6 @@
 import os
 from .base import BasePlatformParser
+from exception.parser_error import ParserError
 
 class ApplicationsParser(BasePlatformParser):
     """

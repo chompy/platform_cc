@@ -139,7 +139,10 @@ class PlatformProject:
         return {
             "path"      : self.path,
             "uid"       : self.getUid(),
-            "entropy"   : self.getEntropy()
+            "short_uid" : self.getUid()[0:6],
+            "entropy"   : self.getEntropy(),
+            "config"    : self.config.all(),
+            "variables" : self.variables.all()
         }
 
     def getServicesParser(self):
@@ -197,21 +200,13 @@ class PlatformProject:
         """
         applicationsParser = self.getApplicationsParser()
         name = str(name)
-        """for application in self._applications:
-            if application and application.getName()
-        
-
-        getApplication
-        print(applicationsParser.getApplicationConfiguration(name))"""
-        #raise NotImplementedError("Applications have not yet been implemented.")
-        
-        """for app in self._applications:
-            if app and app.getName() == name:
-                return app
-        appConfig = self.servicesParser.getApplicationConfiguration(name)
-        service = getService(
+        for application in self._applications:
+            if application and application.getName() == name:
+                return application       
+        appConfig = applicationsParser.getApplicationConfiguration(name)
+        application = getApplication(
             self._getProjectData(),
-            serviceConfig
+            appConfig
         )
-        self._services.append(service)
-        return service"""
+        self._applications.append(application)
+        return application
