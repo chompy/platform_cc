@@ -257,11 +257,11 @@ class Container:
             )
         return output
 
-    def uploadFile(self, fileObj, path):
+    def uploadFile(self, uploadObj, path):
         """
         Upload a file to container.
 
-        :param fileObj: File object with data to push to container
+        :param uploadObj: File object with data to push to container
         :param path: Path inside container to push data to
         """
         if not self.isRunning():
@@ -279,18 +279,21 @@ class Container:
             )
         tarData = io.BytesIO()
         with tarfile.open(fileobj=tarData, mode="w") as tar:
+            uploadObj.seek(0, io.SEEK_END)
             tarFileInfo = tarfile.TarInfo(
-                name=os.path.basename(path)
+                name = os.path.basename(path)
             )
+            tarFileInfo.size = uploadObj.tell()
             tarFileInfo.mtime = time.time()
+            uploadObj.seek(0)
             tar.addfile(
                 tarFileInfo,
-                fileObj
+                uploadObj
             )
         tarData.seek(0)
         container.put_archive(
             os.path.dirname(path),
-            data=tarData
+            data = tarData
         )
 
     def start(self):

@@ -26,6 +26,20 @@ class PhpApplication(BasePlatformApplication):
         "../data/php_extensions.json"
     )
 
+    """ Path to PHP nginx configuration. """
+    NGINX_CONF = os.path.join(
+        os.path.dirname(__file__),
+        "../data/php_nginx.conf"
+    )
+
+    def getContainerCommand(self):
+        if self.getDockerImage() == self.getBaseImage():
+            return None
+        command = self.config.get("web", {}).get("commands", {}).get("start")
+        if command:
+            return "sh -c \"%s\"" % command
+        return None
+
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
@@ -98,6 +112,9 @@ class PhpApplication(BasePlatformApplication):
             chown -R web:web %s
             """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
         )
+        # install nginx config
+        with open(self.NGINX_CONF, "rb") as f:
+            self.uploadFile(f, "/etc/nginx/nginx.conf")
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         for extension in extInstall:
@@ -129,6 +146,101 @@ class PhpApplication(BasePlatformApplication):
                 self.project.get("short_uid")
             )
         )
+        self._hasCommitImage = None
+
+    def generateNginxConfig(self):
+        """
+        Generate configuration for nginx specific to application.
+
+        :return: Nginx configuration
+        :rtype: str
+        """
+        locations = self.config.get("web", {}).get("locations", {})
+        appNginxConf = ""
+        def addFastCgi(scriptName = ""):
+            if not scriptName: scriptName = "$fastcgi_script_name"
+            conf = ""
+            conf += "\t\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
+            conf += "\t\t\t\tfastcgi_pass 127.0.0.1:9000;\n"
+            conf += "\t\t\t\tfastcgi_param SCRIPT_FILENAME $document_root%s;\n" % scriptName
+            conf += "\t\t\t\tinclude fastcgi_params;\n"
+            return conf
+        for path in locations:
+            appNginxConf += "\t\tlocation %s {\n" % path
+            # == ROOT
+            root = locations[path].get("root", "") or ""
+            appNginxConf += "\t\t\troot \"%s\";\n" % (
+                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
+            )
+            # == HEADERS
+            headers = locations[path].get("headers", {})
+            for headerName in headers:
+                appNginxConf += "\t\t\tadd_header %s %s;\n" % (
+                    headerName,
+                    headers[headerName]
+                )
+            # == PASSTHRU
+            passthru = locations[path].get("passthru", False)
+            if passthru and not locations[path].get("scripts", False):
+                if passthru == True: passthru = "/index.php"
+                appNginxConf += "\t\t\tlocation ~ /%s {\n" % passthru.strip("/")
+                appNginxConf += "\t\t\t\tallow all;\n"
+                appNginxConf += addFastCgi(passthru)
+                appNginxConf += "\t\t\t}\n"
+                #appNginxConf += "\t\tlocation / {\n"
+                appNginxConf += "\t\t\ttry_files $uri /%s$is_args$args;\n" % passthru.strip("/")
+                #appNginxConf += "\t\t}\n"
+            # == SCRIPTS
+            scripts = locations[path].get("scripts", False)
+            if scripts:
+                appNginxConf += "\t\t\tlocation ~ [^/]\.php(/|$) {\n"
+                appNginxConf += addFastCgi()
+                if passthru:
+                    appNginxConf += "\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
+                appNginxConf += "\t\t\t}\n"
+            # == ALLOW
+            #allow = locations[path].get("allow", False)
+            # TODO!
+            # allow = false should deny access when requesting a file that does exist but
+            # does not match a rule
+            # == RULES
+            rules = locations[path].get("rules", {})
+            if rules:
+                for ruleRegex in rules:
+                    rule = rules[ruleRegex]
+                    appNginxConf += "\t\t\tlocation ~ %s {\n" % (ruleRegex)
+                    # allow
+                    if not rule.get("allow", True):
+                        appNginxConf += "\t\t\t\tdeny all;\n"
+                    else:
+                        appNginxConf += "\t\t\t\tallow all;\n"
+                    # passthru
+                    passthru = rule.get("passthru", False)
+                    if passthru:
+                        appNginxConf += addFastCgi(passthru)
+                    # expires
+                    expires = rule.get("expires", False)
+                    if expires:
+                        appNginxConf += "\t\t\t\texpires %s;\n" % expires
+                    # headers
+                    headers = rule.get("headers", {})
+                    for headerName in headers:
+                        appNginxConf += "\t\t\t\tadd_header %s %s;\n" % (
+                            headerName,
+                            headers[headerName]
+                        )
+                    # scripts
+                    scripts = rule.get("scripts", False)
+                    appNginxConf += "\t\t\t\tlocation ~ [^/]\.php(/|$) {\n"
+                    if scripts:
+                        appNginxConf += addFastCgi()
+                        if passthru:
+                            appNginxConf += "\t\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
+                    else:
+                        appNginxConf += "\t\t\t\t\tdeny all;\n"
+                    appNginxConf += "\t\t\t\t}\n"
+            appNginxConf += "\t\t}\n"
+        return appNginxConf
 
     def start(self):
         BasePlatformApplication.start(self)
@@ -142,12 +254,16 @@ class PhpApplication(BasePlatformApplication):
         )
         # build php.ini from config vars
         phpIniConfig = self.config.get("variables", {}).get("php", {})
-        phpIniFileObj = io.StringIO()
+        phpIniFileObj = io.BytesIO()
         for key, value in phpIniConfig.items():
-            phpIniFileObj.write("%s = %s\n" % (key, value))
+            phpIniFileObj.write(
+                bytes(str("%s = %s\n" % (key, value)).encode("utf-8"))
+            )
         for key, value in self.project.get("variables", {}).items():
             if not key or key[0:4] != "php:": continue
-            phpIniFileObj.write("%s = %s\n" % (key[4:], value))
+            phpIniFileObj.write(
+                bytes(str("%s = %s\n" % (key[4:], value)).encode("utf-8"))
+            )
         self.uploadFile(
             phpIniFileObj,
             "/usr/local/etc/php/conf.d/app2.ini"
@@ -157,7 +273,16 @@ class PhpApplication(BasePlatformApplication):
         # not yet built/provisioned
         if self.getDockerImage() == self.getBaseImage():
             self.build()
-            container.restart()
+            self.stop()
+            return self.start()
+        # nginx config
+        nginxConfFileObj = io.BytesIO(
+            bytes(str(self.generateNginxConfig()).encode("utf-8"))
+        )
+        self.uploadFile(
+            nginxConfFileObj,
+            "/etc/nginx/app.conf"
+        )
         # start nginx + other services
         self.runCommand(
             """

@@ -177,8 +177,14 @@ class BasePlatformApplication(Container):
 
     def build(self):
         """
-        Run first time commands on application container. Then
-        commit the container.
+        Run commands needed to get container ready for given
+        application. Also runs build hooks commands.
+        """
+        pass
+
+    def deploy(self):
+        """
+        Run deploy hook commands.
         """
         pass
 
@@ -191,7 +197,7 @@ class BasePlatformApplication(Container):
             projectService = projectServices.get(serviceName)
             if not projectService or not projectService.get("running"):
                 raise StateError(
-                    "Application '%s' depends on service '%s' which is not available." % (
+                    "Application '%s' depends on service '%s' which is not running." % (
                         self.getName(),
                         serviceName
                     )
