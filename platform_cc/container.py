@@ -3,6 +3,7 @@ import io
 import time
 import tarfile
 import docker
+import logging
 from dockerpty import PseudoTerminal, ExecOperation
 from exception.state_error import StateError
 from exception.container_command_error import ContainerCommandError
@@ -28,6 +29,7 @@ class Container:
         self.docker = dockerClient
         if not self.docker:
             self.docker = docker.from_env()
+        self.logger = logging.getLogger(__name__)
         self._container = None
 
     def getName(self):

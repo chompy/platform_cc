@@ -11,6 +11,7 @@ from cleo import Application
 from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
 from commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
+from commands.router import RouterStart, RouterStop
 
 # fetch version
 try:
@@ -40,6 +41,8 @@ cleoApp.add(ApplicationStart())
 cleoApp.add(ApplicationStop())
 cleoApp.add(ApplicationList())
 cleoApp.add(ApplicationShell())
+cleoApp.add(RouterStart())
+cleoApp.add(RouterStop())
 
 def main():
     cleoApp.run()

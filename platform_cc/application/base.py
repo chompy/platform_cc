@@ -2,6 +2,7 @@ import os
 import json
 import base64
 import docker
+import logging
 from container import Container
 from exception.state_error import StateError
 
@@ -40,6 +41,7 @@ class BasePlatformApplication(Container):
                 ""
             )
         )
+        self.logger = logging.getLogger(__name__)
         self._hasCommitImage = None
 
     def getDockerImage(self):
@@ -180,15 +182,16 @@ class BasePlatformApplication(Container):
         Run commands needed to get container ready for given
         application. Also runs build hooks commands.
         """
-        pass
+        self.logger.info("Build '%s' application." % self.getName())
 
     def deploy(self):
         """
         Run deploy hook commands.
         """
-        pass
+        self.logger.info("Run deploy hooks for '%s' application." % self.getName())
 
     def start(self):
+        self.logger.info("Start '%s' application." % self.getName())
         # ensure all required services are available
         projectServices = self.project.get("services", {})
         serviceNames = list(self.config.get("relationships", {}).values())

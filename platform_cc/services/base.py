@@ -1,3 +1,4 @@
+import logging
 from container import Container
 
 class BasePlatformService(Container):
@@ -25,6 +26,7 @@ class BasePlatformService(Container):
             ),
             dockerClient
         )
+        self.logger = logging.getLogger(__name__)
 
     def getType(self):
         """
@@ -49,3 +51,7 @@ class BasePlatformService(Container):
             "ip"                        : self.getContainerIpAddress(),
             "platform_relationships"    : {}
         }
+
+    def start(self):
+        self.logger.info("Start '%s' service." % self.getName())
+        Container.start(self)

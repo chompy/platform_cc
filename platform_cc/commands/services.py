@@ -1,4 +1,5 @@
 import os
+
 from cleo import Command
 from commands import getProject, outputJson, outputTable
 
