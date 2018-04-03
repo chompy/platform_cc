@@ -4,6 +4,7 @@ import base64
 import docker
 import logging
 from container import Container
+from parser.routes import RoutesParser
 from exception.state_error import StateError
 
 class BasePlatformApplication(Container):
@@ -63,6 +64,7 @@ class BasePlatformApplication(Container):
                     .get("platform_relationships", {})
                     .get(value[1])
             ]
+        routesParser = RoutesParser(self.project)
         envVars = {
             "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
             "PLATFORM_APPLICATION"      : "",
@@ -74,7 +76,9 @@ class BasePlatformApplication(Container):
             "PLATFORM_RELATIONSHIPS"    : base64.b64encode(
                 bytes(str(json.dumps(platformRelationships)).encode("utf-8"))
             ).decode("utf-8"),
-            "PLATFORM_ROUTES"           : "", # TODO
+            "PLATFORM_ROUTES"           : base64.b64encode(
+                bytes(str(json.dumps(routesParser.getRoutesEnvironmentVariable())).encode("utf-8"))
+            ),
             "PLATFORM_TREE_ID"          : "",
             "PLATFORM_VARIABLES"        : base64.b64encode(
                 bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))

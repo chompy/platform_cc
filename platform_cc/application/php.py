@@ -96,8 +96,8 @@ class PhpApplication(BasePlatformApplication):
             ln -s /usr/bin/nodejs /usr/bin/node
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/main.ini
-            echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/main.ini
+            echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini
+            echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/01-main.ini
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
@@ -242,7 +242,7 @@ class PhpApplication(BasePlatformApplication):
         self.setupMounts()
         # link php.ini in app root
         self.runCommand(
-            "[ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/app.ini || true"
+            "[ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/02-app.ini || true"
         )
         # build php.ini from config vars
         phpIniConfig = self.config.get("variables", {}).get("php", {})
@@ -258,7 +258,7 @@ class PhpApplication(BasePlatformApplication):
             )
         self.uploadFile(
             phpIniFileObj,
-            "/usr/local/etc/php/conf.d/app2.ini"
+            "/usr/local/etc/php/conf.d/03-app.ini"
         )
         # restart container to reload conf changes
         container.restart()

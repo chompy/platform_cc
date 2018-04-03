@@ -1,9 +1,7 @@
 import os
-import io
 import docker
 from container import Container
 from parser.routes import RoutesParser
-from exception.state_error import StateError
 
 class PlatformRouter(Container):
 
@@ -51,15 +49,15 @@ class PlatformRouter(Container):
     def getVolume(self, name = ""):
         return None
 
-    def _generateNginxConfig(self, project):
+    def generateNginxConfig(self, applications):
         """
-        Generate Nginx vhost for given project.
+        Generate Nginx vhost for applications in a project.
 
-        :param project: Dictionary with project data
+        :param applications: List of all applications in a project
         :return: Nginx configuration
         :rtype: str
         """
-        routesParser = RoutesParser(project)
+        routesParser = RoutesParser(applications[0].project)
         routeHostnames = routesParser.getRoutesByHostname()
         output = ""
         for hostname, routes in routeHostnames.items():
@@ -109,10 +107,13 @@ class PlatformRouter(Container):
                             )
                             output += "\t\t}\n"
                         # upstream, proxy_pass
-                        upstreamHost = project.get("application_hosts", {}).get(config.get("upstream", "app"))
+                        upstreamHost = ""
+                        for application in applications:
+                            if application.getName() == config.get("upstream"):
+                                upstreamHost = application.getContainerName() # container host name
                         if not redirectHasRootPath and upstreamHost:
-                            output += "\t\tlocation ~ / {\n"
-                            output += "\t\tset $upstream http://%s;\n" % (
+                            output += "\t\tlocation ~* / {\n"
+                            output += "\t\t\tset $upstream http://%s;\n" % (
                                 upstreamHost
                             )
                             output += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"

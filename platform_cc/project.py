@@ -4,6 +4,8 @@ import time
 import hashlib
 import base36
 import random
+import io
+import docker
 from variables import getVariableStorage
 from variables.var_json import JsonVariables
 from parser.services import ServicesParser
@@ -11,7 +13,8 @@ from parser.applications import ApplicationsParser
 from parser.routes import RoutesParser
 from services import getService
 from application import getApplication
-from container import Container
+from router import PlatformRouter
+from exception.state_error import StateError
 
 class PlatformProject:
     """
@@ -146,15 +149,6 @@ class PlatformProject:
         for service in self._services:
             if not service: continue
             serviceData[service.getName()] = service.getServiceData()
-        appParser = self.getApplicationsParser()
-        appHostNames = {}
-        for appName in appParser.getApplicationNames():
-            appHostNames[appName] = Container.staticGetContainerName(
-                {
-                    "short_uid"       : projectUid[0:6]
-                },
-                appName
-            )
         return {
             "path"              : self.path,
             "uid"               : projectUid,
@@ -162,8 +156,7 @@ class PlatformProject:
             "entropy"           : self.getEntropy(),
             "config"            : self.config.all(),
             "variables"         : self.variables.all(),
-            "services"          : serviceData, # service data needed by applications,
-            "application_hosts" : appHostNames
+            "services"          : serviceData # service data needed by applications,
         }
 
     def getServicesParser(self):
@@ -248,3 +241,49 @@ class PlatformProject:
         )
         self._applications.append(application)
         return application
+
+    def addRouter(self):
+        """
+        Add this project to the router.
+        """
+        # get router
+        router = PlatformRouter()
+        if not router.isRunning():
+            raise StateError(
+                "Router is not running."
+            )
+        # retrieve all applications
+        appParser = self.getApplicationsParser()
+        for appName in appParser.getApplicationNames():
+            self.getApplication(appName)
+        if len(self._applications) == 0:
+            raise Exception("Project must contain at least one application.")
+        # generate nginx config
+        nginxConfig = router.generateNginxConfig(self._applications)
+        # upload nginx config to router
+        nginxConfigFile = io.BytesIO(
+            bytes(str(nginxConfig).encode("utf-8"))
+        )
+        router.uploadFile(
+            nginxConfigFile,
+            os.path.join(
+                router.NGINX_PROJECT_CONF_PATH,
+                "%s.conf" % self._applications[0].project.get("short_uid")
+            )
+        )
+        # add router to project network
+        network = self._applications[0].getNetwork()
+        try:
+            network.connect(
+                router.getContainer()
+            )
+        except docker.errors.APIError:
+            pass
+        # restart router
+        router.getContainer().restart()
+
+    def removeRouter(self):
+        """
+        Remove this project from the router.
+        """
+        return

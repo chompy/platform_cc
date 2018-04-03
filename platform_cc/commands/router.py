@@ -37,5 +37,4 @@ class RouterAdd(Command):
 
     def handle(self):
         project = getProject(self)
-        router = PlatformRouter()
-        router.addProject(project.getProjectData())
+        project.addRouter()
