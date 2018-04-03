@@ -138,15 +138,7 @@ class PhpApplication(BasePlatformApplication):
             """
         )
         # commit container
-        container = self.getContainer()
-        container.commit(
-            self.COMMIT_REPOSITORY_NAME,
-            "%s_%s" % (
-                self.getName(),
-                self.project.get("short_uid")
-            )
-        )
-        self._hasCommitImage = None
+        self.commit()
 
     def generateNginxConfig(self):
         """

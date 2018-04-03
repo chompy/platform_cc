@@ -1,6 +1,7 @@
 import os
 from cleo import Command
 from router import PlatformRouter
+from commands import getProject
 
 class RouterStart(Command):
     """
@@ -25,3 +26,16 @@ class RouterStop(Command):
         router = PlatformRouter()
         router.stop()
         self.line(router.getContainerName())
+
+class RouterAdd(Command):
+    """
+    Add project to router.
+
+    router:add
+    {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        router = PlatformRouter()
+        router.addProject(project.getProjectData())

@@ -11,7 +11,7 @@ class MemcachedService(BasePlatformService):
         "memcached:1.4"          : "memcached:1"
     }
 
-    def getDockerImage(self):
+    def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
     def getServiceData(self):

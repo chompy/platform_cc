@@ -8,8 +8,10 @@ from variables import getVariableStorage
 from variables.var_json import JsonVariables
 from parser.services import ServicesParser
 from parser.applications import ApplicationsParser
+from parser.routes import RoutesParser
 from services import getService
 from application import getApplication
+from container import Container
 
 class PlatformProject:
     """
@@ -67,6 +69,9 @@ class PlatformProject:
 
         # list of initialized applications
         self._applications = []
+
+        # define routes parser
+        self._routesParser = None
 
     def _generateUid(self):
         """
@@ -128,7 +133,7 @@ class PlatformProject:
         self.config.set("entropy", entropy)
         return entropy
 
-    def _getProjectData(self):
+    def getProjectData(self):
         """
         Get dictionary containing project data
         needed by other child objects.
@@ -136,18 +141,29 @@ class PlatformProject:
         :return: Dictionary of project data
         :rtype: dict
         """
+        projectUid = self.getUid()
         serviceData = {}
         for service in self._services:
             if not service: continue
             serviceData[service.getName()] = service.getServiceData()
+        appParser = self.getApplicationsParser()
+        appHostNames = {}
+        for appName in appParser.getApplicationNames():
+            appHostNames[appName] = Container.staticGetContainerName(
+                {
+                    "short_uid"       : projectUid[0:6]
+                },
+                appName
+            )
         return {
-            "path"      : self.path,
-            "uid"       : self.getUid(),
-            "short_uid" : self.getUid()[0:6],
-            "entropy"   : self.getEntropy(),
-            "config"    : self.config.all(),
-            "variables" : self.variables.all(),
-            "services"  : serviceData
+            "path"              : self.path,
+            "uid"               : projectUid,
+            "short_uid"         : projectUid[0:6],
+            "entropy"           : self.getEntropy(),
+            "config"            : self.config.all(),
+            "variables"         : self.variables.all(),
+            "services"          : serviceData, # service data needed by applications,
+            "application_hosts" : appHostNames
         }
 
     def getServicesParser(self):
@@ -174,6 +190,18 @@ class PlatformProject:
         self._applicationsParser = ApplicationsParser(self.path)
         return self._applicationsParser
 
+    def getRoutesParser(self):
+        """
+        Get routes parser.
+
+        :return: Routes parser
+        :rtype: .parser.routes.RoutesParser
+        """
+        if self._routesParser:
+            return self._routesParser
+        self._routesParser = RoutesParser(self.getProjectData())
+        return self._routesParser
+
     def getService(self, name):
         """
         Get a service handler.
@@ -189,7 +217,7 @@ class PlatformProject:
                 return service
         serviceConfig = servicesParser.getServiceConfiguration(name)
         service = getService(
-            self._getProjectData(),
+            self.getProjectData(),
             serviceConfig
         )
         self._services.append(service)
@@ -215,7 +243,7 @@ class PlatformProject:
             self.getService(serivceName.split(":")[0])
         # get app
         application = getApplication(
-            self._getProjectData(),
+            self.getProjectData(),
             appConfig
         )
         self._applications.append(application)

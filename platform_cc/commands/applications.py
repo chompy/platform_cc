@@ -82,7 +82,7 @@ class ApplicationList(Command):
                     appData[application]["container_name"],
                     appData[application]["docker_image"],
                     appData[application]["status"],
-                    appData[application]s["ip_address"] if appData[application]["ip_address"] else "N/A"
+                    appData[application]["ip_address"] if appData[application]["ip_address"] else "N/A"
                 )
             )
         outputTable(

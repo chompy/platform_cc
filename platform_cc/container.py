@@ -13,6 +13,9 @@ class Container:
     Base class for all Docker container instances.
     """
     
+    """ Name of repository for all committed application images. """
+    COMMIT_REPOSITORY_NAME = "platform_cc"
+
     """ Name prefix to use for all service containers. """
     CONTAINER_NAME_PREFIX = "pcc_"
 
@@ -31,6 +34,7 @@ class Container:
             self.docker = docker.from_env()
         self.logger = logging.getLogger(__name__)
         self._container = None
+        self._hasCommitImage = None
 
     def getName(self):
         """
@@ -48,31 +52,91 @@ class Container:
         :return: Docker image name
         :rtype: str
         """
+        commitImage = self.getCommitImage()
+        if commitImage and self._hasCommitImage == None:
+            try:
+                self.docker.images.get(commitImage)
+                self._hasCommitImage = True
+            except docker.errors.ImageNotFound:
+                self._hasCommitImage = False
+        if commitImage and self._hasCommitImage == True:
+            return commitImage
+        return self.getBaseImage()
+
+    def getBaseImage(self):
+        """
+        Get base Docker image name to use for application
+        prior to build.
+
+        :return: Docker image name
+        :rtype: str
+        """
         return "busybox:latest"
 
-    def getContainerName(self):
+    def getCommitImage(self):
         """
-        Get name of service docker container.
+        Get name of committed Docker image to use
+        instead of main image if it exists.
 
-        :return: Container name
+        :return: Committed Docker image name
+        :rtype: str
+        """
+        return "%s:%s_%s" % (
+            self.COMMIT_REPOSITORY_NAME,
+            self.getName(),
+            self.project.get("short_uid")
+        )
+
+    @staticmethod
+    def staticGetContainerName(project, name):
+        """
+        Get name of docker container.
+        :param project: Project data
+        :param name: Container base name
+        :return: Docker container name
         :rtype: str
         """
         return "%s%s_%s" % (
-            self.CONTAINER_NAME_PREFIX,
-            self.project.get("uid")[0:6],
+            Container.CONTAINER_NAME_PREFIX,
+            project.get("short_uid"),
+            name
+        )
+
+    def getContainerName(self):
+        """
+        Get name of docker container.
+
+        :return: Docker container name
+        :rtype: str
+        """
+        return Container.staticGetContainerName(
+            self.project,
             self.name
         )
 
-    def getNetworkName(self):
+    @staticmethod
+    def staticGetNetworkName(project):
         """
-        Get name of network to use with docker container.
+        Get name of network to use with Docker container.
 
+        :param project: Project data
         :return: Network name
         :rtype: str
         """
         return "%s%s" % (
-            self.CONTAINER_NAME_PREFIX,
-            self.project.get("uid")[0:6]
+            Container.CONTAINER_NAME_PREFIX,
+            project.get("short_uid")
+        )
+
+    def getNetworkName(self):
+        """
+        Get name of network to use with Docker container.
+
+        :return: Network name
+        :rtype: str
+        """
+        return Container.staticGetNetworkName(
+            self.project
         )
 
     def getContainerCommand(self):
@@ -320,7 +384,8 @@ class Container:
                     ports = self.getContainerPorts(),
                     volumes = self.getContainerVolumes(),
                     working_dir = self.getContainerWorkingDirectory(),
-                    cap_add = ["SYS_ADMIN"]
+                    hostname = self.getContainerName(),
+                    cap_add = ["SYS_ADMIN"] # needed to use mount inside container
                 )
             except docker.errors.ImageNotFound:
                 self.docker.images.pull(self.getDockerImage())
@@ -345,6 +410,21 @@ class Container:
         """
         self.stop()
         self.start()
+
+    def commit(self):
+        """
+        Commit container in current state and create commit
+        image.
+        """
+        if not self.isRunning():
+            raise StateError("Container '%s' is not running." % self.getDockerImage())
+        container = self.getContainer()
+        commitImage = self.getCommitImage().split(":")
+        container.commit(
+            commitImage[0],
+            commitImage[1]
+        )
+        self._hasCommitImage = None
 
     def shell(self, cmd = "bash", user = "root"):
         """

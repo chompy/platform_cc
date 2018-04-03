@@ -12,9 +12,6 @@ class BasePlatformApplication(Container):
     Base class for managing Platform.sh applications.
     """
 
-    """ Name of repository for all committed application images. """
-    COMMIT_REPOSITORY_NAME = "platform_cc"
-
     """
     Directory inside container to mount application to.
     """
@@ -42,19 +39,6 @@ class BasePlatformApplication(Container):
             )
         )
         self.logger = logging.getLogger(__name__)
-        self._hasCommitImage = None
-
-    def getDockerImage(self):
-        commitImage = self.getCommitImage()
-        if self._hasCommitImage == None:
-            try:
-                self.docker.images.get(commitImage)
-                self._hasCommitImage = True
-            except docker.errors.ImageNotFound:
-                self._hasCommitImage = False
-        if self._hasCommitImage == True:
-            return commitImage
-        return self.getBaseImage()
 
     def getContainerVolumes(self):
         return {
@@ -112,16 +96,6 @@ class BasePlatformApplication(Container):
     def getContainerWorkingDirectory(self):
         return self.APPLICATION_DIRECTORY
 
-    def getBaseImage(self):
-        """
-        Get base Docker image name to use for application
-        prior to build.
-
-        :return: Docker image name
-        :rtype: str
-        """
-        return "busybox:latest"
-
     def getType(self):
         """
         Get application type.
@@ -130,20 +104,6 @@ class BasePlatformApplication(Container):
         :rtype: str
         """        
         return self.config.get("type")
-
-    def getCommitImage(self):
-        """
-        Get name of committed Docker image to use
-        instead of main image if it exists.
-
-        :return: Committed Docker image name
-        :rtype: str
-        """
-        return "%s:%s_%s" % (
-            self.COMMIT_REPOSITORY_NAME,
-            self.getName(),
-            self.project.get("short_uid")
-        )
 
     def setupMounts(self):
         """

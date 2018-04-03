@@ -26,7 +26,7 @@ class MariaDbService(BasePlatformService):
     """ Salt used to generate passwords. """
     PASSWORD_SALT = "a62bf8b07e2abb117894442b00df02446670fBnBK&%2!2"
 
-    def getDockerImage(self):
+    def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
     def getPassword(self, user = "root"):
