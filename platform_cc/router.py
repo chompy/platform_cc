@@ -1,5 +1,6 @@
 import os
 import docker
+import logging
 from container import Container
 from parser.routes import RoutesParser
 
@@ -20,10 +21,10 @@ class PlatformRouter(Container):
 
     def __init__(self, dockerClient = None):
         Container.__init__(self, {}, "router", dockerClient)
+        self.logger = logging.getLogger(__name__)
 
     def getBaseImage(self):
         return "nginx:1.13"
-
 
     def getCommitImage(self):
         return "%s:%s" % (
@@ -57,10 +58,19 @@ class PlatformRouter(Container):
         :return: Nginx configuration
         :rtype: str
         """
+        self.logger.info(
+            "Generate router Nginx configuration for project '%s.'.",
+            applications[0].project.get("short_uid")
+        )
         routesParser = RoutesParser(applications[0].project)
         routeHostnames = routesParser.getRoutesByHostname()
         output = ""
         for hostname, routes in routeHostnames.items():
+            self.logger.info(
+                "Add %s route(s) for '%s.'",
+                len(routes),
+                hostname
+            )
             # create vhost entry for each scheme
             for scheme in ["http", "https"]:
                 # start vhost
@@ -139,47 +149,12 @@ class PlatformRouter(Container):
                     output += "\t}\n"
                 output += "}\n"
         return output
-
-    def addProject(self, project):
-        """
-        Add project to router.
-
-        :param project: Dictionary with project data
-        """
-        if not self.isRunning():
-            raise StateError(
-                "Router is not running."
-            )
-        # upload project nginx conf file
-        nginxConfigFile = io.BytesIO(
-            bytes(str(self._generateNginxConfig(project)).encode("utf-8"))
-        )
-        self.uploadFile(
-            nginxConfigFile,
-            os.path.join(
-                self.NGINX_PROJECT_CONF_PATH,
-                "%s.conf" % project.get("short_uid")
-            )
-        )
-        # add router to project network
-        networkName = Container.staticGetNetworkName(
-            project
-        )
-        try:
-            network = self.docker.networks.get(networkName)
-        except docker.errors.NotFound:
-            network = self.docker.networks.create(
-                networkName
-            )
-        container = self.getContainer()
-        network.connect(
-            container
-        )
-        # restart container
-        container.restart()
     
     def build(self):
         # create web user and install dev ssl certificate
+        self.logger.info(
+            "Create 'web' user and create default SSL certificate."
+        )
         self.runCommand(
             """
             mkdir %s
@@ -198,6 +173,9 @@ class PlatformRouter(Container):
             """ % (self.NGINX_PROJECT_CONF_PATH)
         )
         # add router nginx.conf
+        self.logger.info(
+            "Add main Nginx configuration."
+        )
         if os.path.exists(self.NGINX_CONF):
             with open(self.NGINX_CONF, "rb") as f:
                 self.uploadFile(

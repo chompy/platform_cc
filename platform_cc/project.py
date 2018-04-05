@@ -6,6 +6,7 @@ import base36
 import random
 import io
 import docker
+import logging
 from variables import getVariableStorage
 from variables.var_json import JsonVariables
 from parser.services import ServicesParser
@@ -34,6 +35,9 @@ class PlatformProject:
 
         :param path: Path to project root
         """
+
+        # get logger
+        self.logger = logging.getLogger(__name__)
 
         # set project path
         self.path = str(path)
@@ -109,6 +113,15 @@ class PlatformProject:
         """
         return self.config.get("uid")
 
+    def getShortUid(self):
+        """
+        Get shortened project unique id.
+
+        :return: Shortened project unique id
+        :rtype: str
+        """
+        return self.getUid()[0:6]
+
     def getEntropy(self):
         """
         Get entropy value for project.
@@ -144,15 +157,14 @@ class PlatformProject:
         :return: Dictionary of project data
         :rtype: dict
         """
-        projectUid = self.getUid()
         serviceData = {}
         for service in self._services:
             if not service: continue
             serviceData[service.getName()] = service.getServiceData()
         return {
             "path"              : self.path,
-            "uid"               : projectUid,
-            "short_uid"         : projectUid[0:6],
+            "uid"               : self.getUid(),
+            "short_uid"         : self.getShortUid(),
             "entropy"           : self.getEntropy(),
             "config"            : self.config.all(),
             "variables"         : self.variables.all(),
@@ -168,6 +180,10 @@ class PlatformProject:
         """
         if self._servicesParser:
             return self._servicesParser
+        self.logger.debug(
+            "Build services parser for project '%s.'",
+            self.getShortUid()
+        )
         self._servicesParser = ServicesParser(self.path)
         return self._servicesParser
 
@@ -180,6 +196,10 @@ class PlatformProject:
         """
         if self._applicationsParser:
             return self._applicationsParser
+        self.logger.debug(
+            "Build applications parser for project '%s.'",
+            self.getShortUid()
+        )
         self._applicationsParser = ApplicationsParser(self.path)
         return self._applicationsParser
 
@@ -192,6 +212,10 @@ class PlatformProject:
         """
         if self._routesParser:
             return self._routesParser
+        self.logger.debug(
+            "Build routes parser for project '%s.'",
+            self.getShortUid()
+        )            
         self._routesParser = RoutesParser(self.getProjectData())
         return self._routesParser
 
@@ -209,6 +233,11 @@ class PlatformProject:
             if service and service.getName() == name:
                 return service
         serviceConfig = servicesParser.getServiceConfiguration(name)
+        self.logger.debug(
+            "Build service handler '%s' for project '%s.'",
+            name,
+            self.getShortUid()
+        )
         service = getService(
             self.getProjectData(),
             serviceConfig
@@ -235,6 +264,11 @@ class PlatformProject:
         for serivceName in appServiceDependencies:
             self.getService(serivceName.split(":")[0])
         # get app
+        self.logger.debug(
+            "Build application handler '%s' for project '%s.'",
+            name,
+            self.getShortUid()
+        )        
         application = getApplication(
             self.getProjectData(),
             appConfig
@@ -246,6 +280,10 @@ class PlatformProject:
         """
         Add this project to the router.
         """
+        self.logger.info(
+            "Add project '%s' to router.",
+            self.getShortUid()
+        )
         # get router
         router = PlatformRouter()
         if not router.isRunning():
@@ -268,7 +306,7 @@ class PlatformProject:
             nginxConfigFile,
             os.path.join(
                 router.NGINX_PROJECT_CONF_PATH,
-                "%s.conf" % self._applications[0].project.get("short_uid")
+                "%s.conf" % self.getShortUid()
             )
         )
         # add router to project network
@@ -286,4 +324,23 @@ class PlatformProject:
         """
         Remove this project from the router.
         """
-        return
+        self.logger.info(
+            "Remove project '%s' from router.",
+            self.getShortUid()
+        )
+        # get router
+        router = PlatformRouter()
+        if not router.isRunning():
+            raise StateError(
+                "Router is not running."
+            )
+        # delete conf file in router
+        router.runCommand(
+            "rm -f %s.conf" % (
+                os.path.join(
+                    router.NGINX_PROJECT_CONF_PATH,
+                    self.getShortUid()
+                )
+            )
+        )
+        router.getContainer().restart()

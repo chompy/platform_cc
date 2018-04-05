@@ -4,14 +4,15 @@
 from __future__ import absolute_import
 import sys
 import os
-import logging
+import logging.config
+import json
 sys.path.append(os.path.dirname(__file__))
 import pkg_resources
 from cleo import Application
 from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
 from commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
-from commands.router import RouterStart, RouterStop, RouterAdd
+from commands.router import RouterStart, RouterStop, RouterAdd, RouterRemove
 
 # fetch version
 try:
@@ -20,8 +21,14 @@ except pkg_resources.DistributionNotFound:
     version = "vDEVELOPMENT"
 
 # init logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+LOGGING_CONFIG_JSON = os.path.join(
+    os.path.dirname(__file__),
+    "logging.json"
+)
+loggingConfig = {}
+with open(LOGGING_CONFIG_JSON, "rt") as f:
+    loggingConfig = json.load(f)
+logging.config.dictConfig(loggingConfig)
 
 # init cleo
 cleoApp = Application(
@@ -44,6 +51,7 @@ cleoApp.add(ApplicationShell())
 cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
 cleoApp.add(RouterAdd())
+cleoApp.add(RouterRemove())
 
 def main():
     cleoApp.run()

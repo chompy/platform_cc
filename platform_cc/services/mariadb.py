@@ -104,6 +104,10 @@ class MariaDbService(BasePlatformService):
         # create schemas
         schemas = self.config.get("schemas", [])
         for schema in schemas:
+            self.logger.info(
+                "Create schema '%s' (if it does not exist).",
+                schema
+            )
             container.exec_run(
                 "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % (
                     self.getPassword(),
@@ -113,6 +117,10 @@ class MariaDbService(BasePlatformService):
         # create users
         endpoints = self.config.get("endpoints", {})
         for endpoint in endpoints:
+            self.logger.info(
+                "Create user '%s' (if it does not exist).",
+                endpoint
+            )
             container.exec_run(
                 "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"DROP USER '%s'@'%%';\"" % (
                     self.getPassword(),
@@ -130,6 +138,11 @@ class MariaDbService(BasePlatformService):
             for schema in privileges:
                 privilege = privileges[schema]
                 if privilege == "admin":
+                    self.logger.info(
+                        "Grant user '%s' admin privilege on schema '%s.'",
+                        endpoint,
+                        schema
+                    )
                     container.exec_run(
                         "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';\"" % (
                             self.getPassword(),
@@ -138,6 +151,11 @@ class MariaDbService(BasePlatformService):
                         )
                     )
                 elif privilege == "ro":
+                    self.logger.info(
+                        "Grant user '%s' read-only privilege on schema '%s.'",
+                        endpoint,
+                        schema
+                    )
                     container.exec_run(
                         "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT SELECT ON %s.* TO '%s'@'%%';\"" % (
                             self.getPassword(),
@@ -146,6 +164,11 @@ class MariaDbService(BasePlatformService):
                         )
                     )                    
                 elif privilege == "rw":
+                    self.logger.info(
+                        "Grant user '%s' read/write privilege on schema '%s.'",
+                        endpoint,
+                        schema
+                    )                    
                     container.exec_run(
                         "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* TO '%s'@'%%';\"" % (
                             self.getPassword(),

@@ -399,6 +399,10 @@ class Container:
         """
         container = self.getContainer()
         if not container: return
+        self.logger.info(
+            "Stop '%s' container.",
+            self.getName()
+        )
         container.stop()
         container.wait()
         container.remove()

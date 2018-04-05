@@ -38,3 +38,15 @@ class RouterAdd(Command):
     def handle(self):
         project = getProject(self)
         project.addRouter()
+
+class RouterRemove(Command):
+    """
+    Remove project from router.
+
+    router:remove
+    {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        project.removeRouter()

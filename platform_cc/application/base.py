@@ -39,7 +39,12 @@ class BasePlatformApplication(Container):
                 ""
             )
         )
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(
+            "P-%s-A-%s" % (
+                self.project.get("short_uid"),
+                self.getName()
+            )
+        )
 
     def getContainerVolumes(self):
         return {
@@ -114,6 +119,10 @@ class BasePlatformApplication(Container):
         Setup application defined mount points.
         """
         configMounts = self.config.get("mounts", {})
+        self.logger.info(
+            "Found %s mount point(s).",
+            len(configMounts)
+        )
         for mountDest, config in configMounts.items():
             mountSrc = ""
             if type(config) is dict:
@@ -125,6 +134,10 @@ class BasePlatformApplication(Container):
                 mountSrc = config[len(localMountPrefx):].strip("/")
             else:
                 continue
+            self.logger.debug(
+                "Bind mount point '%s.'.",
+                mountSrc
+            )
             mountSrc = os.path.join(
                 self.STORAGE_DIRECTORY,
                 mountSrc.strip("/")
@@ -146,16 +159,23 @@ class BasePlatformApplication(Container):
         Run commands needed to get container ready for given
         application. Also runs build hooks commands.
         """
-        self.logger.info("Build '%s' application." % self.getName())
+        self.logger.info(
+            "Building application."
+        )
 
     def deploy(self):
         """
         Run deploy hook commands.
         """
-        self.logger.info("Run deploy hooks for '%s' application." % self.getName())
+        self.logger.info(
+            "Run deploy hooks."
+        )
 
     def start(self):
-        self.logger.info("Start '%s' application." % self.getName())
+        self.logger.info(
+            "Start '%s' application.",
+            self.getName()
+        )
         # ensure all required services are available
         projectServices = self.project.get("services", {})
         serviceNames = list(self.config.get("relationships", {}).values())
@@ -168,5 +188,5 @@ class BasePlatformApplication(Container):
                         self.getName(),
                         serviceName
                     )
-                )            
+                )
         Container.start(self)

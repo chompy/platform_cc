@@ -26,8 +26,13 @@ class BasePlatformService(Container):
             ),
             dockerClient
         )
-        self.logger = logging.getLogger(__name__)
-
+        self.logger = logging.getLogger(
+            "P-%s-S-%s" % (
+                self.project.get("short_uid"),
+                self.getName()
+            )
+        )
+        
     def getType(self):
         """
         Get service type.

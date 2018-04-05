@@ -74,12 +74,18 @@ class PhpApplication(BasePlatformApplication):
 
     def build(self):
         # create 'web' user
+        self.logger.info(
+            "Create 'web' user."
+        )
         self.runCommand(
             "useradd -d /app -m -p secret~ --uid %s web || true" % (
                 self.project.get("config", {}).get("web_uid", self.DEFAULT_WEB_UID)
             )            
         )
         # provision container
+        self.logger.info(
+            "Install/build dependencies."
+        )
         self.runCommand(
             """
             usermod -a -G staff web
@@ -113,16 +119,26 @@ class PhpApplication(BasePlatformApplication):
             """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
         )
         # install nginx config
+        self.logger.info(
+            "Install main Nginx configuration file."
+        )
         with open(self.NGINX_CONF, "rb") as f:
             self.uploadFile(f, "/etc/nginx/nginx.conf")
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         for extension in extInstall:
             if type(extension) is not str: continue
+            self.logger.info(
+                "Install/build '%s' extension.",
+                extension
+            )
             command = self.getExtensionInstallCommand(extension)
             if not command: continue
             self.runCommand(command)
         # build hooks
+        self.logger.info(
+            "Run build hooks."
+        )
         try:
             self.runCommand(
                 self.config.get("hooks", {}).get("build", ""),
@@ -132,12 +148,18 @@ class PhpApplication(BasePlatformApplication):
         except ContainerCommandError:
             pass
         # clean up
+        self.logger.info(
+            "Clean up."
+        )
         self.runCommand(
             """
             apt-get clean
             """
         )
         # commit container
+        self.logger.info(
+            "Commit container."
+        )
         self.commit()
 
     def generateNginxConfig(self):
@@ -147,6 +169,9 @@ class PhpApplication(BasePlatformApplication):
         :return: Nginx configuration
         :rtype: str
         """
+        self.logger.info(
+            "Generate application Nginx configuration."
+        )
         locations = self.config.get("web", {}).get("locations", {})
         appNginxConf = ""
         def addFastCgi(scriptName = ""):
@@ -241,6 +266,9 @@ class PhpApplication(BasePlatformApplication):
         # setup mount points
         self.setupMounts()
         # link php.ini in app root
+        self.logger.info(
+            "Compile php.ini."
+        )
         self.runCommand(
             "[ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/02-app.ini || true"
         )
@@ -276,6 +304,9 @@ class PhpApplication(BasePlatformApplication):
             "/etc/nginx/app.conf"
         )
         # start nginx + other services
+        self.logger.info(
+            "Start Nginx."
+        )
         self.runCommand(
             """
             service nginx start
