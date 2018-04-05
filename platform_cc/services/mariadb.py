@@ -73,7 +73,7 @@ class MariaDbService(BasePlatformService):
         endpoints = self.config.get("endpoints", {})
         for name, config in endpoints.items():
             data["platform_relationships"][name.strip()] = {                
-                "host"          : data.get("ip", ""),
+                "host"          : self.getContainerName(),
                 "ip"            : data.get("ip", ""),
                 "port"          : 3306,
                 "path"          : config.get(

@@ -45,7 +45,12 @@ class MysqlSql(Command):
         
         # has stdin
         if not sys.stdin.isatty():
-            stdin = sys.stdin.detach().read()
+            stdin = sys.stdin
+            try:
+                stdin = sys.stdin.detach().read()
+            except AttributeError:
+                pass
+            stdin = stdin.read()
             byteIo = io.BytesIO(stdin)
             service.uploadFile(
                 byteIo,

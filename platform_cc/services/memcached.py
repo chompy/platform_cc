@@ -17,7 +17,7 @@ class MemcachedService(BasePlatformService):
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"]["memcached"] = {
-            "host"          : data.get("ip", ""),
+            "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "scheme"        : "memcached",
             "port"          : 11211
