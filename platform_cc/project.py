@@ -286,10 +286,7 @@ class PlatformProject:
         )
         # get router
         router = PlatformRouter()
-        if not router.isRunning():
-            raise StateError(
-                "Router is not running."
-            )
+        if not router.isRunning(): router.start()
         # retrieve all applications
         appParser = self.getApplicationsParser()
         for appName in appParser.getApplicationNames():
@@ -330,10 +327,7 @@ class PlatformProject:
         )
         # get router
         router = PlatformRouter()
-        if not router.isRunning():
-            raise StateError(
-                "Router is not running."
-            )
+        if not router.isRunning(): return
         # delete conf file in router
         router.runCommand(
             "rm -f %s.conf" % (

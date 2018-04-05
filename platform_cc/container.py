@@ -293,12 +293,6 @@ class Container:
         :return: Output of command
         :rtype: str
         """
-        if not self.isRunning():
-            raise StateError(
-                "Container '%s' must be running in order to execute a command." % (
-                    self.getContainerName()
-                )
-            )
         container = self.getContainer()
         if not container:
             raise StateError(
@@ -330,12 +324,6 @@ class Container:
         :param uploadObj: File object with data to push to container
         :param path: Path inside container to push data to
         """
-        if not self.isRunning():
-            raise StateError(
-                "Container '%s' must be running in order to upload a file." % (
-                    self.getContainerName()
-                )
-            )
         container = self.getContainer()
         if not container:
             raise StateError(
@@ -420,8 +408,6 @@ class Container:
         Commit container in current state and create commit
         image.
         """
-        if not self.isRunning():
-            raise StateError("Container '%s' is not running." % self.getDockerImage())
         container = self.getContainer()
         commitImage = self.getCommitImage().split(":")
         container.commit(
@@ -437,8 +423,6 @@ class Container:
         :param cmd: Command to run
         :param user: User to run as
         """
-        if not self.isRunning():
-            raise StateError("Container '%s' is not running." % self.getDockerImage())
         container = self.getContainer()
         execId = self.docker.api.exec_create(
             container.id,

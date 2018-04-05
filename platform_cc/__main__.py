@@ -13,6 +13,8 @@ from commands.variables import VariableSet, VariableGet, VariableDelete, Variabl
 from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
 from commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
 from commands.router import RouterStart, RouterStop, RouterAdd, RouterRemove
+from commands.project import ProjectStart, ProjectStop
+from commands.mysql import MysqlSql
 
 # fetch version
 try:
@@ -52,6 +54,9 @@ cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
 cleoApp.add(RouterAdd())
 cleoApp.add(RouterRemove())
+cleoApp.add(ProjectStart())
+cleoApp.add(ProjectStop())
+cleoApp.add(MysqlSql())
 
 def main():
     cleoApp.run()
