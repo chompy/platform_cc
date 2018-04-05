@@ -2,9 +2,7 @@ pyaml
 docker>=2.5
 cleo
 base36
-boto3
 yamlordereddictloader
 terminaltables
 future
 dockerpty
-git+https://github.com/approximatenumber/pickledb.git@my_branch

@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import os
 from cleo import Command
-from router import PlatformRouter
-from commands import getProject
+from platform_cc.router import PlatformRouter
+from platform_cc.commands import getProject
 
 class RouterStart(Command):
     """

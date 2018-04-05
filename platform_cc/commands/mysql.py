@@ -2,8 +2,8 @@ import sys
 import os
 import io
 from cleo import Command
-from commands import getProject, outputJson, outputTable
-from exception.state_error import StateError
+from platform_cc.commands import getProject, outputJson, outputTable
+from platform_cc.exception.state_error import StateError
 
 class MysqlSql(Command):
     """

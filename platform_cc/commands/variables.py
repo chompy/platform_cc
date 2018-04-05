@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from cleo import Command
-from commands import getProject, outputJson, outputTable
+from platform_cc.commands import getProject, outputJson, outputTable
 
 class VariableSet(Command):
     """

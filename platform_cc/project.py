@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import json
 import time
@@ -7,15 +8,15 @@ import random
 import io
 import docker
 import logging
-from variables import getVariableStorage
-from variables.var_json import JsonVariables
-from parser.services import ServicesParser
-from parser.applications import ApplicationsParser
-from parser.routes import RoutesParser
-from services import getService
-from application import getApplication
-from router import PlatformRouter
-from exception.state_error import StateError
+from platform_cc.variables import getVariableStorage
+from platform_cc.variables.var_json import JsonVariables
+from platform_cc.parser.services import ServicesParser
+from platform_cc.parser.applications import ApplicationsParser
+from platform_cc.parser.routes import RoutesParser
+from platform_cc.services import getService
+from platform_cc.application import getApplication
+from platform_cc.router import PlatformRouter
+from platform_cc.exception.state_error import StateError
 
 class PlatformProject:
     """

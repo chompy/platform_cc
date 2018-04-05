@@ -1,6 +1,6 @@
 import os
 from .base import BasePlatformParser
-from exception.parser_error import ParserError
+from platform_cc.exception.parser_error import ParserError
 
 class ServicesParser(BasePlatformParser):
     """

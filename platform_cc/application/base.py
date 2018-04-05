@@ -3,9 +3,9 @@ import json
 import base64
 import docker
 import logging
-from container import Container
-from parser.routes import RoutesParser
-from exception.state_error import StateError
+from platform_cc.container import Container
+from platform_cc.parser.routes import RoutesParser
+from platform_cc.exception.state_error import StateError
 
 class BasePlatformApplication(Container):
 

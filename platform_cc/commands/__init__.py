@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import os
 import json
-from project import PlatformProject
+from platform_cc.project import PlatformProject
 from terminaltables import SingleTable
 
 def getProject(command):

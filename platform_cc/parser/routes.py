@@ -1,11 +1,10 @@
+from __future__ import absolute_import
+from future.moves.urllib.parse import urlparse
 import os
 import collections
 import yaml
 from .base import BasePlatformParser
-from exception.parser_error import ParserError
-from future.standard_library import install_aliases
-install_aliases()
-from urllib.parse import urlparse
+from platform_cc.exception.parser_error import ParserError
 
 class RoutesParser(BasePlatformParser):
     """

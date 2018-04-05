@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import os
 from cleo import Command
-from commands import getProject, outputJson, outputTable
+from platform_cc.commands import getProject, outputJson, outputTable
 
 class ProjectStart(Command):
     """

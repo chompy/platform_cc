@@ -6,15 +6,14 @@ import sys
 import os
 import logging.config
 import json
-sys.path.append(os.path.dirname(__file__))
 import pkg_resources
 from cleo import Application
-from commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
-from commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
-from commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
-from commands.router import RouterStart, RouterStop, RouterAdd, RouterRemove
-from commands.project import ProjectStart, ProjectStop
-from commands.mysql import MysqlSql
+from platform_cc.commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
+from platform_cc.commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
+from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
+from platform_cc.commands.router import RouterStart, RouterStop, RouterAdd, RouterRemove
+from platform_cc.commands.project import ProjectStart, ProjectStop
+from platform_cc.commands.mysql import MysqlSql
 
 # fetch version
 try:

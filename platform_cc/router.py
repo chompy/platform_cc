@@ -1,8 +1,8 @@
 import os
 import docker
 import logging
-from container import Container
-from parser.routes import RoutesParser
+from platform_cc.container import Container
+from platform_cc.parser.routes import RoutesParser
 
 class PlatformRouter(Container):
 

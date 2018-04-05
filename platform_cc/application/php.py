@@ -2,7 +2,7 @@ import io
 import os
 import json
 from .base import BasePlatformApplication
-from exception.container_command_error import ContainerCommandError
+from platform_cc.exception.container_command_error import ContainerCommandError
 
 class PhpApplication(BasePlatformApplication):
     """

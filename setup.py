@@ -19,11 +19,12 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='platform_cc',
+    namespace_packages  = ["platform_cc"],
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.11',
+    version='0.1.0',
 
     description="Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.",
     long_description=long_description,
@@ -62,12 +63,10 @@ setup(
         "docker>=2.5",
         "cleo",
         "base36",
-        "boto3",
         "yamlordereddictloader",
         "terminaltables",
         "future",
-        "dockerpty",
-        "git+https://github.com/approximatenumber/pickledb.git@my_branch"
+        "dockerpty"
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -81,7 +80,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        "platform_cc": ["config/*.yaml", "containers/key_value_store/*"]
+        "platform_cc": ["logging.json"]
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

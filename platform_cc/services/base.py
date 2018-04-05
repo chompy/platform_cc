@@ -1,5 +1,5 @@
 import logging
-from container import Container
+from platform_cc.container import Container
 
 class BasePlatformService(Container):
     """
