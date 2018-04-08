@@ -27,7 +27,8 @@ class BasePlatformService(Container):
             dockerClient
         )
         self.logger = logging.getLogger(
-            "P-%s-S-%s" % (
+            "%s.%s.%s" % (
+                __name__,
                 self.project.get("short_uid"),
                 self.getName()
             )

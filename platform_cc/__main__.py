@@ -10,9 +10,9 @@ import pkg_resources
 from cleo import Application
 from platform_cc.commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from platform_cc.commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
-from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationList, ApplicationShell
-from platform_cc.commands.router import RouterStart, RouterStop, RouterAdd, RouterRemove
-from platform_cc.commands.project import ProjectStart, ProjectStop
+from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationRestart, ApplicationList, ApplicationShell
+from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
+from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes
 from platform_cc.commands.mysql import MysqlSql
 
 # fetch version
@@ -47,14 +47,18 @@ cleoApp.add(ServiceList())
 cleoApp.add(ServiceShell())
 cleoApp.add(ApplicationStart())
 cleoApp.add(ApplicationStop())
+cleoApp.add(ApplicationRestart())
 cleoApp.add(ApplicationList())
 cleoApp.add(ApplicationShell())
 cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
+cleoApp.add(RouterRestart())
 cleoApp.add(RouterAdd())
 cleoApp.add(RouterRemove())
 cleoApp.add(ProjectStart())
 cleoApp.add(ProjectStop())
+cleoApp.add(ProjectRestart())
+cleoApp.add(ProjectRoutes())
 cleoApp.add(MysqlSql())
 
 def main():

@@ -354,6 +354,10 @@ class Container:
         """
         Start Docker container for service.
         """
+        self.logger.info(
+            "Start '%s' container.",
+            self.getContainerName()
+        )
         self._container = None
         container = self.getContainer()
         if not container:
@@ -389,7 +393,7 @@ class Container:
         if not container: return
         self.logger.info(
             "Stop '%s' container.",
-            self.getName()
+            self.getContainerName()
         )
         container.stop()
         container.wait()

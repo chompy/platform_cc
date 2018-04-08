@@ -40,7 +40,8 @@ class BasePlatformApplication(Container):
             )
         )
         self.logger = logging.getLogger(
-            "P-%s-A-%s" % (
+            "%s.%s.%s" % (
+                __name__,
                 self.project.get("short_uid"),
                 self.getName()
             )
@@ -172,10 +173,6 @@ class BasePlatformApplication(Container):
         )
 
     def start(self):
-        self.logger.info(
-            "Start '%s' application.",
-            self.getName()
-        )
         # ensure all required services are available
         projectServices = self.project.get("services", {})
         serviceNames = list(self.config.get("relationships", {}).values())

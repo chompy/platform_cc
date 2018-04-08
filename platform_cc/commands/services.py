@@ -16,7 +16,6 @@ class ServiceStart(Command):
         for name in self.argument("name"):
             service = project.getService(name)
             service.start()
-            self.line(service.getContainerName())
 
 class ServiceStop(Command):
     """
@@ -32,7 +31,6 @@ class ServiceStop(Command):
         for name in self.argument("name"):
             service = project.getService(name)
             service.stop()
-            self.line(service.getContainerName())
 
 class ServiceRestart(Command):
     """
@@ -48,7 +46,6 @@ class ServiceRestart(Command):
         for name in self.argument("name"):
             service = project.getService(name)
             service.restart()
-            self.line(service.getContainerName())
 
 class ServiceList(Command):
     """
@@ -73,7 +70,9 @@ class ServiceList(Command):
             serviceData[serviceName] = {
                 "id"                  : serviceContainer.id if serviceContainer else "",
                 "name"                : service.getName(),
+                "type"                : service.getType(),
                 "container_name"      : service.getContainerName(),
+                "base_docker_image"   : service.getBaseImage(),
                 "docker_image"        : service.getDockerImage(),
                 "status"              : serviceContainer.status if serviceContainer else "stopped",
                 "ip_address"          : service.getContainerIpAddress()
@@ -89,12 +88,13 @@ class ServiceList(Command):
         
         # terminal tables output
         tableData = [
-            ("Name", "Container", "Image", "Status", "IP"),
+            ("Name", "Type", "Container", "Image", "Status", "IP"),
         ]
         for service in serviceData:
             tableData.append(
                 (
                     serviceData[service]["name"],
+                    serviceData[service]["type"],
                     serviceData[service]["container_name"],
                     serviceData[service]["docker_image"],
                     serviceData[service]["status"],

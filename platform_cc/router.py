@@ -143,7 +143,7 @@ class PlatformRouter(Container):
                 # if scheme does not have any routes create a redirect
                 if not hasRouteForScheme:
                     output += "\tlocation / {\n"
-                    output += "\t\treturn 301 %s://$server_name$request_uri;\n" % (
+                    output += "\t\treturn 301 %s://$host$request_uri;\n" % (
                         ("http" if scheme == "https" else "https")
                     )
                     output += "\t}\n"
@@ -191,3 +191,11 @@ class PlatformRouter(Container):
             self.build()
             self.stop()
             return self.start()
+
+    def restart(self):
+        # restart without deleting the container
+        container = self.getContainer()
+        if not container:
+            return self.start()
+        self.logger.info("Restart router.")
+        container.restart()

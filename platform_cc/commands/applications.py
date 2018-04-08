@@ -16,7 +16,6 @@ class ApplicationStart(Command):
         for name in self.argument("name"):
             application = project.getApplication(name)
             application.start()
-            self.line(application.getContainerName())
 
 class ApplicationStop(Command):
     """
@@ -32,7 +31,21 @@ class ApplicationStop(Command):
         for name in self.argument("name"):
             application = project.getApplication(name)
             application.stop()
-            self.line(application.getContainerName())
+
+class ApplicationRestart(Command):
+    """
+    Restart one or more applications.
+
+    application:restart
+        {name* : Name(s) of application.}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        for name in self.argument("name"):
+            application = project.getApplication(name)
+            application.restart()
 
 class ApplicationList(Command):
     """
@@ -58,6 +71,8 @@ class ApplicationList(Command):
                 "id"                  : appContainer.id if appContainer else "",
                 "name"                : application.getName(),
                 "container_name"      : application.getContainerName(),
+                "type"                : application.getType(),
+                "base_docker_image"   : application.getBaseImage(),
                 "docker_image"        : application.getDockerImage(),
                 "status"              : appContainer.status if appContainer else "stopped",
                 "ip_address"          : application.getContainerIpAddress()
@@ -73,12 +88,13 @@ class ApplicationList(Command):
         
         # terminal tables output
         tableData = [
-            ("Name", "Container", "Image", "Status", "IP"),
+            ("Name", "Type", "Container", "Image", "Status", "IP"),
         ]
         for application in appData:
             tableData.append(
                 (
                     appData[application]["name"],
+                    appData[application]["type"],
                     appData[application]["container_name"],
                     appData[application]["docker_image"],
                     appData[application]["status"],

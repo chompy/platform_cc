@@ -14,7 +14,6 @@ class RouterStart(Command):
     def handle(self):
         router = PlatformRouter()
         router.start()
-        self.line(router.getContainerName())
 
 class RouterStop(Command):
     """
@@ -26,7 +25,17 @@ class RouterStop(Command):
     def handle(self):
         router = PlatformRouter()
         router.stop()
-        self.line(router.getContainerName())
+
+class RouterRestart(Command):
+    """
+    Restart the router.
+
+    router:restart
+    """
+
+    def handle(self):
+        router = PlatformRouter()
+        router.restart()
 
 class RouterAdd(Command):
     """
