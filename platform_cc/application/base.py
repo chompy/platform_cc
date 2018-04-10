@@ -148,8 +148,9 @@ class BasePlatformApplication(Container):
                 mountDest.strip("/")
             )
             self.runCommand(
-                "mkdir -p %s && mount --bind %s %s" % (
+                "mkdir -p %s && mkdir -p %s && mount --bind %s %s" % (
                     mountSrc,
+                    mountDest,
                     mountSrc,
                     mountDest
                 )
