@@ -73,11 +73,12 @@ class PhpApplication(BasePlatformApplication):
         return ""
 
     def build(self):
+        output = ""
         # create 'web' user
         self.logger.info(
             "Create 'web' user."
         )
-        self.runCommand(
+        output += self.runCommand(
             "useradd -d /app -m -p secret~ --uid %s web || true" % (
                 self.project.get("config", {}).get("web_uid", self.DEFAULT_WEB_UID)
             )            
@@ -86,7 +87,7 @@ class PhpApplication(BasePlatformApplication):
         self.logger.info(
             "Install/build dependencies."
         )
-        self.runCommand(
+        output += self.runCommand(
             """
             usermod -a -G staff web
             chown -R web:web /app
@@ -134,13 +135,13 @@ class PhpApplication(BasePlatformApplication):
             )
             command = self.getExtensionInstallCommand(extension)
             if not command: continue
-            self.runCommand(command)
+            output += self.runCommand(command)
         # build hooks
         self.logger.info(
             "Run build hooks."
         )
         try:
-            self.runCommand(
+            output += self.runCommand(
                 self.config.get("hooks", {}).get("build", ""),
                 "web"
             )
@@ -151,7 +152,7 @@ class PhpApplication(BasePlatformApplication):
         self.logger.info(
             "Clean up."
         )
-        self.runCommand(
+        output += self.runCommand(
             """
             apt-get clean
             """
@@ -161,6 +162,7 @@ class PhpApplication(BasePlatformApplication):
             "Commit container."
         )
         self.commit()
+        return output
 
     def generateNginxConfig(self):
         """

@@ -164,6 +164,15 @@ class BasePlatformApplication(Container):
         self.logger.info(
             "Building application."
         )
+        output = self.runCommand(
+            self.config.get("hooks", {}).get("build", "")
+        )
+        # commit container
+        self.logger.info(
+            "Commit container."
+        )
+        self.commit()
+        return output
 
     def deploy(self):
         """
@@ -171,6 +180,10 @@ class BasePlatformApplication(Container):
         """
         self.logger.info(
             "Run deploy hooks."
+        )
+        return self.runCommand(
+            self.config.get("hooks", {}).get("deploy", ""),
+            "web"
         )
 
     def start(self):

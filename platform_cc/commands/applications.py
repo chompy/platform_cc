@@ -1,6 +1,7 @@
 import os
-from cleo import Command
+from cleo import Command, Output
 from platform_cc.commands import getProject, outputJson, outputTable
+from platform_cc.exception.state_error import StateError
 
 class ApplicationStart(Command):
     """
@@ -132,3 +133,41 @@ class ApplicationShell(Command):
             command,
             user
         )
+
+class ApplicationBuild(Command):
+    """
+    Build application.
+
+    application:build
+        {--name=? : Name of application. (Default=first available application)}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        name = self.option("name")
+        if not name:
+            name = project.getApplicationsParser().getApplicationNames()[0]
+        application = project.getApplication(name)
+        output = application.build()
+        if self.output.get_verbosity() >= Output.VERBOSITY_VERBOSE:
+            self.line(output)
+
+class ApplicationDeployHook(Command):
+    """
+    Run deploy hook for application.
+
+    application:deploy
+        {--name=? : Name of application. (Default=first available application)}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        name = self.option("name")
+        if not name:
+            name = project.getApplicationsParser().getApplicationNames()[0]
+        application = project.getApplication(name)
+        output = application.deploy()
+        if self.output.get_verbosity() >= Output.VERBOSITY_VERBOSE:
+            self.line(output)
