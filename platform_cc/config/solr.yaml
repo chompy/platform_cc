@@ -1,2 +1,0 @@
-mounts:
-    "/data" : "shared:files/data"

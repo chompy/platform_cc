@@ -1,0 +1,6 @@
+v0.1.0
+- Applications and services can now be start/stop/restarted individually.
+- Applications, serivces, and router can now be restarted with one command.
+- Application mount points now used a single shared volume (like Platform.sh).
+- Router should now support routes with paths.
+

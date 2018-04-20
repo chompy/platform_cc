@@ -1,8 +1,12 @@
 /env
 /build
 /test
+/dist
+/platform_cc.egg-info
 pip-selfcheck.json
 *.pyc
 .pcc_project_id
+.vscode
 *.sublime-project
 *.sublime-workspace
+*.code-workspace

@@ -2,7 +2,6 @@ pyaml
 docker>=2.5
 cleo
 base36
-boto3
 yamlordereddictloader
 terminaltables
 future
