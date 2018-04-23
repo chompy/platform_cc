@@ -119,6 +119,8 @@ class BasePlatformApplication(Container):
         """
         Setup application defined mount points.
         """
+        # project config 'use_mount_volumes' must be true
+        if not self.project.get("config", {}).get("use_mount_volumes"): return
         configMounts = self.config.get("mounts", {})
         self.logger.info(
             "Found %s mount point(s).",
@@ -153,7 +155,8 @@ class BasePlatformApplication(Container):
                     mountDest,
                     mountSrc,
                     mountDest
-                )
+                ),
+                "root"
             )
 
     def build(self):

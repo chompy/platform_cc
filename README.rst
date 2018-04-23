@@ -50,6 +50,16 @@ environment variable. Additionally any variable prefixed with "env:" will be set
 environment variable.
 
 
+Mount Volumes
+-------------
+
+By default all application mount points are ignored. You can configure Platform CC to create a Docker volume to
+bind to all mount points by setting the project config value 'use_mount_volumes' in .pcc_project.json.
+
+In the future I'd like to add the ability to fully mount the entire application to a volume. Additionally it'd
+be nice to mount the application code as read only to more closely simulate a Platform.sh environment.
+
+
 Missing Features
 ----------------
 

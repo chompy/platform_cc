@@ -169,7 +169,7 @@ class PlatformProject:
             "entropy"           : self.getEntropy(),
             "config"            : self.config.all(),
             "variables"         : self.variables.all(),
-            "services"          : serviceData # service data needed by applications,
+            "services"          : serviceData # service data needed by applications
         }
 
     def getServicesParser(self):

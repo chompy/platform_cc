@@ -265,8 +265,6 @@ class PhpApplication(BasePlatformApplication):
         BasePlatformApplication.start(self)
         container = self.getContainer()
         if not container: return
-        # setup mount points
-        self.setupMounts()
         # link php.ini in app root
         self.logger.info(
             "Compile php.ini."
@@ -292,6 +290,8 @@ class PhpApplication(BasePlatformApplication):
         )
         # restart container to reload conf changes
         container.restart()
+        # setup mount points
+        self.setupMounts()
         # not yet built/provisioned
         if self.getDockerImage() == self.getBaseImage():
             self.build()
