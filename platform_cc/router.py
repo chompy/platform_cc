@@ -99,7 +99,7 @@ class PlatformRouter(Container):
                     path = config.get("path", "/")
                     if not path: path = "/"
                     output += "\tlocation %s {\n" % (
-                        path
+                        path.replace(" ", "[\s]")
                     )
                     # type 'upstream'
                     if config.get("type") == "upstream":
@@ -109,10 +109,10 @@ class PlatformRouter(Container):
                         for location, redirectConfig in redirectPaths.items():
                             if location.strip() == "/":
                                 redirectHasRootPath = True
-                            output += "\t\tlocation ~ %s {\n" % (
-                                location
+                            output += "\t\tlocation ~ ^%s {\n" % (
+                                location.replace(" ", "[\s]")
                             )
-                            output += "\t\t\treturn 301 %s$request_uri;\n" % (
+                            output += "\t\t\treturn 301 %s;\n" % (
                                 redirectConfig.get("to", "/")
                             )
                             output += "\t\t}\n"
@@ -135,7 +135,7 @@ class PlatformRouter(Container):
                     # type 'redirect'
                     elif config.get("type") == "redirect":
                         output += "\t\tlocation ~ / {\n"
-                        output += "\t\t\treturn 301 %s$request_uri;\n" % (
+                        output += "\t\t\treturn 301 %s;\n" % (
                             config.get("to", "").replace("{default}", routesParser.getDefaultDomain())
                         )
                         output += "\t\t}\n"
