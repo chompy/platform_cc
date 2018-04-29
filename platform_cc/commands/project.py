@@ -108,3 +108,62 @@ class ProjectRoutes(Command):
             "Project '%s' - Routes" % project.getUid()[0:6],
             tableData
         )
+
+class ProjectOptionSet(Command):
+    """
+    Enable or disable project option.
+
+    project:option_set
+        {key : Name of option to set.}
+        {enable : Whether or not to enable or disable option.}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        enabled = self.argument("enable").lower() in ["1", "yes", "y", "enabled", "enable", "true", "t"]
+        project.config.set(
+            "option_%s" % self.argument("key").lower(),
+            "enabled" if enabled else ""
+        )
+
+class ProjectOptionList(Command):
+    """
+    List project options.
+
+    project:options
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--j|json : If set output in JSON.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        options = [
+            {
+                "name"          : "use_mount_volumes",
+                "description"   : "Use Docker volumes for application mount volumes.",
+                "enabled"       : bool(project.config.get("option_use_mount_volumes", False))
+            }
+        ]
+        # json output
+        if self.option("json"):
+            outputJson(self, options)
+            return
+
+        # terminal tables output
+        tableData = [
+            ("Name", "Description", "Enabled")
+        ]
+        for option in options:
+            tableData.append(
+                (
+                    option.get("name").upper(),
+                    option.get("description"),
+                    option.get("enabled")
+                )
+            )
+        outputTable(
+            self,
+            "Project '%s' - Options" % project.getUid()[0:6],
+            tableData
+        )

@@ -60,6 +60,13 @@ class PlatformProject:
         if not self.config.get("uid"):
             self.config.set("uid", self._generateUid())
 
+        # define container 'web' user id for nginx
+        # and application process to use
+        # this should be the same user id as the current
+        # user so that permissions in and out of the container match
+        if not self.config.get("web_user_id"):
+            self.config.set("web_user_id", os.getuid())
+
         # get variable storage
         self.variables = getVariableStorage(
             self.path,

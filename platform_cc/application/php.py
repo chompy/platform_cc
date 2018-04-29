@@ -17,8 +17,8 @@ class PhpApplication(BasePlatformApplication):
         "php:7.0"         : "php:7.0-fpm"   
     }
 
-    """ Default UID to assign for user 'web' """
-    DEFAULT_WEB_UID = 1000
+    """ Default user id to assign for user 'web' """
+    DEFAULT_WEB_USER_ID = 1000
 
     """ Path to PHP extension configuration JSON. """
     EXTENSION_CONF_JSON = os.path.join(
@@ -80,7 +80,7 @@ class PhpApplication(BasePlatformApplication):
         )
         output += self.runCommand(
             "useradd -d /app -m -p secret~ --uid %s web || true" % (
-                self.project.get("config", {}).get("web_uid", self.DEFAULT_WEB_UID)
+                self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
         )
         # provision container
