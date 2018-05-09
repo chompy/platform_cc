@@ -386,10 +386,16 @@ class Container:
                     cap_add = ["SYS_ADMIN"] # needed to use mount inside container
                 )
             except docker.errors.ImageNotFound:
+                self.logger.info(
+                    "Pull '%s' image for '%s' container.",
+                    self.getDockerImage(),
+                    self.getContainerName()
+                )
                 self.docker.images.pull(self.getDockerImage())
                 return self.start()
         if container.status == "running": return
         container.start()
+        self._container = None
 
     def stop(self):
         """
