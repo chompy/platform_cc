@@ -3,6 +3,7 @@ import json
 import base64
 import docker
 import logging
+import io
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
@@ -159,6 +160,32 @@ class BasePlatformApplication(Container):
                 "root"
             )
 
+    def installSsh(self):
+        """
+        Install SSH key and known hosts file.
+        """
+        sshDatas = [
+            ["ssh_key", "/app/.ssh/id_rsa"],
+            ["ssh_known_host", "/app/.ssh/known_hosts"]
+        ]
+        for sshData in sshDatas:
+            data = self.project.get("config", {}).get(sshData[0])
+            if not data: continue
+            self.logger.info(
+                "Install '%s' from project config." % sshData[0]
+            )
+            data = str(base64.b64decode(data))
+            dataFileObject = io.BytesIO(data)
+            self.uploadFile(
+                dataFileObject,
+                sshData[1]
+            )
+            self.runCommand(
+                "chmod 0600 %s" % (
+                    sshData[1]
+                )
+            )
+
     def build(self):
         """
         Run commands needed to get container ready for given
@@ -167,6 +194,7 @@ class BasePlatformApplication(Container):
         self.logger.info(
             "Building application."
         )
+        self.installSsh()
         output = self.runCommand(
             self.config.get("hooks", {}).get("build", "")
         )

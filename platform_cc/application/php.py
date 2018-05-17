@@ -83,6 +83,11 @@ class PhpApplication(BasePlatformApplication):
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
         )
+        # install ssh key + known_hosts
+        self.installSsh()
+        output += self.runCommand(
+            "chown -R web:web /app/.ssh"
+        )
         # provision container
         self.logger.info(
             "Install/build dependencies."
