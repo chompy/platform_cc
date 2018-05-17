@@ -121,7 +121,6 @@ class BasePlatformApplication(Container):
         Setup application defined mount points.
         """
         # project option 'use_mount_volumes' must be true
-        if not self.project.get("config", {}).get("option_use_mount_volumes"): return
         configMounts = self.config.get("mounts", {})
         self.logger.info(
             "Found %s mount point(s).",
@@ -151,9 +150,15 @@ class BasePlatformApplication(Container):
                 mountDest.strip("/")
             )
             self.runCommand(
-                "mkdir -p %s && mkdir -p %s && mount --bind %s %s" % (
+                "mkdir -p %s && mkdir -p %s" % (
                     mountSrc,
                     mountDest,
+                ),
+                "root"
+            )
+            if not self.project.get("config", {}).get("option_use_mount_volumes"): continue
+            self.runCommand(
+                "mount --bind %s %s" % (
                     mountSrc,
                     mountDest
                 ),
@@ -166,7 +171,7 @@ class BasePlatformApplication(Container):
         """
         sshDatas = [
             ["ssh_key", "/app/.ssh/id_rsa"],
-            ["ssh_known_host", "/app/.ssh/known_hosts"]
+            ["ssh_known_hosts", "/app/.ssh/known_hosts"]
         ]
         for sshData in sshDatas:
             data = self.project.get("config", {}).get(sshData[0])
