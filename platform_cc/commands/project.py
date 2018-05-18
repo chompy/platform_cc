@@ -167,15 +167,3 @@ class ProjectOptionList(Command):
             "Project '%s' - Options" % project.getUid()[0:6],
             tableData
         )
-
-class ProjectOptionSet(Command):
-    """
-    Purge all project Docker data.
-
-    project:purge
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self)
-        

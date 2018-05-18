@@ -369,6 +369,10 @@ class Container:
         self._container = None
         container = self.getContainer()
         if not container:
+            useMountVolumes = self.project.get("config", {}).get("option_use_mount_volumes")
+            capAdd = []
+            if useMountVolumes:
+                capAdd.append("SYS_ADMIN")
             self.getNetwork() # instantiate if not created
             try:
                 container = self.docker.containers.create(
@@ -385,7 +389,8 @@ class Container:
                     volumes = self.getContainerVolumes(),
                     working_dir = self.getContainerWorkingDirectory(),
                     hostname = self.getContainerName(),
-                    cap_add = ["SYS_ADMIN"] # needed to use mount inside container
+                    privileged = bool(useMountVolumes), # needed to use mount inside container
+                    cap_add = capAdd
                 )
             except docker.errors.ImageNotFound:
                 self.logger.info(
