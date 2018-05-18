@@ -31,7 +31,9 @@ class Container:
         self.name = str(name)
         self.docker = dockerClient
         if not self.docker:
-            self.docker = docker.from_env()
+            self.docker = docker.from_env(
+                timeout = 300 # 5 minutes
+            )
         self.logger = logging.getLogger(__name__)
         self._container = None
         self._hasCommitImage = None
