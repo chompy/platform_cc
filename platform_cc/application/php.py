@@ -141,6 +141,20 @@ class PhpApplication(BasePlatformApplication):
             command = self.getExtensionInstallCommand(extension)
             if not command: continue
             output += self.runCommand(command)
+        # build flavor composer
+        if self.config.get("build", {}).get("flavor") == "composer":
+            self.logger.info(
+                "Composer install."
+            )
+            try:
+                output += self.runCommand(
+                    """
+                    php -d memory_limit=-1 /usr/local/bin/composer install
+                    """,
+                    "web"
+                )
+            except ContainerCommandError:
+                pass
         # build hooks
         self.logger.info(
             "Run build hooks."
