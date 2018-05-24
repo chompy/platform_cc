@@ -72,6 +72,12 @@ class BasePlatformApplication(Container):
                     .get(value[1])
             ]
         routesParser = RoutesParser(self.project)
+        # get subnet from project network, used for trusted proxy
+        network = self.getNetwork()
+        trustedProxies = "%s,127.0.0.1" % (
+            str(network.attrs.get("IPAM", {}).get("Config",[{}])[0].get("Subnet"))
+        )
+        # sest env vars
         envVars = {
             "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
             "PLATFORM_APPLICATION"      : "",
@@ -91,7 +97,7 @@ class BasePlatformApplication(Container):
                 bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))
             ).decode("utf-8"),
             "PLATFORM_PROJECT_ENTROPY"  : self.project.get("entropy", ""),
-            "TRUSTED_PROXIES"           : "172.0.0.0/8,127.0.0.1"
+            "TRUSTED_PROXIES"           : trustedProxies
         }
         # set env vars from app variables
         for key, value in self.config.get("variables", {}).get("env", {}).items():
