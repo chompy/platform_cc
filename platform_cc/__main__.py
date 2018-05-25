@@ -12,7 +12,7 @@ from platform_cc.commands.variables import VariableSet, VariableGet, VariableDel
 from platform_cc.commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
 from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook
 from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
-from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList
+from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge
 from platform_cc.commands.mysql import MysqlSql
 
 # fetch version
@@ -63,6 +63,7 @@ cleoApp.add(ProjectRestart())
 cleoApp.add(ProjectRoutes())
 cleoApp.add(ProjectOptionSet())
 cleoApp.add(ProjectOptionList())
+cleoApp.add(ProjectPurge())
 cleoApp.add(MysqlSql())
 
 def main():

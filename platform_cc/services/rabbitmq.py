@@ -15,9 +15,8 @@ class RabbitMqService(BasePlatformService):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
     def getContainerVolumes(self):
-        volume = self.getVolume()
         return {
-            volume.name : {
+            self.getVolumeName() : {
                 "bind" : "/var/lib/rabbitmq",
                 "mode" : "rw"
             }

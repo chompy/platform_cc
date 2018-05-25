@@ -60,9 +60,8 @@ class MariaDbService(BasePlatformService):
         }
 
     def getContainerVolumes(self):
-        volume = self.getVolume()
         return {
-            volume.name : {
+            self.getVolumeName() : {
                 "bind" : "/var/lib/mysql",
                 "mode" : "rw"
             }

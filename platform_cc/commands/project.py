@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 import os
+import time
+import docker
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
 
@@ -167,3 +169,52 @@ class ProjectOptionList(Command):
             "Project '%s' - Options" % project.getUid()[0:6],
             tableData
         )
+
+class ProjectPurge(Command):
+    """
+    Purge all docker images and volumes specific to this project.
+
+    project:purge
+        {--d|dry-run : List items to be purged.}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        dryRun = bool(self.option("dry-run"))
+        # inform user and wait 5 seconds
+        if not dryRun:
+            self.line(
+                "<question>!!! Purge of project '%s' will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
+                    project.getShortUid()
+                )
+            )
+            time.sleep(5)
+        # services
+        serviceParser = project.getServicesParser()
+        for serviceName in serviceParser.getServiceNames():
+            service = project.getService(serviceName)
+            service.purge(dryRun)
+        # applications
+        appParser = project.getApplicationsParser()
+        for appName in appParser.getApplicationNames():
+            app = project.getApplication(appName)
+            app.purge(dryRun)
+        # remove from router
+        if not dryRun:
+            project.removeRouter()
+        # delete network
+        app = project.getApplication(appParser.getApplicationNames()[0])
+        networkName = app.getNetworkName()
+        try:
+            network = app.docker.networks.get(networkName)
+            if not dryRun:
+                network.disconnect(project.getRouter().getContainerName())
+                network.remove()
+            app.logger.info(
+                "Deleted '%s' Docker network.",
+                networkName
+            )
+        except docker.errors.NotFound:
+            pass
+        

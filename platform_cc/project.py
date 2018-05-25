@@ -88,6 +88,9 @@ class PlatformProject:
         # define routes parser
         self._routesParser = None
 
+        # define router
+        self._router = None
+
     def _generateUid(self):
         """
         Generate a unique id for the project.
@@ -284,6 +287,14 @@ class PlatformProject:
         self._applications.append(application)
         return application
 
+    def getRouter(self):
+        """
+        Get main project router.
+        """
+        if self._router: return self._router
+        self._router = PlatformRouter()
+        return self._router
+
     def addRouter(self):
         """
         Add this project to the router.
@@ -293,7 +304,7 @@ class PlatformProject:
             self.getShortUid()
         )
         # get router
-        router = PlatformRouter()
+        router = self.getRouter()
         if not router.isRunning(): router.start()
         # retrieve all applications
         appParser = self.getApplicationsParser()
@@ -334,7 +345,7 @@ class PlatformProject:
             self.getShortUid()
         )
         # get router
-        router = PlatformRouter()
+        router = self.getRouter()
         if not router.isRunning(): return
         # delete conf file in router
         router.runCommand(

@@ -54,7 +54,7 @@ class BasePlatformApplication(Container):
                 "bind" : self.APPLICATION_DIRECTORY,
                 "mode" : "rw"                
             },
-            self.getVolume().name : {
+            self.getVolumeName() : {
                 "bind" : self.STORAGE_DIRECTORY,
                 "mode" : "rw"
             }

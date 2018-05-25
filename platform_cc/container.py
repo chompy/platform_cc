@@ -141,6 +141,25 @@ class Container:
             self.project
         )
 
+    def getVolumeName(self, name = ""):
+        """
+        Get name of volume for use with this Docker container.
+
+        :return: Volume name
+        :rtype: str
+        """
+        volumeId = "%s%s_%s" %(
+            self.CONTAINER_NAME_PREFIX,
+            self.project.get("uid")[0:6],
+            self.getName()
+        )
+        if name:
+            volumeId = "%s_%s" % (
+                volumeId,
+                str(name)
+            )
+        return volumeId
+
     def getContainerCommand(self):
         """
         Get command to run to start service inside container.
@@ -237,16 +256,7 @@ class Container:
         :return: Docker volume
         :rtype: docker.client.volumes.Volume
         """
-        volumeId = "%s%s_%s" %(
-            self.CONTAINER_NAME_PREFIX,
-            self.project.get("uid")[0:6],
-            self.getName()
-        )
-        if name:
-            volumeId = "%s_%s" % (
-                volumeId,
-                str(name)
-            )
+        volumeId = self.getVolumeName(name)
         try:
             return self.docker.volumes.get(volumeId)
         except docker.errors.NotFound:
@@ -438,6 +448,36 @@ class Container:
             commitImage[1]
         )
         self._hasCommitImage = None
+
+    def purge(self, dry = False):
+        """
+        Delete image and volumes for this container.
+
+        :param dry: Don't perform purge, only list items to purge
+        """
+        # stop container if running
+        if self.isRunning():
+            self.stop()
+        # delete committed image
+        if self.getDockerImage() == self.getCommitImage():
+            if not dry:
+                self.docker.images.remove(self.getCommitImage())
+            self.logger.info(
+                "Delete '%s' Docker image.",
+                self.getCommitImage()
+            )
+        # delete volumes
+        for volumeName in self.getContainerVolumes():
+            try:
+                volume = self.docker.volumes.get(volumeName)
+                if not dry:
+                    volume.remove()
+                self.logger.info(
+                    "Deleted '%s' Docker volume.",
+                    self.getVolumeName()
+                )
+            except docker.errors.NotFound:
+                pass
 
     def shell(self, cmd = "bash", user = "root"):
         """
