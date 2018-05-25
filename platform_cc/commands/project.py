@@ -209,7 +209,10 @@ class ProjectPurge(Command):
         try:
             network = app.docker.networks.get(networkName)
             if not dryRun:
-                network.disconnect(project.getRouter().getContainerName())
+                try:
+                    network.disconnect(project.getRouter().getContainerName())
+                except docker.errors.APIError:
+                    pass
                 network.remove()
             app.logger.info(
                 "Deleted '%s' Docker network.",

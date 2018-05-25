@@ -28,5 +28,15 @@
             "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
             "command": "true"
         }
+    ],
+    "xdebug" : [
+        {
+            "images" : ["php:5.4-fpm", "php:5.6-fpm"],
+            "command": "pecl install xdebug-2.5.5 && docker-php-ext-enable xdebug"
+        },
+        {
+            "images" : ["php:7.0-fpm"],
+            "command": "pecl install xdebug && docker-php-ext-enable xdebug"
+        }
     ]
 }
