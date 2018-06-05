@@ -110,8 +110,8 @@ class PhpApplication(BasePlatformApplication):
             tar xf node.tar.xz
             rm node.tar.xz
             mv node-* /opt/nodejs
-            ln -s /opt/nodejs/bin/* /usr/bin/
-            ln -s /usr/bin/node /usr/bin/nodejs
+            ln -s -f /opt/nodejs/bin/* /usr/bin/
+            ln -s -f /usr/bin/node /usr/bin/nodejs
             """
         )
         self.logger.info(
@@ -123,9 +123,9 @@ class PhpApplication(BasePlatformApplication):
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
             echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini
             echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/01-main.ini
-            ln -s /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
-            ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
-            ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
+            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
+            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
+            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
             """
         )
         self.logger.info(
@@ -136,7 +136,7 @@ class PhpApplication(BasePlatformApplication):
             php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
             php composer-setup.php --install-dir=/usr/local/bin
             rm composer-setup.php
-            ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
+            ln -s -f /usr/local/bin/composer.phar /usr/local/bin/composer
             """
         )
         self.logger.info(
@@ -328,7 +328,7 @@ class PhpApplication(BasePlatformApplication):
             "Compile php.ini."
         )
         self.runCommand(
-            "[ -f /app/php.ini ] && ln -s /app/php.ini /usr/local/etc/php/conf.d/02-app.ini || true"
+            "[ -f /app/php.ini ] && ln -s -f /app/php.ini /usr/local/etc/php/conf.d/02-app.ini || true"
         )
         # build php.ini from config vars
         phpIniConfig = self.config.get("variables", {}).get("php", {})
