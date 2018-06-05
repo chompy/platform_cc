@@ -90,22 +90,35 @@ class PhpApplication(BasePlatformApplication):
         )
         # provision container
         self.logger.info(
-            "Install/build dependencies."
+            "Install extra software via APT."
         )
         output += self.runCommand(
             """
-            usermod -a -G staff web
-            chown -R web:web /app
             apt-get update
             apt-get install -y rsync git unzip python-pip python-dev \\
-                gem nodejs npm libyaml-dev ruby ruby-dev nginx less nano \\
-                libicu-dev libxslt1-dev libfreetype6-dev libjpeg62-turbo-dev libpng12-dev \\
+                gem libyaml-dev ruby ruby-dev nginx less nano \\
+                libicu-dev libxslt1-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev \\
                 libmcrypt-dev
-            mkdir -p /var/lib/gems
-            chown -R web:web /var/lib/gems
-            chown -R root:staff /usr/bin
-            chmod -R g+rw /usr/bin
-            ln -s /usr/bin/nodejs /usr/bin/node
+            """
+        )
+        self.logger.info(
+            "Install NodeJS."
+        )
+        output += self.runCommand(
+            """
+            curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.tar.xz
+            tar xf node.tar.xz
+            rm node.tar.xz
+            mv node-* /opt/nodejs
+            ln -s /opt/nodejs/bin/* /usr/bin/
+            ln -s /usr/bin/node /usr/bin/nodejs
+            """
+        )
+        self.logger.info(
+            "Configure PHP."
+        )        
+        output += self.runCommand(
+            """
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
             echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini
@@ -113,13 +126,39 @@ class PhpApplication(BasePlatformApplication):
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
             ln -s /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
+            """
+        )
+        self.logger.info(
+            "Install Composer."
+        )
+        output += self.runCommand(
+            """
             php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
             php composer-setup.php --install-dir=/usr/local/bin
             rm composer-setup.php
             ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
+            """
+        )
+        self.logger.info(
+            "Install default PHP extensions."
+        )
+        output += self.runCommand(
+            """
             docker-php-ext-install -j$(nproc) bcmath intl xsl mysql mysqli pdo_mysql sockets exif mcrypt
             docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
             docker-php-ext-install -j$(nproc) gd
+            """
+        )
+        self.logger.info(
+            "Setup/fix user permission."
+        )
+        output += self.runCommand(
+            """
+            usermod -a -G staff web
+            mkdir -p /var/lib/gems
+            chown -R web:web /var/lib/gems
+            chown -R root:staff /usr/bin
+            chmod -R g+rw /usr/bin
             chown -R web:web %s
             chown -R web:web %s
             """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)

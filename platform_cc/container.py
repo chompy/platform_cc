@@ -312,6 +312,8 @@ class Container:
                     self.getContainerName()
                 )
             )
+        if not self.isRunning():
+            raise StateError("Container '%s' is not running." % self.getContainerName())
         (exitCode, output) = container.exec_run(
             [
                 "sh", "-c", command
@@ -349,6 +351,8 @@ class Container:
                     self.getContainerName()
                 )
             )
+        if not self.isRunning():
+            raise StateError("Container '%s' is not running." % self.getContainerName())
         tarData = io.BytesIO()
         with tarfile.open(fileobj=tarData, mode="w") as tar:
             uploadObj.seek(0, io.SEEK_END)
@@ -486,6 +490,8 @@ class Container:
         :param cmd: Command to run
         :param user: User to run as
         """
+        if not self.isRunning():
+            raise StateError("Container '%s' is not running." % self.getContainerName())
         container = self.getContainer()
         execId = self.docker.api.exec_create(
             container.id,
