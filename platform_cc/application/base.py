@@ -164,7 +164,7 @@ class BasePlatformApplication(Container):
             )
             if not self.project.get("config", {}).get("option_use_mount_volumes"): continue
             self.runCommand(
-                "mount --bind %s %s" % (
+                "mount -o user_xattr --bind %s %s" % (
                     mountSrc,
                     mountDest
                 ),
