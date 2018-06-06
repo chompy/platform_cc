@@ -11,10 +11,12 @@ class PhpApplication(BasePlatformApplication):
 
     """ Mapping for application type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "php"             : "php:5.6-fpm",
-        "php:5.4"         : "php:5.4-fpm",
-        "php:5.6"         : "php:5.6-fpm",
-        "php:7.0"         : "php:7.0-fpm"   
+        "php"             : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+        "php:5.4"         : "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+        "php:5.6"         : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+        #"php:7.0"         : "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+        #"php:7.1"         : "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
+        "php:7.2"         : "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"   
     }
 
     """ Default user id to assign for user 'web' """
@@ -74,101 +76,29 @@ class PhpApplication(BasePlatformApplication):
 
     def build(self):
         output = ""
-        # create 'web' user
+        # change 'web' user id
         self.logger.info(
-            "Create 'web' user."
+            "Update 'web' user to match host user id."
         )
         output += self.runCommand(
-            "useradd -d /app -m -p secret~ --uid %s web || true" % (
+            "usermod -u %s web" % (
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
         )
         # install ssh key + known_hosts
         self.installSsh()
         output += self.runCommand(
-            "chown -R web:web /app/.ssh"
-        )
-        # provision container
-        self.logger.info(
-            "Install extra software via APT."
-        )
-        output += self.runCommand(
-            """
-            apt-get update
-            apt-get install -y rsync git unzip python-pip python-dev \\
-                gem libyaml-dev ruby ruby-dev nginx less nano \\
-                libicu-dev libxslt1-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev \\
-                libmcrypt-dev
-            """
-        )
-        self.logger.info(
-            "Install NodeJS."
-        )
-        output += self.runCommand(
-            """
-            curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.tar.xz
-            tar xf node.tar.xz
-            rm node.tar.xz
-            mv node-* /opt/nodejs
-            ln -s -f /opt/nodejs/bin/* /usr/bin/
-            ln -s -f /usr/bin/node /usr/bin/nodejs
-            """
-        )
-        self.logger.info(
-            "Configure PHP."
-        )        
-        output += self.runCommand(
-            """
-            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini
-            echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/01-main.ini
-            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php5-fpm
-            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
-            ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
-            """
-        )
-        self.logger.info(
-            "Install Composer."
-        )
-        output += self.runCommand(
-            """
-            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-            php composer-setup.php --install-dir=/usr/local/bin
-            rm composer-setup.php
-            ln -s -f /usr/local/bin/composer.phar /usr/local/bin/composer
-            """
-        )
-        self.logger.info(
-            "Install default PHP extensions."
-        )
-        output += self.runCommand(
-            """
-            docker-php-ext-install -j$(nproc) bcmath intl xsl mysql mysqli pdo_mysql sockets exif mcrypt
-            docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
-            docker-php-ext-install -j$(nproc) gd
-            """
+            "chown -f -R web /app/.ssh"
         )
         self.logger.info(
             "Setup/fix user permission."
         )
         output += self.runCommand(
             """
-            usermod -a -G staff web
-            mkdir -p /var/lib/gems
-            chown -R web:web /var/lib/gems
-            chown -R root:staff /usr/bin
-            chmod -R g+rw /usr/bin
-            chown -R web:web %s
-            chown -R web:web %s
+            chown -f -R web %s
+            chown -f -R web %s
             """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
         )
-        # install nginx config
-        self.logger.info(
-            "Install main Nginx configuration file."
-        )
-        with open(self.NGINX_CONF, "rb") as f:
-            self.uploadFile(f, "/etc/nginx/nginx.conf")
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         for extension in extInstall:

@@ -1,41 +1,66 @@
 {
     "__default__" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command" : "docker-php-ext-install -j$(nproc) __EXT_NAME__"
         }
     ],
     "memcached" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command" : "apt-get install -y libmemcached-dev zlib1g-dev && echo '\n' | pecl install memcached-2.2.0 || true && docker-php-ext-enable memcached || true"
         }
     ],
     "redis" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command" : "echo '\n' | pecl install redis || true && docker-php-ext-enable redis || true"
         }
     ],
     "imagick" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command" : "apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev && echo '\n' | pecl install imagick || true && docker-php-ext-enable imagick || true"
         }
     ],
     "newrelic" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm", "php:7.0-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command": "true"
         }
     ],
     "xdebug" : [
         {
-            "images" : ["php:5.4-fpm", "php:5.6-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm"
+            ],
             "command": "echo '\n' | pecl install xdebug-2.5.5 || true && docker-php-ext-enable xdebug || true"
         },
         {
-            "images" : ["php:7.0-fpm"],
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
             "command": "echo '\n' | pecl install xdebug || true && docker-php-ext-enable xdebug || true"
         }
     ]

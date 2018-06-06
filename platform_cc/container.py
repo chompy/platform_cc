@@ -19,6 +19,12 @@ class Container:
     """ Name prefix to use for all service containers. """
     CONTAINER_NAME_PREFIX = "pcc_"
 
+    """
+    Credientials for Gitlab registry containing prebuilt Docker
+    images for Platform CC.
+    """
+    PCC_GITLAB_REGISTRY_CREDS = ["gitlab+deploy-token-2184", "-SdryhQWhgesCn85S5__"]
+
     def __init__(self, project, name, dockerClient = None):
         """
         Constructor.
@@ -411,6 +417,11 @@ class Container:
                     "Pull '%s' image for '%s' container.",
                     self.getDockerImage(),
                     self.getContainerName()
+                )
+                self.docker.login(
+                    username=self.PCC_GITLAB_REGISTRY_CREDS[0],
+                    password=self.PCC_GITLAB_REGISTRY_CREDS[1],
+                    registry="https://registry.gitlab.com"
                 )
                 self.docker.images.pull(self.getDockerImage())
                 return self.start()
