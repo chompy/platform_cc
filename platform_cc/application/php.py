@@ -302,3 +302,5 @@ class PhpApplication(BasePlatformApplication):
             service nginx start
             """
         )
+        # install cron jobs if enabled
+        self.installCron()

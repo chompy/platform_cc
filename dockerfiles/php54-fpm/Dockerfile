@@ -2,7 +2,7 @@ FROM php:5.4-fpm
 
 # install dependencies via apt-get
 RUN apt-get update && \
-    apt-get install -y rsync git unzip python-pip python-dev \
+    apt-get install -y rsync git unzip cron python-pip python-dev \
         gem libyaml-0-2 libyaml-dev ruby ruby-dev nginx less nano \
         libmcrypt4 libmcrypt-dev libicu52 libicu-dev libxslt1.1 libxslt1-dev \
         libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \

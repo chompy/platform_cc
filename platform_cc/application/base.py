@@ -179,6 +179,9 @@ class BasePlatformApplication(Container):
             ["ssh_key", "/app/.ssh/id_rsa"],
             ["ssh_known_hosts", "/app/.ssh/known_hosts"]
         ]
+        self.runCommand(
+            "mkdir -p /app/.ssh && chown -f -R web:web /app/.ssh"
+        )
         for sshData in sshDatas:
             data = self.project.get("config", {}).get(sshData[0])
             if not data: continue
@@ -189,14 +192,53 @@ class BasePlatformApplication(Container):
             dataFileObject = io.BytesIO(data)
             self.uploadFile(
                 dataFileObject,
-                sshData[1]
+                "/tmp/.ssh_file" # can't upload file to a mount directory, so upload to tmp and copy
             )
             self.runCommand(
-                "chmod 0600 %s" % (
+                "mv /tmp/.ssh_file %s && chmod -f 0600 %s" % (
+                    sshData[1],
                     sshData[1]
                 )
             )
 
+    def installCron(self):
+        """
+        Install cron tasks and enable cron in application container.
+        """
+        # cron must be enabled via options
+        if not self.project.get("config", {}).get("option_enable_cron"): return
+        # create cron directory if not exist
+        self.runCommand(
+            "mkdir -p /etc/cron.d"
+        )
+        # itterate crons make cron files
+        crons = self.config.get("crons", {})
+        self.logger.info(
+            "Installing %s cron task(s)." % str(len(crons))
+        )
+        for name, cron in crons.items():
+            spec = cron.get("spec", "*/5 * * * *") # default is every 5 minutes
+            cmd = cron.get("cmd", "")
+            if not cmd: continue
+            self.logger.debug(
+                "Installing '%s' cron." % name
+            )
+            fileObj = io.BytesIO(
+                bytes(
+                    "%s web %s" % (
+                        spec,
+                        cmd
+                    )
+                )
+            )
+            self.uploadFile(
+                fileObj,
+                "/etc/cron.d/%s" % name
+            )
+        # start cron
+        self.logger.info("Start cron daemon.")
+        self.runCommand("cron")
+            
     def build(self):
         """
         Run commands needed to get container ready for given

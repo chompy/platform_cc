@@ -50,14 +50,18 @@ environment variable. Additionally any variable prefixed with "env:" will be set
 environment variable.
 
 
-Mount Volumes
+Extra Options
 -------------
 
-By default all application mount points are ignored. You can configure Platform CC to create a Docker volume to
-bind to all mount points by setting the project config value 'use_mount_volumes' in .pcc_project.json.
+Platform.CC contains a few additional features that are disabled by default. They can be enabled and
+disabled by using the 'project:option_set' command. A project restart is required to fully enable and
+disable the features. For a list of features and their current status use the 'project:options' command.
 
-In the future I'd like to add the ability to fully mount the entire application to a volume. Additionally it'd
-be nice to mount the application code as read only to more closely simulate a Platform.sh environment.
+**USE_MOUNT_VOLUMES**
+When enabled mount points defined in .platform.app.yaml are mounted to a Docker volume.
+
+**ENABLE_CRON**
+Enables Cron tasks as defined in .platform.app.yaml.
 
 
 Missing Features
@@ -67,12 +71,11 @@ See TODO for list of features the still need to be implementd.
 
 Currently Unsupported Functionality:
 
-- Cron tasks
+- Worker container.
 
 Currently Unplanned Functionality:
 
 - Non PHP applications
-- Workers
 - Limiting app size and disk space
 - Web upstream,socket_family (PHP doesn't really need this?)
 
