@@ -18,9 +18,7 @@ RUN curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.t
     ln -s -f /usr/bin/node /usr/bin/nodejs
 
 # update php configurations
-RUN sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.conf && \
-    sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.conf && \
-    echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini && \
+RUN echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini && \
     echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/01-main.ini && \
     ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php5-fpm && \
     ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0 && \
@@ -36,14 +34,6 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
 RUN docker-php-ext-install bcmath intl xsl mysql mysqli pdo_mysql sockets exif mcrypt && \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
     docker-php-ext-install gd
-
-# create web user
-RUN useradd -d /app -m -p secret~ --uid 1000 web && \
-    usermod -a -G staff web && \
-    mkdir -p /var/lib/gems && \
-    chown -R web:web /var/lib/gems && \
-    chown -R root:staff /usr/bin && \
-    chmod -R g+rw /usr/bin
 
 # install nginx conf
 COPY nginx.conf /etc/nginx/nginx.conf
