@@ -4,9 +4,9 @@ FROM php:5.6-fpm
 RUN apt-get update && \
     apt-get install -y rsync git unzip cron python-pip python-dev \
         gem libyaml-0-2 libyaml-dev ruby ruby-dev nginx less nano \
-        libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
+        libmcrypt4 libmcrypt-dev libicu52 libicu-dev libxslt1.1 libxslt1-dev \
         libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-        libpng16-16 libpng-dev && \
+        libpng12-0 libpng-dev && \
     apt-get clean
 
 # install nodejs
