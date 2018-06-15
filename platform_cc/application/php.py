@@ -35,9 +35,8 @@ class PhpApplication(BasePlatformApplication):
     )
 
     def getContainerCommand(self):
-        # if need provising don't start php-fpm
         if self.getDockerImage() == self.getBaseImage():
-            return "tail -f /dev/null"
+            return None
         command = self.config.get("web", {}).get("commands", {}).get("start")
         if command:
             return "sh -c \"%s\"" % command
