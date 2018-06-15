@@ -76,20 +76,34 @@ class PhpApplication(BasePlatformApplication):
 
     def build(self):
         output = ""
-        # change 'web' user id
+        # add web user
         self.logger.info(
-            "Update 'web' user to match host user id."
+            "Add and configure 'web' user."
         )
+        output += self.runCommand(
+            """
+            useradd -d /app -m -p secret~ --uid %s web
+            usermod -a -G staff web
+            mkdir -p /var/lib/gems
+            chown -R web:web /var/lib/gems
+            chown -R root:staff /usr/bin
+            chmod -R g+rw /usr/bin
+            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            """ % (
+                self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
+            )
+        )
+
         output += self.runCommand(
             "usermod -u %s web" % (
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
         )
-        # change php-fpm user to web
+        # add
         output + self.runCommand(
             """
-            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+
             """    
         )
         # install ssh key + known_hosts
