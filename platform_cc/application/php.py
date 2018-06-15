@@ -85,6 +85,13 @@ class PhpApplication(BasePlatformApplication):
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
         )
+        # change php-fpm user to web
+        output + self.runCommand(
+            """
+            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            """    
+        )
         # install ssh key + known_hosts
         self.installSsh()
         output += self.runCommand(

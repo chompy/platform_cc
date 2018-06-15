@@ -18,9 +18,7 @@ RUN curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.t
     ln -s -f /usr/bin/node /usr/bin/nodejs
 
 # update php configurations
-RUN sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf && \
-    sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf && \
-    echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini && \
+RUN echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini && \
     echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/01-main.ini && \
     ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php5-fpm && \
     ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0 && \
