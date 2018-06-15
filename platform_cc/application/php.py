@@ -94,12 +94,15 @@ class PhpApplication(BasePlatformApplication):
         self.logger.info(
             "Setup/fix user permission."
         )
-        output += self.runCommand(
-            """
-            chown -f -R web %s
-            chown -f -R web %s
-            """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
-        )
+        try:
+            output += self.runCommand(
+                """
+                chown -f -R web %s
+                chown -f -R web %s
+                """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
+            )
+        except ContainerCommandError:
+            pass
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         for extension in extInstall:
