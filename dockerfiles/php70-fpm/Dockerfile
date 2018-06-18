@@ -1,12 +1,12 @@
-FROM php:5.4-fpm
+FROM php:7.0-fpm
 
 # install dependencies via apt-get
 RUN apt-get update && \
     apt-get install -y rsync git unzip cron python-pip python-dev \
-        gem libyaml-0-2 libyaml-dev ruby ruby-dev less \
-        libmcrypt4 libmcrypt-dev libicu52 libicu-dev libxslt1.1 libxslt1-dev \
+        gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano \
+        libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
         libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-        libpng12-0 libpng-dev libpcre3 libpcre3-dev && \
+        libpng16-16 libpng-dev libpcre3 libpcre3-dev && \
     apt-get clean
 
 # install nodejs
@@ -31,9 +31,9 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     ln -s -f /usr/local/bin/composer.phar /usr/local/bin/composer
 
 # install default php extensions
-RUN docker-php-ext-install bcmath intl xsl mysql mysqli pdo_mysql sockets exif mcrypt && \
+RUN docker-php-ext-install -j$(nproc) bcmath intl xsl pdo_mysql sockets exif && \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
-    docker-php-ext-install gd
+    docker-php-ext-install -j$(nproc) gd
 
 # install nginx + conf
 RUN curl -L https://nginx.org/download/nginx-1.14.0.tar.gz -o nginx.tar.gz && \
