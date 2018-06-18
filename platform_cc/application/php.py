@@ -14,7 +14,7 @@ class PhpApplication(BasePlatformApplication):
         "php"             : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
         "php:5.4"         : "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
         "php:5.6"         : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-        #"php:7.0"         : "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+        "php:7.0"         : "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
         #"php:7.1"         : "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
         "php:7.2"         : "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"   
     }
