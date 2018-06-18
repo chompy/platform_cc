@@ -10,7 +10,7 @@ import pkg_resources
 from cleo import Application
 from platform_cc.commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from platform_cc.commands.services import ServiceStart, ServiceStop, ServiceRestart, ServiceList, ServiceShell
-from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook
+from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull
 from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
 from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge
 from platform_cc.commands.mysql import MysqlSql
@@ -52,6 +52,7 @@ cleoApp.add(ApplicationList())
 cleoApp.add(ApplicationShell())
 cleoApp.add(ApplicationBuild())
 cleoApp.add(ApplicationDeployHook())
+cleoApp.add(ApplicationPull())
 cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
 cleoApp.add(RouterRestart())

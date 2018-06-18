@@ -1,4 +1,5 @@
 import os
+import time
 from cleo import Command, Output
 from platform_cc.commands import getProject, outputJson, outputTable
 from platform_cc.exception.state_error import StateError
@@ -136,7 +137,7 @@ class ApplicationShell(Command):
 
 class ApplicationBuild(Command):
     """
-    Build application.
+    (Re)Build application.
 
     application:build
         {--name=? : Name of application. (Default=first available application)}
@@ -149,6 +150,13 @@ class ApplicationBuild(Command):
         if not name:
             name = project.getApplicationsParser().getApplicationNames()[0]
         application = project.getApplication(name)
+        # inform user and wait 5 seconds
+        self.line(
+            "<question>!!! Rebuild of application '%s' will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
+                application.getName()
+            )
+        )
+        time.sleep(5)
         output = application.build()
         if self.output.get_verbosity() >= Output.VERBOSITY_VERBOSE:
             self.line(output)
@@ -171,3 +179,20 @@ class ApplicationDeployHook(Command):
         output = application.deploy()
         if self.output.get_verbosity() >= Output.VERBOSITY_VERBOSE:
             self.line(output)
+
+class ApplicationPull(Command):
+    """
+    Pull base application image.
+
+    application:pull
+        {--name=? : Name of application. (Default=first available application)}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        name = self.option("name")
+        if not name:
+            name = project.getApplicationsParser().getApplicationNames()[0]
+        application = project.getApplication(name)
+        application.pullImage()

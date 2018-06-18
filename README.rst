@@ -41,6 +41,21 @@ This assumes that you have a project ready to go with all the appropiate configu
         $ platform_cc application:deploy --name=application_name
 
 
+Upgrading To New Platform.CC Version
+------------------------------------
+
+It is likely that new base application images will be available when a new Platform.CC version
+is released. There are cases where old application images will no longer be compatible with the
+new version of Platform.CC. In that event you can upgrade your application by running the following
+commands...
+
+        $ platform_cc application:pull
+        $ platform_cc application:build
+
+If your project contains multiple applications you will likely need to run the command for each of them
+using the --name argument to specify the application.
+
+
 More On Variables
 -----------------
 

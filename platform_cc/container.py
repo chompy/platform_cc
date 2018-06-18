@@ -378,6 +378,22 @@ class Container:
             data = tarData
         )
 
+    def pullImage(self):
+        """
+        Pull image for container.
+        """
+        self.logger.info(
+            "Pull '%s' image for '%s' container.",
+            self.getBaseImage(),
+            self.getContainerName()
+        )
+        self.docker.login(
+            username=self.PCC_GITLAB_REGISTRY_CREDS[0],
+            password=self.PCC_GITLAB_REGISTRY_CREDS[1],
+            registry="https://registry.gitlab.com"
+        )
+        self.docker.images.pull(self.getBaseImage())
+
     def start(self):
         """
         Start Docker container for service.
@@ -394,6 +410,8 @@ class Container:
             if useMountVolumes:
                 capAdd.append("SYS_ADMIN")
             self.getNetwork() # instantiate if not created
+            if not self.getDockerImage():
+                raise StateError("No Docker image found for container '%s.'" % self.getContainerName())
             try:
                 container = self.docker.containers.create(
                     self.getDockerImage(),
@@ -413,17 +431,7 @@ class Container:
                     cap_add = capAdd
                 )
             except docker.errors.ImageNotFound:
-                self.logger.info(
-                    "Pull '%s' image for '%s' container.",
-                    self.getDockerImage(),
-                    self.getContainerName()
-                )
-                self.docker.login(
-                    username=self.PCC_GITLAB_REGISTRY_CREDS[0],
-                    password=self.PCC_GITLAB_REGISTRY_CREDS[1],
-                    registry="https://registry.gitlab.com"
-                )
-                self.docker.images.pull(self.getDockerImage())
+                self.pullImage()
                 return self.start()
         if container.status == "running": return
         container.start()
