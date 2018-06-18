@@ -410,6 +410,8 @@ class Container:
             if useMountVolumes:
                 capAdd.append("SYS_ADMIN")
             self.getNetwork() # instantiate if not created
+            if not self.getDockerImage():
+                raise StateError("No Docker image found for container '%s.'" % self.getContainerName())
             try:
                 container = self.docker.containers.create(
                     self.getDockerImage(),
