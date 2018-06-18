@@ -238,16 +238,38 @@ class BasePlatformApplication(Container):
         # start cron
         self.logger.info("Start cron daemon.")
         self.runCommand("cron")
-            
+
+    def prebuild(self):
+        """
+        Perform tasks on container prior to build process.
+        """   
+        # delete committed image
+        if self.getDockerImage() == self.getCommitImage():
+            # stop container if running
+            if self.isRunning():
+                self.stop()
+            self.docker.images.remove(self.getCommitImage())
+            self.logger.info(
+                "Delete '%s' Docker image.",
+                self.getCommitImage()
+            )
+            self._hasCommitImage = False
+        # start container
+        if not self.isRunning():
+            BasePlatformApplication.start(self, False)
+    
     def build(self):
         """
         Run commands needed to get container ready for given
         application. Also runs build hooks commands.
         """
+        self.prebuild()
         self.logger.info(
             "Building application."
         )
+        # install ssh
         self.installSsh()
+        # run build hooks
         output = self.runCommand(
             self.config.get("hooks", {}).get("build", "")
         )
@@ -256,6 +278,7 @@ class BasePlatformApplication(Container):
             "Commit container."
         )
         self.commit()
+        self.stop()
         return output
 
     def deploy(self):
@@ -270,18 +293,19 @@ class BasePlatformApplication(Container):
             "web"
         )
 
-    def start(self):
+    def start(self,  requireServices = True):
         # ensure all required services are available
-        projectServices = self.project.get("services", {})
-        serviceNames = list(self.config.get("relationships", {}).values())
-        for serviceName in serviceNames:
-            serviceName = serviceName.strip().split(":")[0]
-            projectService = projectServices.get(serviceName)
-            if not projectService or not projectService.get("running"):
-                raise StateError(
-                    "Application '%s' depends on service '%s' which is not running." % (
-                        self.getName(),
-                        serviceName
+        if requireServices:
+            projectServices = self.project.get("services", {})
+            serviceNames = list(self.config.get("relationships", {}).values())
+            for serviceName in serviceNames:
+                serviceName = serviceName.strip().split(":")[0]
+                projectService = projectServices.get(serviceName)
+                if not projectService or not projectService.get("running"):
+                    raise StateError(
+                        "Application '%s' depends on service '%s' which is not running." % (
+                            self.getName(),
+                            serviceName
+                        )
                     )
-                )
         Container.start(self)

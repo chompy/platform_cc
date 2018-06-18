@@ -75,6 +75,7 @@ class PhpApplication(BasePlatformApplication):
         return ""
 
     def build(self):
+        self.prebuild()
         output = ""
         # add web user
         self.logger.info(
@@ -94,17 +95,10 @@ class PhpApplication(BasePlatformApplication):
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )
         )
-
         output += self.runCommand(
             "usermod -u %s web" % (
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )            
-        )
-        # add
-        output + self.runCommand(
-            """
-
-            """    
         )
         # install ssh key + known_hosts
         self.installSsh()
@@ -188,19 +182,40 @@ class PhpApplication(BasePlatformApplication):
         )
         locations = self.config.get("web", {}).get("locations", {})
         appNginxConf = ""
-        def addFastCgi(scriptName = ""):
-            if not scriptName: scriptName = "$fastcgi_script_name"
+        def addFastCgi(scriptName = False):
             conf = ""
-            conf += "\t\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
+            if scriptName and type(scriptName) is str:
+                conf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % scriptName.strip("/")
+                conf += "\t\t\t\ttry_files $fastcgi_script_name @rewrite;\n"
+            else:
+                conf += "\t\t\t\ttry_files $fastcgi_script_name =404;\n"
             conf += "\t\t\t\tfastcgi_pass 127.0.0.1:9000;\n"
-            conf += "\t\t\t\tfastcgi_param SCRIPT_FILENAME $document_root%s;\n" % scriptName
+            conf += "\t\t\t\tset $_document_root $document_root;\n"
             conf += "\t\t\t\tinclude fastcgi_params;\n"
+            conf += "\t\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
+            conf += "\t\t\t\tset $path_info  $fastcgi_path_info;\n";
             return conf
         for path in locations:
-            appNginxConf += "\t\tlocation %s {\n" % path
-            # == ROOT
             root = locations[path].get("root", "") or ""
-            appNginxConf += "\t\t\troot \"%s\";\n" % (
+            passthru = locations[path].get("passthru", False)
+            # ============
+            appNginxConf += "\t\tlocation = \"%s\" {\n" % path.rstrip("/")
+            appNginxConf += "\t\t\talias \"%s\";\n" % (
+                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
+            )
+            if type(passthru) is str:
+                appNginxConf += "\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
+                appNginxConf += "\t\t\ttry_files $uri @rewrite;\n"
+            else:
+                appNginxConf += "\t\t\ttry_files $uri =404;\n"
+            appNginxConf += "\t\t\texpires -1s;\n"
+            appNginxConf += "\t\t}\n"
+            # ============
+            pathStrip = "/%s/" % path.strip("/")
+            if pathStrip == "//": pathStrip = "/"
+            appNginxConf += "\t\tlocation \"%s\" {\n" % pathStrip
+            # == ALIAS
+            appNginxConf += "\t\t\talias \"%s/\";\n" % (
                 ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
             )
             # == HEADERS
@@ -210,16 +225,25 @@ class PhpApplication(BasePlatformApplication):
                     headerName,
                     headers[headerName]
                 )
+            # == SUB LOCATION
+            appNginxConf += "\t\t\tlocation \"%s\" {\n" % pathStrip
+            if type(passthru) is str:
+                appNginxConf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
+                appNginxConf += "\t\t\t\ttry_files $uri @rewrite;\n"
+            else:
+                appNginxConf += "\t\t\t\ttry_files $uri =404;\n"
+            appNginxConf += "\t\t\t\texpires -1s;\n"
+            appNginxConf += "\t\t\t}\n"
             # == PASSTHRU
             passthru = locations[path].get("passthru", False)
             if passthru and not locations[path].get("scripts", False):
                 if passthru == True: passthru = "/index.php"
-                appNginxConf += "\t\t\tlocation ~ /%s {\n" % passthru.strip("/")
+                appNginxConf += "\t\t\tlocation ~ \".+?\.php(?=$|/)\" {\n"
                 appNginxConf += "\t\t\t\tallow all;\n"
                 appNginxConf += addFastCgi(passthru)
                 appNginxConf += "\t\t\t}\n"
                 #appNginxConf += "\t\tlocation / {\n"
-                appNginxConf += "\t\t\ttry_files $uri /%s$is_args$args;\n" % passthru.strip("/")
+                #appNginxConf += "\t\t\ttry_files $uri /%s$is_args$args;\n" % passthru.strip("/")
                 #appNginxConf += "\t\t}\n"
             # == SCRIPTS
             scripts = locations[path].get("scripts", False)
@@ -235,6 +259,10 @@ class PhpApplication(BasePlatformApplication):
             # allow = false should deny access when requesting a file that does exist but
             # does not match a rule
             # == RULES
+            # TODO
+            # we don't currently make use of the rules directive, so this code has
+            # not been tested, commented out for now
+            """
             rules = locations[path].get("rules", {})
             if rules:
                 for ruleRegex in rules:
@@ -270,11 +298,12 @@ class PhpApplication(BasePlatformApplication):
                     else:
                         appNginxConf += "\t\t\t\t\tdeny all;\n"
                     appNginxConf += "\t\t\t\t}\n"
+            """
             appNginxConf += "\t\t}\n"
         return appNginxConf
 
-    def start(self):
-        BasePlatformApplication.start(self)
+    def start(self, requireServices = True):
+        BasePlatformApplication.start(self, requireServices)
         container = self.getContainer()
         if not container: return
         # link php.ini in app root
@@ -307,15 +336,14 @@ class PhpApplication(BasePlatformApplication):
         # not yet built/provisioned
         if self.getDockerImage() == self.getBaseImage():
             self.build()
-            self.stop()
-            return self.start()
+            return self.start(requireServices)
         # nginx config
         nginxConfFileObj = io.BytesIO(
             bytes(str(self.generateNginxConfig()).encode("utf-8"))
         )
         self.uploadFile(
             nginxConfFileObj,
-            "/etc/nginx/app.conf"
+            "/usr/local/nginx/conf/app.conf"
         )
         # start nginx + other services
         self.logger.info(
@@ -323,7 +351,7 @@ class PhpApplication(BasePlatformApplication):
         )
         self.runCommand(
             """
-            service nginx start
+            /usr/local/nginx/sbin/nginx
             """
         )
         # install cron jobs if enabled

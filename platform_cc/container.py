@@ -378,6 +378,22 @@ class Container:
             data = tarData
         )
 
+    def pullImage(self):
+        """
+        Pull image for container.
+        """
+        self.logger.info(
+            "Pull '%s' image for '%s' container.",
+            self.getBaseImage(),
+            self.getContainerName()
+        )
+        self.docker.login(
+            username=self.PCC_GITLAB_REGISTRY_CREDS[0],
+            password=self.PCC_GITLAB_REGISTRY_CREDS[1],
+            registry="https://registry.gitlab.com"
+        )
+        self.docker.images.pull(self.getBaseImage())
+
     def start(self):
         """
         Start Docker container for service.
@@ -413,17 +429,7 @@ class Container:
                     cap_add = capAdd
                 )
             except docker.errors.ImageNotFound:
-                self.logger.info(
-                    "Pull '%s' image for '%s' container.",
-                    self.getDockerImage(),
-                    self.getContainerName()
-                )
-                self.docker.login(
-                    username=self.PCC_GITLAB_REGISTRY_CREDS[0],
-                    password=self.PCC_GITLAB_REGISTRY_CREDS[1],
-                    registry="https://registry.gitlab.com"
-                )
-                self.docker.images.pull(self.getDockerImage())
+                self.pullImage()
                 return self.start()
         if container.status == "running": return
         container.start()
