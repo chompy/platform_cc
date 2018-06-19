@@ -77,6 +77,14 @@ class BasePlatformApplication(Container):
         trustedProxies = "%s,127.0.0.1" % (
             str(network.attrs.get("IPAM", {}).get("Config",[{}])[0].get("Subnet"))
         )
+        try:
+            bridgeNetwork = self.docker.networks.get("bridge")
+            trustedProxies = "%s,%s" % (
+                str(bridgeNetwork.attrs.get("IPAM", {}).get("Config",[{}])[0].get("Subnet")),
+                trustedProxies
+            )
+        except docker.errors.NotFound:
+            pass
         # sest env vars
         envVars = {
             "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
