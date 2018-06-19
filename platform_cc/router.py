@@ -126,6 +126,7 @@ class PlatformRouter(Container):
                             output += "\t\t\tset $upstream http://%s;\n" % (
                                 upstreamHost
                             )
+                            output += "\t\t\tproxy_set_header X-Client-IP $remote_addr;\n"
                             output += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
                             output += "\t\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
                             output += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
