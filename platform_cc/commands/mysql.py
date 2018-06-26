@@ -50,7 +50,10 @@ class MysqlSql(Command):
                 stdin = sys.stdin.detach().read()
             except AttributeError:
                 pass
-            stdin = stdin.read()
+            try:
+                stdin = stdin.read()
+            except AttributeError:
+                pass
             byteIo = io.BytesIO(stdin)
             service.uploadFile(
                 byteIo,
