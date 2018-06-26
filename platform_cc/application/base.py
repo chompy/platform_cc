@@ -196,7 +196,7 @@ class BasePlatformApplication(Container):
             self.logger.info(
                 "Install '%s' from project config." % sshData[0]
             )
-            data = str(base64.b64decode(data))
+            data = base64.b64decode(data)
             dataFileObject = io.BytesIO(data)
             self.uploadFile(
                 dataFileObject,

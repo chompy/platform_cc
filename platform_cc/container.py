@@ -332,7 +332,7 @@ class Container:
                     self.getContainerName(),
                     command,
                     exitCode,
-                    output
+                    output.decode("utf-8")
                 )
             )
             raise ContainerCommandError(
@@ -341,7 +341,7 @@ class Container:
                     exitCode
                 )
             )
-        return output
+        return output.decode("utf-8")
 
     def uploadFile(self, uploadObj, path):
         """
