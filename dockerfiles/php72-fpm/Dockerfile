@@ -31,7 +31,7 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     ln -s -f /usr/local/bin/composer.phar /usr/local/bin/composer
 
 # install default php extensions
-RUN docker-php-ext-install -j$(nproc) bcmath intl xsl pdo_mysql sockets exif && \
+RUN docker-php-ext-install -j$(nproc) bcmath intl xsl mysqli pdo_mysql sockets exif && \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
     docker-php-ext-install -j$(nproc) gd
 
