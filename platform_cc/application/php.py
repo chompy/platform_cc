@@ -119,6 +119,11 @@ class PhpApplication(BasePlatformApplication):
             pass
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
+        output += self.runCommand(
+            """
+            apt-get update -y
+            """
+        )
         for extension in extInstall:
             if type(extension) is not str: continue
             self.logger.info(
