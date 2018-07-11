@@ -1,13 +1,15 @@
 from .mariadb import MariaDbService
 from .memcached import MemcachedService
 from .rabbitmq import RabbitMqService
+from .athenapdf import AthenaPdfService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
     "mariadb"       : MariaDbService,
     "mysql"         : MariaDbService,
     "memcached"     : MemcachedService,
-    "rabbitmq"      : RabbitMqService
+    "rabbitmq"      : RabbitMqService,
+    "athenapdf"     : AthenaPdfService
 }
 
 def getService(project, config):
