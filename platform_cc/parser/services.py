@@ -7,16 +7,23 @@ class ServicesParser(BasePlatformParser):
     Services (.platform/services.yaml) parser.
     """
 
-    """ Path to services yaml file. """
-    YAML_PATH = ".platform/services.yaml"
+    """ Paths to services yaml file. """
+    YAML_PATHS = [
+        ".platform/services.yaml",
+        ".platform/services.pcc.yaml"
+    ]
 
     def __init__(self, projectPath):
         BasePlatformParser.__init__(self, projectPath)
-        yamlPath = os.path.join(
-            self.projectPath,
-            self.YAML_PATH
-        )
-        self.services = self._readYaml(yamlPath)
+        yamlPaths = []
+        for yamlPath in self.YAML_PATHS:
+            yamlFullPath = os.path.join(
+                self.projectPath,
+                yamlPath
+            )
+            if os.path.isfile(yamlFullPath):
+                yamlPaths.append(yamlFullPath)
+        self.services = self._readYaml(yamlPaths)
 
     def getServiceNames(self):
         """
