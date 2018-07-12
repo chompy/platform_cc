@@ -11,8 +11,11 @@ class RoutesParser(BasePlatformParser):
     Routes (.platform/routes.yaml) parser.
     """
 
-    """ Path to routes yaml file. """
-    YAML_PATH = ".platform/routes.yaml"
+    """ Paths to routes yaml file. """
+    YAML_PATHS = [
+        ".platform/routes.yaml",
+        ".platform/routes.pcc.yaml"
+    ]
 
     def __init__(self, project):
         """
@@ -22,10 +25,16 @@ class RoutesParser(BasePlatformParser):
         self.project = project
         self._routes = None
 
-    def _readYaml(self, path):
-        config = None
-        with open(path, "r") as f:
-            config = yaml.load(f)
+    def _readYaml(self, paths):
+        config = {}
+        if type(paths) is not list:
+            paths = [paths]
+        for path in paths:
+            with open(path, "r") as f:
+                self._mergeDict(
+                    yaml.load(f),
+                    config
+                )
         return config
 
     def getDefaultDomain(self):
@@ -57,12 +66,15 @@ class RoutesParser(BasePlatformParser):
         """
         if self._routes:
             return self._routes
-        routes = self._readYaml(
-            os.path.join(
+        yamlPaths = []
+        for yamlPath in self.YAML_PATHS:
+            yamlFullPath = os.path.join(
                 self.projectPath,
-                self.YAML_PATH
+                yamlPath
             )
-        )
+            if os.path.isfile(yamlFullPath):
+                yamlPaths.append(yamlFullPath)
+        routes = self._readYaml(yamlPaths)
         self._routes = []
         for routeSyntax, routeConfig in routes.items():
             if routeSyntax.startswith("."): continue

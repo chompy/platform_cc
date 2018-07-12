@@ -7,8 +7,11 @@ class ApplicationsParser(BasePlatformParser):
     Applications (.platform.app.yaml) parser.
     """
 
-    """ Filename of application configuration yaml file. """
-    YAML_FILENAME = ".platform.app.yaml"
+    """ Filenames of application configuration yaml file. """
+    YAML_FILENAMES = [
+        ".platform.app.yaml",
+        ".platform.app.pcc.yaml"
+    ]
 
     def __init__(self, projectPath):
         BasePlatformParser.__init__(self, projectPath)
@@ -26,7 +29,7 @@ class ApplicationsParser(BasePlatformParser):
             appConfig = self._readYaml(yamlPath)
             name = appConfig.get(
                 "name",
-                os.path.basename(os.path.dirname(yamlPath))
+                os.path.basename(os.path.dirname(yamlPath[0]))
             )
             # skip if no name or name already exists
             if not name or name in self.applications:
@@ -41,17 +44,29 @@ class ApplicationsParser(BasePlatformParser):
         :rtype: list
         """
         yamlList = []
+        # get all application yaml files in a directory
+        def getYamlPathsInDir(path):
+            if not os.path.isdir(path): return []
+            yamlFiles = []
+            for yamlFilename in self.YAML_FILENAMES:
+                yamlPath = os.path.join(path, yamlFilename)
+                if os.path.isfile(yamlPath):
+                    yamlFiles.append(yamlPath)
+            return yamlFiles
+        # find app yaml in project path
+        yamlDirList = getYamlPathsInDir(self.projectPath)
+        if yamlDirList:
+            yamlList.append(yamlDirList)
+        # find app yaml in sub directories
         for name in os.listdir(self.projectPath):
             fullPath = os.path.join(
                 self.projectPath,
                 name
             )
             if os.path.isdir(fullPath):
-                yamlPath = os.path.join(fullPath, self.YAML_FILENAME)
-                if os.path.isfile(yamlPath):
-                    yamlList.append(yamlPath)
-            elif name == self.YAML_FILENAME:
-                yamlList.append(fullPath)
+                yamlDirList = getYamlPathsInDir(fullPath)
+                if yamlDirList:
+                    yamlList.append(yamlDirList)
         return yamlList
 
     def getApplicationNames(self):
