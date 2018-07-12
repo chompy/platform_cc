@@ -2,6 +2,7 @@ from .mariadb import MariaDbService
 from .memcached import MemcachedService
 from .rabbitmq import RabbitMqService
 from .athenapdf import AthenaPdfService
+from .minio import MinioService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
@@ -9,7 +10,8 @@ SERVICES_MAP = {
     "mysql"         : MariaDbService,
     "memcached"     : MemcachedService,
     "rabbitmq"      : RabbitMqService,
-    "athenapdf"     : AthenaPdfService
+    "athenapdf"     : AthenaPdfService,
+    "minio"         : MinioService
 }
 
 def getService(project, config):
