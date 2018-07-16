@@ -1,6 +1,20 @@
+v0.1.10
+- Fixed issue with web user id when ran as root.
+- Added license, GPL v3.
+
+v0.1.9
+- Added Minio object store service.
+- Added Athena PDF / Weaver service.
+- Added ability to read .pcc.yaml files to add configuration options that you do not want Platform.sh to read.
+
+v0.1.8
+- Python 3 fixes.
+- Added Mysqli extension to PHP7.
+- Router Nginx client ip fix.
+- Fixed issue with PHP extension install.
+
 v0.1.0
 - Applications and services can now be start/stop/restarted individually.
 - Applications, serivces, and router can now be restarted with one command.
 - Application mount points now used a single shared volume (like Platform.sh).
 - Router should now support routes with paths.
-
