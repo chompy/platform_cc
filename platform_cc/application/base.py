@@ -24,6 +24,7 @@ import io
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
+from platform_cc.exception.container_command_error import ContainerCommandError
 
 class BasePlatformApplication(Container):
 
@@ -204,9 +205,12 @@ class BasePlatformApplication(Container):
             ["ssh_key", "/app/.ssh/id_rsa"],
             ["ssh_known_hosts", "/app/.ssh/known_hosts"]
         ]
-        self.runCommand(
-            "mkdir -p /app/.ssh && chown -f -R web:web /app/.ssh"
-        )
+        try:
+            self.runCommand(
+                "mkdir -p /app/.ssh && chown -f -R web:web /app/.ssh"
+            )
+        except ContainerCommandError:
+            pass
         for sshData in sshDatas:
             data = self.project.get("config", {}).get(sshData[0])
             if not data: continue
@@ -219,12 +223,15 @@ class BasePlatformApplication(Container):
                 dataFileObject,
                 "/tmp/.ssh_file" # can't upload file to a mount directory, so upload to tmp and copy
             )
-            self.runCommand(
-                "mv /tmp/.ssh_file %s && chmod -f 0600 %s" % (
-                    sshData[1],
-                    sshData[1]
+            try:
+                self.runCommand(
+                    "mv /tmp/.ssh_file %s && chmod -f 0600 %s" % (
+                        sshData[1],
+                        sshData[1]
+                    )
                 )
-            )
+            except ContainerCommandError:
+                pass
 
     def installCron(self):
         """
