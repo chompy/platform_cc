@@ -81,7 +81,7 @@ class PlatformProject:
         # and application process to use
         # this should be the same user id as the current
         # user so that permissions in and out of the container match
-        if not self.config.get("web_user_id") or self.config.get("web_user_id") <= 0:
+        if not self.config.get("web_user_id") or int(self.config.get("web_user_id")) <= 0:
             currentUserId = os.getuid()
             if currentUserId <= 0:
                 currentUserId = 1000
