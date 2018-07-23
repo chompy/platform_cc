@@ -345,9 +345,10 @@ class Container:
         )
         if exitCode:
             self.logger.error(
-                "Command execution error on container '%s'... (CMD=%s, EXIT_CODE=%s, OUTPUT=%s)" % (
+                "Command execution error on container '%s'... (CMD=%s, USER=%s, EXIT_CODE=%s, OUTPUT=%s)" % (
                     self.getContainerName(),
                     command,
+                    user,
                     exitCode,
                     output.decode("utf-8")
                 )
