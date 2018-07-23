@@ -31,7 +31,7 @@ from platform_cc.commands.services import ServiceStart, ServiceStop, ServiceRest
 from platform_cc.commands.applications import ApplicationStart, ApplicationStop, ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull
 from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
 from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge
-from platform_cc.commands.mysql import MysqlSql
+from platform_cc.commands.mysql import MysqlSql, MysqlDump
 
 # fetch version
 try:
@@ -84,6 +84,7 @@ cleoApp.add(ProjectOptionSet())
 cleoApp.add(ProjectOptionList())
 cleoApp.add(ProjectPurge())
 cleoApp.add(MysqlSql())
+cleoApp.add(MysqlDump())
 
 def main():
     cleoApp.run()

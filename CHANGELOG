@@ -1,3 +1,6 @@
+DEV (Latest Unversioned)
+- Added mysql:dump command.
+
 v0.1.10
 - Fixed issue with web user id when ran as root.
 - Added license, GPL v3.

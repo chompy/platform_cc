@@ -22,6 +22,24 @@ from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
 from platform_cc.exception.state_error import StateError
 
+def getMysqlService(project, name = None):
+    """ Get MySQL service to use. """
+    servicesParser = project.getServicesParser()
+    if not name:
+        for _name in servicesParser.getServiceNames():
+            serviceType = servicesParser.getServiceType(_name).split(":")[0]
+            if serviceType not in ["mysql", "mariadb"]: continue
+            name = _name
+            break
+    if not name:
+        raise ValueError("No service was specified.")
+    serviceType = servicesParser.getServiceType(name).split(":")[0]
+    if serviceType not in ["mysql", "mariadb"]:
+        raise ValueError(
+            "Service '%s' is not a MySQL or MariaDB service." % name
+        )
+    return project.getService(name)
+
 class MysqlSql(Command):
     """
     Execute SQL commands for MySQL service.
@@ -35,21 +53,7 @@ class MysqlSql(Command):
     def handle(self):
         project = getProject(self)
         serviceName = self.option("service")
-        servicesParser = project.getServicesParser()
-        if not serviceName:
-            for _serviceName in servicesParser.getServiceNames():
-                serviceType = servicesParser.getServiceType(_serviceName).split(":")[0]
-                if serviceType not in ["mysql", "mariadb"]: continue
-                serviceName = _serviceName
-                break
-        if not serviceName:
-            raise ValueError("No service was specified.")
-        serviceType = servicesParser.getServiceType(serviceName).split(":")[0]
-        if serviceType not in ["mysql", "mariadb"]:
-            raise ValueError(
-                "Service '%s' is not a MySQL or MariaDB service." % serviceName
-            )
-        service = project.getService(serviceName)
+        service = getMysqlService(project, serviceName)
         if not service.isRunning():
             raise StateError(
                 "Service '%s' is not running." % serviceName
@@ -84,4 +88,28 @@ class MysqlSql(Command):
             self.line(output.decode("utf-8"))
             return
 
+        service.shell(cmd)
+
+class MysqlDump(Command):
+    """
+    Execute dump for MySQL service.
+
+    mysql:dump
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--s|service=? : Name of MariaDB service. (Default=first available)}
+        {database : Name of database to use.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        serviceName = self.option("service")
+        service = getMysqlService(project, serviceName)
+        if not service.isRunning():
+            raise StateError(
+                "Service '%s' is not running." % serviceName
+            )
+        cmd = "mysqldump -h 127.0.0.1 -uroot --password=\"%s\" %s" % (
+            service.getPassword(),
+            self.argument("database")
+        )
         service.shell(cmd)
