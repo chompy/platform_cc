@@ -5,6 +5,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command" : "docker-php-ext-install -j$(nproc) __EXT_NAME__"
@@ -21,6 +22,7 @@
         {
             "images" : [
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command" : "apt-get install -y libmemcached-dev zlib1g-dev && echo '\n' | pecl install memcached || true && docker-php-ext-enable memcached || true"
@@ -32,6 +34,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command" : "echo '\n' | pecl install redis || true && docker-php-ext-enable redis || true"
@@ -43,6 +46,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command" : "apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev && echo '\n' | pecl install imagick || true && docker-php-ext-enable imagick || true"
@@ -54,6 +58,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command": "true"
@@ -70,6 +75,7 @@
         {
             "images" : [
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
             "command": "echo '\n' | pecl install xdebug || true && docker-php-ext-enable xdebug || true"
