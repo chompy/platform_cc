@@ -20,6 +20,7 @@ from .memcached import MemcachedService
 from .rabbitmq import RabbitMqService
 from .athenapdf import AthenaPdfService
 from .minio import MinioService
+from .redis import RedisService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
@@ -28,7 +29,8 @@ SERVICES_MAP = {
     "memcached"     : MemcachedService,
     "rabbitmq"      : RabbitMqService,
     "athenapdf"     : AthenaPdfService,
-    "minio"         : MinioService
+    "minio"         : MinioService,
+    "redis"         : RedisService
 }
 
 def getService(project, config):

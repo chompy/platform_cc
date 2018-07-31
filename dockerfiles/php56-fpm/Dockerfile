@@ -6,7 +6,7 @@ RUN apt-get update && \
         gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano \
         libmcrypt4 libmcrypt-dev libicu52 libicu-dev libxslt1.1 libxslt1-dev \
         libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-        libpng12-0 libpng-dev libpcre3 libpcre3-dev && \
+        libpng12-0 libpng-dev libpcre3 libpcre3-dev libedit-dev && \
     apt-get clean
 
 # install nodejs

@@ -1,5 +1,11 @@
 DEV (Latest Unversioned)
+--
+
+v0.1.11
 - Added mysql:dump command.
+- Added PHP 7.1 support.
+- Added Redis service.
+- Updated all docker files with package libedit-dev so that readline extension can be installed.
 
 v0.1.10
 - Fixed issue with web user id when ran as root.
