@@ -24,13 +24,14 @@ from .redis import RedisService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
-    "mariadb"       : MariaDbService,
-    "mysql"         : MariaDbService,
-    "memcached"     : MemcachedService,
-    "rabbitmq"      : RabbitMqService,
-    "athenapdf"     : AthenaPdfService,
-    "minio"         : MinioService,
-    "redis"         : RedisService
+    "mariadb"         : MariaDbService,
+    "mysql"           : MariaDbService,
+    "memcached"       : MemcachedService,
+    "rabbitmq"        : RabbitMqService,
+    "athenapdf"       : AthenaPdfService,
+    "minio"           : MinioService,
+    "redis"           : RedisService,
+    "redis-persistent": RedisService
 }
 
 def getService(project, config):

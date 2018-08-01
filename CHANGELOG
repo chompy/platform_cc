@@ -1,5 +1,6 @@
 DEV (Latest Unversioned)
---
+- Fixed php5.6 dockerfile.
+- Added redis-persistent service support.
 
 v0.1.11
 - Added mysql:dump command.
