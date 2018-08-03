@@ -144,7 +144,8 @@ class PlatformRouter(Container):
                                 upstreamHost
                             )
                             output += "\t\t\tproxy_set_header X-Client-IP $server_addr;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-Host $host:$server_port;\n"
+                            output += "\t\t\tproxy_set_header X-Forwarded-Host $host;\n"
+                            output += "\t\t\tproxy_set_header X-Forwarded-Port $server_port;\n"
                             output += "\t\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
                             output += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
                             output += "\t\t\tproxy_set_header Host $host;\n"
