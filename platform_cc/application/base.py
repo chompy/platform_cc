@@ -21,6 +21,8 @@ import base64
 import docker
 import logging
 import io
+import random
+import string
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
@@ -118,7 +120,7 @@ class BasePlatformApplication(Container):
             "PLATFORM_ROUTES"           : base64.b64encode(
                 bytes(str(json.dumps(routesParser.getRoutesEnvironmentVariable())).encode("utf-8"))
             ),
-            "PLATFORM_TREE_ID"          : "",
+            "PLATFORM_TREE_ID"          : ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(40)),
             "PLATFORM_VARIABLES"        : base64.b64encode(
                 bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))
             ).decode("utf-8"),

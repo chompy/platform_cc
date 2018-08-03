@@ -61,7 +61,7 @@ class RoutesParser(BasePlatformParser):
         :return: Default domain
         :rtype: string
         """
-        return self.project.get("short_uid", "default")
+        return self.project.get("short_uid", "default") + ".*"
 
     def getAllDomains(self):
         """
@@ -71,7 +71,7 @@ class RoutesParser(BasePlatformParser):
         :rtype: list
         """
         return [
-            self.project.get("short_uid", "default")
+            self.project.get("short_uid", "default") + ".*"
         ]
 
     def getRoutes(self):
