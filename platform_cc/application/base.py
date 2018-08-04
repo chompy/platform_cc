@@ -327,6 +327,11 @@ class BasePlatformApplication(Container):
             "web"
         )
 
+    def getLabels(self):
+        labels = Container.getLabels(self)
+        labels["%s.type" % Container.LABEL_PREFIX] = "application"
+        return labels
+
     def start(self,  requireServices = True):
         # ensure all required services are available
         if requireServices:

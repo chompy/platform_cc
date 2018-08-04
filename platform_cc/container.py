@@ -21,6 +21,7 @@ import time
 import tarfile
 import docker
 import logging
+import json
 from dockerpty import PseudoTerminal, ExecOperation
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.container_command_error import ContainerCommandError
@@ -35,6 +36,9 @@ class Container:
 
     """ Name prefix to use for all service containers. """
     CONTAINER_NAME_PREFIX = "pcc_"
+
+    """ Prefix to use for all Docker labels. """
+    LABEL_PREFIX = "com.contextualcode.platformcc"
 
     """
     Credientials for Gitlab registry containing prebuilt Docker
@@ -173,7 +177,7 @@ class Container:
         """
         volumeId = "%s%s_%s" %(
             self.CONTAINER_NAME_PREFIX,
-            self.project.get("uid")[0:6],
+            self.project.get("short_uid"),
             self.getName()
         )
         if name:
@@ -251,8 +255,14 @@ class Container:
             )
         except docker.errors.NotFound:
             pass
+
+        labels = Container.getLabels(self)
+        labels.pop(
+            "%s.project" % self.LABEL_PREFIX
+        )
         return self.docker.networks.create(
-            networkName
+            networkName,
+            labels = labels
         )
 
     def getContainer(self):
@@ -284,8 +294,13 @@ class Container:
             return self.docker.volumes.get(volumeId)
         except docker.errors.NotFound:
             pass
+        labels = Container.getLabels(self)
+        labels.pop(
+            "%s.project" % self.LABEL_PREFIX
+        )
         return self.docker.volumes.create(
-            volumeId
+            volumeId,
+            labels = labels
         )
 
     def isRunning(self):
@@ -412,6 +427,17 @@ class Container:
         )
         self.docker.images.pull(self.getBaseImage())
 
+    def getLabels(self):
+        """
+        Retrieve a list of labels to apply to container.
+        """
+        return {
+            self.LABEL_PREFIX : "",
+            "%s.project-uid" % self.LABEL_PREFIX : self.project.get("uid"),
+            "%s.name" % self.LABEL_PREFIX : self.getName(),
+            "%s.project" % self.LABEL_PREFIX : json.dumps(self.project)
+        }
+
     def start(self):
         """
         Start Docker container for service.
@@ -446,7 +472,8 @@ class Container:
                     working_dir = self.getContainerWorkingDirectory(),
                     hostname = self.getContainerName(),
                     privileged = bool(useMountVolumes), # needed to use mount inside container
-                    cap_add = capAdd
+                    cap_add = capAdd,
+                    labels = self.getLabels()
                 )
             except docker.errors.ImageNotFound:
                 self.pullImage()

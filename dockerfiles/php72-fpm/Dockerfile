@@ -1,4 +1,5 @@
 FROM php:7.2-fpm
+LABEL com.contextualcode.platformcc=""
 
 # install dependencies via apt-get
 RUN apt-get update && \

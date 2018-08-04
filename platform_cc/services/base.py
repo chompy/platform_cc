@@ -75,6 +75,11 @@ class BasePlatformService(Container):
             "platform_relationships"    : {}
         }
 
+    def getLabels(self):
+        labels = Container.getLabels(self)
+        labels["%s.type" % Container.LABEL_PREFIX] = "service"
+        return labels
+
     def start(self):
         self.logger.info("Start '%s' service." % self.getName())
         Container.start(self)
