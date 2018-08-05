@@ -26,6 +26,7 @@ import io
 import docker
 import logging
 from platform_cc.variables import getVariableStorage
+from platform_cc.variables.base import BasePlatformVariables
 from platform_cc.parser.services import ServicesParser
 from platform_cc.parser.applications import ApplicationsParser
 from platform_cc.parser.routes import RoutesParser
@@ -34,6 +35,7 @@ from platform_cc.application import getApplication
 from platform_cc.router import PlatformRouter
 from platform_cc.container import Container
 from platform_cc.exception.state_error import StateError
+from platform_cc.exception.parser_error import ParserError
 
 class PlatformProject:
     """
@@ -50,86 +52,39 @@ class PlatformProject:
     """ Salt used to generate project unique ids. """
     HASH_SALT = "6fabb8b0ee9&(2cae2eb26306cdc51012f180eb$NBd!a0e"
 
-    def __init__(self, projectPath = None, projectUid = None):
+    def __init__(self, projectConfig, projectVars, projectPath = None):
         """
         Constructor.
 
-        :param path: Path to project root
+        :param projectConfig: Project configuration
+        :param projectVars: Project variables
+        :param projectPath: Path to project
         """
+
+        # type check
+        if not isinstance(projectConfig, BasePlatformVariables):
+            raise ValueError("Project config should be an instance of 'BasePlatformVariables.'")
+        if not isinstance(projectVars, BasePlatformVariables):
+            raise ValueError("Project variables should be an instance of 'BasePlatformVariables.'")
+
+        # set project path, enforce string
+        self.path = None
+        if projectPath:
+            self.path = str(projectPath)
+
+        # validate project path
+        print(self.path)
+        if self.path and not os.path.isdir(self.path):
+            raise ValueError("Project path does not exist.")
 
         # get logger
         self.logger = logging.getLogger(__name__)
 
-        # set project path
-        self.path = str(projectPath)
+        # set project config
+        self.config = projectConfig
 
-        # get docker client
-        self.docker =  docker.from_env(
-            timeout = 300 # 5 minutes
-        )
-
-        # load project config
-        # from path
-        if self.path and os.path.isdir(self.path):
-
-            # validate project path
-            if not os.path.isdir(self.path):
-                raise ValueError("Invalid project path.")
-
-            # load config (use JsonFileVariables class to do this
-            # as it already contains the functionality)
-            self.config = getVariableStorage(
-                {
-                    "storage_handler"        : "json_file",
-                    "json_path"              : os.path.join(self.path, self.PROJECT_CONFIG_FILE)
-                }
-            )
-
-            # get variable storage
-            self.variables = getVariableStorage(
-                {
-                    "storage_handler"        : "json_file",
-                    "json_path"              : os.path.join(self.path, self.PROJECT_VAR_STORAGE_FILE)
-                }
-            )
-
-        # from active docker network/containers
-        elif projectUid:
-            networkList = self.docker.networks.list(
-                filters = {
-                    "label" : ["%s.project-uid=%s" % (
-                        Container.LABEL_PREFIX, projectUid
-                    )]
-                }
-            )
-            if not networkList:
-                networkList = self.docker.networks.list(
-                    filters = {
-                        "label" : ["%s.project-short-uid=%s" % (
-                            Container.LABEL_PREFIX, projectUid
-                        )]
-                    }
-                )
-            if not networkList:
-                raise ValueError("Cannot find active project with uid '%s.'" % projectUid)
-            labels = networkList[0].attrs.get("Labels", {})
-            projectData = json.loads(labels.get("%s.project" % Container.LABEL_PREFIX))
-            self.config = getVariableStorage(
-                {
-                    "storage_handler"           : "dict",
-                    "dict_vars"                 : projectData.get("config", {})
-                }
-            )
-            self.variables = getVariableStorage(
-                {
-                    "storage_handler"           : "dict",
-                    "dict_vars"                 : projectData.get("variables", {})
-                }
-            )
-
-        # unable to load project
-        else:            
-            raise ValueError("Project requires either a project path or project uid to initalize.")
+        # set project variables
+        self.variables = projectVars
 
         # generate uid if it does not exist
         if not self.config.get("uid"):
@@ -165,6 +120,114 @@ class PlatformProject:
 
         # define router
         self._router = None
+
+    @staticmethod
+    def fromPath(projectPath):
+        """
+        Load instance of project from path to project root.
+
+        :param projectPath: Path to project
+        :rtype: PlatformProject
+        """
+
+        # enforce string
+        projectPath = str(projectPath)
+
+        # validate project path
+        if not os.path.isdir(projectPath):
+            raise ValueError("Project path does not exist.")
+
+        # load config (use JsonFileVariables class to do this
+        # as it already contains the functionality)
+        projectConfig = getVariableStorage(
+            {
+                "storage_handler"        : "json_file",
+                "json_path"              : os.path.join(projectPath, PlatformProject.PROJECT_CONFIG_FILE)
+            }
+        )
+
+        # get variable storage
+        projectVars = getVariableStorage(
+            {
+                "storage_handler"        : "json_file",
+                "json_path"              : os.path.join(projectPath, PlatformProject.PROJECT_VAR_STORAGE_FILE)
+            }
+        )
+
+        # create project object
+        return PlatformProject(
+            projectConfig,
+            projectVars,
+            projectPath
+        )
+
+    @staticmethod
+    def getDockerClient():
+        """
+        Get the Docker client.
+        """
+        return docker.from_env(
+            timeout = 300 # 5 minutes
+        )
+
+    @staticmethod
+    def fromDocker(projectUid):
+        """
+        Load instance of project from values stored in
+        Docker labels using the project uid.
+
+        :param projectUid: Project unique id
+        :rtype: PlatformProject
+        """
+
+        # fetch project network
+        dockerClient = PlatformProject.getDockerClient()
+        networkList = dockerClient.networks.list(
+            filters = {
+                "label" : ["%s.project-uid=%s" % (
+                    Container.LABEL_PREFIX, projectUid
+                )]
+            }
+        )
+        if not networkList:
+            networkList = dockerClient.networks.list(
+                filters = {
+                    "label" : ["%s.project-short-uid=%s" % (
+                        Container.LABEL_PREFIX, projectUid
+                    )]
+                }
+            )
+        if not networkList:
+            raise ValueError("Cannot find active project with uid '%s' in current Docker environment." % projectUid)
+
+        # fetch network labels
+        labels = networkList[0].attrs.get("Labels", {})
+
+        # get project data
+        projectData = json.loads(labels.get("%s.project" % Container.LABEL_PREFIX))
+
+        # get config from project data
+        projectConfig = getVariableStorage(
+            {
+                "storage_handler"           : "dict",
+                "dict_vars"                 : projectData.get("config", {})
+            }
+        )
+
+        # get vars from project data
+        projectVars = getVariableStorage(
+            {
+                "storage_handler"           : "dict",
+                "dict_vars"                 : projectData.get("variables", {})
+            }
+        )
+
+        # create project object
+        return PlatformProject(
+            projectConfig,
+            projectVars,
+            None
+        )
 
     def _generateUid(self):
         """
@@ -266,6 +329,8 @@ class PlatformProject:
         """
         if self._servicesParser:
             return self._servicesParser
+        if not self.path:
+            raise StateError("Cannot get services parse without project path.")
         self.logger.debug(
             "Build services parser for project '%s.'",
             self.getShortUid()
@@ -282,6 +347,8 @@ class PlatformProject:
         """
         if self._applicationsParser:
             return self._applicationsParser
+        if not self.path:
+            raise StateError("Cannot get applications parser without project path.")
         self.logger.debug(
             "Build applications parser for project '%s.'",
             self.getShortUid()
@@ -298,6 +365,8 @@ class PlatformProject:
         """
         if self._routesParser:
             return self._routesParser
+        if not self.path:
+            raise StateError("Cannot get routes parser without project path.")
         self.logger.debug(
             "Build routes parser for project '%s.'",
             self.getShortUid()
@@ -305,31 +374,75 @@ class PlatformProject:
         self._routesParser = RoutesParser(self.getProjectData())
         return self._routesParser
 
-    def getService(self, name):
+    def getService(self, name = None):
         """
         Get a service handler.
 
-        :param name: Service name
+        :param name: Service name, if not provided first found service is returned
         :return: Service handler
         :rtype: .service.base.BasePlatformService
         """
-        servicesParser = self.getServicesParser()
-        name = str(name)
+
+        # service already loaded
         for service in self._services:
-            if service and service.getName() == name:
+            if service and (not name or service.getName() == name):
                 return service
-        serviceConfig = servicesParser.getServiceConfiguration(name)
-        self.logger.debug(
-            "Build service handler '%s' for project '%s.'",
-            name,
-            self.getShortUid()
+
+        # check docker
+        dockerClient = PlatformProject.getDockerClient()
+        dockerLabelFilters = [
+            "%s.type=service" % (Container.LABEL_PREFIX),
+            "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
+        ]
+        if name:
+            dockerLabelFilters.append(
+                "%s.name=%s" % (Container.LABEL_PREFIX, name)
+            )
+        matchedServices = dockerClient.containers.list(
+            filters = {
+                "label" : dockerLabelFilters
+            }
         )
-        service = getService(
-            self.getProjectData(),
-            serviceConfig
-        )
-        self._services.append(service)
-        return service
+        if matchedServices:
+            self.logger.debug(
+                "Build service handler '%s' for project '%s' from Docker environment.",
+                matchedServices[0].attrs.get("Config", {}).get("Labels", {}).get("%s.name" % Container.LABEL_PREFIX),
+                self.getShortUid()
+            )
+            serviceConfig = json.loads(
+                matchedServices[0].attrs.get("Config", {}).get("Labels", {}).get("%s.config" % Container.LABEL_PREFIX)
+            )
+            service = getService(
+                self.getProjectData(),
+                serviceConfig
+            )
+            self._services.append(service)
+            return service
+
+        # check path
+        if self.path:
+            servicesParser = self.getServicesParser()
+            if not name:
+                serviceNames = servicesParser.getServiceNames()
+                if not serviceNames:
+                    raise ParserError("No services defined.")
+                name = servicesParser.getServiceNames()[0]
+            name = str(name)
+            self.logger.debug(
+                "Build service handler '%s' for project '%s' from YAML configuration files.",
+                name,
+                self.getShortUid()
+            )
+            serviceConfig = servicesParser.getServiceConfiguration(name)
+            service = getService(
+                self.getProjectData(),
+                serviceConfig
+            )
+            self._services.append(service)
+            return service
+
+        # not found
+        raise StateError("Unable to find service with name '%s.'" % name)
 
     def getApplication(self, name):
         """

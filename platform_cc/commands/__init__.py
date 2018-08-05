@@ -18,10 +18,11 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 import os
 import json
+from cleo.exceptions.input import NoSuchOption
 from platform_cc.project import PlatformProject
 from terminaltables import SingleTable
 
-def getProject(command, withUid = False):
+def getProject(command):
     """
     Get PlatformProject object for current command.
 
@@ -30,11 +31,25 @@ def getProject(command, withUid = False):
     :return: Project
     :rtype: PlatformProject
     """
-    path = command.option("path")
-    uid = None
-    if withUid: uid = command.option("uid")
-    if not path and not uid: path = os.getcwd()
-    return PlatformProject(path, uid)
+
+    # use project path if provided
+    try:
+        path = command.option("path")
+    except NoSuchOption:
+        path = None
+    if path:
+        return PlatformProject.fromPath(path)
+
+    # use uid to fetch from docker env if provided
+    try:
+        uid = command.option("uid")
+    except NoSuchOption:
+        uid = None
+    if uid:
+        return PlatformProject.fromDocker(uid)
+
+    # if none of the above provided use cwd as path
+    return PlatformProject.fromPath(os.getcwd())
     
 def outputTable(command, title, data):
     """

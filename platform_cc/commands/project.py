@@ -52,7 +52,7 @@ class ProjectStop(Command):
     """
 
     def handle(self):
-        project = getProject(self, withUid=True)
+        project = getProject(self)
         applicationsParser = project.getApplicationsParser()
         for applicationName in applicationsParser.getApplicationNames():
             application = project.getApplication(applicationName)
