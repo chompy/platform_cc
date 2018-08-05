@@ -20,15 +20,13 @@ class BasePlatformVariables:
     Base class for handling storage of variables.
     """
 
-    def __init__(self, projectPath, projectConfig = None):
+    def __init__(self, config = {}):
         """
         Constructor.
 
-        :param projectPath: Path to project root
-        :param projectConfig: Project configuration
+        :param config: Dict containing configuration
         """
-        self.projectPath = str(projectPath)
-        self.projectConfig = projectConfig
+        self.config = dict(config)
 
     def set(self, key, value):
         """

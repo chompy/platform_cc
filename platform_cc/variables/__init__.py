@@ -15,32 +15,34 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .var_json import JsonVariables
+from .var_json_file import JsonFileVariables
+from .var_dict import DictVariables
 
-def getVariableStorage(projectPath, projectConfig = None):
+def getVariableStorage(config = {}):
     """
     Init a variable storage class from project configuration.
+
+    :param config: Dict containing configuration
     """
 
-    # default is json
-    variableStorageName = "json"
+    # enforce dict
+    config = dict(config)
 
-    # retrieve storage method from project config
-    variableStorageName = str(
-        projectConfig.get("variable_storage", variableStorageName)
+    # determine which storage handler to use
+    variableStorageHandler = str(
+        config.get("storage_handler", "json_file")
     )
     
-    # json
-    if variableStorageName == "json":
-        return JsonVariables(
-            projectPath,
-            projectConfig
-        )
+    # use json file handler
+    if variableStorageHandler in ["json_file", "json"]:
+        return JsonFileVariables(config)
+    elif variableStorageHandler in ["dict", "dictionary"]:
+        return DictVariables(config)
 
     # not found
     raise NotImplementedError(
         "Variable storage handler '%s' has not been implemented." % (
-            variableStorageName
+            variableStorageHandler
         )
     )
     

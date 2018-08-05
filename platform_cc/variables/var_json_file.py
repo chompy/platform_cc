@@ -17,26 +17,29 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import json
-from .base import BasePlatformVariables
+from .var_dict import DictVariables
 
-class JsonVariables(BasePlatformVariables):
+class JsonFileVariables(DictVariables):
     """
-    JSON Variable storage handler.
+    JSON file variable storage handler.
     """
 
     """ Filename to use when storing variables. """
     JSON_STORAGE_FILENAME = ".pcc_variables.json"
 
-    def __init__(self, projectPath, projectConfig = None):
-        BasePlatformVariables.__init__(self, projectPath, projectConfig)
-        self.JSON_STORAGE_FILENAME = projectConfig.get(
-            "variables_json_filename",
-            self.JSON_STORAGE_FILENAME
+    def __init__(self, config = {}):
+        
+        DictVariables.__init__(self, config)
+
+        # get path to json file
+        self._jsonPath = self.config.get(
+            "json_path"
         )
-        self._jsonPath = os.path.join(
-            projectPath,
-            self.JSON_STORAGE_FILENAME
-        )
+        # not provided or path doesn't exist
+        if not self._jsonPath or not os.path.isdir(os.path.dirname(self._jsonPath)):
+            raise ValueError("Invalid or missing json_path provided.")
+
+        # load
         self._loadVars()
 
     def _loadVars(self):
@@ -58,15 +61,9 @@ class JsonVariables(BasePlatformVariables):
             )
 
     def set(self, key, value):
-        self._vars[str(key)] = str(value)
+        DictVariables.set(self, key, value)
         self._saveVars()
-
-    def get(self, key, default = None):
-        return self._vars.get(str(key), default)
 
     def delete(self, key):
-        self._vars.pop(str(key), None)
+        DictVariables.delete(self, key)
         self._saveVars()
-
-    def all(self):
-        return self._vars.copy()

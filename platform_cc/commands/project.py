@@ -48,10 +48,11 @@ class ProjectStop(Command):
 
     project:stop
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
     """
 
     def handle(self):
-        project = getProject(self)
+        project = getProject(self, withUid=True)
         applicationsParser = project.getApplicationsParser()
         for applicationName in applicationsParser.getApplicationNames():
             application = project.getApplication(applicationName)

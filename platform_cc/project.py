@@ -26,13 +26,13 @@ import io
 import docker
 import logging
 from platform_cc.variables import getVariableStorage
-from platform_cc.variables.var_json import JsonVariables
 from platform_cc.parser.services import ServicesParser
 from platform_cc.parser.applications import ApplicationsParser
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.services import getService
 from platform_cc.application import getApplication
 from platform_cc.router import PlatformRouter
+from platform_cc.container import Container
 from platform_cc.exception.state_error import StateError
 
 class PlatformProject:
@@ -44,10 +44,13 @@ class PlatformProject:
     """ Filename of project config file. """
     PROJECT_CONFIG_FILE = ".pcc_project.json"
 
+    """ Filename to use when storing variables. """
+    PROJECT_VAR_STORAGE_FILE = ".pcc_variables.json"
+
     """ Salt used to generate project unique ids. """
     HASH_SALT = "6fabb8b0ee9&(2cae2eb26306cdc51012f180eb$NBd!a0e"
 
-    def __init__(self, path):
+    def __init__(self, projectPath = None, projectUid = None):
         """
         Constructor.
 
@@ -58,20 +61,75 @@ class PlatformProject:
         self.logger = logging.getLogger(__name__)
 
         # set project path
-        self.path = str(path)
+        self.path = str(projectPath)
 
-        # validate project path
-        if not os.path.isdir(self.path):
-            raise ValueError("Invalid project path.")
-
-        # load config (use JsonVariables class to do this
-        # as it already contains the functionality)
-        self.config = JsonVariables(
-            self.path,
-            {
-                "variables_json_filename" : self.PROJECT_CONFIG_FILE
-            }
+        # get docker client
+        self.docker =  docker.from_env(
+            timeout = 300 # 5 minutes
         )
+
+        # load project config
+        # from path
+        if self.path and os.path.isdir(self.path):
+
+            # validate project path
+            if not os.path.isdir(self.path):
+                raise ValueError("Invalid project path.")
+
+            # load config (use JsonFileVariables class to do this
+            # as it already contains the functionality)
+            self.config = getVariableStorage(
+                {
+                    "storage_handler"        : "json_file",
+                    "json_path"              : os.path.join(self.path, self.PROJECT_CONFIG_FILE)
+                }
+            )
+
+            # get variable storage
+            self.variables = getVariableStorage(
+                {
+                    "storage_handler"        : "json_file",
+                    "json_path"              : os.path.join(self.path, self.PROJECT_VAR_STORAGE_FILE)
+                }
+            )
+
+        # from active docker network/containers
+        elif projectUid:
+            networkList = self.docker.networks.list(
+                filters = {
+                    "label" : ["%s.project-uid=%s" % (
+                        Container.LABEL_PREFIX, projectUid
+                    )]
+                }
+            )
+            if not networkList:
+                networkList = self.docker.networks.list(
+                    filters = {
+                        "label" : ["%s.project-short-uid=%s" % (
+                            Container.LABEL_PREFIX, projectUid
+                        )]
+                    }
+                )
+            if not networkList:
+                raise ValueError("Cannot find active project with uid '%s.'" % projectUid)
+            labels = networkList[0].attrs.get("Labels", {})
+            projectData = json.loads(labels.get("%s.project" % Container.LABEL_PREFIX))
+            self.config = getVariableStorage(
+                {
+                    "storage_handler"           : "dict",
+                    "dict_vars"                 : projectData.get("config", {})
+                }
+            )
+            self.variables = getVariableStorage(
+                {
+                    "storage_handler"           : "dict",
+                    "dict_vars"                 : projectData.get("variables", {})
+                }
+            )
+
+        # unable to load project
+        else:            
+            raise ValueError("Project requires either a project path or project uid to initalize.")
 
         # generate uid if it does not exist
         if not self.config.get("uid"):
@@ -82,16 +140,13 @@ class PlatformProject:
         # this should be the same user id as the current
         # user so that permissions in and out of the container match
         if not self.config.get("web_user_id") or int(self.config.get("web_user_id")) <= 0:
-            currentUserId = os.getuid()
+            try:
+                currentUserId = os.getuid()
+            except AttributeError:
+                currentUserId = 1000
             if currentUserId <= 0:
                 currentUserId = 1000
             self.config.set("web_user_id", currentUserId)
-
-        # get variable storage
-        self.variables = getVariableStorage(
-            self.path,
-            self.config
-        )
 
         # define services parser
         self._servicesParser = None

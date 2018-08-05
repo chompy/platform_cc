@@ -329,6 +329,7 @@ class BasePlatformApplication(Container):
 
     def getLabels(self):
         labels = Container.getLabels(self)
+        labels["%s.config" % Container.LABEL_PREFIX] = json.dumps(self.config)
         labels["%s.type" % Container.LABEL_PREFIX] = "application"
         return labels
 

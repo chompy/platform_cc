@@ -16,6 +16,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import json
 from platform_cc.container import Container
 
 class BasePlatformService(Container):
@@ -77,6 +78,7 @@ class BasePlatformService(Container):
 
     def getLabels(self):
         labels = Container.getLabels(self)
+        labels["%s.config" % Container.LABEL_PREFIX] = json.dumps(self.config)
         labels["%s.type" % Container.LABEL_PREFIX] = "service"
         return labels
 

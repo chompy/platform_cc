@@ -257,8 +257,9 @@ class Container:
             pass
 
         labels = Container.getLabels(self)
+        labels["%s.project" % self.LABEL_PREFIX] = json.dumps(self.project)
         labels.pop(
-            "%s.project" % self.LABEL_PREFIX
+            "%s.name" % self.LABEL_PREFIX
         )
         return self.docker.networks.create(
             networkName,
@@ -295,9 +296,6 @@ class Container:
         except docker.errors.NotFound:
             pass
         labels = Container.getLabels(self)
-        labels.pop(
-            "%s.project" % self.LABEL_PREFIX
-        )
         return self.docker.volumes.create(
             volumeId,
             labels = labels
@@ -434,8 +432,8 @@ class Container:
         return {
             self.LABEL_PREFIX : "",
             "%s.project-uid" % self.LABEL_PREFIX : self.project.get("uid"),
-            "%s.name" % self.LABEL_PREFIX : self.getName(),
-            "%s.project" % self.LABEL_PREFIX : json.dumps(self.project)
+            "%s.project-short-uid" % self.LABEL_PREFIX : self.project.get("short_uid"),
+            "%s.name" % self.LABEL_PREFIX : self.getName()
         }
 
     def start(self):

@@ -21,17 +21,20 @@ import json
 from platform_cc.project import PlatformProject
 from terminaltables import SingleTable
 
-def getProject(command):
+def getProject(command, withUid = False):
     """
     Get PlatformProject object for current command.
 
     :param command: Current command being ran
+    :param withUid: If true use uid option to fetch project
     :return: Project
     :rtype: PlatformProject
     """
     path = command.option("path")
-    if not path: path = os.getcwd()
-    return PlatformProject(path)
+    uid = None
+    if withUid: uid = command.option("uid")
+    if not path and not uid: path = os.getcwd()
+    return PlatformProject(path, uid)
     
 def outputTable(command, title, data):
     """
