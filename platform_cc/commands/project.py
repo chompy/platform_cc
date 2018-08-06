@@ -21,6 +21,7 @@ import time
 import docker
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
+from platform_cc.exception.state_error import StateError
 
 class ProjectStart(Command):
     """
@@ -53,14 +54,9 @@ class ProjectStop(Command):
 
     def handle(self):
         project = getProject(self)
-        applicationsParser = project.getApplicationsParser()
-        for applicationName in applicationsParser.getApplicationNames():
-            application = project.getApplication(applicationName)
-            application.stop()
-        servicesParser = project.getServicesParser()
-        for serviceName in servicesParser.getServiceNames():
-            service = project.getService(serviceName)
-            service.stop()
+        projectContainers = project.dockerFetch()
+        for container in projectContainers:
+            container.stop()
         project.removeRouter()
 
 class ProjectRestart(Command):
@@ -73,14 +69,9 @@ class ProjectRestart(Command):
 
     def handle(self):
         project = getProject(self)
-        applicationsParser = project.getApplicationsParser()
-        for applicationName in applicationsParser.getApplicationNames():
-            application = project.getApplication(applicationName)
-            application.restart()
-        servicesParser = project.getServicesParser()
-        for serviceName in servicesParser.getServiceNames():
-            service = project.getService(serviceName)
-            service.restart()
+        projectContainers = project.dockerFetch()
+        for container in projectContainers:
+            container.restart()
         project.addRouter()
 
 class ProjectRoutes(Command):
@@ -200,6 +191,7 @@ class ProjectPurge(Command):
     project:purge
         {--d|dry-run : List items to be purged.}
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
     """
 
     def handle(self):
@@ -213,34 +205,4 @@ class ProjectPurge(Command):
                 )
             )
             time.sleep(5)
-        # services
-        serviceParser = project.getServicesParser()
-        for serviceName in serviceParser.getServiceNames():
-            service = project.getService(serviceName)
-            service.purge(dryRun)
-        # applications
-        appParser = project.getApplicationsParser()
-        for appName in appParser.getApplicationNames():
-            app = project.getApplication(appName)
-            app.purge(dryRun)
-        # remove from router
-        if not dryRun:
-            project.removeRouter()
-        # delete network
-        app = project.getApplication(appParser.getApplicationNames()[0])
-        networkName = app.getNetworkName()
-        try:
-            network = app.docker.networks.get(networkName)
-            if not dryRun:
-                try:
-                    network.disconnect(project.getRouter().getContainerName())
-                except docker.errors.APIError:
-                    pass
-                network.remove()
-            app.logger.info(
-                "Deleted '%s' Docker network.",
-                networkName
-            )
-        except docker.errors.NotFound:
-            pass
-        
+        project.purge(dryRun)

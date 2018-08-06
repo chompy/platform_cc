@@ -73,7 +73,6 @@ class PlatformProject:
             self.path = str(projectPath)
 
         # validate project path
-        print(self.path)
         if self.path and not os.path.isdir(self.path):
             raise ValueError("Project path does not exist.")
 
@@ -179,7 +178,6 @@ class PlatformProject:
         :param projectUid: Project unique id
         :rtype: PlatformProject
         """
-
         # fetch project network
         dockerClient = PlatformProject.getDockerClient()
         networkList = dockerClient.networks.list(
@@ -374,6 +372,57 @@ class PlatformProject:
         self._routesParser = RoutesParser(self.getProjectData())
         return self._routesParser
 
+    def dockerFetch(self, filterType = None, filterName = None):
+        """
+        Fetch applications and services from Docker environment.
+
+        :param filterType: Filter type of container (application or service)
+        :param filterName: Filter by container name
+        :return: List containing docker containers
+        """
+
+        dockerClient = PlatformProject.getDockerClient()
+        dockerLabelFilters = [
+            "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
+        ]
+        if filterType:
+            dockerLabelFilters.append(
+                "%s.type=%s" % (Container.LABEL_PREFIX, filterType)
+            )            
+        if filterName:
+            dockerLabelFilters.append(
+                "%s.name=%s" % (Container.LABEL_PREFIX, filterName)
+            )
+        containerList = dockerClient.containers.list(
+            filters = {
+                "label" : dockerLabelFilters
+            }
+        )
+        results = []
+        for container in containerList:
+            containerLabels = container.attrs.get("Config", {}).get("Labels", {})
+            containerType = containerLabels.get("%s.type" % Container.LABEL_PREFIX)
+            containerConfig = json.loads(
+                containerLabels.get("%s.config" % Container.LABEL_PREFIX)
+            )
+            # app
+            if containerType == "application":
+                results.append(
+                    getApplication(
+                        self.getProjectData(),
+                        containerConfig
+                    )
+                )
+            # service
+            elif containerType == "service":
+                results.append(
+                    getService(
+                        self.getProjectData(),
+                        containerConfig
+                    )
+                )
+        return results
+
     def getService(self, name = None):
         """
         Get a service handler.
@@ -389,35 +438,10 @@ class PlatformProject:
                 return service
 
         # check docker
-        dockerClient = PlatformProject.getDockerClient()
-        dockerLabelFilters = [
-            "%s.type=service" % (Container.LABEL_PREFIX),
-            "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
-        ]
-        if name:
-            dockerLabelFilters.append(
-                "%s.name=%s" % (Container.LABEL_PREFIX, name)
-            )
-        matchedServices = dockerClient.containers.list(
-            filters = {
-                "label" : dockerLabelFilters
-            }
-        )
+        matchedServices = self.dockerFetch("service", name)
         if matchedServices:
-            self.logger.debug(
-                "Build service handler '%s' for project '%s' from Docker environment.",
-                matchedServices[0].attrs.get("Config", {}).get("Labels", {}).get("%s.name" % Container.LABEL_PREFIX),
-                self.getShortUid()
-            )
-            serviceConfig = json.loads(
-                matchedServices[0].attrs.get("Config", {}).get("Labels", {}).get("%s.config" % Container.LABEL_PREFIX)
-            )
-            service = getService(
-                self.getProjectData(),
-                serviceConfig
-            )
-            self._services.append(service)
-            return service
+            self._services.append(matchedServices[0])
+            return matchedServices[0]
 
         # check path
         if self.path:
@@ -426,7 +450,7 @@ class PlatformProject:
                 serviceNames = servicesParser.getServiceNames()
                 if not serviceNames:
                     raise ParserError("No services defined.")
-                name = servicesParser.getServiceNames()[0]
+                name = serviceNames[0]
             name = str(name)
             self.logger.debug(
                 "Build service handler '%s' for project '%s' from YAML configuration files.",
@@ -444,36 +468,55 @@ class PlatformProject:
         # not found
         raise StateError("Unable to find service with name '%s.'" % name)
 
-    def getApplication(self, name):
+    def getApplication(self, name = None):
         """
         Get an application handler.
 
-        :param name: Application name
+        :param name: Application name, , if not provided first found application is returned
         :return: Application handler
         :rtype: .application.base.BasePlatformApplication
         """
-        applicationsParser = self.getApplicationsParser()
-        name = str(name)
+
+        # already loaded
         for application in self._applications:
-            if application and application.getName() == name:
-                return application       
-        appConfig = applicationsParser.getApplicationConfiguration(name)
-        # init all service dependencies for app
-        appServiceDependencies = list(appConfig.get("relationships", {}).values())
-        for serivceName in appServiceDependencies:
-            self.getService(serivceName.split(":")[0])
-        # get app
-        self.logger.debug(
-            "Build application handler '%s' for project '%s.'",
-            name,
-            self.getShortUid()
-        )        
-        application = getApplication(
-            self.getProjectData(),
-            appConfig
-        )
-        self._applications.append(application)
-        return application
+            if application and (not name or application.getName() == name):
+                return application   
+
+        # check docker
+        matchedApps = self.dockerFetch("application", name)
+        if matchedApps:
+            self._applications.append(matchedApps[0])
+            return matchedApps[0]
+
+        # check path
+        if self.path:
+            appsParser = self.getApplicationsParser()
+            if not name:
+                appNames = appsParser.getApplicationNames()
+                if not appNames:
+                    raise ParserError("No applications defined.")
+                name = appNames[0]
+            name = str(name)
+            self.logger.debug(
+                "Build application handler '%s' for project '%s' from YAML configuration files.",
+                name,
+                self.getShortUid()
+            )
+            appConfig = appsParser.getApplicationConfiguration(name)
+            # init all service dependencies for app
+            appServiceDependencies = list(appConfig.get("relationships", {}).values())
+            for serivceName in appServiceDependencies:
+                self.getService(serivceName.split(":")[0])
+            # get app
+            app = getApplication(
+                self.getProjectData(),
+                appConfig
+            )
+            self._applications.append(app)
+            return app
+
+        # not found
+        raise StateError("Unable to find application with name '%s.'" % name)
 
     def getRouter(self):
         """
@@ -544,4 +587,63 @@ class PlatformProject:
                 )
             )
         )
+        # remove router from project network
+        dockerClient = PlatformProject.getDockerClient()
+        networkName = Container.staticGetNetworkName(self.getProjectData())
+        try:
+            network = dockerClient.networks.get(networkName)
+            network.disconnect(
+                router.getContainer()
+            )
+        except docker.errors.NotFound:
+            pass
+        except docker.errors.APIError:
+            pass
+        # restart router
         router.getContainer().restart()
+
+    def purge(self, dryRun = True):
+        """
+        Purge all docker images and volumes specific to this project.
+
+        :param dryRun: If true do not perform actions, only log affects resources
+        """
+        # remove all running project containers
+        for container in self.dockerFetch(): container.stop()
+        # remove from router
+        self.removeRouter()
+        # get docker client
+        dockerClient = self.getDockerClient()
+        # remove volumes
+        volumeList = dockerClient.volumes.list(
+            filters = {
+                "label" : [
+                    "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
+                ]
+            }
+        )
+        for volume in volumeList:
+            self.logger.info("Delete Docker volume '%s.'" % volume.short_id)
+            if not dryRun: volume.remove()
+        # remove images
+        imageList = dockerClient.images.list(
+            filters = {
+                "label" : [
+                    "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
+                ]
+            }
+        )
+        for image in imageList:
+            self.logger.info("Delete Docker image '%s.'" % image.short_id)
+            if not dryRun: image.remove()
+        # remove network
+        networkList = dockerClient.networks.list(
+            filters = {
+                "label" : [
+                    "%s.project-uid=%s" % (Container.LABEL_PREFIX, self.getUid())
+                ]
+            }
+        )
+        for network in networkList:
+            self.logger.info("Delete Docker network '%s.'" % network.short_id)
+            if not dryRun: network.remove()
