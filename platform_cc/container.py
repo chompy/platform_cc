@@ -332,12 +332,13 @@ class Container:
             )
         ).strip()
 
-    def runCommand(self, command, user = "root"):
+    def runCommand(self, command, user = "root", shell = "sh"):
         """
         Run a command inside container.
 
         :param command: Command to run
         :param user: User to run command as
+        :param shell: Shell to use when running command
         :return: Output of command
         :rtype: str
         """
@@ -352,7 +353,7 @@ class Container:
             raise StateError("Container '%s' is not running." % self.getContainerName())
         (exitCode, output) = container.exec_run(
             [
-                "sh", "-c", command
+                shell, "-c", command
             ],
             user = user
         )

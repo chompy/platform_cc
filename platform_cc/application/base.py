@@ -305,7 +305,9 @@ class BasePlatformApplication(Container):
         self.installSsh()
         # run build hooks
         output = self.runCommand(
-            self.config.get("hooks", {}).get("build", "")
+            self.config.get("hooks", {}).get("build", ""),
+            "root",
+            "bash"
         )
         # commit container
         self.logger.info(
@@ -324,7 +326,8 @@ class BasePlatformApplication(Container):
         )
         return self.runCommand(
             self.config.get("hooks", {}).get("deploy", ""),
-            "web"
+            "web",
+            "bash"
         )
 
     def getLabels(self):
