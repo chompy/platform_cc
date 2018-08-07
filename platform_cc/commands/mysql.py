@@ -21,24 +21,22 @@ import io
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
 from platform_cc.exception.state_error import StateError
+from platform_cc.exception.container_not_found_error import ContainerNotFoundError
 
 def getMysqlService(project, name = None):
     """ Get MySQL service to use. """
-    servicesParser = project.getServicesParser()
-    if not name:
-        for _name in servicesParser.getServiceNames():
-            serviceType = servicesParser.getServiceType(_name).split(":")[0]
-            if serviceType not in ["mysql", "mariadb"]: continue
-            name = _name
-            break
-    if not name:
-        raise ValueError("No service was specified.")
-    serviceType = servicesParser.getServiceType(name).split(":")[0]
-    if serviceType not in ["mysql", "mariadb"]:
+    serviceList = project.dockerFetch(
+        "service",
+        name
+    )
+    for service in serviceList:
+        if service.getType().split(":")[0] in ["mysql", "mariadb"]:
+            return service
+    if name and serviceList:
         raise ValueError(
             "Service '%s' is not a MySQL or MariaDB service." % name
         )
-    return project.getService(name)
+    raise ContainerNotFoundError("Could not find any running MySQL or MariaDB services.")
 
 class MysqlSql(Command):
     """
@@ -46,6 +44,7 @@ class MysqlSql(Command):
 
     mysql:sql
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
         {--s|service=? : Name of MariaDB service. (Default=first available)}
         {--d|database=?} : Name of database to use.}
     """
@@ -96,6 +95,7 @@ class MysqlDump(Command):
 
     mysql:dump
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
         {--s|service=? : Name of MariaDB service. (Default=first available)}
         {database : Name of database to use.}
     """

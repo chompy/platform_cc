@@ -36,6 +36,7 @@ from platform_cc.router import PlatformRouter
 from platform_cc.container import Container
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.parser_error import ParserError
+from platform_cc.exception.container_not_found_error import ContainerNotFoundError
 
 class PlatformProject:
     """
@@ -328,7 +329,7 @@ class PlatformProject:
         if self._servicesParser:
             return self._servicesParser
         if not self.path:
-            raise StateError("Cannot get services parse without project path.")
+            raise StateError("Cannot get services parser without project path.")
         self.logger.debug(
             "Build services parser for project '%s.'",
             self.getShortUid()
@@ -378,7 +379,7 @@ class PlatformProject:
 
         :param filterType: Filter type of container (application or service)
         :param filterName: Filter by container name
-        :return: List containing docker containers
+        :return: List containing containers
         """
 
         dockerClient = PlatformProject.getDockerClient()
@@ -466,7 +467,7 @@ class PlatformProject:
             return service
 
         # not found
-        raise StateError("Unable to find service with name '%s.'" % name)
+        raise ContainerNotFoundError("Unable to find service with name '%s.'" % name)
 
     def getApplication(self, name = None):
         """
@@ -516,7 +517,7 @@ class PlatformProject:
             return app
 
         # not found
-        raise StateError("Unable to find application with name '%s.'" % name)
+        raise ContainerNotFoundError("Unable to find application with name '%s.'" % name)
 
     def getRouter(self):
         """

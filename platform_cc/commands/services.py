@@ -40,6 +40,7 @@ class ServiceStop(Command):
 
     service:stop
         {name* : Name(s) of service.}
+        {--u|uid=? : Project uid.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
@@ -70,6 +71,7 @@ class ServiceList(Command):
 
     service:list
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
         {--j|json : If set output in JSON.}
     """
 
@@ -131,6 +133,7 @@ class ServiceShell(Command):
     service:shell
         {name : Name of service.}
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
         {--c|command=? : Command to run. (Default=bash)}
         {--u|user=? : User to run command as. (Default=root)}
     """
