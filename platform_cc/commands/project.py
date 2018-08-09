@@ -49,7 +49,7 @@ class ProjectStop(Command):
 
     project:stop
         {--p|path=? : Path to project root. (Default=current directory)}
-        {--u|uid=? : Project uid.}
+        {--u|uid=? : Project uid, can be provided instead of path.}
     """
 
     def handle(self):
@@ -191,7 +191,7 @@ class ProjectPurge(Command):
     project:purge
         {--d|dry-run : List items to be purged.}
         {--p|path=? : Path to project root. (Default=current directory)}
-        {--u|uid=? : Project uid.}
+        {--u|uid=? : Project uid, can be provided instead of path.}
     """
 
     def handle(self):

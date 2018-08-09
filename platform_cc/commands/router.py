@@ -72,6 +72,7 @@ class RouterRemove(Command):
 
     router:remove
     {--p|path=? : Path to project root. (Default=current directory)}
+    {--u|uid=? : Project uid, can be provided instead of path.}
     """
 
     def handle(self):
