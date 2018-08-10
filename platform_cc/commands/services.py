@@ -135,7 +135,7 @@ class ServiceShell(Command):
         {--p|path=? : Path to project root. (Default=current directory)}
         {--u|uid=? : Project uid.}
         {--c|command=? : Command to run. (Default=bash)}
-        {--u|user=? : User to run command as. (Default=root)}
+        {--user=? : User to run command as. (Default=root)}
     """
 
     def handle(self):
