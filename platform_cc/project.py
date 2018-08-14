@@ -373,12 +373,13 @@ class PlatformProject:
         self._routesParser = RoutesParser(self.getProjectData())
         return self._routesParser
 
-    def dockerFetch(self, filterType = None, filterName = None):
+    def dockerFetch(self, filterType = None, filterName = None, all = False):
         """
         Fetch applications and services from Docker environment.
 
         :param filterType: Filter type of container (application or service)
         :param filterName: Filter by container name
+        :param all: If true all containers, even non running, are fetched
         :return: List containing containers
         """
 
@@ -397,7 +398,8 @@ class PlatformProject:
         containerList = dockerClient.containers.list(
             filters = {
                 "label" : dockerLabelFilters
-            }
+            },
+            all = all
         )
         results = []
         for container in containerList:
@@ -648,3 +650,22 @@ class PlatformProject:
         for network in networkList:
             self.logger.info("Delete Docker network '%s.'" % network.short_id)
             if not dryRun: network.remove()
+
+    @staticmethod
+    def getAllActiveProjects():
+        """ Get list of all currently active projects. """
+        dockerClient = PlatformProject.getDockerClient()
+        # fetch projects with their network which contains their project uid
+        networkList = dockerClient.networks.list(
+            filters = {
+                "label" : [Container.LABEL_PREFIX]
+            }
+        )
+        projects = []
+        for network in networkList:
+            labels = network.attrs.get("Labels", {})
+            projectUid = labels.get("%s.project-uid" % Container.LABEL_PREFIX)
+            if not projectUid: continue
+            projects.append(PlatformProject.fromDocker(projectUid))
+        return projects
+        

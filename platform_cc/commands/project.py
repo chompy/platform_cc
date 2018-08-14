@@ -54,7 +54,7 @@ class ProjectStop(Command):
 
     def handle(self):
         project = getProject(self)
-        projectContainers = project.dockerFetch()
+        projectContainers = project.dockerFetch(all=True)
         for container in projectContainers:
             container.stop()
         project.removeRouter()
@@ -68,11 +68,8 @@ class ProjectRestart(Command):
     """
 
     def handle(self):
-        project = getProject(self)
-        projectContainers = project.dockerFetch()
-        for container in projectContainers:
-            container.restart()
-        project.addRouter()
+        self.call("project:stop", [("--path", self.option("path"))])
+        self.call("project:start", [("--path", self.option("path"))])
 
 class ProjectRoutes(Command):
     """
