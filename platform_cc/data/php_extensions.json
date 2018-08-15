@@ -80,5 +80,22 @@
             ],
             "command": "echo '\n' | pecl install xdebug || true && docker-php-ext-enable xdebug || true"
         }
+    ],
+    "twig" : [
+        {
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm"
+            ],
+            "command": "pear channel-discover pear.twig-project.org && pear install twig/CTwig && docker-php-ext-enable twig || true"
+        },
+        {
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
+            "command": "true"
+        }
     ]
 }

@@ -5,6 +5,7 @@ DEV (Latest Unversioned)
 - Added labels for containers, images, volumes, and networks.
 - App deploy and build hooks now use bash shell.
 - Added all:stop, all:purge, and all:list commands.
+- Added ability to install twig php extension.
 
 v0.1.11
 - Added mysql:dump command.
