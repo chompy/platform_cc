@@ -1,4 +1,4 @@
-DEV (Latest Unversioned)
+v0.1.12
 - Fixed php5.6 dockerfile.
 - Added redis-persistent service support.
 - Removed port from x-forwarded-host and added x-forwarded-host to route generation.
