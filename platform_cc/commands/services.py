@@ -19,37 +19,6 @@ import os
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
 
-class ServiceStart(Command):
-    """
-    Start one or more services.
-
-    service:start
-        {name* : Name(s) of service.}
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self)
-        for name in self.argument("name"):
-            service = project.getService(name)
-            service.start()
-
-class ServiceStop(Command):
-    """
-    Stop one or more services.
-
-    service:stop
-        {name* : Name(s) of service.}
-        {--u|uid=? : Project uid.}
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self)
-        for name in self.argument("name"):
-            service = project.getService(name)
-            service.stop()
-
 class ServiceRestart(Command):
     """
     Restart one or more services.
@@ -77,23 +46,18 @@ class ServiceList(Command):
 
     def handle(self):
         project = getProject(self)
-        serviceNames = project.getServicesParser().getServiceNames()
-
+        services = project.dockerFetch("service", all=True)
         # build service data
         serviceData = {}
-        for serviceName in serviceNames:
-            service = project.getService(
-                serviceName
-            )
+        for service in services:
             serviceContainer = service.getContainer()
-            serviceData[serviceName] = {
+            serviceData[service.getName()] = {
                 "id"                  : serviceContainer.id if serviceContainer else "",
                 "name"                : service.getName(),
                 "type"                : service.getType(),
                 "container_name"      : service.getContainerName(),
                 "base_docker_image"   : service.getBaseImage(),
                 "docker_image"        : service.getDockerImage(),
-                "status"              : serviceContainer.status if serviceContainer else "stopped",
                 "ip_address"          : service.getContainerIpAddress()
             }
 
@@ -107,7 +71,7 @@ class ServiceList(Command):
         
         # terminal tables output
         tableData = [
-            ("Name", "Type", "Container", "Image", "Status", "IP"),
+            ("Name", "Type", "Container", "Image", "IP"),
         ]
         for service in serviceData:
             tableData.append(
@@ -116,7 +80,6 @@ class ServiceList(Command):
                     serviceData[service]["type"],
                     serviceData[service]["container_name"],
                     serviceData[service]["docker_image"],
-                    serviceData[service]["status"],
                     serviceData[service]["ip_address"] if serviceData[service]["ip_address"] else "N/A"
                 )
             )

@@ -6,6 +6,7 @@ DEV (Latest Unversioned)
 - App deploy and build hooks now use bash shell.
 - Added all:stop, all:purge, and all:list commands.
 - Added ability to install twig php extension.
+- Removed service+application start and stop commands.
 
 v0.1.11
 - Added mysql:dump command.

@@ -21,36 +21,6 @@ from cleo import Command, Output
 from platform_cc.commands import getProject, outputJson, outputTable
 from platform_cc.exception.state_error import StateError
 
-class ApplicationStart(Command):
-    """
-    Start one or more applications.
-
-    application:start
-        {name* : Name(s) of application.}
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self)
-        for name in self.argument("name"):
-            application = project.getApplication(name)
-            application.start()
-
-class ApplicationStop(Command):
-    """
-    Stop one or more applications.
-
-    application:stop
-        {name* : Name(s) of application.}
-        {--p|path=? : Path to project root. (Default=current directory)}
-    """
-
-    def handle(self):
-        project = getProject(self)
-        for name in self.argument("name"):
-            application = project.getApplication(name)
-            application.stop()
-
 class ApplicationRestart(Command):
     """
     Restart one or more applications.
@@ -93,7 +63,6 @@ class ApplicationList(Command):
                 "type"                : application.getType(),
                 "base_docker_image"   : application.getBaseImage(),
                 "docker_image"        : application.getDockerImage(),
-                "status"              : appContainer.status if appContainer else "stopped",
                 "ip_address"          : application.getContainerIpAddress()
             }
 
@@ -107,7 +76,7 @@ class ApplicationList(Command):
         
         # terminal tables output
         tableData = [
-            ("Name", "Type", "Container", "Image", "Status", "IP"),
+            ("Name", "Type", "Container", "Image", "IP"),
         ]
         for application in appData:
             tableData.append(
@@ -116,7 +85,6 @@ class ApplicationList(Command):
                     appData[application]["type"],
                     appData[application]["container_name"],
                     appData[application]["docker_image"],
-                    appData[application]["status"],
                     appData[application]["ip_address"] if appData[application]["ip_address"] else "N/A"
                 )
             )
@@ -133,24 +101,24 @@ class ApplicationShell(Command):
     application:shell
         {--name=? : Name of application. (Default=first available application)}
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
         {--c|command=? : Command to run. (Default=bash)}
-        {--u|user=? : User to run command as. (Default=web)}
+        {--user=? : User to run command as. (Default=web)}
     """
 
     def handle(self):
         project = getProject(self)
-        name = self.option("name")
-        if not name:
-            name = project.getApplicationsParser().getApplicationNames()[0]
-        application = project.getApplication(name)
+        app = project.getApplication(
+            self.option("name")
+        )
         command = self.option("command")
         if not command: command = "bash"
         user = self.option("user")
         if not user: user = "web"
-        application.shell(
+        app.shell(
             command,
             user
-        )
+        )        
 
 class ApplicationBuild(Command):
     """
