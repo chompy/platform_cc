@@ -1,12 +1,14 @@
+v0.2.0
+- Added all:stop, all:purge, and all:list commands.
+- Removed service+application start and stop commands.
+- Added ability to install twig php extension.
+- App deploy and build hooks now use bash shell.
+
 v0.1.12
 - Fixed php5.6 dockerfile.
 - Added redis-persistent service support.
 - Removed port from x-forwarded-host and added x-forwarded-host to route generation.
 - Added labels for containers, images, volumes, and networks.
-- App deploy and build hooks now use bash shell.
-- Added all:stop, all:purge, and all:list commands.
-- Added ability to install twig php extension.
-- Removed service+application start and stop commands.
 
 v0.1.11
 - Added mysql:dump command.
