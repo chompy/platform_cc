@@ -71,5 +71,4 @@ class BasePlatformParser:
                     loadConf,
                     config
                 )
-        print(config)
         return config

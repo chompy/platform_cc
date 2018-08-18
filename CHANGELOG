@@ -1,3 +1,6 @@
+DEV (Latest Unversioned)
+- Non Platform.sh compatible services are flagged.
+
 v0.2.0
 - Added all:stop, all:purge, and all:list commands.
 - Removed service+application start and stop commands.
