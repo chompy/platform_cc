@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
 import yamlordereddictloader
+import collections
 
 class BasePlatformParser:
     """
@@ -59,8 +60,16 @@ class BasePlatformParser:
             paths = [paths]
         for path in paths:
             with open(path, "r") as f:
+                loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+                for key in loadConf:
+                    if type(loadConf[key]) is not collections.OrderedDict: continue
+                    if "_from" not in loadConf[key]:
+                        loadConf[key]["_from"] = []
+                    if path not in loadConf[key]["_from"]:
+                        loadConf[key]["_from"].append(path)
                 self._mergeDict(
-                    yaml.load(f, Loader=yamlordereddictloader.Loader),
+                    loadConf,
                     config
                 )
+        print(config)
         return config

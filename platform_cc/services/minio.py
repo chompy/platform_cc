@@ -35,6 +35,9 @@ class MinioService(BasePlatformService):
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
+    def isPlatformShCompatible(self):
+        return False
+
     def getKey(self, type = "access_key"):
         """ 
         Get key to use for for minio access

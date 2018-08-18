@@ -35,6 +35,9 @@ class AthenaPdfService(BasePlatformService):
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
+    def isPlatformShCompatible(self):
+        return False
+
     def getAuthKey(self):
         """ 
         Get auth key to use when authenticating with weaver service.

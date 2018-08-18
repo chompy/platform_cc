@@ -638,7 +638,7 @@ class PlatformProject:
         )
         for image in imageList:
             self.logger.info("Delete Docker image '%s.'" % image.short_id)
-            if not dryRun: image.remove()
+            if not dryRun: dockerClient.images.remove(image.id)
         # remove network
         networkList = dockerClient.networks.list(
             filters = {

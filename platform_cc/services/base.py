@@ -63,6 +63,15 @@ class BasePlatformService(Container):
             "_type"
         )
 
+    def isPlatformShCompatible(self):
+        """
+        Whether or not this service is designed to
+        be compatible with platform.sh.
+
+        :rtype: bool
+        """
+        return True
+
     def getServiceData(self):
         """
         Get data needed to access service for use by applications.
@@ -84,4 +93,11 @@ class BasePlatformService(Container):
 
     def start(self):
         self.logger.info("Start '%s' service." % self.getName())
+        # if not platform.sh compatiable service and service definition
+        # is in main service.yaml file warn user to consider
+        # moving service definition to service.pcc.yaml
+        if not self.isPlatformShCompatible():
+            # TODO
+            pass
+
         Container.start(self)
