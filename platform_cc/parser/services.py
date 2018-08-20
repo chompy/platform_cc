@@ -16,6 +16,9 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import yaml
+import yamlordereddictloader
+import collections
 from .base import BasePlatformParser
 from platform_cc.exception.parser_error import ParserError
 
@@ -40,7 +43,19 @@ class ServicesParser(BasePlatformParser):
             )
             if os.path.isfile(yamlFullPath):
                 yamlPaths.append(yamlFullPath)
-        self.services = self._readYaml(yamlPaths)
+        self.services = self._readYamls(yamlPaths)
+
+    def _readYaml(self, path):
+        loadConf = {}
+        with open(path, "r") as f:
+            loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+            for key in loadConf:
+                if type(loadConf[key]) is not collections.OrderedDict: continue
+                if "_from" not in loadConf[key]:
+                    loadConf[key]["_from"] = []
+                if path not in loadConf[key]["_from"]:
+                    loadConf[key]["_from"].append(path)
+        return loadConf
 
     def getServiceNames(self):
         """
@@ -89,5 +104,6 @@ class ServicesParser(BasePlatformParser):
         serviceConf = self.services[name].get("configuration", {}).copy()
         serviceConf["_name"] = name
         serviceConf["_type"] = self.getServiceType(name)
+        serviceConf["_is_default_config"] = os.path.basename(self.services[name].get("_path", "")) == os.path.basename(self.YAML_PATHS[0])
         return serviceConf
 

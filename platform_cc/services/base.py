@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import json
 from platform_cc.container import Container
+from platform_cc.parser.services import ServicesParser
 
 class BasePlatformService(Container):
     """
@@ -51,6 +52,16 @@ class BasePlatformService(Container):
                 self.getName()
             )
         )
+        isDefaultConf = self.config.get("_is_default_config", True)
+        if isDefaultConf and not self.isPlatformShCompatible():
+            self.logger.warn(
+                "Service '%s/%s' is not compatible with Platform.sh but was defined in '%s', consider moving it to '%s.'" % (
+                    self.getName(),
+                    self.getType(),
+                    ServicesParser.YAML_PATHS[0],
+                    ServicesParser.YAML_PATHS[1]
+                )
+            )
         
     def getType(self):
         """

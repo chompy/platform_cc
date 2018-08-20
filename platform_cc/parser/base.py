@@ -17,7 +17,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
 import yamlordereddictloader
-import collections
 
 class BasePlatformParser:
     """
@@ -48,9 +47,22 @@ class BasePlatformParser:
                 dest[key] = value
         return dest
 
-    def _readYaml(self, paths):
+    def _readYaml(self, path):
         """
-        Read YAML configuration file.
+        Read single YAML configuration.
+
+        :param path: Path string to YAML file
+        :return: Dictionary containing configuration.
+        """
+        loadConf = {}
+        with open(path, "r") as f:
+            loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+        return loadConf
+
+    def _readYamls(self, paths):
+        """
+        Read YAML configuration files and merge them all together
+        in to a single configuration dict.
 
         :param paths: Path or list of paths to YAML file
         :return: Dictionary containing configuration.
@@ -59,16 +71,8 @@ class BasePlatformParser:
         if type(paths) is not list:
             paths = [paths]
         for path in paths:
-            with open(path, "r") as f:
-                loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
-                for key in loadConf:
-                    if type(loadConf[key]) is not collections.OrderedDict: continue
-                    if "_from" not in loadConf[key]:
-                        loadConf[key]["_from"] = []
-                    if path not in loadConf[key]["_from"]:
-                        loadConf[key]["_from"].append(path)
-                self._mergeDict(
-                    loadConf,
-                    config
-                )
+            self._mergeDict(
+                self._readYaml(path),
+                config
+            )
         return config
