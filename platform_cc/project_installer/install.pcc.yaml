@@ -1,0 +1,48 @@
+env:
+    env:COMPOSER_AUTH: |
+        {"http-basic":{"updates.ez.no":{"username":"643915d16b45f9104df7383534b0ed96","password":"5A8zvLMrs89uSWhkYkVk"}},"gitlab-token":{"gitlab.com":"X2KZ_J2vrSqaBfV76icL"}}
+    env:ENVIRONMENT: dev
+    env:SYMFONY_ENV: dev
+
+credentials:
+    s3:
+        access_key: AWS_ACCESS_KEY
+        secret_key: AWS_ACCESS_SECRET
+    ssh:
+        - |
+            -----BEGIN RSA PRIVATE KEY-----
+            PRIVATE_KEY_HERE
+            -----END RSA PRIVATE KEY-----
+
+assets:
+    - handler: s3
+      bucket: cc_backups
+      path: mla/db-{CURRENT_MONTH}-{CURRENT_DAY}-{CURRENT_YEAR}.sql.gz
+      to: db-mla.sql.gz
+
+    - handler: s3
+      bucket: cc_backups
+      path: mla/var-{CURRENT_MONTH}-{CURRENT_DAY}-{CURRENT_YEAR}.sql.gz
+      to: var-mla.tar.gz
+
+    - handler: s3
+      bucket: cc_backups
+      path: "{PROJECT_DIRNAME}/db-{CURRENT_MONTH}-{CURRENT_DAY}-{CURRENT_YEAR}.sql.gz"
+      to: db.sql.gz
+
+    - handler: rsync
+      from: "ssh://remote.server/var/test"
+      to: "test/"
+
+    - handler: http
+      from: "ssh://remote.server/var/test"
+      to: "test/"
+
+tasks:
+    - type: mysql_import
+      path: db-mla.sql.sz
+    
+    - type: shell
+      command: |
+            tar xvfz var-mla.tar.gz mount
+      
