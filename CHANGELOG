@@ -1,5 +1,6 @@
 DEV (Latest Unversioned)
 - Non Platform.sh compatible services are flagged.
+- Igbinary PHP extension.
 
 v0.2.0
 - Added all:stop, all:purge, and all:list commands.
