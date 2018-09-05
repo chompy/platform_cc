@@ -97,5 +97,17 @@
             ],
             "command": "true"
         }
+    ],
+    "igbinary" : [
+        {
+            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
+                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
+            ],
+            "command" : "echo '\n' | pecl install igbinary || true && docker-php-ext-enable igbinary || true"
+        }
     ]
 }
