@@ -30,7 +30,7 @@ from platform_cc.commands.variables import VariableSet, VariableGet, VariableDel
 from platform_cc.commands.services import ServiceRestart, ServiceList, ServiceShell
 from platform_cc.commands.applications import ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull
 from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
-from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge
+from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge, ProjectInstall
 from platform_cc.commands.mysql import MysqlSql, MysqlDump
 from platform_cc.commands.all import AllStop, AllPurge, AllList
 
@@ -80,6 +80,7 @@ cleoApp.add(ProjectRoutes())
 cleoApp.add(ProjectOptionSet())
 cleoApp.add(ProjectOptionList())
 cleoApp.add(ProjectPurge())
+cleoApp.add(ProjectInstall())
 cleoApp.add(MysqlSql())
 cleoApp.add(MysqlDump())
 cleoApp.add(AllStop())

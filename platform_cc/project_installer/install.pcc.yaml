@@ -1,18 +1,14 @@
-env:
-    env:COMPOSER_AUTH: |
-        {"http-basic":{"updates.ez.no":{"username":"643915d16b45f9104df7383534b0ed96","password":"5A8zvLMrs89uSWhkYkVk"}},"gitlab-token":{"gitlab.com":"X2KZ_J2vrSqaBfV76icL"}}
-    env:ENVIRONMENT: dev
-    env:SYMFONY_ENV: dev
+vars:
+    "env:ENVIRONMENT": dev
+    "env:SYMFONY_ENV": dev
+    "env:AWS_ACCESS_KEY_ID": AKIAINN6BYLRJKT7ORQA
+    "env:AWS_SECRET_ACCESS_KEY": "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"
 
-credentials:
-    s3:
-        access_key: AWS_ACCESS_KEY
-        secret_key: AWS_ACCESS_SECRET
-    ssh:
-        - |
-            -----BEGIN RSA PRIVATE KEY-----
-            PRIVATE_KEY_HERE
-            -----END RSA PRIVATE KEY-----
+ssh_private_keys:
+    - |
+        -----BEGIN RSA PRIVATE KEY-----
+        PRIVATE KEY
+        -----END RSA PRIVATE KEY-----
 
 assets:
     - handler: s3
@@ -42,6 +38,9 @@ tasks:
     - type: mysql_import
       path: db-mla.sql.sz
     
+    - type: asset_s3
+      bucket: cc_backups
+
     - type: shell
       command: |
             tar xvfz var-mla.tar.gz mount

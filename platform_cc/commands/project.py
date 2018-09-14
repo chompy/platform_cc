@@ -22,6 +22,7 @@ import docker
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
 from platform_cc.exception.state_error import StateError
+from platform_cc.project_installer import loadInstallFile, projectInstall
 
 class ProjectStart(Command):
     """
@@ -33,15 +34,7 @@ class ProjectStart(Command):
 
     def handle(self):
         project = getProject(self)
-        servicesParser = project.getServicesParser()
-        for serviceName in servicesParser.getServiceNames():
-            service = project.getService(serviceName)
-            service.start()
-        applicationsParser = project.getApplicationsParser()
-        for applicationName in applicationsParser.getApplicationNames():
-            application = project.getApplication(applicationName)
-            application.start()
-        project.addRouter()
+        project.start()
 
 class ProjectStop(Command):
     """
@@ -54,10 +47,7 @@ class ProjectStop(Command):
 
     def handle(self):
         project = getProject(self)
-        projectContainers = project.dockerFetch(all=True)
-        for container in projectContainers:
-            container.stop()
-        project.removeRouter()
+        project.stop()
 
 class ProjectRestart(Command):
     """
@@ -203,3 +193,21 @@ class ProjectPurge(Command):
             )
             time.sleep(5)
         project.purge(dryRun)
+
+
+class ProjectInstall(Command):
+    """
+    Install a site from install.pcc.yaml file.
+
+    project:install
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--f|file=? : Path to install.pcc.yaml file. (Default=./install.pcc.yaml)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        filePath = self.option("file")
+        if not filePath:
+            filePath = os.path.join(project.path, "install.pcc.yaml")
+        conf = loadInstallFile(filePath)
+        projectInstall(project, conf)

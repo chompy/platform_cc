@@ -669,3 +669,21 @@ class PlatformProject:
             projects.append(PlatformProject.fromDocker(projectUid))
         return projects
         
+    def start(self):
+        """ Start project. """
+        servicesParser = self.getServicesParser()
+        for serviceName in servicesParser.getServiceNames():
+            service = self.getService(serviceName)
+            service.start()
+        applicationsParser = self.getApplicationsParser()
+        for applicationName in applicationsParser.getApplicationNames():
+            application = self.getApplication(applicationName)
+            application.start()
+        self.addRouter()
+
+    def stop(self):
+        """ Stop project. """
+        projectContainers = self.dockerFetch(all=True)
+        for container in projectContainers:
+            container.stop()
+        self.removeRouter()

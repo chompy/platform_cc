@@ -66,7 +66,8 @@ setup(
         "yamlordereddictloader",
         "terminaltables",
         "future",
-        "dockerpty"
+        "dockerpty",
+        "boto3"
     ],
 
     # List additional groups of dependencies here (e.g. development
