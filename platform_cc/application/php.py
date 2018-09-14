@@ -376,5 +376,18 @@ class PhpApplication(BasePlatformApplication):
             /usr/local/nginx/sbin/nginx
             """
         )
+
+        # start newrelic agent
+        extInstall = self.config.get("runtime", {}).get("extensions", [])
+        if "newrelic" in extInstall:
+            self.logger.info(
+                "Start Newrelic agent."
+            )
+            self.runCommand(
+                """
+                newrelic-daemon
+                """
+            )  
+            
         # install cron jobs if enabled
         self.installCron()
