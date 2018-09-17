@@ -30,6 +30,31 @@ class BaseTaskHandler:
             if not self.params.has_key(name):
                 raise ValueError("Task handler '%s' is missing '%s' parameter." % (self.getType(), name))
 
+    def parseAppPath(self, path):
+        """
+        Parse a path string that points to a path inside an
+        application container.
+        Expected syntax... "app_name:path" or "path"
+
+        :param string: Path to
+        :rtype: tuple
+        :return: Tuple containing application and path
+        """
+        pathSplit = path.strip().split(":")
+        appName = None
+        appPath = ""
+        if len(pathSplit) == 1:
+            appPath = pathSplit[0].strip()
+        elif len(pathSplit) > 1:
+            appName = pathSplit[0].strip()
+            appPath = pathSplit[1].strip()
+
+        return (
+            self.project.getApplication(appName),
+            appPath
+        )
+            
+
     def run(self):
         """
         Perform task.

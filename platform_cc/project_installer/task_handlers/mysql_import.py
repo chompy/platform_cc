@@ -1,4 +1,6 @@
 import os
+import io
+import tarfile
 from .base import BaseTaskHandler
 from ...commands.mysql import getMysqlService
 from ...exception.state_error import StateError
@@ -26,6 +28,18 @@ class MysqlImportTaskHandler(BaseTaskHandler):
                 "Service '%s' is not running." % service.getName()
             )
 
+        # get from container and path
+        fromApp, fromPath = self.parseAppPath(self.params.get("from"))
+
+        # download dump from container
+        tarStream, _ = fromApp.getContainer().get_archive(
+            fromPath
+        )
+        tarFileObject = io.BytesIO()
+        for d in tarStream:
+            tarFileObject.write(d)
+        tarStream.close()
+
         # build command to run
         cmd = "mysql -h 127.0.0.1 -uroot --password=\"%s\"" % (
             service.getPassword()
@@ -34,10 +48,15 @@ class MysqlImportTaskHandler(BaseTaskHandler):
             cmd += " --database=\"%s\"" % self.params.get("to")
         
         # upload dump
-        fileBaseName = os.path.basename(self.params.get("from"))
+        fileBaseName = os.path.basename(fromPath)
         fileExt = os.path.splitext(fileBaseName)[1]
-        with open(self.params.get("from"), "rb") as f:
-            service.uploadFile(f, "/tmp/dump%s" % fileExt)
+        service.uploadFile(tarFileObject, "/tmp/dump%s.tar" % fileExt)
+        service.runCommand(
+            "cd /tmp && tar -xf dump%s.tar && rm dump%s.tar" % (
+                fileExt, fileExt
+            )
+        )
+        tarFileObject.close()
 
         # un-gunzip file if gz is file extension
         if fileExt == ".gz":

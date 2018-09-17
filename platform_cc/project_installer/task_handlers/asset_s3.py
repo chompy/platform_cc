@@ -42,18 +42,8 @@ class AssetS3TaskHandler(BaseTaskHandler):
         now = datetime.datetime.now()
         downloadFrom = now.strftime(downloadFrom)
 
-        # parse download to (syntax... app_name:path, path)
-        downloadTo = self.params.get("to").split(":")
-        downloadToAppName = None
-        downloadToPath = ""
-        if len(downloadTo) == 1:
-            downloadToPath = downloadTo[0].strip()
-        elif len(downloadTo) > 1:
-            downloadToAppName = downloadTo[0].strip()
-            downloadToPath = downloadTo[1].strip()
-
-        # get container to download to
-        app = self.project.getApplication(downloadToAppName)
+        # parse download to path
+        app, downloadTo = self.parseAppPath(self.params.get("to"))
 
         # log that we are searching for match on s3
         self.logger.info(
@@ -91,7 +81,7 @@ class AssetS3TaskHandler(BaseTaskHandler):
                 self.params.get("bucket"),
                 matchKey,
                 app.getName(),
-                downloadToPath
+                downloadTo
             )
         )
 
@@ -107,5 +97,5 @@ class AssetS3TaskHandler(BaseTaskHandler):
         app.uploadFile(downloadTemp, "/tmp/dump")
         downloadTemp.close()
         app.runCommand(
-            "cd /app && mv /tmp/dump %s" % downloadToPath
+            "cd /app && mv /tmp/dump %s" % downloadTo
         )
