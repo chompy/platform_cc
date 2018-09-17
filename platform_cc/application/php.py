@@ -333,7 +333,7 @@ class PhpApplication(BasePlatformApplication):
             "Compile php.ini."
         )
         self.runCommand(
-            "[ -f /app/php.ini ] && ln -s -f /app/php.ini /usr/local/etc/php/conf.d/02-app.ini || true"
+            "[ -f /app/php.ini ] && ln -s -f /app/php.ini /usr/local/etc/php/conf.d/zzz-03-app.ini || true"
         )
         # build php.ini from config vars
         phpIniConfig = self.config.get("variables", {}).get("php", {})
@@ -376,5 +376,18 @@ class PhpApplication(BasePlatformApplication):
             /usr/local/nginx/sbin/nginx
             """
         )
+
+        # start newrelic agent
+        extInstall = self.config.get("runtime", {}).get("extensions", [])
+        if "newrelic" in extInstall:
+            self.logger.info(
+                "Start Newrelic agent."
+            )
+            self.runCommand(
+                """
+                newrelic-daemon
+                """
+            )  
+            
         # install cron jobs if enabled
         self.installCron()
