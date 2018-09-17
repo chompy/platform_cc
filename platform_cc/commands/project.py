@@ -202,6 +202,7 @@ class ProjectInstall(Command):
     project:install
         {--p|path=? : Path to project root. (Default=current directory)}
         {--f|file=? : Path to install.pcc.yaml file. (Default=./install.pcc.yaml)}
+        {--purge : Purge project before installing.}
     """
 
     def handle(self):
@@ -210,4 +211,16 @@ class ProjectInstall(Command):
         if not filePath:
             filePath = os.path.join(project.path, "install.pcc.yaml")
         conf = loadInstallFile(filePath)
+
+        # purge project
+        if self.option("purge"):
+            self.line(
+                "<question>!!! Purge of project '%s' will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
+                    project.getShortUid()
+                )
+            )
+            time.sleep(5)
+            project.purge(False)
+
+        # run installer
         projectInstall(project, conf)

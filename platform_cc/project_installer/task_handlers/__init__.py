@@ -1,7 +1,9 @@
 from .asset_s3 import AssetS3TaskHandler
+from .mysql_import import MysqlImportTaskHandler
 
 TASK_HANDLER_MAP = {
-    "asset_s3"      : AssetS3TaskHandler
+    "asset_s3"      : AssetS3TaskHandler,
+    "mysql_import"  : MysqlImportTaskHandler
 }
 
 def getTaskHandler(project, params = {}):

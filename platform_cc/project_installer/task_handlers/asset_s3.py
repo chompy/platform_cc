@@ -4,6 +4,7 @@ import datetime
 import collections
 import re
 import difflib
+import io
 from .base import BaseTaskHandler
 
 class AssetS3TaskHandler(BaseTaskHandler):
@@ -41,13 +42,20 @@ class AssetS3TaskHandler(BaseTaskHandler):
         now = datetime.datetime.now()
         downloadFrom = now.strftime(downloadFrom)
 
-        # ensure download directory exists
-        downloadTo = os.path.abspath(self.params.get("to"))
-        if not os.path.exists(os.path.dirname(downloadTo)):
-            raise ValueError("'to' parameter must point to an existing directory.")
-        if os.path.isdir(downloadTo):
-            raise ValueError("'to' parameter must be a file, not a directory.")
+        # parse download to (syntax... app_name:path, path)
+        downloadTo = self.params.get("to").split(":")
+        downloadToAppName = None
+        downloadToPath = ""
+        if len(downloadTo) == 1:
+            downloadToPath = downloadTo[0].strip()
+        elif len(downloadTo) > 1:
+            downloadToAppName = downloadTo[0].strip()
+            downloadToPath = downloadTo[1].strip()
 
+        # get container to download to
+        app = self.project.getApplication(downloadToAppName)
+
+        # log that we are searching for match on s3
         self.logger.info(
             "Locate S3 asset that matches 's3://%s/%s.'" % (
                 self.params.get("bucket"),
@@ -79,15 +87,25 @@ class AssetS3TaskHandler(BaseTaskHandler):
             return
 
         self.logger.info(
-            "Found 's3://%s/%s', download to '%s.'" % (
+            "Found 's3://%s/%s', download to '%s:%s.'" % (
                 self.params.get("bucket"),
                 matchKey,
-                downloadTo
+                app.getName(),
+                downloadToPath
             )
         )
 
         # download asset
-        bucket.download_file(
+        downloadTemp = io.BytesIO()
+        bucket.download_fileobj(
             matchKey,
-            downloadTo
+            downloadTemp
+        )
+        downloadTemp.seek(0)
+
+        # move asset to app container
+        app.uploadFile(downloadTemp, "/tmp/dump")
+        downloadTemp.close()
+        app.runCommand(
+            "cd /app && mv /tmp/dump %s" % downloadToPath
         )

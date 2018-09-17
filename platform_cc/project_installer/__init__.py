@@ -1,8 +1,11 @@
 import os
 import yaml
+import logging
 from .task_handlers import getTaskHandler
 
 def loadInstallFile(path):
+    logger = logging.getLogger(__name__)
+    logger.info("Load project installer YAML file from '%s.'" % path)
     if not os.path.exists(path):
         raise ValueError("Install YAML file not found.")
     with open(path, "r") as f:
@@ -16,6 +19,7 @@ def projectInstall(project, config = {}):
     :param tasks: Platform.CC project
     :param config: Install tasks config
     """
+    logger = logging.getLogger(__name__)
     config = dict(config)
     # set vars
     for key, value in config.get("vars", {}).items():
@@ -26,7 +30,8 @@ def projectInstall(project, config = {}):
 
     # tasks
     for taskParams in config.get("tasks", []):
+        logger.info("Execute install task '%s.'" % taskParams.get("type"))
         getTaskHandler(project, taskParams).run()
 
     # stop project
-    project.stop()
+    #project.stop()
