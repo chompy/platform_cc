@@ -19,10 +19,17 @@ class MysqlImportTaskHandler(BaseTaskHandler):
 
     def run(self):
         # validate params
-        self.checkParams(["from"])
+        self.checkParams(["from", "to"])
+
+        # parse 'to' parameter
+        toParams = self.params.get("to", "").split(":")
+        if len(toParams) < 2:
+            raise ValueError("'mysql_import' install task requires 'to' parameter in format <service_name>:<database_name>.")
+        serviceName = toParams[0].strip()
+        database = toParams[1].strip()
 
         # get mysql service
-        service = getMysqlService(self.project, self.params.get("service"))
+        service = getMysqlService(self.project, serviceName)
         if not service.isRunning():
             raise StateError(
                 "Service '%s' is not running." % service.getName()
@@ -45,7 +52,7 @@ class MysqlImportTaskHandler(BaseTaskHandler):
             service.getPassword()
         )
         if self.params.get("to"):
-            cmd += " --database=\"%s\"" % self.params.get("to")
+            cmd += " --database=\"%s\"" % database
         
         # upload dump
         fileBaseName = os.path.basename(fromPath)
@@ -61,13 +68,15 @@ class MysqlImportTaskHandler(BaseTaskHandler):
         # un-gunzip file if gz is file extension
         if fileExt == ".gz":
             service.runCommand(
-                "cd /tmp && gunzip -f dump%s" % fileExt
+                "cd /tmp && gunzip -f %s" % fileBaseName
             )
+            fileBaseName = fileBaseName[0:-3]
         
         # run command
-        cmd = "sh -c 'cat /tmp/dump | %s && rm /tmp/dump'" % cmd
+        cmd = "sh -c 'cat /tmp/%s | %s && rm /tmp/%s'" % (fileBaseName, cmd, fileBaseName)
         service.runCommand(cmd)
 
         # delete dump
-        if self.params.get("delete_dump"):
-            os.remove(self.params.get("from"))
+        # TODO
+        #if self.params.get("delete_dump"):
+        #    os.remove(self.params.get("from"))
