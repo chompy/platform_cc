@@ -59,3 +59,13 @@ Parameters...
 - from :: Application and path inside container to fetch dump from. (<app_name>:<path_to>)
 - to :: Service and database name to import dump to. (<service_name>:<database_name>)
 - delete_dump :: If set to true then the original dump file will be deleted upon completion.
+
+
+**shell**
+
+Run a shell command inside an application container.
+
+Parameters...
+
+- to :: Name of application, uses first found application if not provided.
+- command :: Shell command to run.
