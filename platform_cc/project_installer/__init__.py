@@ -31,7 +31,13 @@ def projectInstall(project, config = {}):
     # tasks
     for taskParams in config.get("tasks", []):
         logger.info("Execute install task '%s.'" % taskParams.get("type"))
-        getTaskHandler(project, taskParams).run()
+        task = getTaskHandler(project, taskParams)
+        if not task.checkCondition():
+            logger.info("Task run condition did not pass, skipped.")
+            continue
+        task.run()
 
-    # stop project
-    #project.stop()
+    # run deploy hooks
+    applications = project.dockerFetch(filterType="application")
+    for application in applications:
+        application.deploy()

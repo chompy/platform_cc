@@ -1,11 +1,13 @@
 from .asset_s3 import AssetS3TaskHandler
 from .mysql_import import MysqlImportTaskHandler
 from .shell import ShellTaskHandler
+from .rsync import RsyncTaskHandler
 
 TASK_HANDLER_MAP = {
     "asset_s3"      : AssetS3TaskHandler,
     "mysql_import"  : MysqlImportTaskHandler,
-    "shell"         : ShellTaskHandler
+    "shell"         : ShellTaskHandler,
+    "rsync"         : RsyncTaskHandler
 }
 
 def getTaskHandler(project, params = {}):

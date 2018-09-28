@@ -22,19 +22,37 @@ Example...
 
     tasks:
         - type: asset_s3
-          bucket: database-dumps
-          from: "project.sql.gz"
+          from: "database-dumps/project.sql.gz"
           to: "app:/app/project.sql.gz"
 
         - type: mysql_import
           from: app:/app/project.sql.gz
           to: mysqldb:main
           delete_dump: true
+          condition: ["app", "[ -f /app/project.sql.gz ]"]
 
         - type: command
           to: app
           command: |
                 php app/console cache:clear
+
+
+## Task Run Condition
+
+Every task can execute a shell command that dictates if the task should be ran or not. If the shell command
+returns a non zero exit code then the task will be skipped.
+
+Any one of the following syntaxes will work...
+
+    condition: ["<app_name>", "<shell_command>"]
+
+    condition: "<shell_command>"
+
+    condition:
+        application: "<app_name>"
+        command: "<shell_command>"
+
+If <app_name> is omitted then the first available application will be used.
 
 
 ## Available Tasks
@@ -45,8 +63,7 @@ Fetch asset from Amazon S3 bucket.
 
 Parameters...
 
-- bucket :: Bucket to fetch from.
-- from :: Path to asset in bucket to fetch.
+- from :: Bucket and path to asset to fetch. (<bucket_name>/<path_to>)
 - to :: Application and path inside container to dump asset to. (<app_name>:<path_to>)
 
 
@@ -69,3 +86,13 @@ Parameters...
 
 - to :: Name of application, uses first found application if not provided.
 - command :: Shell command to run.
+
+
+**rsync**
+
+Rsync remote asset(s) to application directory.
+
+Parameters...
+
+- from :: Remote path to asset(s). (user@server.com:/path/to)
+- to :: Application and path inside container to copy asset(s) to. (<app_name>:<path_to>)

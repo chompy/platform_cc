@@ -79,5 +79,5 @@ class MysqlImportTaskHandler(BaseTaskHandler):
         # delete dump
         if self.params.get("delete_dump"):
             fromApp.runCommand(
-                "rm %s" % fromPath,
+                "rm -f %s" % fromPath
             )

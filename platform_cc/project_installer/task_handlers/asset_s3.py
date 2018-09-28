@@ -19,7 +19,7 @@ class AssetS3TaskHandler(BaseTaskHandler):
         return "asset_s3"
 
     def run(self):
-        self.checkParams(["bucket", "from", "to"])
+        self.checkParams(["from", "to"])
 
         # get aws creds
         awsAccessKey = self.project.variables.get("env:AWS_ACCESS_KEY_ID")
@@ -35,12 +35,10 @@ class AssetS3TaskHandler(BaseTaskHandler):
 
         # get download from
         downloadFrom = self.params.get("from")
-        downloadFrom = downloadFrom.replace(
-            "{PROJECT_DIRNAME}",
-            os.path.basename(self.project.path)
-        )
         now = datetime.datetime.now()
         downloadFrom = now.strftime(downloadFrom)
+        bucketName = downloadFrom.split("/")[0]
+        bucketPath = "/".join(downloadFrom.split("/")[1:])
 
         # parse download to path
         app, downloadTo = self.parseAppPath(self.params.get("to"))
@@ -48,8 +46,8 @@ class AssetS3TaskHandler(BaseTaskHandler):
         # log that we are searching for match on s3
         self.logger.info(
             "Locate S3 asset that matches 's3://%s/%s.'" % (
-                self.params.get("bucket"),
-                downloadFrom,
+                bucketName,
+                bucketPath,
             )
         )
 
@@ -61,24 +59,24 @@ class AssetS3TaskHandler(BaseTaskHandler):
             region_name=awsRegion
         )
         # get bucket resource
-        bucket = s3.Bucket(self.params.get("bucket"))
+        bucket = s3.Bucket(bucketName)
 
         # get bucket objects
         bucketObjects = bucket.objects.all()
         matchKey = None
         for obj in bucketObjects:
-            # perform regex match on 'downloadFrom'
-            m = re.search(downloadFrom, obj.key)
+            # perform regex match on 'bucketName'
+            m = re.search(bucketPath, obj.key)
             if m:
                 matchKey = obj.key
                 break
         if not matchKey:
-            self.logger.warn("No assets found that matched expression '%s.'" % downloadFrom)
+            self.logger.warn("No assets found that matched expression '%s.'" % bucketPath)
             return
 
         self.logger.info(
             "Found 's3://%s/%s', download to '%s:%s.'" % (
-                self.params.get("bucket"),
+                bucketName,
                 matchKey,
                 app.getName(),
                 downloadTo
@@ -97,5 +95,6 @@ class AssetS3TaskHandler(BaseTaskHandler):
         app.uploadFile(downloadTemp, "/tmp/dump")
         downloadTemp.close()
         app.runCommand(
-            "cd /app && mv /tmp/dump %s" % downloadTo
+            "cd /app && mv /tmp/dump %s && chown -R web:web %s" % (downloadTo, downloadTo),
+            user="root"
         )
