@@ -1,5 +1,5 @@
 DEV (Latest Unversioned)
-(n/a)
+- Project installer shell task now accepts user argument.
 
 v0.2.1
 - Non Platform.sh compatible services are flagged.
