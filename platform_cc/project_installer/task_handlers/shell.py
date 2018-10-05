@@ -19,5 +19,7 @@ class ShellTaskHandler(BaseTaskHandler):
         self.checkParams(["to", "command"])
         # get 'to' application
         toApp = self.project.getApplication(self.params.get("to"))
+        # get user to run as
+        user = self.params.get("user", "web")
         # run command
-        toApp.runCommand(self.params.get("command"))
+        toApp.runCommand(self.params.get("command"), user)

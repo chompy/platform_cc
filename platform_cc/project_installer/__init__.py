@@ -29,8 +29,10 @@ def projectInstall(project, config = {}):
     project.start()
 
     # tasks
-    for taskParams in config.get("tasks", []):
-        logger.info("Execute install task '%s.'" % taskParams.get("type"))
+    tasks = config.get("tasks", [])
+    for index in range(len(tasks)):
+        taskParams = tasks[index]
+        logger.info("STEP %d - Execute install task '%s.'" % (index + 1, taskParams.get("type")))
         task = getTaskHandler(project, taskParams)
         if not task.checkCondition():
             logger.info("Task run condition did not pass, skipped.")
