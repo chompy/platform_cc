@@ -12,12 +12,13 @@ def loadInstallFile(path):
         conf = yaml.load(f)
     return conf
 
-def projectInstall(project, config = {}):
+def projectInstall(project, config = {}, startFrom = 0):
     """
     Run tasks defined in config on given project.
 
     :param tasks: Platform.CC project
     :param config: Install tasks config
+    :param startFrom: Specify task/step to start from
     """
     logger = logging.getLogger(__name__)
     config = dict(config)
@@ -28,11 +29,19 @@ def projectInstall(project, config = {}):
     # start project
     project.start()
 
+    # start from should be >= 1
+    if not startFrom: startFrom = 1
+    startFrom = int(startFrom)
+    if startFrom <= 0: startFrom = 1
+
     # tasks
     tasks = config.get("tasks", [])
     for index in range(len(tasks)):
         taskParams = tasks[index]
         logger.info("STEP %d - Execute install task '%s.'" % (index + 1, taskParams.get("type")))
+        if index + 1 < startFrom:
+            logger.info("Task skipped.")
+            continue
         task = getTaskHandler(project, taskParams)
         if not task.checkCondition():
             logger.info("Task run condition did not pass, skipped.")

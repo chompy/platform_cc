@@ -202,6 +202,7 @@ class ProjectInstall(Command):
     project:install
         {--p|path=? : Path to project root. (Default=current directory)}
         {--f|file=? : Path to install.pcc.yaml file. (Default=./install.pcc.yaml)}
+        {--start-from=? : Start from specified install step. }
         {--purge : Purge project before installing.}
     """
 
@@ -223,4 +224,4 @@ class ProjectInstall(Command):
             project.purge(False)
 
         # run installer
-        projectInstall(project, conf)
+        projectInstall(project, conf, startFrom=self.option("start-from"))
