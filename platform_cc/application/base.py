@@ -23,6 +23,7 @@ import logging
 import io
 import random
 import string
+import collections
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
@@ -51,7 +52,7 @@ class BasePlatformApplication(Container):
         :param project: Project data
         :param config: Service configuration
         """
-        self.config = dict(config)
+        self.config = collections.OrderedDict(config)
         Container.__init__(
             self,
             project,

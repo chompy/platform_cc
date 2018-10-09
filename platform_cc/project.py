@@ -25,6 +25,7 @@ import random
 import io
 import docker
 import logging
+import collections
 from platform_cc.variables import getVariableStorage
 from platform_cc.variables.base import BasePlatformVariables
 from platform_cc.parser.services import ServicesParser
@@ -203,7 +204,10 @@ class PlatformProject:
         labels = networkList[0].attrs.get("Labels", {})
 
         # get project data
-        projectData = json.loads(labels.get("%s.project" % Container.LABEL_PREFIX))
+        projectData = json.loads(
+            labels.get("%s.project" % Container.LABEL_PREFIX),
+            object_pairs_hook=collections.OrderedDict
+        )
 
         # get config from project data
         projectConfig = getVariableStorage(
@@ -406,7 +410,8 @@ class PlatformProject:
             containerLabels = container.attrs.get("Config", {}).get("Labels", {})
             containerType = containerLabels.get("%s.type" % Container.LABEL_PREFIX)
             containerConfig = json.loads(
-                containerLabels.get("%s.config" % Container.LABEL_PREFIX)
+                containerLabels.get("%s.config" % Container.LABEL_PREFIX),
+                object_pairs_hook=collections.OrderedDict
             )
             # app
             if containerType == "application":

@@ -206,7 +206,8 @@ class PhpApplication(BasePlatformApplication):
         appNginxConf = ""
         def addFastCgi(scriptName = False):
             conf = ""
-            if scriptName and type(scriptName) is str:
+            if scriptName:
+                scriptName = str(scriptName)
                 conf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % scriptName.strip("/")
                 conf += "\t\t\t\ttry_files $fastcgi_script_name @rewrite;\n"
             else:
@@ -225,7 +226,8 @@ class PhpApplication(BasePlatformApplication):
             appNginxConf += "\t\t\talias \"%s\";\n" % (
                 ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
             )
-            if type(passthru) is str:
+            if passthru:
+                passthru = str(passthru)
                 appNginxConf += "\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
                 appNginxConf += "\t\t\ttry_files $uri @rewrite;\n"
             else:
@@ -249,7 +251,8 @@ class PhpApplication(BasePlatformApplication):
                 )
             # == SUB LOCATION
             appNginxConf += "\t\t\tlocation \"%s\" {\n" % pathStrip
-            if type(passthru) is str:
+            if passthru:
+                passthru = str(passthru)
                 appNginxConf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
                 appNginxConf += "\t\t\t\ttry_files $uri @rewrite;\n"
             else:
@@ -258,8 +261,9 @@ class PhpApplication(BasePlatformApplication):
             appNginxConf += "\t\t\t}\n"
             # == PASSTHRU
             passthru = locations[path].get("passthru", False)
-            if passthru and not locations[path].get("scripts", False):
+            if passthru:
                 if passthru == True: passthru = "/index.php"
+                passthru = str(passthru)
                 appNginxConf += "\t\t\tlocation ~ \".+?\.php(?=$|/)\" {\n"
                 appNginxConf += "\t\t\t\tallow all;\n"
                 appNginxConf += addFastCgi(passthru)
