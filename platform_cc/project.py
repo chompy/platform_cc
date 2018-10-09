@@ -168,7 +168,7 @@ class PlatformProject:
         Get the Docker client.
         """
         return docker.from_env(
-            timeout = 300 # 5 minutes
+            timeout = 900 # 15 minutes
         )
 
     @staticmethod
