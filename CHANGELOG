@@ -1,6 +1,7 @@
 DEV (Latest Unversioned)
 - Project installer shell task now accepts user argument.
 - Fixed issue where running project:start a second time would break the nginx config.
+- Added ability to install ssh key via project installer.
 
 v0.2.1
 - Non Platform.sh compatible services are flagged.

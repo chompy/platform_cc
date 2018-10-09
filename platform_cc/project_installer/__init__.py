@@ -26,6 +26,16 @@ def projectInstall(project, config = {}, startFrom = 0):
     for key, value in config.get("vars", {}).items():
         project.variables.set(key, value)
 
+    # install ssh keys
+    sshKey = config.get("ssh_key", "")
+    sshKnownHosts = config.get("ssh_known_hosts", "")
+    if sshKey:
+        logger.info("Install SSH key.")
+        project.config.set("ssh_key", sshKey)
+    if sshKnownHosts:
+        logger.info("Install SSH known hosts.")
+        project.config.set("ssh_known_hosts", sshKnownHosts)
+
     # start project
     project.start()
 
