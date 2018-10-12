@@ -67,7 +67,7 @@ class AthenaPdfService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        data["platform_relationships"]["athenapdf"] = {
+        data["platform_relationships"][self.getName()] = {
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "port"          : 8080,

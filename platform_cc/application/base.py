@@ -106,7 +106,7 @@ class BasePlatformApplication(Container):
             )
         except docker.errors.NotFound:
             pass
-        # sest env vars
+        # set env vars
         envVars = {
             "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
             "PLATFORM_APPLICATION"      : "",

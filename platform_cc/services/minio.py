@@ -80,7 +80,7 @@ class MinioService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        data["platform_relationships"]["minio"] = {
+        data["platform_relationships"][self.getName()] = {
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "port"          : 9000,

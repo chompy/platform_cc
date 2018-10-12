@@ -33,7 +33,7 @@ class MemcachedService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        data["platform_relationships"]["memcached"] = {
+        data["platform_relationships"][self.getName()] = {
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "scheme"        : "memcached",
