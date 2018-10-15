@@ -40,6 +40,21 @@ class MariaDbService(BasePlatformService):
         "mariadb:5.5"            : "mariadb:5.5"        
     }
 
+    """ Default schema list if one is not set. """
+    DEFAULT_SCHEMAS = [
+        "mysql"
+    ]
+
+    """ Default endpoint to provide if one is not set. """
+    DEFAULT_ENDPOINT = {
+        "mysql" : {
+            "default_schema" : "mysql",
+            "privileges" : {
+                "mysql" : "admin"
+            }
+        }
+    }
+
     """ Salt used to generate passwords. """
     PASSWORD_SALT = "a62bf8b07e2abb117894442b00df02446670fBnBK&%2!2"
 
@@ -86,7 +101,7 @@ class MariaDbService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        endpoints = self.config.get("endpoints", {})
+        endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         for name, config in endpoints.items():
             data["platform_relationships"][name.strip()] = {                
                 "host"          : self.getContainerName(),
@@ -118,7 +133,7 @@ class MariaDbService(BasePlatformService):
             )
             time.sleep(.35)
         # create schemas
-        schemas = self.config.get("schemas", [])
+        schemas = self.config.get("schemas", self.DEFAULT_SCHEMAS)
         for schema in schemas:
             self.logger.info(
                 "Create schema '%s' (if it does not exist).",
@@ -131,7 +146,7 @@ class MariaDbService(BasePlatformService):
                 )
             )
         # create users
-        endpoints = self.config.get("endpoints", {})
+        endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         for endpoint in endpoints:
             self.logger.info(
                 "Create user '%s' (if it does not exist).",
