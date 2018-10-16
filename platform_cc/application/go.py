@@ -18,6 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import os
 import json
+from nginx.config.api import Location
+from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
 
@@ -33,12 +35,6 @@ class GoApplication(BasePlatformApplication):
 
     """ Default user id to assign for user 'web' """
     DEFAULT_WEB_USER_ID = 1000
-
-    """ Port to use for TCP upstream. """
-    TCP_PORT = 8001
-
-    """ Socket path to use for upstream. """
-    SOCKET_PATH = "/tmp/app.socket"
 
     def getContainerCommand(self):
         if self.getDockerImage() == self.getBaseImage():
@@ -126,118 +122,8 @@ class GoApplication(BasePlatformApplication):
         self.commit()
         return output
 
-    def generateNginxConfig(self):
-        """
-        Generate configuration for nginx specific to application.
-
-        :return: Nginx configuration
-        :rtype: str
-        """
-        self.logger.info(
-            "Generate application Nginx configuration."
-        )
-        locations = self.config.get("web", {}).get("locations", {})
-        appNginxConf = ""
-        def addPassthru():
-            conf = ""
-            upstreamConf = self.config.get("web", {}).get("upstream", {"socket_family" : "tcp", "protocol" : "http"})
-            # tcp port, proxy pass
-            if upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "http":
-                conf += "\t\t\t\tproxy_pass http://127.0.0.1:%d\n;" % self.TCP_PORT
-                conf += "\t\t\t\tproxy_set_header Host $host;\n"
-            # tcp port, fastcgi
-            elif upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "fastcgi":
-                conf += "\t\t\t\tfastcgi_pass 127.0.0.1:%d;" % self.TCP_PORT
-                conf += "\t\t\t\tinclude fastcgi_params;\n"
-                conf += "\t\t\t\tset $path_info  $fastcgi_path_info;\n";
-            # socket, proxy pass
-            elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "http":
-                conf += "\t\t\t\tproxy_pass unix:%s;\n" % self.SOCKET_PATH
-                conf += "\t\t\t\tproxy_set_header Host $host;\n"
-            # socket, fastcgi
-            elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "fastcgi":
-                conf += "\t\t\t\tfastcgi_pass unix:%s;" % self.SOCKET_PATH
-                conf += "\t\t\t\tinclude fastcgi_params;\n"
-                conf += "\t\t\t\tset $path_info  $fastcgi_path_info;\n";
-            return conf
-
-        for path in locations:
-            root = locations[path].get("root", "") or ""
-            passthru = locations[path].get("passthru", False)
-            # ============
-            appNginxConf += "\t\tlocation = \"%s\" {\n" % path.rstrip("/")
-            appNginxConf += "\t\t\talias \"%s\";\n" % (
-                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
-            )
-            appNginxConf += "\t\t\ttry_files $uri =404;\n"
-            appNginxConf += "\t\t\texpires -1s;\n"
-            appNginxConf += "\t\t}\n"
-            # ============
-            pathStrip = "/%s/" % path.strip("/")
-            if pathStrip == "//": pathStrip = "/"
-            appNginxConf += "\t\tlocation \"%s\" {\n" % pathStrip
-            # == ALIAS
-            appNginxConf += "\t\t\talias \"%s/\";\n" % (
-                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
-            )
-            # == HEADERS
-            headers = locations[path].get("headers", {})
-            for headerName in headers:
-                appNginxConf += "\t\t\tadd_header %s %s;\n" % (
-                    headerName,
-                    headers[headerName]
-                )
-            # == SUB LOCATION
-            appNginxConf += "\t\t\tlocation \"%s\" {\n" % pathStrip
-            appNginxConf += "\t\t\t\texpires -1s;\n"
-            appNginxConf += "\t\t\t}\n"
-            # == PASSTHRU
-            passthru = locations[path].get("passthru", False)
-            if passthru:
-                appNginxConf += "\t\t\tlocation ~ / {\n"
-                appNginxConf += "\t\t\t\tallow all;\n"
-                appNginxConf += addPassthru()
-                appNginxConf += "\t\t\t}\n"
-            # == ALLOW
-            #allow = locations[path].get("allow", False)
-            # TODO!
-            # allow = false should deny access when requesting a file that does exist but
-            # does not match a rule
-            # == RULES
-            # TODO
-            # we don't currently make use of the rules directive, so this code has
-            # not been tested, commented out for now
-            # see php
-            appNginxConf += "\t\t}\n"
-        return appNginxConf
-
     def start(self, requireServices = True):
         BasePlatformApplication.start(self, requireServices)
         container = self.getContainer()
         if not container: return
-        # setup mount points
-        self.setupMounts()
-        # not yet built/provisioned
-        if self.getDockerImage() == self.getBaseImage():
-            self.build()
-            return self.start(requireServices)
-        # nginx config
-        nginxConfFileObj = io.BytesIO(
-            bytes(str(self.generateNginxConfig()).encode("utf-8"))
-        )
-        self.uploadFile(
-            nginxConfFileObj,
-            "/usr/local/nginx/conf/app.conf"
-        )
-        # start nginx + other services
-        self.logger.info(
-            "Start Nginx."
-        )
-        self.runCommand(
-            """
-            /usr/local/nginx/sbin/nginx
-            """
-        )
-
-        # install cron jobs if enabled
-        self.installCron()
+        self.startServices()

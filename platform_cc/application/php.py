@@ -18,6 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import os
 import json
+from nginx.config.api import Location
+from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
 
@@ -192,13 +194,31 @@ class PhpApplication(BasePlatformApplication):
         self.commit()
         return output
 
-    def generateNginxConfig(self):
-        """
-        Generate configuration for nginx specific to application.
+    def _generateNginxPassthruArgs(self, locationConfig = {}, script = False):
+        options = BasePlatformApplication._generateNginxPassthruArgs(self, locationConfig)
+        passthru = locationConfig.get("passthru", False)
+        if script:
+            script = str(script)
+            options.append(
+                KeyValueOption("set", "$_rewrite_path %s" % script.strip("/"))
+            )
+            options.append(
+                KeyValueOption("try_files", "$fastcgi_script_name @rewrite")
+            )
+        else:
+            options.append(
+                KeyValueOption("try_files", "$fastcgi_script_name =404")
+            )
+        
+        options.append(
+            KeyValueOption("set", " $_document_root $document_root")
+        )
+        options.append(
+            KeyValueOption("fastcgi_split_path_info", "^(.+?\.php)(/.*)$")
+        )
+        return options
 
-        :return: Nginx configuration
-        :rtype: str
-        """
+    def generateNginxConfig(self):
         self.logger.info(
             "Generate application Nginx configuration."
         )
@@ -330,6 +350,20 @@ class PhpApplication(BasePlatformApplication):
             appNginxConf += "\t\t}\n"
         return appNginxConf
 
+    def startServices(self):
+        BasePlatformApplication.startServices(self)
+        # start newrelic agent
+        extInstall = self.config.get("runtime", {}).get("extensions", [])
+        if "newrelic" in extInstall:
+            self.logger.info(
+                "Start Newrelic agent."
+            )
+            self.runCommand(
+                """
+                newrelic-daemon
+                """
+            ) 
+
     def start(self, requireServices = True):
         BasePlatformApplication.start(self, requireServices)
         container = self.getContainer()
@@ -359,41 +393,5 @@ class PhpApplication(BasePlatformApplication):
         )
         # restart container to reload conf changes
         container.restart()
-        # setup mount points
-        self.setupMounts()
-        # not yet built/provisioned
-        if self.getDockerImage() == self.getBaseImage():
-            self.build()
-            return self.start(requireServices)
-        # nginx config
-        nginxConfFileObj = io.BytesIO(
-            bytes(str(self.generateNginxConfig()).encode("utf-8"))
-        )
-        self.uploadFile(
-            nginxConfFileObj,
-            "/usr/local/nginx/conf/app.conf"
-        )
-        # start nginx + other services
-        self.logger.info(
-            "Start Nginx."
-        )
-        self.runCommand(
-            """
-            /usr/local/nginx/sbin/nginx
-            """
-        )
-
-        # start newrelic agent
-        extInstall = self.config.get("runtime", {}).get("extensions", [])
-        if "newrelic" in extInstall:
-            self.logger.info(
-                "Start Newrelic agent."
-            )
-            self.runCommand(
-                """
-                newrelic-daemon
-                """
-            )  
-            
-        # install cron jobs if enabled
-        self.installCron()
+        # start container services
+        self.startServices()

@@ -24,6 +24,8 @@ import io
 import random
 import string
 import collections
+from nginx.config.api import Location
+from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
@@ -44,6 +46,12 @@ class BasePlatformApplication(Container):
     Directory inside container to mount storage to.
     """
     STORAGE_DIRECTORY = "/mnt/storage"
+
+    """ Port to use for TCP upstream. """
+    TCP_PORT = 8001
+
+    """ Socket path to use for upstream. """
+    SOCKET_PATH = "/tmp/app.socket"
 
     def __init__(self, project, config):
         """
@@ -150,6 +158,129 @@ class BasePlatformApplication(Container):
         :rtype: str
         """        
         return self.config.get("type")
+
+    def _generateNginxPassthruArgs(self, locationConfig = {}):
+        """
+        Get args needs to generate nginx passthru.
+
+        :param locationConfig: Dict containing location configuration
+        :return: List of nginx block values
+        :rtype: list
+        """
+        upstreamConf = self.config.get("web", {}).get("upstream", {"socket_family" : "tcp", "protocol" : "http"})
+        output = []
+        # tcp port, proxy pass
+        if upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "http":
+            output.append(
+                KeyValueOption("proxy_pass", "http://127.0.0.1:%d" % self.TCP_PORT)
+            )
+            output.append(
+                KeyValueOption("proxy_set_header", "Host $host")
+            )
+        # tcp port, fastcgi
+        elif upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "fastcgi":
+            output.append(
+                KeyValueOption("fastcgi_pass", "127.0.0.0:%d" % self.TCP_PORT)
+            )
+            output.append(
+                KeyValueOption("include", "fastcgi_params")
+            )
+            output.append(
+                KeyValueOption("set", "$path_info $fastcgi_path_info")
+            )
+        # socket, proxy pass
+        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "http":
+            output.append(
+                KeyValueOption("proxy_pass", "unix:%s" % self.SOCKET_PATH)
+            )
+            output.append(
+                KeyValueOption("proxy_set_header", "Host $host")
+            )
+        # socket, fastcgi
+        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "fastcgi":
+            output.append(
+                KeyValueOption("fastcgi_pass", "unix:%s" % self.SOCKET_PATH)
+            )
+            output.append(
+                KeyValueOption("include", "fastcgi_params")
+            )
+            output.append(
+                KeyValueOption("set", "$path_info $fastcgi_path_info")
+            )
+        return output        
+
+    def _generateNginxLocation(self, path, locationConfig = {}):
+        """
+        Generate nginx location configuration.
+
+        :param path: Location path
+        :param locationConfig: Dict of location configuration
+        :return: Nginx configuration string
+        :rtype: string
+        """
+
+        # params
+        root = locationConfig.get("root", "") or ""
+        passthru = locationConfig.get("passthru", False)
+        pathStrip = "/%s/" % path.strip("/")
+        if pathStrip == "//": pathStrip = "/"
+
+        # == ABS BLOCK
+        absLocation = Location(
+            "= %s" % path.rstrip("/"),
+            try_files = "$uri =404",
+            expires = "-1s",
+            alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
+        )
+
+        # == MAIN BLOCK
+        # base options
+        options = [
+            KeyValueOption("alias", ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/"))
+        ]
+        # headers
+        headers = locationConfig.get("headers", {})
+        if headers:
+            options.append(
+                KeyValuesMultiLines(
+                    "add_header",
+                    ["%s %s" % (k, v) for k,v in headers.items()]
+                )
+            )
+        location = Location(
+            pathStrip,
+            *options
+        )
+        # passthru
+        if passthru:
+            passthruLocation = Location(
+                "~ /",
+                expires = "-1s",
+                allow = "all",
+                *self._generateNginxPassthruArgs(locationConfig)
+            )
+            location.sections.add(passthruLocation)
+
+        # TODO rules
+
+        # output
+        return str(absLocation) + str(location)
+        
+    def generateNginxConfig(self):
+        """
+        Generate configuration for nginx specific to application.
+
+        :return: Nginx configuration
+        :rtype: str
+        """
+        self.logger.info(
+            "Generate application Nginx configuration."
+        )
+        locations = self.config.get("web", {}).get("locations", {})
+        output = ""
+        for path in locations:
+            output += self._generateNginxLocation(path, locations[path])
+        return output
 
     def setupMounts(self):
         """
@@ -337,6 +468,27 @@ class BasePlatformApplication(Container):
         labels["%s.type" % Container.LABEL_PREFIX] = "application"
         return labels
 
+    def startServices(self):
+        """ Start extra services ran in the app container. """
+        # nginx
+        self.logger.info(
+            "Start Nginx."
+        )
+        nginxConfFileObj = io.BytesIO(
+            bytes(str(self.generateNginxConfig()).encode("utf-8"))
+        )
+        self.uploadFile(
+            nginxConfFileObj,
+            "/usr/local/nginx/conf/app.conf"
+        )
+        self.runCommand(
+            """
+            /usr/local/nginx/sbin/nginx -s stop || true && /usr/local/nginx/sbin/nginx
+            """
+        )
+        # cron
+        self.installCron()
+
     def start(self,  requireServices = True):
         # ensure all required services are available
         if requireServices:
@@ -352,4 +504,13 @@ class BasePlatformApplication(Container):
                             serviceName
                         )
                     )
+        # start container
         Container.start(self)
+        container = self.getContainer()
+        if not container: return
+        # setup mount points
+        self.setupMounts()
+        # not yet built/provisioned
+        if self.getDockerImage() == self.getBaseImage():
+            self.build()
+            return self.start(requireServices)
