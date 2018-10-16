@@ -227,6 +227,7 @@ class PhpApplication(BasePlatformApplication):
                 ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
             )
             if passthru:
+                if passthru == True: passthru = "/index.php"
                 passthru = str(passthru)
                 appNginxConf += "\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
                 appNginxConf += "\t\t\ttry_files $uri @rewrite;\n"
@@ -252,6 +253,7 @@ class PhpApplication(BasePlatformApplication):
             # == SUB LOCATION
             appNginxConf += "\t\t\tlocation \"%s\" {\n" % pathStrip
             if passthru:
+                if passthru == True: passthru = "/index.php"
                 passthru = str(passthru)
                 appNginxConf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
                 appNginxConf += "\t\t\t\ttry_files $uri @rewrite;\n"

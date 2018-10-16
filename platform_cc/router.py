@@ -154,10 +154,13 @@ class PlatformRouter(Container):
                             output += "\t\t}\n"
                     # type 'redirect'
                     elif config.get("type") == "redirect":
+                        to = config.get("to", "").replace("{default}", routesParser.getDefaultDomain())
                         output += "\t\tlocation ~ / {\n"
-                        output += "\t\t\treturn 301 %s;\n" % (
-                            config.get("to", "").replace("{default}", routesParser.getDefaultDomain())
-                        )
+                        # cannot fullfil redirect to wildcard domain
+                        if "*" in to:
+                            output += "\t\t\treturn 501;" # TODO display error message
+                        else:
+                            output += "\t\t\treturn 301 %s;\n" % to
                         output += "\t\t}\n"
                     output += "\t}\n"
                 # if scheme does not have any routes create a redirect

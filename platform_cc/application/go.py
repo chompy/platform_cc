@@ -169,6 +169,7 @@ class GoApplication(BasePlatformApplication):
             appNginxConf += "\t\t\talias \"%s\";\n" % (
                 ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
             )
+            appNginxConf += "\t\t\ttry_files $uri =404;\n"
             appNginxConf += "\t\t\texpires -1s;\n"
             appNginxConf += "\t\t}\n"
             # ============
