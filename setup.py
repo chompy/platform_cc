@@ -67,7 +67,8 @@ setup(
         "terminaltables",
         "future",
         "dockerpty",
-        "boto3"
+        "boto3",
+        "nginx-config-builder"
     ],
 
     # List additional groups of dependencies here (e.g. development

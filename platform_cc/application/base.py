@@ -159,9 +159,9 @@ class BasePlatformApplication(Container):
         """        
         return self.config.get("type")
 
-    def _generateNginxPassthruArgs(self, locationConfig = {}):
+    def _generateNginxPassthruOptions(self, locationConfig = {}):
         """
-        Get args needs to generate nginx passthru.
+        Get options to generate nginx passthru.
 
         :param locationConfig: Dict containing location configuration
         :return: List of nginx block values
@@ -180,7 +180,7 @@ class BasePlatformApplication(Container):
         # tcp port, fastcgi
         elif upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "fastcgi":
             output.append(
-                KeyValueOption("fastcgi_pass", "127.0.0.0:%d" % self.TCP_PORT)
+                KeyValueOption("fastcgi_pass", "127.0.0.1:%d" % self.TCP_PORT)
             )
             output.append(
                 KeyValueOption("include", "fastcgi_params")
@@ -209,14 +209,14 @@ class BasePlatformApplication(Container):
             )
         return output        
 
-    def _generateNginxLocation(self, path, locationConfig = {}):
+    def _generateNginxLocations(self, path, locationConfig = {}):
         """
-        Generate nginx location configuration.
+        Generate nginx location configuration(s) for given path.
 
         :param path: Location path
         :param locationConfig: Dict of location configuration
-        :return: Nginx configuration string
-        :rtype: string
+        :return: List of nginx locations
+        :rtype: list
         """
 
         # params
@@ -224,20 +224,20 @@ class BasePlatformApplication(Container):
         passthru = locationConfig.get("passthru", False)
         pathStrip = "/%s/" % path.strip("/")
         if pathStrip == "//": pathStrip = "/"
-
-        # == ABS BLOCK
-        absLocation = Location(
-            "= %s" % path.rstrip("/"),
+        
+        # generate root location
+        rootLocation = Location(
+            "= \"%s\"" % path.rstrip("/"),
             try_files = "$uri =404",
             expires = "-1s",
             alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
         )
 
-        # == MAIN BLOCK
         # base options
         options = [
-            KeyValueOption("alias", ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/"))
+            KeyValueOption("alias", "%s/" % ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/") )
         ]
+
         # headers
         headers = locationConfig.get("headers", {})
         if headers:
@@ -248,23 +248,24 @@ class BasePlatformApplication(Container):
                 )
             )
         location = Location(
-            pathStrip,
+            "\"%s\"" % pathStrip,
             *options
         )
+        
         # passthru
         if passthru:
             passthruLocation = Location(
                 "~ /",
                 expires = "-1s",
                 allow = "all",
-                *self._generateNginxPassthruArgs(locationConfig)
+                *self._generateNginxPassthruOptions(locationConfig)
             )
             location.sections.add(passthruLocation)
 
         # TODO rules
 
         # output
-        return str(absLocation) + str(location)
+        return [rootLocation, location]
         
     def generateNginxConfig(self):
         """
@@ -279,7 +280,9 @@ class BasePlatformApplication(Container):
         locations = self.config.get("web", {}).get("locations", {})
         output = ""
         for path in locations:
-            output += self._generateNginxLocation(path, locations[path])
+            nginxLocations = self._generateNginxLocations(path, locations[path])
+            for nginxLocation in nginxLocations:
+                output += str(nginxLocation)
         return output
 
     def setupMounts(self):

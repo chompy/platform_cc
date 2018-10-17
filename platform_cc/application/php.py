@@ -41,6 +41,8 @@ class PhpApplication(BasePlatformApplication):
     """ Default user id to assign for user 'web' """
     DEFAULT_WEB_USER_ID = 1000
 
+    TCP_PORT = 9000
+
     """ Path to PHP extension configuration JSON. """
     EXTENSION_CONF_JSON = os.path.join(
         os.path.dirname(__file__),
@@ -194,13 +196,22 @@ class PhpApplication(BasePlatformApplication):
         self.commit()
         return output
 
-    def _generateNginxPassthruArgs(self, locationConfig = {}, script = False):
-        options = BasePlatformApplication._generateNginxPassthruArgs(self, locationConfig)
-        passthru = locationConfig.get("passthru", False)
+    def _generateNginxPassthruOptions(self, locationConfig = {}, script = False):
+        
+        # force fastcgi/tcp upstream for php
+        if not "web" in self.config:
+            self.config["web"] = {}
+        self.config["web"]["upstream"] = {"socket_family" : "tcp", "protocol" : "fastcgi"}
+
+        options = BasePlatformApplication._generateNginxPassthruOptions(self, locationConfig)
+        setOptions = [
+            "$_document_root $document_root",
+            "$path_info $fastcgi_path_info"
+        ]
         if script:
             script = str(script)
-            options.append(
-                KeyValueOption("set", "$_rewrite_path %s" % script.strip("/"))
+            setOptions.append(
+                "$_rewrite_path \"/%s\"" % script.strip("/")
             )
             options.append(
                 KeyValueOption("try_files", "$fastcgi_script_name @rewrite")
@@ -209,146 +220,75 @@ class PhpApplication(BasePlatformApplication):
             options.append(
                 KeyValueOption("try_files", "$fastcgi_script_name =404")
             )
-        
         options.append(
-            KeyValueOption("set", " $_document_root $document_root")
+            KeyValuesMultiLines("set", setOptions)
         )
         options.append(
             KeyValueOption("fastcgi_split_path_info", "^(.+?\.php)(/.*)$")
         )
         return options
 
-    def generateNginxConfig(self):
-        self.logger.info(
-            "Generate application Nginx configuration."
-        )
-        locations = self.config.get("web", {}).get("locations", {})
-        appNginxConf = ""
-        def addFastCgi(scriptName = False):
-            conf = ""
-            if scriptName:
-                scriptName = str(scriptName)
-                conf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % scriptName.strip("/")
-                conf += "\t\t\t\ttry_files $fastcgi_script_name @rewrite;\n"
-            else:
-                conf += "\t\t\t\ttry_files $fastcgi_script_name =404;\n"
-            conf += "\t\t\t\tfastcgi_pass 127.0.0.1:9000;\n"
-            conf += "\t\t\t\tset $_document_root $document_root;\n"
-            conf += "\t\t\t\tinclude fastcgi_params;\n"
-            conf += "\t\t\t\tfastcgi_split_path_info ^(.+?\.php)(/.*)$;\n"
-            conf += "\t\t\t\tset $path_info  $fastcgi_path_info;\n";
-            return conf
-        for path in locations:
-            root = locations[path].get("root", "") or ""
-            passthru = locations[path].get("passthru", False)
-            # ============
-            appNginxConf += "\t\tlocation = \"%s\" {\n" % path.rstrip("/")
-            appNginxConf += "\t\t\talias \"%s\";\n" % (
-                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
-            )
-            if passthru:
-                if passthru == True: passthru = "/index.php"
-                passthru = str(passthru)
-                appNginxConf += "\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
-                appNginxConf += "\t\t\ttry_files $uri @rewrite;\n"
-            else:
-                appNginxConf += "\t\t\ttry_files $uri =404;\n"
-            appNginxConf += "\t\t\texpires -1s;\n"
-            appNginxConf += "\t\t}\n"
-            # ============
-            pathStrip = "/%s/" % path.strip("/")
-            if pathStrip == "//": pathStrip = "/"
-            appNginxConf += "\t\tlocation \"%s\" {\n" % pathStrip
-            # == ALIAS
-            appNginxConf += "\t\t\talias \"%s/\";\n" % (
-                ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
-            )
-            # == HEADERS
-            headers = locations[path].get("headers", {})
-            for headerName in headers:
-                appNginxConf += "\t\t\tadd_header %s %s;\n" % (
-                    headerName,
-                    headers[headerName]
+    def _generateNginxLocations(self, path, locationConfig = {}):
+
+        # params
+        pathStrip = "/%s/" % path.strip("/")
+        if pathStrip == "//": pathStrip = "/"
+        passthru = locationConfig.get("passthru", False)
+        if passthru == True: passthru = "/index.php"
+        passthru = str(passthru)
+        scripts = locationConfig.get("scripts", False)
+
+        # get base locations
+        locations = BasePlatformApplication._generateNginxLocations(self, path, locationConfig)
+
+        # update root location
+        locations[0].options["try_files"] = "$uri @rewrite" if passthru else "$uri =404"
+        locations[0].options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
+
+        # update main location
+        # php specific passthru
+        if passthru:
+            locations[1].sections.pop("location ~ /")
+            locations[1].sections.add(
+                Location(
+                    "~ \".+?\.php(?=$|/)\"",
+                    expires = "-1s",
+                    allow = "all",
+                    *self._generateNginxPassthruOptions(locationConfig, passthru)
                 )
-            # == SUB LOCATION
-            appNginxConf += "\t\t\tlocation \"%s\" {\n" % pathStrip
+            )
+
+        # php sub location
+        subLocationOptions = {
+            "expires"     : "-1s"
+        }
+        if passthru:
+            subLocationOptions["set"] = "$_rewrite_path \"/%s\"" % passthru.strip("/")
+            subLocationOptions["try_files"] = "$uri @rewrite"
+        else:
+            subLocationOptions["try_files"] = "$uri =404"
+        locations[1].sections.add(
+            Location(
+                pathStrip,
+                **subLocationOptions
+            )
+        )
+
+        # php scripts
+        if scripts:
+            options = self._generateNginxPassthruOptions(locationConfig)
             if passthru:
-                if passthru == True: passthru = "/index.php"
-                passthru = str(passthru)
-                appNginxConf += "\t\t\t\tset $_rewrite_path \"/%s\";\n" % passthru.strip("/")
-                appNginxConf += "\t\t\t\ttry_files $uri @rewrite;\n"
-            else:
-                appNginxConf += "\t\t\t\ttry_files $uri =404;\n"
-            appNginxConf += "\t\t\t\texpires -1s;\n"
-            appNginxConf += "\t\t\t}\n"
-            # == PASSTHRU
-            passthru = locations[path].get("passthru", False)
-            if passthru:
-                if passthru == True: passthru = "/index.php"
-                passthru = str(passthru)
-                appNginxConf += "\t\t\tlocation ~ \".+?\.php(?=$|/)\" {\n"
-                appNginxConf += "\t\t\t\tallow all;\n"
-                appNginxConf += addFastCgi(passthru)
-                appNginxConf += "\t\t\t}\n"
-                #appNginxConf += "\t\tlocation / {\n"
-                #appNginxConf += "\t\t\ttry_files $uri /%s$is_args$args;\n" % passthru.strip("/")
-                #appNginxConf += "\t\t}\n"
-            # == SCRIPTS
-            scripts = locations[path].get("scripts", False)
-            if scripts:
-                appNginxConf += "\t\t\tlocation ~ [^/]\.php(/|$) {\n"
-                appNginxConf += addFastCgi()
-                if passthru:
-                    appNginxConf += "\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
-                appNginxConf += "\t\t\t}\n"
-            # == ALLOW
-            #allow = locations[path].get("allow", False)
-            # TODO!
-            # allow = false should deny access when requesting a file that does exist but
-            # does not match a rule
-            # == RULES
-            # TODO
-            # we don't currently make use of the rules directive, so this code has
-            # not been tested, commented out for now
-            """
-            rules = locations[path].get("rules", {})
-            if rules:
-                for ruleRegex in rules:
-                    rule = rules[ruleRegex]
-                    appNginxConf += "\t\t\tlocation ~ %s {\n" % (ruleRegex)
-                    # allow
-                    if not rule.get("allow", True):
-                        appNginxConf += "\t\t\t\tdeny all;\n"
-                    else:
-                        appNginxConf += "\t\t\t\tallow all;\n"
-                    # passthru
-                    passthru = rule.get("passthru", False)
-                    if passthru:
-                        appNginxConf += addFastCgi(passthru)
-                    # expires
-                    expires = rule.get("expires", False)
-                    if expires:
-                        appNginxConf += "\t\t\t\texpires %s;\n" % expires
-                    # headers
-                    headers = rule.get("headers", {})
-                    for headerName in headers:
-                        appNginxConf += "\t\t\t\tadd_header %s %s;\n" % (
-                            headerName,
-                            headers[headerName]
-                        )
-                    # scripts
-                    scripts = rule.get("scripts", False)
-                    appNginxConf += "\t\t\t\tlocation ~ [^/]\.php(/|$) {\n"
-                    if scripts:
-                        appNginxConf += addFastCgi()
-                        if passthru:
-                            appNginxConf += "\t\t\t\t\tfastcgi_index %s;\n" % (passthru.lstrip("/"))
-                    else:
-                        appNginxConf += "\t\t\t\t\tdeny all;\n"
-                    appNginxConf += "\t\t\t\t}\n"
-            """
-            appNginxConf += "\t\t}\n"
-        return appNginxConf
+                options.append(
+                    KeyValueOption("fastcgi_index", passthru.lstrip("/"))
+                )
+            locations.append(
+                Location(
+                    "~ [^/]\\.php(/|$)",
+                    *options
+                )
+            )
+
+        return locations
 
     def startServices(self):
         BasePlatformApplication.startServices(self)
