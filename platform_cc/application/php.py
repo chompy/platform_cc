@@ -235,14 +235,17 @@ class PhpApplication(BasePlatformApplication):
         if pathStrip == "//": pathStrip = "/"
         passthru = locationConfig.get("passthru", False)
         if passthru == True: passthru = "/index.php"
-        passthru = str(passthru)
+        if passthru != False: passthru = str(passthru)
         scripts = locationConfig.get("scripts", False)
+        index = locationConfig.get("index", [])
+        if type(index) is not list: index = [index]
 
         # get base locations
         locations = BasePlatformApplication._generateNginxLocations(self, path, locationConfig)
 
         # update root location
-        locations[0].options["try_files"] = "$uri @rewrite" if passthru else "$uri =404"
+        if passthru:
+            locations[0].options["try_files"] = "$uri @rewrite"
         locations[0].options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
 
         # update main location
@@ -262,11 +265,11 @@ class PhpApplication(BasePlatformApplication):
         subLocationOptions = {
             "expires"     : "-1s"
         }
+        if index:
+            subLocationOptions["index"] = " ".join(index)
         if passthru:
             subLocationOptions["set"] = "$_rewrite_path \"/%s\"" % passthru.strip("/")
             subLocationOptions["try_files"] = "$uri @rewrite"
-        else:
-            subLocationOptions["try_files"] = "$uri =404"
         locations[1].sections.add(
             Location(
                 pathStrip,

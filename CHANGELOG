@@ -4,6 +4,7 @@ DEV (Latest Unversioned)
 - Added ability to install ssh key via project installer.
 - Added docker service.
 - Added initial support for Golang. (Needs further testing.)
+- Nginx configuration revamp.
 
 v0.2.1
 - Non Platform.sh compatible services are flagged.

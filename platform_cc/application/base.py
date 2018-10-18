@@ -224,14 +224,17 @@ class BasePlatformApplication(Container):
         passthru = locationConfig.get("passthru", False)
         pathStrip = "/%s/" % path.strip("/")
         if pathStrip == "//": pathStrip = "/"
-        
+        index = locationConfig.get("index", [])
+        if type(index) is not list: index = [index]
+
         # generate root location
         rootLocation = Location(
             "= \"%s\"" % path.rstrip("/"),
-            try_files = "$uri =404",
             expires = "-1s",
             alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
         )
+        if index:
+            rootLocation.options["index"] = " ".join(index)
 
         # base options
         options = [
@@ -247,6 +250,14 @@ class BasePlatformApplication(Container):
                     ["%s %s" % (k, v) for k,v in headers.items()]
                 )
             )
+
+        # index
+        if index:
+            options.append(
+                KeyValueOption("index", " ".join(index))
+            )
+
+        # create location
         location = Location(
             "\"%s\"" % pathStrip,
             *options
