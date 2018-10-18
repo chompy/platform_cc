@@ -128,7 +128,7 @@ class PlatformRouter(Container):
                             location.sections.add(
                                 Location(
                                     "~ %s" % _location.replace(" ", '[\s]'),
-                                    KeyValueOption("return", "30 %s" % redirectConfig.get("to", "/"))
+                                    KeyValueOption("return", "301 %s" % redirectConfig.get("to", "/"))
                                 )
                             )
                         # upstream, proxy_pass
