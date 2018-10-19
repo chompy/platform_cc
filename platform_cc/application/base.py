@@ -289,6 +289,12 @@ class BasePlatformApplication(Container):
             "Generate application Nginx configuration."
         )
         locations = self.config.get("web", {}).get("locations", {})
+        if not locations or len(locations) == 0:
+            locations["/"] = {
+                "allow"     : False,
+                "passthru"  : True
+            }
+
         output = ""
         for path in locations:
             nginxLocations = self._generateNginxLocations(path, locations[path])

@@ -1,4 +1,5 @@
 DEV (Latest Unversioned)
+- Initial Python 3 support.
 
 v0.2.2
 - Project installer shell task now accepts user argument.

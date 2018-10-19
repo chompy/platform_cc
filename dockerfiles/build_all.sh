@@ -6,3 +6,4 @@ docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm ./php70
 docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm ./php71-fpm
 docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm ./php72-fpm
 docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11 ./golang-1-11
+docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7 ./python-3-7

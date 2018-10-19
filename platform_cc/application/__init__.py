@@ -17,11 +17,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from .php import PhpApplication
 from .go import GoApplication
+from .python import PythonApplication
 
 """ Map application names to their application class. """
 APPLICATION_MAP = {
     "php"           : PhpApplication,
     "golang"        : GoApplication,
+    "python"        : PythonApplication,
 }
 
 def getApplication(project, config):
