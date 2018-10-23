@@ -79,7 +79,7 @@ class BasePlatformApplication(Container):
 
     def getContainerVolumes(self):
         return {
-            self.project.get("path") : {
+            os.path.abspath(self.config.get("_path", self.project.get("path"))) : {
                 "bind" : self.APPLICATION_DIRECTORY,
                 "mode" : "rw"                
             },

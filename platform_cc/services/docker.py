@@ -34,6 +34,7 @@ class DockerService(BasePlatformService):
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", "")
         }
+        data["platform_relationships"]["docker"] = data["platform_relationships"][self.getName()]
         return data
 
     def getContainerEnvironmentVariables(self):

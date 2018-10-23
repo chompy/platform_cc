@@ -87,4 +87,5 @@ class MinioService(BasePlatformService):
             "access_key"    : self.getKey(),
             "secret_key"    : self.getKey("secret_key")
         }
+        data["platform_relationships"]["minio"] = data["platform_relationships"][self.getName()]
         return data

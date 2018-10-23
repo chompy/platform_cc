@@ -62,4 +62,5 @@ class RedisService(BasePlatformService):
             "scheme"        : "redis",
             "port"          : 6379
         }
+        data["platform_relationships"]["redis"] = data["platform_relationships"][self.getName()]
         return data

@@ -39,4 +39,5 @@ class MemcachedService(BasePlatformService):
             "scheme"        : "memcached",
             "port"          : 11211
         }
+        data["platform_relationships"]["memcached"] = data["platform_relationships"][self.getName()]
         return data

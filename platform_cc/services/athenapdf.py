@@ -73,4 +73,5 @@ class AthenaPdfService(BasePlatformService):
             "port"          : 8080,
             "auth"          : self.getAuthKey()
         }
+        data["platform_relationships"]["athenapdf"] = data["platform_relationships"][self.getName()]
         return data

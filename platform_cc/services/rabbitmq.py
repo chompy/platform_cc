@@ -49,4 +49,5 @@ class RabbitMqService(BasePlatformService):
             "username"      : "guest",
             "password"      : "guest"
         }
+        data["platform_relationships"]["rabbitmq"] = data["platform_relationships"][self.getName()]
         return data
