@@ -53,7 +53,8 @@ class ApplicationsParser(BasePlatformParser):
             if not name or name in self.applications:
                 continue
             self.applications[name] = appConfig
-            self.applications[name]["_path"] = appPath
+            if os.path.isdir(appPath):
+                self.applications[name]["_path"] = appPath
 
     def getYamlPaths(self):
         """
