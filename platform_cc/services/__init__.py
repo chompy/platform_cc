@@ -22,6 +22,7 @@ from .athenapdf import AthenaPdfService
 from .minio import MinioService
 from .redis import RedisService
 from .docker import DockerService
+from .solr import SolrService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
@@ -34,6 +35,7 @@ SERVICES_MAP = {
     "redis"           : RedisService,
     "redis-persistent": RedisService,
     "docker"          : DockerService,
+    "solr"            : SolrService
 }
 
 def getService(project, config):

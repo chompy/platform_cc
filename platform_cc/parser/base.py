@@ -15,8 +15,10 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
 import yaml
 import yamlordereddictloader
+from .yaml_archive import ArchiveTag
 
 class BasePlatformParser:
     """
@@ -29,6 +31,8 @@ class BasePlatformParser:
 
         :param projectPath: Path to project root
         """
+        
+        yaml.SafeLoader.add_constructor(ArchiveTag.yaml_tag, ArchiveTag.from_yaml)
         self.projectPath = str(projectPath)
 
     def _mergeDict(self, source, dest):
@@ -54,9 +58,10 @@ class BasePlatformParser:
         :param path: Path string to YAML file
         :return: Dictionary containing configuration.
         """
+        ArchiveTag.base_path = os.path.dirname(path)
         loadConf = {}
         with open(path, "r") as f:
-            loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+            loadConf = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         return loadConf
 
     def _readYamls(self, paths):

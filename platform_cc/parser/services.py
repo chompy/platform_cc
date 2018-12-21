@@ -20,6 +20,7 @@ import yaml
 import yamlordereddictloader
 import collections
 from .base import BasePlatformParser
+from .yaml_archive import ArchiveTag
 from platform_cc.exception.parser_error import ParserError
 
 class ServicesParser(BasePlatformParser):
@@ -47,8 +48,9 @@ class ServicesParser(BasePlatformParser):
 
     def _readYaml(self, path):
         loadConf = {}
+        ArchiveTag.base_path = os.path.dirname(path)
         with open(path, "r") as f:
-            loadConf = yaml.load(f, Loader=yamlordereddictloader.Loader)
+            loadConf = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
             for key in loadConf:
                 if type(loadConf[key]) is not collections.OrderedDict: continue
                 if "_from" not in loadConf[key]:

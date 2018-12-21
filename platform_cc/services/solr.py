@@ -25,10 +25,6 @@ class SolrService(BasePlatformService):
             self.getVolumeName() : {
                 "bind" : "/opt/solr/data",
                 "mode" : "rw"
-            },
-            self.getVolumeName("solr_xml") : {
-                "bind" : "/opt/solr/solr/solr.xml",
-                "mode" : "rw"
             }
         }
 
@@ -36,7 +32,7 @@ class SolrService(BasePlatformService):
         data = BasePlatformService.getServiceData(self)
         endpoints = self.config.get("endpoints", {})
         # for solr version 4 automatically add "collection1" endpoint
-        versionNo = getType().split(":")[1][0]
+        versionNo = self.getType().split(":")[1][0]
         if versionNo == "4":
             endpoints["solr"] = {
                 "core" : "collection1"
@@ -58,9 +54,9 @@ class SolrService(BasePlatformService):
 
         # configure cores
         #/solr/admin/cores?action=CREATE&name=%s&instanceDir=/opt/solr/data/%s&config=solrconfig.xml&dataDir=data
-        try:
-            r = request.get("http://%s" % data.get("ip", ""))
-        except requests.exceptions.ConnectionError:
-            pass
+        #try:
+        #    r = request.get("http://%s" % data.get("ip", ""))
+        #except requests.exceptions.ConnectionError:
+        #    pass
 
         # TODO
