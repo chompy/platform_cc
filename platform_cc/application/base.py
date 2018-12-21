@@ -295,7 +295,7 @@ class BasePlatformApplication(Container):
                 "passthru"  : True
             }
 
-        output = ""
+        output = "charset UTF-8;\n"
         for path in locations:
             nginxLocations = self._generateNginxLocations(path, locations[path])
             for nginxLocation in nginxLocations:
