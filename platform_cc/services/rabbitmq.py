@@ -41,7 +41,7 @@ class RabbitMqService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        data["platform_relationships"]["rabbitmq"] = {
+        data["platform_relationships"][self.getName()] = {
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "scheme"        : "amqp",
@@ -49,4 +49,5 @@ class RabbitMqService(BasePlatformService):
             "username"      : "guest",
             "password"      : "guest"
         }
+        data["platform_relationships"]["rabbitmq"] = data["platform_relationships"][self.getName()]
         return data

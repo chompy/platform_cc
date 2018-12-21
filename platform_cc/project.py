@@ -25,6 +25,7 @@ import random
 import io
 import docker
 import logging
+import collections
 from platform_cc.variables import getVariableStorage
 from platform_cc.variables.base import BasePlatformVariables
 from platform_cc.parser.services import ServicesParser
@@ -167,7 +168,7 @@ class PlatformProject:
         Get the Docker client.
         """
         return docker.from_env(
-            timeout = 300 # 5 minutes
+            timeout = 900 # 15 minutes
         )
 
     @staticmethod
@@ -203,7 +204,10 @@ class PlatformProject:
         labels = networkList[0].attrs.get("Labels", {})
 
         # get project data
-        projectData = json.loads(labels.get("%s.project" % Container.LABEL_PREFIX))
+        projectData = json.loads(
+            labels.get("%s.project" % Container.LABEL_PREFIX),
+            object_pairs_hook=collections.OrderedDict
+        )
 
         # get config from project data
         projectConfig = getVariableStorage(
@@ -406,7 +410,8 @@ class PlatformProject:
             containerLabels = container.attrs.get("Config", {}).get("Labels", {})
             containerType = containerLabels.get("%s.type" % Container.LABEL_PREFIX)
             containerConfig = json.loads(
-                containerLabels.get("%s.config" % Container.LABEL_PREFIX)
+                containerLabels.get("%s.config" % Container.LABEL_PREFIX),
+                object_pairs_hook=collections.OrderedDict
             )
             # app
             if containerType == "application":
@@ -669,3 +674,21 @@ class PlatformProject:
             projects.append(PlatformProject.fromDocker(projectUid))
         return projects
         
+    def start(self):
+        """ Start project. """
+        servicesParser = self.getServicesParser()
+        for serviceName in servicesParser.getServiceNames():
+            service = self.getService(serviceName)
+            service.start()
+        applicationsParser = self.getApplicationsParser()
+        for applicationName in applicationsParser.getApplicationNames():
+            application = self.getApplication(applicationName)
+            application.start()
+        self.addRouter()
+
+    def stop(self):
+        """ Stop project. """
+        projectContainers = self.dockerFetch(all=True)
+        for container in projectContainers:
+            container.stop()
+        self.removeRouter()

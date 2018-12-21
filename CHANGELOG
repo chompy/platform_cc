@@ -1,5 +1,20 @@
 DEV (Latest Unversioned)
+- Initial Python 3 support.
+- Fixed pathing issue with multi application projects.
+
+v0.2.2
+- Project installer shell task now accepts user argument.
+- Fixed issue where running project:start a second time would break the nginx config.
+- Added ability to install ssh key via project installer.
+- Added docker service.
+- Added initial support for Golang. (Needs further testing.)
+- Nginx configuration revamp.
+
+v0.2.1
 - Non Platform.sh compatible services are flagged.
+- Igbinary PHP extension.
+- Newrelic PHP extension + ability to start newrelic daemon when extension installed
+- Add project:install command that can install assets and credientials for a project from install.pcc.yaml.
 
 v0.2.0
 - Added all:stop, all:purge, and all:list commands.

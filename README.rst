@@ -5,19 +5,67 @@ Platform.CC (Platform.ContextualCode)
 
 Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.
 
+Requirements / Installation
+---------------------------
+Requirements
+~~~~~~~~~~~~
+- Python 2.7
+- Docker
+    - Mac:
+        1.  Install Version 17.09.1-ce-mac42 https://download.docker.com/mac/stable/21090/Docker.dmg. If you are unable to install that version - try to upgrade your OS.
+        2.  Open Docker -> Preferences -> File Sharing and remove all directories except `/tmp`.
+        3.  Open Docker -> Preferences -> Advanced and increase memory to 4.0 GB.
+        4.  Install `d4m-nfs`:
+
+         $ cd ~
+
+         $ git clone git@github.com:IFSight/d4m-nfs.git
+
+         $ cd d4m-nfs
+
+         $ echo /Users:/Users > etc/d4m-nfs-mounts.txt
+
+         $ sudo rm /etc/exports && sudo touch /etc/exports
+
+         $ ./d4m-nfs.sh
+    - Linux:
+
+        Follow the instructions here https://github.com/docker/docker-install.
+        You might have to add yourself to the docker user group:
+
+        $ sudo addgroup --system docker && sudo adduser $USER docker && newgrp docker
+
+Installation
+~~~~~~~~~~~~
+$ cd ~
+
+$ git clone https://gitlab.com/contextualcode/platform_cc.git
+
+$ cd platform_cc
+
+$ pip install -r requirements.txt
+
+$ sudo python setup.py install
 
 Quick Start
 -----------
 
 This assumes that you have a project ready to go with all the appropiate configuration files (.platform.app.yaml, etc).
 
-1) Install Composer credientials.
+1) Install Composer credentials, ssh keys, etc.
 
     You can use the "var:set" command to set environment variables. This can be use to
     setup Composer credientials for your project. The below command is an example
     of how one might copy their .composer/auth.json in to their project.
 
-        $ platform_cc var:set env:COMPOSER_AUTH `cat ~/.composer/auth.json | tr '\r' ' ' |  tr '\n' ' ' | sed 's/ \{3,\}/ /g' | sed 's/   / /g'`
+
+        $ platform_cc var:set 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+
+        $ platform_cc var:set project:ssh_key `cat ~/.ssh/id_rsa | base64 -w 0`
+
+        $ platform_cc var:set project:known_hosts `cat ~/.ssh/known_hosts | base64 -w 0`
+
+    (Use `base64 -b 0` on Macs)
 
 2) Start in the root directory of the project.
 
@@ -30,6 +78,12 @@ This assumes that you have a project ready to go with all the appropiate configu
     You should now install databases and setup other services.
 
     You can use the 'mysql:sql' command to run SQL queries and gain access to the MySQL console.
+
+    For example:
+
+    $ platform db:dump -emaster -fdb_dump.sql
+
+    $ cat db_dump.sql | platform_cc mysql:sql -dmain
 
 4) Run deploy hooks.
 
@@ -73,11 +127,27 @@ disabled by using the 'project:option_set' command. A project restart is require
 disable the features. For a list of features and their current status use the 'project:options' command.
 
 **USE_MOUNT_VOLUMES**
-When enabled mount points defined in .platform.app.yaml are mounted to a Docker volume.
+When enabled mount points defined in .platform.app.yaml are mounted to a Docker volume. Setting this to `true` is important for performance on Macs.
 
 **ENABLE_CRON**
 Enables Cron tasks as defined in .platform.app.yaml.
 
+Custom config
+-------------
+
+If you find that you need some variables that are specific only to your Platform.CC projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
+
+For example, if you wanted to have the environment variable `$SYMFONY_ENV` set to `dev`, you could set it with `var:set`:
+
+$ platform_cc var:set 'env:SYMFONY_ENV' 'dev'
+
+But this would have to be ran each time you restarted the project. If you wanted `$SYMFONY_ENV` to always be `dev` when in Platform.CC, you can create `.platform.app.pcc.yaml` file with contents:
+
+variables:
+    env:
+        SYMFONY_ENV: dev
+
+In this way, you can have variables and settings that are only and automatically set in your local development environments. And importantly, it uses the same syntax as your `.platform.app.yaml` files.
 
 Missing Features
 ----------------

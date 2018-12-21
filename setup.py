@@ -24,7 +24,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.2.0',
+    version='0.2.2',
 
     description="Tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.",
     long_description=long_description,
@@ -66,7 +66,9 @@ setup(
         "yamlordereddictloader",
         "terminaltables",
         "future",
-        "dockerpty"
+        "dockerpty",
+        "boto3",
+        "nginx-config-builder"
     ],
 
     # List additional groups of dependencies here (e.g. development

@@ -56,10 +56,11 @@ class RedisService(BasePlatformService):
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
-        data["platform_relationships"]["redis"] = {
+        data["platform_relationships"][self.getName()] = {
             "host"          : self.getContainerName(),
             "ip"            : data.get("ip", ""),
             "scheme"        : "redis",
             "port"          : 6379
         }
+        data["platform_relationships"]["redis"] = data["platform_relationships"][self.getName()]
         return data

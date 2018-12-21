@@ -23,6 +23,9 @@ import logging
 import io
 import random
 import string
+import collections
+from nginx.config.api import Location
+from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
@@ -44,6 +47,12 @@ class BasePlatformApplication(Container):
     """
     STORAGE_DIRECTORY = "/mnt/storage"
 
+    """ Port to use for TCP upstream. """
+    TCP_PORT = 8001
+
+    """ Socket path to use for upstream. """
+    SOCKET_PATH = "/tmp/app.socket"
+
     def __init__(self, project, config):
         """
         Constructor.
@@ -51,7 +60,7 @@ class BasePlatformApplication(Container):
         :param project: Project data
         :param config: Service configuration
         """
-        self.config = dict(config)
+        self.config = collections.OrderedDict(config)
         Container.__init__(
             self,
             project,
@@ -70,7 +79,7 @@ class BasePlatformApplication(Container):
 
     def getContainerVolumes(self):
         return {
-            self.project.get("path") : {
+            os.path.abspath(self.config.get("_path", self.project.get("path"))) : {
                 "bind" : self.APPLICATION_DIRECTORY,
                 "mode" : "rw"                
             },
@@ -105,7 +114,7 @@ class BasePlatformApplication(Container):
             )
         except docker.errors.NotFound:
             pass
-        # sest env vars
+        # set env vars
         envVars = {
             "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
             "PLATFORM_APPLICATION"      : "",
@@ -149,6 +158,149 @@ class BasePlatformApplication(Container):
         :rtype: str
         """        
         return self.config.get("type")
+
+    def _generateNginxPassthruOptions(self, locationConfig = {}):
+        """
+        Get options to generate nginx passthru.
+
+        :param locationConfig: Dict containing location configuration
+        :return: List of nginx block values
+        :rtype: list
+        """
+        upstreamConf = self.config.get("web", {}).get("upstream", {"socket_family" : "tcp", "protocol" : "http"})
+        output = []
+        # tcp port, proxy pass
+        if upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "http":
+            output.append(
+                KeyValueOption("proxy_pass", "http://127.0.0.1:%d" % self.TCP_PORT)
+            )
+            output.append(
+                KeyValueOption("proxy_set_header", "Host $host")
+            )
+        # tcp port, fastcgi
+        elif upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "fastcgi":
+            output.append(
+                KeyValueOption("fastcgi_pass", "127.0.0.1:%d" % self.TCP_PORT)
+            )
+            output.append(
+                KeyValueOption("include", "fastcgi_params")
+            )
+            output.append(
+                KeyValueOption("set", "$path_info $fastcgi_path_info")
+            )
+        # socket, proxy pass
+        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "http":
+            output.append(
+                KeyValueOption("proxy_pass", "unix:%s" % self.SOCKET_PATH)
+            )
+            output.append(
+                KeyValueOption("proxy_set_header", "Host $host")
+            )
+        # socket, fastcgi
+        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "fastcgi":
+            output.append(
+                KeyValueOption("fastcgi_pass", "unix:%s" % self.SOCKET_PATH)
+            )
+            output.append(
+                KeyValueOption("include", "fastcgi_params")
+            )
+            output.append(
+                KeyValueOption("set", "$path_info $fastcgi_path_info")
+            )
+        return output        
+
+    def _generateNginxLocations(self, path, locationConfig = {}):
+        """
+        Generate nginx location configuration(s) for given path.
+
+        :param path: Location path
+        :param locationConfig: Dict of location configuration
+        :return: List of nginx locations
+        :rtype: list
+        """
+
+        # params
+        root = locationConfig.get("root", "") or ""
+        passthru = locationConfig.get("passthru", False)
+        pathStrip = "/%s/" % path.strip("/")
+        if pathStrip == "//": pathStrip = "/"
+        index = locationConfig.get("index", [])
+        if type(index) is not list: index = [index]
+
+        # generate root location
+        rootLocation = Location(
+            "= \"%s\"" % path.rstrip("/"),
+            expires = "-1s",
+            alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
+        )
+        if index:
+            rootLocation.options["index"] = " ".join(index)
+
+        # base options
+        options = [
+            KeyValueOption("alias", "%s/" % ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/") )
+        ]
+
+        # headers
+        headers = locationConfig.get("headers", {})
+        if headers:
+            options.append(
+                KeyValuesMultiLines(
+                    "add_header",
+                    ["%s %s" % (k, v) for k,v in headers.items()]
+                )
+            )
+
+        # index
+        if index:
+            options.append(
+                KeyValueOption("index", " ".join(index))
+            )
+
+        # create location
+        location = Location(
+            "\"%s\"" % pathStrip,
+            *options
+        )
+        
+        # passthru
+        if passthru:
+            passthruLocation = Location(
+                "~ /",
+                expires = "-1s",
+                allow = "all",
+                *self._generateNginxPassthruOptions(locationConfig)
+            )
+            location.sections.add(passthruLocation)
+
+        # TODO rules
+
+        # output
+        return [rootLocation, location]
+        
+    def generateNginxConfig(self):
+        """
+        Generate configuration for nginx specific to application.
+
+        :return: Nginx configuration
+        :rtype: str
+        """
+        self.logger.info(
+            "Generate application Nginx configuration."
+        )
+        locations = self.config.get("web", {}).get("locations", {})
+        if not locations or len(locations) == 0:
+            locations["/"] = {
+                "allow"     : False,
+                "passthru"  : True
+            }
+
+        output = "charset UTF-8;\n"
+        for path in locations:
+            nginxLocations = self._generateNginxLocations(path, locations[path])
+            for nginxLocation in nginxLocations:
+                output += str(nginxLocation)
+        return output
 
     def setupMounts(self):
         """
@@ -336,6 +488,27 @@ class BasePlatformApplication(Container):
         labels["%s.type" % Container.LABEL_PREFIX] = "application"
         return labels
 
+    def startServices(self):
+        """ Start extra services ran in the app container. """
+        # nginx
+        self.logger.info(
+            "Start Nginx."
+        )
+        nginxConfFileObj = io.BytesIO(
+            bytes(str(self.generateNginxConfig()).encode("utf-8"))
+        )
+        self.uploadFile(
+            nginxConfFileObj,
+            "/usr/local/nginx/conf/app.conf"
+        )
+        self.runCommand(
+            """
+            /usr/local/nginx/sbin/nginx -s stop || true && /usr/local/nginx/sbin/nginx
+            """
+        )
+        # cron
+        self.installCron()
+
     def start(self,  requireServices = True):
         # ensure all required services are available
         if requireServices:
@@ -351,4 +524,13 @@ class BasePlatformApplication(Container):
                             serviceName
                         )
                     )
+        # start container
         Container.start(self)
+        container = self.getContainer()
+        if not container: return
+        # setup mount points
+        self.setupMounts()
+        # not yet built/provisioned
+        if self.getDockerImage() == self.getBaseImage():
+            self.build()
+            return self.start(requireServices)

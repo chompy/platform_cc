@@ -20,6 +20,8 @@ import docker
 import logging
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
+from nginx.config.api import Location, Block
+from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 
 class PlatformRouter(Container):
 
@@ -90,84 +92,99 @@ class PlatformRouter(Container):
             )
             # create vhost entry for each scheme
             for scheme in ["http", "https"]:
-                # start vhost
-                output += "server {\n"
-                # resolver
-                output += "\tresolver 127.0.0.11;\n"
-                # server_name
-                output += "\tserver_name %s;\n" % (
-                    hostname
+
+                # create server section
+                server = Block(
+                    "server",
+                    resolver = "127.0.0.11",
+                    server_name = hostname,
+                    listen = "443 ssl" if scheme == "https" else "80",
+                    client_max_body_size = "200M"
                 )
-                # listen
+
+                # add ssl
                 if scheme == "https":
-                    output += "\tlisten 443 ssl;\n"
-                    output += "\tssl_certificate /etc/nginx/ssl/server.crt;\n"
-                    output += "\tssl_certificate_key /etc/nginx/ssl/server.key;\n"
-                else:
-                    output += "\tlisten 80;\n"
-                # client_max_body_size
-                output += "\tclient_max_body_size 200M;\n"
+                    server.options["ssl_certificate"] = "/etc/nginx/ssl/server.crt"
+                    server.options["ssl_certificate_key"] = "/etc/nginx/ssl/server.key"
+
                 # add locations
                 hasRouteForScheme = False
                 for config in routes:
                     if config.get("scheme", "http") != scheme: continue
                     hasRouteForScheme = True
-                    # location
                     path = config.get("path", "/")
                     if not path: path = "/"
-                    output += "\tlocation %s {\n" % (
-                        path.replace(" ", "[\s]")
+                    location = Location(
+                        path.replace(" ", '[\s]')
                     )
                     # type 'upstream'
                     if config.get("type") == "upstream":
                         # redirects
                         redirectHasRootPath = False
                         redirectPaths = config.get("redirects", {}).get("paths", {})
-                        for location, redirectConfig in redirectPaths.items():
-                            if location.strip() == "/":
+                        for _location, redirectConfig in redirectPaths.items():
+                            if _location.strip() == "/":
                                 redirectHasRootPath = True
-                            output += "\t\tlocation ~ ^%s {\n" % (
-                                location.replace(" ", "[\s]")
+                            location.sections.add(
+                                Location(
+                                    "~ %s" % _location.replace(" ", '[\s]'),
+                                    KeyValueOption("return", "301 %s" % redirectConfig.get("to", "/"))
+                                )
                             )
-                            output += "\t\t\treturn 301 %s;\n" % (
-                                redirectConfig.get("to", "/")
-                            )
-                            output += "\t\t}\n"
                         # upstream, proxy_pass
                         upstreamHost = ""
                         for application in applications:
                             if application.getName() == config.get("upstream"):
                                 upstreamHost = application.getContainerName() # container host name
                         if not redirectHasRootPath and upstreamHost:
-                            output += "\t\tlocation ~* / {\n"
-                            output += "\t\t\tset $upstream http://%s;\n" % (
-                                upstreamHost
+                            location.sections.add(
+                                Location(
+                                    "~* /",
+                                    KeyValuesMultiLines(
+                                        "proxy_set_header",
+                                        [
+                                            "X-Client-IP $server_addr",
+                                            "X-Forwarded-Host $host",
+                                            "X-Forwarded-Port $server_port",
+                                            "X-Forwarded-Proto $scheme",
+                                            "X-Forwarded-Server $host",
+                                            "Host $host",
+                                            "X-Forwarded-For $remote_addr",
+                                        ]
+                                    ),
+                                    set = "$upstream http://%s" % upstreamHost,
+                                    proxy_pass = "$upstream"
+                                )
                             )
-                            output += "\t\t\tproxy_set_header X-Client-IP $server_addr;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-Host $host;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-Port $server_port;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-Proto $scheme;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-Server $host;\n"
-                            output += "\t\t\tproxy_set_header Host $host;\n"
-                            output += "\t\t\tproxy_set_header X-Forwarded-For $remote_addr;\n"
-                            output += "\t\t\tproxy_pass $upstream;\n"
-                            output += "\t\t}\n"
+                    
                     # type 'redirect'
                     elif config.get("type") == "redirect":
-                        output += "\t\tlocation ~ / {\n"
-                        output += "\t\t\treturn 301 %s;\n" % (
-                            config.get("to", "").replace("{default}", routesParser.getDefaultDomain())
+                        to = config.get("to", "").replace("{default}", routesParser.getDefaultDomain())
+                        location.sections.add(
+                            Location(
+                                "~ /",
+                                KeyValueOption("return", ("501" if "*" in to else ("301 %s" % to)))
+                            )
                         )
-                        output += "\t\t}\n"
-                    output += "\t}\n"
+
+                    # add location to server
+                    server.sections.add(location)                        
+
                 # if scheme does not have any routes create a redirect
                 if not hasRouteForScheme:
-                    output += "\tlocation / {\n"
-                    output += "\t\treturn 301 %s://$host$request_uri;\n" % (
-                        ("http" if scheme == "https" else "https")
+                    server.sections.add(
+                        Location(
+                            "/",
+                            KeyValueOption(
+                                "return",
+                                "301 %s://$host$request_uri" % ("http" if scheme == "https" else "https")
+                            )
+                        )
                     )
-                    output += "\t}\n"
-                output += "}\n"
+                
+                # add server output
+                output += str(server)
+        
         return output
     
     def build(self):

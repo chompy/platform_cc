@@ -1,0 +1,33 @@
+FROM golang:1.11
+LABEL com.contextualcode.platformcc=""
+
+# install dependencies via apt-get
+RUN apt-get update && \
+    apt-get install -y rsync git unzip cron python-pip python-dev \
+        gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano \
+        libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
+        libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
+        libpng16-16 libpng-dev libpcre3 libpcre3-dev libedit-dev && \
+    apt-get clean
+
+# install nodejs
+RUN curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.tar.xz && \
+    tar xf node.tar.xz && \
+    rm node.tar.xz && \
+    mv node-* /opt/nodejs && \
+    ln -s -f /opt/nodejs/bin/* /usr/bin/ && \
+    ln -s -f /usr/bin/node /usr/bin/nodejs
+
+# install nginx + conf
+RUN curl -L https://nginx.org/download/nginx-1.14.0.tar.gz -o nginx.tar.gz && \
+    tar xvfz nginx.tar.gz && \
+    rm nginx.tar.gz && \
+    cd nginx* && \
+    git clone --recursive https://github.com/google/ngx_brotli.git && \
+    ./configure --with-http_realip_module --with-http_gunzip_module --with-http_gzip_static_module --add-module=ngx_brotli && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf nginx* 
+COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY fastcgi_params /usr/local/nginx/conf/fastcgi_params

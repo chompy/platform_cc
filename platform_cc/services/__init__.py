@@ -21,6 +21,7 @@ from .rabbitmq import RabbitMqService
 from .athenapdf import AthenaPdfService
 from .minio import MinioService
 from .redis import RedisService
+from .docker import DockerService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
@@ -31,7 +32,8 @@ SERVICES_MAP = {
     "athenapdf"       : AthenaPdfService,
     "minio"           : MinioService,
     "redis"           : RedisService,
-    "redis-persistent": RedisService
+    "redis-persistent": RedisService,
+    "docker"          : DockerService,
 }
 
 def getService(project, config):

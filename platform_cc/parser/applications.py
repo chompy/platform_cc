@@ -44,14 +44,17 @@ class ApplicationsParser(BasePlatformParser):
             raise ParserError("No applications have been defined.")
         for yamlPath in yamlPaths:
             appConfig = self._readYamls(yamlPath)
+            appPath = os.path.basename(os.path.dirname(yamlPath[0]))
             name = appConfig.get(
                 "name",
-                os.path.basename(os.path.dirname(yamlPath[0]))
+                appPath
             )
             # skip if no name or name already exists
             if not name or name in self.applications:
                 continue
             self.applications[name] = appConfig
+            if os.path.isdir(appPath):
+                self.applications[name]["_path"] = appPath
 
     def getYamlPaths(self):
         """
