@@ -61,7 +61,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"
             ],
-            "command": "cd /opt && curl -o nr.tar.gz https://download.newrelic.com/php_agent/release/newrelic-php5-8.4.0.231-linux.tar.gz && tar xfz nr.tar.gz && cd newrelic* && NR_INSTALL_SILENT=1 ./newrelic-install install && cd .. && rm nr.tar.gz"
+            "command": "cd /opt && curl -o nr.tar.gz https://download.newrelic.com/php_agent/release/newrelic-php5-8.5.0.235-linux.tar.gz && tar xfz nr.tar.gz && cd newrelic* && NR_INSTALL_SILENT=1 ./newrelic-install install && cd .. && rm nr.tar.gz"
         }
     ],
     "xdebug" : [
