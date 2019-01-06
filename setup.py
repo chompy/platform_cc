@@ -61,7 +61,7 @@ setup(
     install_requires=[
         "pyaml",
         "docker>=2.5",
-        "cleo",
+        "cleo<0.7",
         "base36",
         "yamlordereddictloader",
         "terminaltables",
