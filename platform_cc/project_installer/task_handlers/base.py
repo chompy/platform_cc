@@ -30,7 +30,7 @@ class BaseTaskHandler:
         :param list: List of dictionary keys
         """
         for name in names:
-            if not self.params.has_key(name):
+            if not name in self.params:
                 raise ValueError("Task handler '%s' is missing '%s' parameter." % (self.getType(), name))            
 
     def _replaceShortCodes(self, string):
