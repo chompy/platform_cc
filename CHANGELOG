@@ -1,6 +1,10 @@
 DEV (Latest Unversioned)
+
+v0.2.3
 - Initial Python 3 support.
 - Fixed pathing issue with multi application projects.
+- Fixed issues with multi application projects.
+- Fixed bug where the wrong directory was mounted to a single application project.
 
 v0.2.2
 - Project installer shell task now accepts user argument.
