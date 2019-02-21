@@ -255,16 +255,13 @@ class PhpApplication(BasePlatformApplication):
             locations[1].sections.add(
                 Location(
                     "~ \".+?\.php(?=$|/)\"",
-                    expires = "-1s",
                     allow = "all",
                     *self._generateNginxPassthruOptions(locationConfig, passthru)
                 )
             )
 
         # php sub location
-        subLocationOptions = {
-            "expires"     : "-1s"
-        }
+        subLocationOptions = {}
         if index:
             subLocationOptions["index"] = " ".join(index)
         if passthru:
