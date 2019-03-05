@@ -104,7 +104,7 @@ class PhpApplication(BasePlatformApplication):
         )
         output += self.runCommand(
             """
-            useradd -d /app -m -p secret~ --uid %s web
+            useradd -l -d /app -m -p secret~ --uid %s web
             usermod -a -G staff web
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
