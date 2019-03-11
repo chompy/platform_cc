@@ -104,7 +104,7 @@ class PhpApplication(BasePlatformApplication):
         )
         output += self.runCommand(
             """
-            useradd -d /app -m -p secret~ --uid %s web
+            useradd -l -d /app -m -p secret~ --uid %s web
             usermod -a -G staff web
             mkdir -p /var/lib/gems
             chown -R web:web /var/lib/gems
@@ -255,16 +255,13 @@ class PhpApplication(BasePlatformApplication):
             locations[1].sections.add(
                 Location(
                     "~ \".+?\.php(?=$|/)\"",
-                    expires = "-1s",
                     allow = "all",
                     *self._generateNginxPassthruOptions(locationConfig, passthru)
                 )
             )
 
         # php sub location
-        subLocationOptions = {
-            "expires"     : "-1s"
-        }
+        subLocationOptions = {}
         if index:
             subLocationOptions["index"] = " ".join(index)
         if passthru:

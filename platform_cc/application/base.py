@@ -230,7 +230,6 @@ class BasePlatformApplication(Container):
         # generate root location
         rootLocation = Location(
             "= \"%s\"" % path.rstrip("/"),
-            expires = "-1s",
             alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
         )
         if index:
@@ -267,7 +266,6 @@ class BasePlatformApplication(Container):
         if passthru:
             passthruLocation = Location(
                 "~ /",
-                expires = "-1s",
                 allow = "all",
                 *self._generateNginxPassthruOptions(locationConfig)
             )

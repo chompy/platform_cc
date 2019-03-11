@@ -59,7 +59,7 @@ class Container:
         self.docker = dockerClient
         if not self.docker:
             self.docker = docker.from_env(
-                timeout = 900 # 15 minutes
+                timeout = 1800 # 30 minutes
             )
         self.logger = logging.getLogger(__name__)
         self._container = None
