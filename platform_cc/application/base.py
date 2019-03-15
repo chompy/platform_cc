@@ -25,11 +25,14 @@ import random
 import string
 import collections
 from nginx.config.api import Location
-from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
+from nginx.config.api.options import KeyValueOption
+from nginx.config.api.options import KeyValuesMultiLines
+from nginx.config.api.options import KeyOption
 from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.container_command_error import ContainerCommandError
+
 
 class BasePlatformApplication(Container):
 
@@ -79,13 +82,16 @@ class BasePlatformApplication(Container):
 
     def getContainerVolumes(self):
         return {
-            os.path.abspath(self.config.get("_path", self.project.get("path"))) : {
-                "bind" : self.APPLICATION_DIRECTORY,
-                "mode" : "rw"                
+            os.path.abspath(
+                self.config.get(
+                    "_path", self.project.get("path"))
+                ): {
+                "bind": self.APPLICATION_DIRECTORY,
+                "mode": "rw"
             },
-            self.getVolumeName() : {
-                "bind" : self.STORAGE_DIRECTORY,
-                "mode" : "rw"
+            self.getVolumeName(): {
+                "bind": self.STORAGE_DIRECTORY,
+                "mode": "rw"
             }
         }
 
@@ -104,47 +110,65 @@ class BasePlatformApplication(Container):
         # get subnet from project network, used for trusted proxy
         network = self.getNetwork()
         trustedProxies = "%s,127.0.0.1" % (
-            str(network.attrs.get("IPAM", {}).get("Config",[{}])[0].get("Subnet"))
+            str(
+                network.attrs.get("IPAM", {}).get(
+                    "Config", [{}]
+                )[0].get("Subnet")
+            )
         )
         try:
             bridgeNetwork = self.docker.networks.get("bridge")
             trustedProxies = "%s,%s" % (
-                str(bridgeNetwork.attrs.get("IPAM", {}).get("Config",[{}])[0].get("Subnet")),
+                str(
+                    bridgeNetwork.attrs.get("IPAM", {}).get(
+                        "Config", [{}]
+                    )[0].get("Subnet")
+                ),
                 trustedProxies
             )
         except docker.errors.NotFound:
             pass
         # set env vars
         envVars = {
-            "PLATFORM_APP_DIR"          : self.APPLICATION_DIRECTORY,
-            "PLATFORM_APPLICATION"      : "",
-            "PLATFORM_APPLICATION_NAME" : self.getName(),
-            "PLATFORM_BRANCH"           : "",
-            "PLATFORM_DOCUMENT_ROOT"    : "/",
-            "PLATFORM_ENVIRONMENT"      : "",
-            "PLATFORM_PROJECT"          : self.project.get("uid", ""),
-            "PLATFORM_RELATIONSHIPS"    : base64.b64encode(
+            "PLATFORM_APP_DIR":           self.APPLICATION_DIRECTORY,
+            "PLATFORM_APPLICATION":       "",
+            "PLATFORM_APPLICATION_NAME":  self.getName(),
+            "PLATFORM_BRANCH":            "",
+            "PLATFORM_DOCUMENT_ROOT":     "/",
+            "PLATFORM_ENVIRONMENT":       "",
+            "PLATFORM_PROJECT":           self.project.get("uid", ""),
+            "PLATFORM_RELATIONSHIPS":     base64.b64encode(
                 bytes(str(json.dumps(platformRelationships)).encode("utf-8"))
             ).decode("utf-8"),
-            "PLATFORM_ROUTES"           : base64.b64encode(
-                bytes(str(json.dumps(routesParser.getRoutesEnvironmentVariable())).encode("utf-8"))
+            "PLATFORM_ROUTES":            base64.b64encode(
+                bytes(str(
+                    json.dumps(routesParser.getRoutesEnvironmentVariable())
+                ).encode("utf-8"))
             ),
-            "PLATFORM_TREE_ID"          : ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(40)),
-            "PLATFORM_VARIABLES"        : base64.b64encode(
-                bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))
+            "PLATFORM_TREE_ID":           ''.join(random.choice(
+                string.ascii_lowercase + string.digits) for _ in range(40)
+            ),
+            "PLATFORM_VARIABLES":         base64.b64encode(
+                bytes(
+                    str(
+                        json.dumps(self.project.get("variables", {}))
+                    ).encode("utf-8")
+                )
             ).decode("utf-8"),
-            "PLATFORM_PROJECT_ENTROPY"  : self.project.get("entropy", ""),
-            "TRUSTED_PROXIES"           : trustedProxies
+            "PLATFORM_PROJECT_ENTROPY":   self.project.get("entropy", ""),
+            "TRUSTED_PROXIES":            trustedProxies
         }
         # set env vars from app variables
-        for key, value in self.config.get("variables", {}).get("env", {}).items():
+        for key, value in self.config.get(
+            "variables", {}
+        ).get("env", {}).items():
             envVars[key.strip().upper()] = str(value)
         # set env vars from project variables
         for key, value in self.project.get("variables", {}).items():
-            if not key.startswith("env:"): continue
+            if not key.startswith("env:"):
+                continue
             key = key[4:]
             envVars[key.strip().upper()] = str(value)
-        
         return envVars
 
     def getContainerWorkingDirectory(self):
@@ -156,10 +180,10 @@ class BasePlatformApplication(Container):
 
         :return: Application type
         :rtype: str
-        """        
+        """
         return self.config.get("type")
 
-    def _generateNginxPassthruOptions(self, locationConfig = {}):
+    def _generateNginxPassthruOptions(self, locationConfig={}):
         """
         Get options to generate nginx passthru.
 
@@ -167,18 +191,29 @@ class BasePlatformApplication(Container):
         :return: List of nginx block values
         :rtype: list
         """
-        upstreamConf = self.config.get("web", {}).get("upstream", {"socket_family" : "tcp", "protocol" : "http"})
+        upstreamConf = self.config.get("web", {}).get(
+            "upstream", {"socket_family": "tcp", "protocol": "http"}
+        )
         output = []
         # tcp port, proxy pass
-        if upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "http":
+        if (
+            upstreamConf.get("socket_family") == "tcp" and
+            upstreamConf.get("protocol") == "http"
+        ):
             output.append(
-                KeyValueOption("proxy_pass", "http://127.0.0.1:%d" % self.TCP_PORT)
+                KeyValueOption(
+                    "proxy_pass",
+                    "http://127.0.0.1:%d" % self.TCP_PORT
+                )
             )
             output.append(
                 KeyValueOption("proxy_set_header", "Host $host")
             )
         # tcp port, fastcgi
-        elif upstreamConf.get("socket_family") == "tcp" and upstreamConf.get("protocol") == "fastcgi":
+        elif (
+            upstreamConf.get("socket_family") == "tcp" and
+            upstreamConf.get("protocol") == "fastcgi"
+        ):
             output.append(
                 KeyValueOption("fastcgi_pass", "127.0.0.1:%d" % self.TCP_PORT)
             )
@@ -189,7 +224,10 @@ class BasePlatformApplication(Container):
                 KeyValueOption("set", "$path_info $fastcgi_path_info")
             )
         # socket, proxy pass
-        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "http":
+        elif (
+            upstreamConf.get("socket_family") == "socket" and
+            upstreamConf.get("protocol") == "http"
+        ):
             output.append(
                 KeyValueOption("proxy_pass", "unix:%s" % self.SOCKET_PATH)
             )
@@ -197,7 +235,10 @@ class BasePlatformApplication(Container):
                 KeyValueOption("proxy_set_header", "Host $host")
             )
         # socket, fastcgi
-        elif upstreamConf.get("socket_family") == "socket" and upstreamConf.get("protocol") == "fastcgi":
+        elif (
+            upstreamConf.get("socket_family") == "socket" and
+            upstreamConf.get("protocol") == "fastcgi"
+        ):
             output.append(
                 KeyValueOption("fastcgi_pass", "unix:%s" % self.SOCKET_PATH)
             )
@@ -207,9 +248,9 @@ class BasePlatformApplication(Container):
             output.append(
                 KeyValueOption("set", "$path_info $fastcgi_path_info")
             )
-        return output        
+        return output
 
-    def _generateNginxLocations(self, path, locationConfig = {}):
+    def _generateNginxLocations(self, path, locationConfig={}):
         """
         Generate nginx location configuration(s) for given path.
 
@@ -223,21 +264,28 @@ class BasePlatformApplication(Container):
         root = locationConfig.get("root", "") or ""
         passthru = locationConfig.get("passthru", False)
         pathStrip = "/%s/" % path.strip("/")
-        if pathStrip == "//": pathStrip = "/"
+        if pathStrip == "//":
+            pathStrip = "/"
         index = locationConfig.get("index", [])
-        if type(index) is not list: index = [index]
+        if type(index) is not list:
+            index = [index]
 
         # generate root location
         rootLocation = Location(
             "= \"%s\"" % path.rstrip("/"),
-            alias = ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/")
+            alias=("%s/%s" % (
+                self.APPLICATION_DIRECTORY,
+                root.strip("/")
+            )).rstrip("/")
         )
         if index:
             rootLocation.options["index"] = " ".join(index)
 
         # base options
         options = [
-            KeyValueOption("alias", "%s/" % ("%s/%s" % (self.APPLICATION_DIRECTORY, root.strip("/"))).rstrip("/") )
+            KeyValueOption("alias", "%s/" % ("%s/%s" % (
+                self.APPLICATION_DIRECTORY, root.strip("/")
+            )).rstrip("/"))
         ]
 
         # headers
@@ -246,7 +294,7 @@ class BasePlatformApplication(Container):
             options.append(
                 KeyValuesMultiLines(
                     "add_header",
-                    ["%s %s" % (k, v) for k,v in headers.items()]
+                    ["%s %s" % (k, v) for k, v in headers.items()]
                 )
             )
 
@@ -261,12 +309,12 @@ class BasePlatformApplication(Container):
             "\"%s\"" % pathStrip,
             *options
         )
-        
+
         # passthru
         if passthru:
             passthruLocation = Location(
                 "~ /",
-                allow = "all",
+                allow="all",
                 *self._generateNginxPassthruOptions(locationConfig)
             )
             location.sections.add(passthruLocation)
@@ -275,7 +323,7 @@ class BasePlatformApplication(Container):
 
         # output
         return [rootLocation, location]
-        
+
     def generateNginxConfig(self):
         """
         Generate configuration for nginx specific to application.
@@ -289,13 +337,15 @@ class BasePlatformApplication(Container):
         locations = self.config.get("web", {}).get("locations", {})
         if not locations or len(locations) == 0:
             locations["/"] = {
-                "allow"     : False,
-                "passthru"  : True
+                "allow":      False,
+                "passthru":   True
             }
 
         output = "charset UTF-8;\n"
         for path in locations:
-            nginxLocations = self._generateNginxLocations(path, locations[path])
+            nginxLocations = self._generateNginxLocations(
+                path, locations[path]
+            )
             for nginxLocation in nginxLocations:
                 output += str(nginxLocation)
         return output
@@ -313,11 +363,13 @@ class BasePlatformApplication(Container):
         for mountDest, config in configMounts.items():
             mountSrc = ""
             if type(config) is dict:
-                if not config.get("source") == "local": continue
+                if not config.get("source") == "local":
+                    continue
                 mountSrc = config.get("source_path", "").strip("/")
             elif type(config) is str:
                 localMountPrefx = "shared:files/"
-                if not config.startswith(localMountPrefx): continue
+                if not config.startswith(localMountPrefx):
+                    continue
                 mountSrc = config[len(localMountPrefx):].strip("/")
             else:
                 continue
@@ -340,7 +392,10 @@ class BasePlatformApplication(Container):
                 ),
                 "root"
             )
-            if not self.project.get("config", {}).get("option_use_mount_volumes"): continue
+            if not self.project.get("config", {}).get(
+                "option_use_mount_volumes"
+            ):
+                continue
             self.runCommand(
                 "mount -o user_xattr --bind %s %s" % (
                     mountSrc,
@@ -365,7 +420,8 @@ class BasePlatformApplication(Container):
             pass
         for sshData in sshDatas:
             data = self.project.get("config", {}).get(sshData[0])
-            if not data: continue
+            if not data:
+                continue
             self.logger.info(
                 "Install '%s' from project config." % sshData[0]
             )
@@ -373,7 +429,7 @@ class BasePlatformApplication(Container):
             dataFileObject = io.BytesIO(data)
             self.uploadFile(
                 dataFileObject,
-                "/tmp/.ssh_file" # can't upload file to a mount directory, so upload to tmp and copy
+                "/tmp/.ssh_file"  # upload to tmp and copy
             )
             try:
                 self.runCommand(
@@ -390,7 +446,8 @@ class BasePlatformApplication(Container):
         Install cron tasks and enable cron in application container.
         """
         # cron must be enabled via options
-        if not self.project.get("config", {}).get("option_enable_cron"): return
+        if not self.project.get("config", {}).get("option_enable_cron"):
+            return
         # create cron directory if not exist
         self.runCommand(
             "mkdir -p /etc/cron.d"
@@ -401,9 +458,10 @@ class BasePlatformApplication(Container):
             "Installing %s cron task(s)." % str(len(crons))
         )
         for name, cron in crons.items():
-            spec = cron.get("spec", "*/5 * * * *") # default is every 5 minutes
+            spec = cron.get("spec", "*/5 * * * *")  # default is every 5m
             cmd = cron.get("cmd", "")
-            if not cmd: continue
+            if not cmd:
+                continue
             self.logger.debug(
                 "Installing '%s' cron." % name
             )
@@ -426,7 +484,7 @@ class BasePlatformApplication(Container):
     def prebuild(self):
         """
         Perform tasks on container prior to build process.
-        """   
+        """
         # delete committed image
         if self.getDockerImage() == self.getCommitImage():
             # stop container if running
@@ -441,7 +499,7 @@ class BasePlatformApplication(Container):
         # start container
         if not self.isRunning():
             BasePlatformApplication.start(self, False)
-    
+
     def build(self):
         """
         Run commands needed to get container ready for given
@@ -501,13 +559,14 @@ class BasePlatformApplication(Container):
         )
         self.runCommand(
             """
-            /usr/local/nginx/sbin/nginx -s stop || true && /usr/local/nginx/sbin/nginx
+            /usr/local/nginx/sbin/nginx -s stop || true
+            /usr/local/nginx/sbin/nginx
             """
         )
         # cron
         self.installCron()
 
-    def start(self,  requireServices = True):
+    def start(self,  requireServices=True):
         # ensure all required services are available
         if requireServices:
             projectServices = self.project.get("services", {})
@@ -517,7 +576,10 @@ class BasePlatformApplication(Container):
                 projectService = projectServices.get(serviceName)
                 if not projectService or not projectService.get("running"):
                     raise StateError(
-                        "Application '%s' depends on service '%s' which is not running." % (
+                        """
+                        Application '%s' depends on service '%s'
+                        which is not running.
+                        """ % (
                             self.getName(),
                             serviceName
                         )
@@ -525,7 +587,8 @@ class BasePlatformApplication(Container):
         # start container
         Container.start(self)
         container = self.getContainer()
-        if not container: return
+        if not container:
+            return
         # setup mount points
         self.setupMounts()
         # not yet built/provisioned

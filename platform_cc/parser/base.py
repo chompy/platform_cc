@@ -20,6 +20,7 @@ import yaml
 import yamlordereddictloader
 from .yaml_archive import ArchiveTag
 
+
 class BasePlatformParser:
     """
     Base class for Platform.sh configuration parser.
@@ -31,8 +32,10 @@ class BasePlatformParser:
 
         :param projectPath: Path to project root
         """
-        
-        yaml.SafeLoader.add_constructor(ArchiveTag.yaml_tag, ArchiveTag.from_yaml)
+
+        yaml.SafeLoader.add_constructor(
+            ArchiveTag.yaml_tag, ArchiveTag.from_yaml
+        )
         self.projectPath = str(projectPath)
 
     def _mergeDict(self, source, dest):

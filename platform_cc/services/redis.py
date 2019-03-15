@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from .base import BasePlatformService
 
+
 class RedisService(BasePlatformService):
     """
     Handler for redis services.
@@ -24,14 +25,14 @@ class RedisService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "redis"                 : "redis:3.2-alpine",
-        "redis-persistent"      : "redis:3.2-alpine",
-        "redis:3.2"             : "redis:3.2-alpine",
-        "redis-persistent:3.2"  : "redis:3.2-alpine",
-        "redis:2.8"             : "redis:2.8-alpine",
-        "redis-persistent:2.8"  : "redis:2.8-alpine",
-        "redis:3.0"             : "redis:3.0-alpine",
-        "redis-persistent:3.0"  : "redis:3.0-alpine"
+        "redis":                  "redis:3.2-alpine",
+        "redis-persistent":       "redis:3.2-alpine",
+        "redis:3.2":              "redis:3.2-alpine",
+        "redis-persistent:3.2":   "redis:3.2-alpine",
+        "redis:2.8":              "redis:2.8-alpine",
+        "redis-persistent:2.8":   "redis:2.8-alpine",
+        "redis:3.0":              "redis:3.0-alpine",
+        "redis-persistent:3.0":   "redis:3.0-alpine"
     }
 
     def getBaseImage(self):
@@ -39,28 +40,35 @@ class RedisService(BasePlatformService):
 
     def isPersistent(self):
         """ Return true if this redis service is persistent. """
-        return len(self.getType()) > 11 and self.getType()[-11:] == "-persistent"
+        return (
+            len(self.getType()) > 11 and
+            self.getType()[-11:] == "-persistent"
+        )
 
     def getContainerVolumes(self):
-        if not self.isPersistent(): return {}
+        if not self.isPersistent():
+            return {}
         return {
-            self.getVolumeName() : {
-                "bind" : "/data",
-                "mode" : "rw"
+            self.getVolumeName(): {
+                "bind": "/data",
+                "mode": "rw"
             }
         }
 
     def getContainerCommand(self):
-        if not self.isPersistent(): return BasePlatformService.getContainerCommand(self)
+        if not self.isPersistent():
+            return BasePlatformService.getContainerCommand(self)
         return ["redis-server", "--appendonly", "yes"]
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"][self.getName()] = {
-            "host"          : self.getContainerName(),
-            "ip"            : data.get("ip", ""),
-            "scheme"        : "redis",
-            "port"          : 6379
+            "host":           self.getContainerName(),
+            "ip":             data.get("ip", ""),
+            "scheme":         "redis",
+            "port":           6379
         }
-        data["platform_relationships"]["redis"] = data["platform_relationships"][self.getName()]
+        data["platform_relationships"]["redis"] = (
+            data["platform_relationships"][self.getName()]
+        )
         return data

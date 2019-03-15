@@ -19,6 +19,7 @@ import os
 from .base import BasePlatformParser
 from platform_cc.exception.parser_error import ParserError
 
+
 class ApplicationsParser(BasePlatformParser):
     """
     Applications (.platform.app.yaml) parser.
@@ -65,8 +66,10 @@ class ApplicationsParser(BasePlatformParser):
         """
         yamlList = []
         # get all application yaml files in a directory
+
         def getYamlPathsInDir(path):
-            if not os.path.isdir(path): return []
+            if not os.path.isdir(path):
+                return []
             yamlFiles = []
             for yamlFilename in self.YAML_FILENAMES:
                 yamlPath = os.path.join(path, yamlFilename)
@@ -108,7 +111,7 @@ class ApplicationsParser(BasePlatformParser):
         :rtype: dict
         """
         name = str(name)
-        if not name in self.applications:
+        if name not in self.applications:
             raise ParserError("Application '%s' is not defined." % name)
         applicationConfig = self.applications[name].copy()
         return applicationConfig

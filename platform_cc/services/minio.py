@@ -19,6 +19,7 @@ from .base import BasePlatformService
 import hashlib
 import base36
 
+
 class MinioService(BasePlatformService):
     """
     Handler for Minio object store service.
@@ -26,7 +27,7 @@ class MinioService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "minio"              : "minio/minio"
+        "minio":            "minio/minio"
     }
 
     """ Salt used to generate access keys. """
@@ -38,8 +39,8 @@ class MinioService(BasePlatformService):
     def isPlatformShCompatible(self):
         return False
 
-    def getKey(self, type = "access_key"):
-        """ 
+    def getKey(self, type="access_key"):
+        """
         Get key to use for for minio access
 
         :rtype: str
@@ -63,8 +64,8 @@ class MinioService(BasePlatformService):
 
     def getContainerEnvironmentVariables(self):
         return {
-            "MINIO_ACCESS_KEY"       : self.getKey(),
-            "MINIO_SECRET_KEY"       : self.getKey("secret_key")
+            "MINIO_ACCESS_KEY":        self.getKey(),
+            "MINIO_SECRET_KEY":        self.getKey("secret_key")
         }
 
     def getContainerCommand(self):
@@ -72,20 +73,22 @@ class MinioService(BasePlatformService):
 
     def getContainerVolumes(self):
         return {
-            self.getVolumeName() : {
-                "bind" : "/data",
-                "mode" : "rw"
+            self.getVolumeName(): {
+                "bind": "/data",
+                "mode": "rw"
             }
         }
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"][self.getName()] = {
-            "host"          : self.getContainerName(),
-            "ip"            : data.get("ip", ""),
-            "port"          : 9000,
-            "access_key"    : self.getKey(),
-            "secret_key"    : self.getKey("secret_key")
+            "host":           self.getContainerName(),
+            "ip":             data.get("ip", ""),
+            "port":           9000,
+            "access_key":     self.getKey(),
+            "secret_key":     self.getKey("secret_key")
         }
-        data["platform_relationships"]["minio"] = data["platform_relationships"][self.getName()]
+        data["platform_relationships"]["minio"] = (
+            data["platform_relationships"][self.getName()]
+        )
         return data

@@ -23,6 +23,7 @@ from .base import BasePlatformParser
 from .yaml_archive import ArchiveTag
 from platform_cc.exception.parser_error import ParserError
 
+
 class ServicesParser(BasePlatformParser):
     """
     Services (.platform/services.yaml) parser.
@@ -52,7 +53,8 @@ class ServicesParser(BasePlatformParser):
         with open(path, "r") as f:
             loadConf = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
             for key in loadConf:
-                if type(loadConf[key]) is not collections.OrderedDict: continue
+                if type(loadConf[key]) is not collections.OrderedDict:
+                    continue
                 if "_from" not in loadConf[key]:
                     loadConf[key]["_from"] = []
                 if path not in loadConf[key]["_from"]:
@@ -77,14 +79,16 @@ class ServicesParser(BasePlatformParser):
         :rtype: str
         """
         name = str(name)
-        if not name in self.services:
+        if name not in self.services:
             raise ParserError(
                 "Service '%s' is not defined." % name
             )
         # ensure 'type' parameter is present
-        if not "type" in self.services[name]:
+        if "type" not in self.services[name]:
             raise ParserError(
-                "'type' configuration parameter is missing for service '%s.'" % (
+                """
+                'type' configuration parameter is missing for service '%s.'
+                """ % (
                     name
                 )
             )
@@ -101,11 +105,12 @@ class ServicesParser(BasePlatformParser):
         :rtype: dict
         """
         name = str(name)
-        if not name in self.services:
+        if name not in self.services:
             raise ParserError("Service '%s' is not defined." % name)
         serviceConf = self.services[name].get("configuration", {}).copy()
         serviceConf["_name"] = name
         serviceConf["_type"] = self.getServiceType(name)
-        serviceConf["_is_default_config"] = os.path.basename(self.services[name].get("_path", "")) == os.path.basename(self.YAML_PATHS[0])
+        serviceConf["_is_default_config"] = os.path.basename(
+            self.services[name].get("_path", "")
+        ) == os.path.basename(self.YAML_PATHS[0])
         return serviceConf
-

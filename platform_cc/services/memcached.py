@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from .base import BasePlatformService
 
+
 class MemcachedService(BasePlatformService):
     """
     Handler for memcached services.
@@ -24,8 +25,8 @@ class MemcachedService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "memcached"              : "memcached:1",
-        "memcached:1.4"          : "memcached:1"
+        "memcached":              "memcached:1",
+        "memcached:1.4":          "memcached:1"
     }
 
     def getBaseImage(self):
@@ -34,10 +35,12 @@ class MemcachedService(BasePlatformService):
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"][self.getName()] = {
-            "host"          : self.getContainerName(),
-            "ip"            : data.get("ip", ""),
-            "scheme"        : "memcached",
-            "port"          : 11211
+            "host":           self.getContainerName(),
+            "ip":             data.get("ip", ""),
+            "scheme":         "memcached",
+            "port":           11211
         }
-        data["platform_relationships"]["memcached"] = data["platform_relationships"][self.getName()]
+        data["platform_relationships"]["memcached"] = (
+            data["platform_relationships"][self.getName()]
+        )
         return data

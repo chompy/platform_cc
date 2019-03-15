@@ -20,12 +20,13 @@ import json
 from platform_cc.container import Container
 from platform_cc.parser.services import ServicesParser
 
+
 class BasePlatformService(Container):
     """
     Base class for Platform.sh services.
     """
 
-    def __init__(self, project, config, dockerClient = None):
+    def __init__(self, project, config, dockerClient=None):
         """
         Constructor.
 
@@ -55,14 +56,17 @@ class BasePlatformService(Container):
         isDefaultConf = self.config.get("_is_default_config", True)
         if isDefaultConf and not self.isPlatformShCompatible():
             self.logger.warn(
-                "Service '%s/%s' is not compatible with Platform.sh but was defined in '%s', consider moving it to '%s.'" % (
+                """
+                Service '%s/%s' is not compatible with Platform.sh but
+                was defined in '%s', consider moving it to '%s.'
+                """ % (
                     self.getName(),
                     self.getType(),
                     ServicesParser.YAML_PATHS[0],
                     ServicesParser.YAML_PATHS[1]
                 )
             )
-        
+
     def getType(self):
         """
         Get service type.
@@ -91,9 +95,9 @@ class BasePlatformService(Container):
         :rtype: dict
         """
         return {
-            "running"                   : self.isRunning(),
-            "ip"                        : self.getContainerIpAddress(),
-            "platform_relationships"    : {}
+            "running":                    self.isRunning(),
+            "ip":                         self.getContainerIpAddress(),
+            "platform_relationships":     {}
         }
 
     def getLabels(self):
@@ -110,5 +114,4 @@ class BasePlatformService(Container):
         if not self.isPlatformShCompatible():
             # TODO
             pass
-
         Container.start(self)

@@ -19,6 +19,7 @@ from .base import BasePlatformService
 import hashlib
 import base36
 
+
 class AthenaPdfService(BasePlatformService):
     """
     Handler for Athena PDF services.
@@ -26,7 +27,7 @@ class AthenaPdfService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "athenapdf"              : "arachnysdocker/athenapdf-service"
+        "athenapdf":            "arachnysdocker/athenapdf-service"
     }
 
     """ Salt used to generate auth key. """
@@ -39,7 +40,7 @@ class AthenaPdfService(BasePlatformService):
         return False
 
     def getAuthKey(self):
-        """ 
+        """
         Get auth key to use when authenticating with weaver service.
 
         :rtype: str
@@ -62,16 +63,18 @@ class AthenaPdfService(BasePlatformService):
 
     def getContainerEnvironmentVariables(self):
         return {
-            "WEAVER_AUTH_KEY"       : self.getAuthKey()
+            "WEAVER_AUTH_KEY":  self.getAuthKey()
         }
 
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"][self.getName()] = {
-            "host"          : self.getContainerName(),
-            "ip"            : data.get("ip", ""),
-            "port"          : 8080,
-            "auth"          : self.getAuthKey()
+            "host":           self.getContainerName(),
+            "ip":             data.get("ip", ""),
+            "port":           8080,
+            "auth":           self.getAuthKey()
         }
-        data["platform_relationships"]["athenapdf"] = data["platform_relationships"][self.getName()]
+        data["platform_relationships"]["athenapdf"] = (
+            data["platform_relationships"][self.getName()]
+        )
         return data

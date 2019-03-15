@@ -23,6 +23,7 @@ import yaml
 from .base import BasePlatformParser
 from platform_cc.exception.parser_error import ParserError
 
+
 class RoutesParser(BasePlatformParser):
     """
     Routes (.platform/routes.yaml) parser.
@@ -94,14 +95,19 @@ class RoutesParser(BasePlatformParser):
         routes = self._readYaml(yamlPaths)
         self._routes = []
         for routeSyntax, routeConfig in routes.items():
-            if routeSyntax.startswith("."): continue
+            if routeSyntax.startswith("."):
+                continue
             parseRouteSyntax = urlparse(routeSyntax)
             hostnames = []
             for domain in self.getAllDomains():
-                newHostname = parseRouteSyntax.hostname.replace("{all}", domain)
+                newHostname = parseRouteSyntax.hostname.replace(
+                    "{all}", domain
+                )
                 if newHostname != parseRouteSyntax.hostname:
                     hostnames.append(newHostname)
-            newHostname = parseRouteSyntax.hostname.replace("{default}", self.getDefaultDomain())
+            newHostname = parseRouteSyntax.hostname.replace(
+                "{default}", self.getDefaultDomain()
+            )
             if newHostname != parseRouteSyntax.hostname:
                 hostnames.append(newHostname)
             if not hostnames:
@@ -118,16 +124,16 @@ class RoutesParser(BasePlatformParser):
                 if len(upstream) < 2 or upstream[1] != "http":
                     continue
             self._routes.append({
-                "scheme"            : parseRouteSyntax.scheme,
-                "hostnames"         : hostnames,
-                "path"              : parseRouteSyntax.path,
-                "type"              : routeConfig.get("type", "upstream"),
-                "upstream"          : upstream[0],
-                "to"                : routeConfig.get("to", ""),
-                "cache"             : routeConfig.get("cache", {}),
-                "ssi"               : routeConfig.get("ssi", {}),
-                "original_url"      : routeSyntax,
-                "redirects"         : routeConfig.get("redirects", {})
+                "scheme":             parseRouteSyntax.scheme,
+                "hostnames":          hostnames,
+                "path":               parseRouteSyntax.path,
+                "type":               routeConfig.get("type", "upstream"),
+                "upstream":           upstream[0],
+                "to":                 routeConfig.get("to", ""),
+                "cache":              routeConfig.get("cache", {}),
+                "ssi":                routeConfig.get("ssi", {}),
+                "original_url":       routeSyntax,
+                "redirects":          routeConfig.get("redirects", {})
             })
         return self._routes
 
@@ -155,7 +161,7 @@ class RoutesParser(BasePlatformParser):
         :rtype: dict
         """
         routes = self.getRoutes()
-        output = {}        
+        output = {}
         for route in routes:
             hostnames = route.pop("hostnames", [])
             route.pop("redirects")

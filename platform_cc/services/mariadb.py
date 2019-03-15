@@ -21,6 +21,7 @@ import base36
 import docker
 import time
 
+
 class MariaDbService(BasePlatformService):
     """
     Handler for MariaDB services.
@@ -28,16 +29,16 @@ class MariaDbService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "mysql"                  : "mariadb:10.2",
-        "mysql:10.2"             : "mariadb:10.2",
-        "mysql:10.1"             : "mariadb:10.1",
-        "mysql:10.0"             : "mariadb:10.0",
-        "mysql:5.5"              : "mariadb:5.5",
-        "mariadb"                : "mariadb:10.2",
-        "mariadb:10.2"           : "mariadb:10.2",
-        "mariadb:10.1"           : "mariadb:10.1",
-        "mariadb:10.0"           : "mariadb:10.0",
-        "mariadb:5.5"            : "mariadb:5.5"        
+        "mysql":                   "mariadb:10.2",
+        "mysql:10.2":              "mariadb:10.2",
+        "mysql:10.1":              "mariadb:10.1",
+        "mysql:10.0":              "mariadb:10.0",
+        "mysql:5.5":               "mariadb:5.5",
+        "mariadb":                 "mariadb:10.2",
+        "mariadb:10.2":            "mariadb:10.2",
+        "mariadb:10.1":            "mariadb:10.1",
+        "mariadb:10.0":            "mariadb:10.0",
+        "mariadb:5.5":             "mariadb:5.5"
     }
 
     """ Default schema list if one is not set. """
@@ -47,10 +48,10 @@ class MariaDbService(BasePlatformService):
 
     """ Default endpoint to provide if one is not set. """
     DEFAULT_ENDPOINT = {
-        "mysql" : {
-            "default_schema" : "mysql",
-            "privileges" : {
-                "mysql" : "admin"
+        "mysql": {
+            "default_schema": "mysql",
+            "privileges": {
+                "mysql": "admin"
             }
         }
     }
@@ -61,8 +62,8 @@ class MariaDbService(BasePlatformService):
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
-    def getPassword(self, user = "root"):
-        """ 
+    def getPassword(self, user="root"):
+        """
         Get database password for given user.
 
         :param user: Database username
@@ -88,14 +89,14 @@ class MariaDbService(BasePlatformService):
 
     def getContainerEnvironmentVariables(self):
         return {
-            "MYSQL_ROOT_PASSWORD"       : self.getPassword()
+            "MYSQL_ROOT_PASSWORD":      self.getPassword()
         }
 
     def getContainerVolumes(self):
         return {
-            self.getVolumeName() : {
-                "bind" : "/var/lib/mysql",
-                "mode" : "rw"
+            self.getVolumeName(): {
+                "bind": "/var/lib/mysql",
+                "mode": "rw"
             }
         }
 
@@ -103,28 +104,28 @@ class MariaDbService(BasePlatformService):
         data = BasePlatformService.getServiceData(self)
         endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         for name, config in endpoints.items():
-            data["platform_relationships"][name.strip()] = {                
-                "host"          : self.getContainerName(),
-                "ip"            : data.get("ip", ""),
-                "port"          : 3306,
-                "path"          : config.get(
-                                    "default_schema",
-                                    list(config.get("privileges", {}).keys())[0]
-                                )
-                ,
-                "query"         : {
-                    "is_master"     : True
+            data["platform_relationships"][name.strip()] = {
+                "host":           self.getContainerName(),
+                "ip":             data.get("ip", ""),
+                "port":           3306,
+                "path":           config.get(
+                    "default_schema",
+                    list(config.get("privileges", {}).keys())[0]
+                ),
+                "query": {
+                    "is_master":    True
                 },
-                "scheme"        : "mysql",
-                "password"      : self.getPassword(name.strip()),
-                "username"      : name.strip()
+                "scheme":         "mysql",
+                "password":       self.getPassword(name.strip()),
+                "username":       name.strip()
             }
         return data
 
     def start(self):
         BasePlatformService.start(self)
         container = self.getContainer()
-        if not container: return
+        if not container:
+            return
         # wait for mysql to become ready
         exitCode = 1
         while exitCode != 0:
@@ -140,7 +141,11 @@ class MariaDbService(BasePlatformService):
                 schema
             )
             container.exec_run(
-                "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;\"" % (
+                """
+                mysql -h 127.0.0.1 -uroot --password="%s" \\
+                -e "CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 \\
+                COLLATE utf8mb4_bin;"
+                """ % (
                     self.getPassword(),
                     schema
                 )
@@ -153,13 +158,19 @@ class MariaDbService(BasePlatformService):
                 endpoint
             )
             container.exec_run(
-                "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"DROP USER '%s'@'%%';\"" % (
+                """
+                mysql -h 127.0.0.1 -uroot --password="%s" \\
+                -e "DROP USER '%s'@'%%';"
+                """ % (
                     self.getPassword(),
                     endpoint
                 )
             )
             container.exec_run(
-                "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"CREATE USER '%s'@'%%' IDENTIFIED BY '%s';\"" % (
+                """
+                mysql -h 127.0.0.1 -uroot --password="%s" \\
+                -e "CREATE USER '%s'@'%%' IDENTIFIED BY '%s';"
+                """ % (
                     self.getPassword(),
                     endpoint,
                     self.getPassword(endpoint)
@@ -175,7 +186,10 @@ class MariaDbService(BasePlatformService):
                         schema
                     )
                     container.exec_run(
-                        "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';\"" % (
+                        """
+                        mysql -h 127.0.0.1 -uroot --password=\"%s\" \\
+                        -e "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';"
+                        """ % (
                             self.getPassword(),
                             schema,
                             endpoint
@@ -188,27 +202,36 @@ class MariaDbService(BasePlatformService):
                         schema
                     )
                     container.exec_run(
-                        "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT SELECT ON %s.* TO '%s'@'%%';\"" % (
+                        """
+                        mysql -h 127.0.0.1 -uroot --password="%s" \\
+                        -e "GRANT SELECT ON %s.* TO '%s'@'%%';"
+                        """ % (
                             self.getPassword(),
                             schema,
                             endpoint
                         )
-                    )                    
+                    )
                 elif privilege == "rw":
                     self.logger.info(
                         "Grant user '%s' read/write privilege on schema '%s.'",
                         endpoint,
                         schema
-                    )                    
+                    )
                     container.exec_run(
-                        "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* TO '%s'@'%%';\"" % (
+                        """
+                        mysql -h 127.0.0.1 -uroot --password="%s" \\
+                        -e "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* \\
+                        TO '%s'@'%%';"
+                        """ % (
                             self.getPassword(),
                             schema,
                             endpoint
                         )
                     )
         container.exec_run(
-            "mysql -h 127.0.0.1 -uroot --password=\"%s\" -e \"FLUSH PRIVILEGES;\"" % (
+            """
+            mysql -h 127.0.0.1 -uroot --password="%s" -e "FLUSH PRIVILEGES;"
+            """ % (
                 self.getPassword()
             )
         )

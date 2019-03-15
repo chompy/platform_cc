@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from .base import BasePlatformService
 
+
 class DockerService(BasePlatformService):
     """
     Handler for docker service.
@@ -31,10 +32,12 @@ class DockerService(BasePlatformService):
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         data["platform_relationships"][self.getName()] = {
-            "host"          : self.getContainerName(),
-            "ip"            : data.get("ip", "")
+            "host":         self.getContainerName(),
+            "ip":           data.get("ip", "")
         }
-        data["platform_relationships"]["docker"] = data["platform_relationships"][self.getName()]
+        data["platform_relationships"]["docker"] = (
+            data["platform_relationships"][self.getName()]
+        )
         return data
 
     def getContainerEnvironmentVariables(self):
@@ -47,8 +50,8 @@ class DockerService(BasePlatformService):
         volumes = {}
         for key, value in self.config.get("volumes", {}).iteritems():
             volumes[self.getVolumeName(str(key))] = {
-                "bind"  : str(value),
-                "mode"  : "rw"
+                "bind":     str(value),
+                "mode":     "rw"
             }
         return volumes
 
