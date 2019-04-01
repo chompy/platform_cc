@@ -333,5 +333,6 @@ class PhpApplication(BasePlatformApplication):
         )
         # restart container to reload conf changes
         container.restart()
+        self.setupMounts()
         # start container services
         self.startServices()
