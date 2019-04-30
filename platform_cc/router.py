@@ -83,6 +83,7 @@ class PlatformRouter(Container):
         )
         routesParser = RoutesParser(applications[0].project)
         routeHostnames = routesParser.getRoutesByHostname()
+        disableHttps = "PCC_DISABLE_HTTPS" in os.environ
         output = ""
         for hostname, routes in routeHostnames.items():
             self.logger.info(
@@ -92,23 +93,38 @@ class PlatformRouter(Container):
             )
             # create vhost entry for each scheme
             for scheme in ["http", "https"]:
-
+                # actual scheme to use, only changes if disableHttps is true
+                finalScheme = scheme
+                if disableHttps:
+                    finalScheme = "http"
+                # determine what port to listen on
+                listen = "443 ssl"
+                if scheme == "http" or disableHttps:
+                    listen = "80"
                 # create server section
                 server = Block(
                     "server",
                     resolver = "127.0.0.11",
                     server_name = hostname,
-                    listen = "443 ssl" if scheme == "https" else "80",
+                    listen = listen,
                     client_max_body_size = "200M"
                 )
-
                 # add ssl
-                if scheme == "https":
+                if scheme == "https" and not disableHttps:
                     server.options["ssl_certificate"] = "/etc/nginx/ssl/server.crt"
                     server.options["ssl_certificate_key"] = "/etc/nginx/ssl/server.key"
-
-                # add locations
+                # if https is disabled and both http and https schemes have
+                # routes then assume https is the desired route
                 hasRouteForScheme = False
+                if disableHttps and scheme == "http":
+                    hasHttpsRoute = False
+                    for config in routes:    
+                        if config.get("scheme", "http") == "https":
+                            hasHttpsRoute = True
+                            break
+                    if hasHttpsRoute:
+                        continue
+                # add locations
                 for config in routes:
                     if config.get("scheme", "http") != scheme: continue
                     hasRouteForScheme = True
@@ -177,7 +193,7 @@ class PlatformRouter(Container):
                             "/",
                             KeyValueOption(
                                 "return",
-                                "301 %s://$host$request_uri" % ("http" if scheme == "https" else "https")
+                                "301 %s://$host$request_uri" % ("http" if finalScheme == "https" else "https")
                             )
                         )
                     )

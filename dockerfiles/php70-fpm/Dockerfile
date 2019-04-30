@@ -1,22 +1,26 @@
 FROM php:7.0-fpm
 LABEL com.contextualcode.platformcc=""
 
+# install nodejs
+RUN curl https://nodejs.org/dist/latest-v12.x/node-v12.1.0-linux-x64.tar.xz -o node.tar.xz && \
+    tar xf node.tar.xz && \
+    rm node.tar.xz && \
+    mv node-* /opt/nodejs && \
+    ln -s -f /opt/nodejs/bin/* /usr/bin/ && \
+    ln -s -f /usr/bin/node /usr/bin/nodejs
+
 # install dependencies via apt-get
 RUN apt-get update && \
     apt-get install -y rsync git unzip cron python-pip python-dev \
         gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano \
         libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
         libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-        libpng16-16 libpng-dev libpcre3 libpcre3-dev libedit-dev && \
+        libpng16-16 libpng-dev libpcre3 libpcre3-dev libedit-dev gnupg apt-transport-https && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && \
+    apt-get install -y yarn && \
     apt-get clean
-
-# install nodejs
-RUN curl https://nodejs.org/dist/v8.11.2/node-v8.11.2-linux-x64.tar.xz -o node.tar.xz && \
-    tar xf node.tar.xz && \
-    rm node.tar.xz && \
-    mv node-* /opt/nodejs && \
-    ln -s -f /opt/nodejs/bin/* /usr/bin/ && \
-    ln -s -f /usr/bin/node /usr/bin/nodejs
 
 # update php configurations
 RUN echo "date.timezone = UTC" > /usr/local/etc/php/conf.d/01-main.ini && \
