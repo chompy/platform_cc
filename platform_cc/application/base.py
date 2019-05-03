@@ -51,7 +51,7 @@ class BasePlatformApplication(Container):
     TCP_PORT = 8001
 
     """ Socket path to use for upstream. """
-    SOCKET_PATH = "/tmp/app.socket"
+    SOCKET_PATH = "/run/app.sock"
 
     def __init__(self, project, config):
         """

@@ -112,6 +112,11 @@ class PhpApplication(BasePlatformApplication):
             chmod -R g+rw /usr/bin
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.backlog.*/listen.backlog = 511/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.owner.*/listen.owner = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.group.*/listen.group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.mode.*/listen.mode = 0660/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/listen.*/listen = \/run\/app.sock/g" /usr/local/etc/php-fpm.d/zz-docker.conf
             """ % (
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )
@@ -201,7 +206,7 @@ class PhpApplication(BasePlatformApplication):
         # force fastcgi/tcp upstream for php
         if not "web" in self.config:
             self.config["web"] = {}
-        self.config["web"]["upstream"] = {"socket_family" : "tcp", "protocol" : "fastcgi"}
+        self.config["web"]["upstream"] = {"socket_family" : "socket", "protocol" : "fastcgi"}
 
         options = BasePlatformApplication._generateNginxPassthruOptions(self, locationConfig)
         setOptions = [
