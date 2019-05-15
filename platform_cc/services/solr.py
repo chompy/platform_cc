@@ -9,13 +9,19 @@ import requests
 class SolrService(BasePlatformService):
     """
     Handler for Solr service.
+    Just a placeholder/dummy service for now.
     """
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "solr:4.10":            "klabs/solr:ezfind",
-        # "solr:6.3":            "solr:6.3-alpine",
-        # "solr:6.6":            "solr:6.6-alpine"
+        #"solr:4.10":            "klabs/solr:ezfind",
+        #"solr:6.3":            "solr:6.3-alpine",
+        #"solr:6.6":            "solr:6.6-alpine",
+        "solr:3.6":            "busybox",
+        "solr:4.10":           "busybox",
+        "solr:6.3":            "busybox",
+        "solr:6.6":            "busybox",
+        "solr:7.6":            "busybox"        
     }
 
     def getBaseImage(self):
@@ -53,20 +59,21 @@ class SolrService(BasePlatformService):
 
     def start(self):
         BasePlatformService.start(self)
-        container = self.getContainer()
-        if not container:
-            return
+        # TODO
+        #container = self.getContainer()
+        #if not container:
+        #    return
 
         # copy configsets
 
         # copy config
-        container.runCommand(
-            """
-            mkdir /solr_conf
-            """
-        )
-        data = BasePlatformService.getServiceData(self)
-        containerIp = data.get("ip", "")
+        #container.runCommand(
+        #    """
+        #    mkdir /solr_conf
+        #    """
+        #)
+        #data = BasePlatformService.getServiceData(self)
+        #containerIp = data.get("ip", "")
 
         # configure cores
         # /solr/admin/cores?action=CREATE&name=%s&instanceDir=/opt/solr/data/%s&config=solrconfig.xml&dataDir=data
