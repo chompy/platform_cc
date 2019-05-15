@@ -54,7 +54,7 @@ class BasePlatformApplication(Container):
     TCP_PORT = 8001
 
     """ Socket path to use for upstream. """
-    SOCKET_PATH = "/tmp/app.socket"
+    SOCKET_PATH = "/run/app.sock"
 
     def __init__(self, project, config):
         """
@@ -155,8 +155,11 @@ class BasePlatformApplication(Container):
                     ).encode("utf-8")
                 )
             ).decode("utf-8"),
-            "PLATFORM_PROJECT_ENTROPY":   self.project.get("entropy", ""),
-            "TRUSTED_PROXIES":            trustedProxies
+            "PLATFORM_PROJECT_ENTROPY"  : self.project.get("entropy", ""),
+            "TRUSTED_PROXIES"           : trustedProxies,
+            "SYMFONY_TRUSTED_PROXIES"   : trustedProxies,
+            "PORT"                      : self.TCP_PORT,
+            "SOCKET"                    : self.SOCKET_PATH
         }
         # set env vars from app variables
         for key, value in self.config.get(

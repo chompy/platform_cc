@@ -1,4 +1,9 @@
 DEV (Latest Unversioned)
+- PHP 7.3 support.
+- PHP containers now use Unix sockets instead of TCP by default.
+- Fixed bug with mount volumes with PHP.
+- Added PCC_DISABLE_HTTPS env var that converts all HTTPS routes to HTTP when set.
+- Added yarn to PHP docker container.
 
 v0.2.3
 - Initial Python 3 support.

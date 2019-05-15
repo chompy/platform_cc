@@ -30,12 +30,13 @@ class PhpApplication(BasePlatformApplication):
 
     """ Mapping for application type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "php"             : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
+        "php"             : "registry.gitlab.com/contextualcode/platform_cc/php73-fpm",
         "php:5.4"         : "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
         "php:5.6"         : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
         "php:7.0"         : "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
         "php:7.1"         : "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-        "php:7.2"         : "registry.gitlab.com/contextualcode/platform_cc/php72-fpm"   
+        "php:7.2"         : "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
+        "php:7.3"         : "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
     }
 
     """ Default user id to assign for user 'web' """
@@ -112,6 +113,11 @@ class PhpApplication(BasePlatformApplication):
             chmod -R g+rw /usr/bin
             sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
             sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.backlog.*/listen.backlog = 511/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.owner.*/listen.owner = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.group.*/listen.group = web/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/;listen.mode.*/listen.mode = 0660/g" /usr/local/etc/php-fpm.d/www.conf
+            sed -i "s/listen.*/listen = \/run\/app.sock/g" /usr/local/etc/php-fpm.d/zz-docker.conf
             """ % (
                 self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
             )
@@ -201,7 +207,12 @@ class PhpApplication(BasePlatformApplication):
         # force fastcgi/tcp upstream for php
         if not "web" in self.config:
             self.config["web"] = {}
-        self.config["web"]["upstream"] = {"socket_family" : "tcp", "protocol" : "fastcgi"}
+        if not "upstream" in self.config["web"]:
+            self.config["web"]["upstream"] = {}
+        if not "socket_family" in self.config["web"]["upstream"]:
+            self.config["web"]["upstream"]["socket_family"] = "socket"
+        if not "protocol" in self.config["web"]["upstream"]:
+            self.config["web"]["upstream"]["protocol"] = "fastcgi"            
 
         options = BasePlatformApplication._generateNginxPassthruOptions(self, locationConfig)
         setOptions = [
@@ -333,5 +344,6 @@ class PhpApplication(BasePlatformApplication):
         )
         # restart container to reload conf changes
         container.restart()
+        self.setupMounts()
         # start container services
         self.startServices()
