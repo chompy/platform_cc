@@ -47,12 +47,6 @@ class GoApplication(BasePlatformApplication):
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
-    def getContainerEnvironmentVariables(self):
-        envVars = BasePlatformApplication.getContainerEnvironmentVariables(self)
-        envVars["PORT"] = self.TCP_PORT
-        envVars["SOCKET"] = self.SOCKET_PATH
-        return envVars
-
     def build(self):
         self.prebuild()
         output = ""

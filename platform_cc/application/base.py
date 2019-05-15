@@ -134,7 +134,10 @@ class BasePlatformApplication(Container):
                 bytes(str(json.dumps(self.project.get("variables", {}))).encode("utf-8"))
             ).decode("utf-8"),
             "PLATFORM_PROJECT_ENTROPY"  : self.project.get("entropy", ""),
-            "TRUSTED_PROXIES"           : trustedProxies
+            "TRUSTED_PROXIES"           : trustedProxies,
+            "SYMFONY_TRUSTED_PROXIES"   : trustedProxies,
+            "PORT"                      : self.TCP_PORT,
+            "SOCKET"                    : self.SOCKET_PATH
         }
         # set env vars from app variables
         for key, value in self.config.get("variables", {}).get("env", {}).items():

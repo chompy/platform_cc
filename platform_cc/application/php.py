@@ -207,7 +207,12 @@ class PhpApplication(BasePlatformApplication):
         # force fastcgi/tcp upstream for php
         if not "web" in self.config:
             self.config["web"] = {}
-        self.config["web"]["upstream"] = {"socket_family" : "socket", "protocol" : "fastcgi"}
+        if not "upstream" in self.config["web"]:
+            self.config["web"]["upstream"] = {}
+        if not "socket_family" in self.config["web"]["upstream"]:
+            self.config["web"]["upstream"]["socket_family"] = "socket"
+        if not "protocol" in self.config["web"]["upstream"]:
+            self.config["web"]["upstream"]["protocol"] = "fastcgi"            
 
         options = BasePlatformApplication._generateNginxPassthruOptions(self, locationConfig)
         setOptions = [
