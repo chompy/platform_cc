@@ -4,6 +4,7 @@ DEV (Latest Unversioned)
 - Fixed bug with mount volumes with PHP.
 - Added PCC_DISABLE_HTTPS env var that converts all HTTPS routes to HTTP when set.
 - Added yarn to PHP docker container.
+- Fixed issue with Mariadb service where schemas, users, and grants failed to be created.
 
 v0.2.3
 - Initial Python 3 support.

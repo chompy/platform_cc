@@ -132,8 +132,7 @@ class MariaDbService(BasePlatformService):
             (exitCode, output) = container.exec_run(
                 "mysqladmin ping -h 127.0.0.1 --silent"
             )
-            time.sleep(5)
-        time.sleep(10)
+            time.sleep(.35)
         # create schemas
         schemas = self.config.get("schemas", self.DEFAULT_SCHEMAS)
         for schema in schemas:
@@ -141,14 +140,14 @@ class MariaDbService(BasePlatformService):
                 "Create schema '%s' (if it does not exist).",
                 schema
             )
-            container.exec_run(
+            (exit_code, output) = container.exec_run(
                 """
-                mysql -h 127.0.0.1 -uroot --password="%s" \\
-                -e "CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 \\
+                mysql -h 127.0.0.1 -uroot --password="%s" \
+                -e "CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 \
                 COLLATE utf8mb4_bin;"
                 """ % (
                     self.getPassword(),
-                    schema
+                    str(schema)
                 )
             )
         # create users
@@ -160,7 +159,7 @@ class MariaDbService(BasePlatformService):
             )
             container.exec_run(
                 """
-                mysql -h 127.0.0.1 -uroot --password="%s" \\
+                mysql -h 127.0.0.1 -uroot --password="%s" \
                 -e "DROP USER '%s'@'%%';"
                 """ % (
                     self.getPassword(),
@@ -169,7 +168,7 @@ class MariaDbService(BasePlatformService):
             )
             container.exec_run(
                 """
-                mysql -h 127.0.0.1 -uroot --password="%s" \\
+                mysql -h 127.0.0.1 -uroot --password="%s" \
                 -e "CREATE USER '%s'@'%%' IDENTIFIED BY '%s';"
                 """ % (
                     self.getPassword(),
@@ -188,7 +187,7 @@ class MariaDbService(BasePlatformService):
                     )
                     container.exec_run(
                         """
-                        mysql -h 127.0.0.1 -uroot --password=\"%s\" \\
+                        mysql -h 127.0.0.1 -uroot --password=\"%s\" \
                         -e "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';"
                         """ % (
                             self.getPassword(),
@@ -204,7 +203,7 @@ class MariaDbService(BasePlatformService):
                     )
                     container.exec_run(
                         """
-                        mysql -h 127.0.0.1 -uroot --password="%s" \\
+                        mysql -h 127.0.0.1 -uroot --password="%s" \
                         -e "GRANT SELECT ON %s.* TO '%s'@'%%';"
                         """ % (
                             self.getPassword(),
@@ -220,8 +219,8 @@ class MariaDbService(BasePlatformService):
                     )
                     container.exec_run(
                         """
-                        mysql -h 127.0.0.1 -uroot --password="%s" \\
-                        -e "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* \\
+                        mysql -h 127.0.0.1 -uroot --password="%s" \
+                        -e "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* \
                         TO '%s'@'%%';"
                         """ % (
                             self.getPassword(),
