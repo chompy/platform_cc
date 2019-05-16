@@ -132,7 +132,8 @@ class MariaDbService(BasePlatformService):
             (exitCode, output) = container.exec_run(
                 "mysqladmin ping -h 127.0.0.1 --silent"
             )
-            time.sleep(.35)
+            time.sleep(5)
+        time.sleep(10)
         # create schemas
         schemas = self.config.get("schemas", self.DEFAULT_SCHEMAS)
         for schema in schemas:
