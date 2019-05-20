@@ -121,7 +121,7 @@ class RoutesParser(BasePlatformParser):
             upstream = ["", ""]
             if routeConfig.get("type", "upstream") == "upstream":
                 upstream = routeConfig.get("upstream", "").split(":")
-                if len(upstream) < 2 or upstream[1] != "http":
+                if len(upstream) < 2 or upstream[1][0:4] != "http":
                     continue
             self._routes.append({
                 "scheme":             parseRouteSyntax.scheme,

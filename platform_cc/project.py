@@ -429,7 +429,11 @@ class PlatformProject:
                         containerConfig
                     )
                 )
-        return results
+
+        # sort results
+        def sortKeyName(value):
+            return value.getName()
+        return sorted(results, key=sortKeyName)
 
     def getService(self, name = None):
         """
@@ -490,10 +494,15 @@ class PlatformProject:
             if application and (not name or application.getName() == name):
                 return application   
 
+        # use to sort application list by name
+        def appSortKey(value):
+            return value.getName()
+
         # check docker
         matchedApps = self.dockerFetch("application", name)
         if matchedApps:
             self._applications.append(matchedApps[0])
+            self._applications = sorted(self._applications, key=appSortKey)
             return matchedApps[0]
 
         # check path
@@ -521,6 +530,7 @@ class PlatformProject:
                 appConfig
             )
             self._applications.append(app)
+            self._applications = sorted(self._applications, key=appSortKey)
             return app
 
         # not found
@@ -552,7 +562,7 @@ class PlatformProject:
         if len(self._applications) == 0:
             raise Exception("Project must contain at least one application.")
         # generate nginx config
-        nginxConfig = router.generateNginxConfig(self._applications)
+        nginxConfig = router.generateNginxConfig(self._applications, self._services)
         # upload nginx config to router
         nginxConfigFile = io.BytesIO(
             bytes(str(nginxConfig).encode("utf-8"))

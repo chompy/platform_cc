@@ -579,10 +579,7 @@ class BasePlatformApplication(Container):
                 projectService = projectServices.get(serviceName)
                 if not projectService or not projectService.get("running"):
                     raise StateError(
-                        """
-                        Application '%s' depends on service '%s'
-                        which is not running.
-                        """ % (
+                        "Application '%s' depends on service '%s' which is not running." % (
                             self.getName(),
                             serviceName
                         )

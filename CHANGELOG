@@ -5,6 +5,8 @@ DEV (Latest Unversioned)
 - Added PCC_DISABLE_HTTPS env var that converts all HTTPS routes to HTTP when set.
 - Added yarn to PHP docker container.
 - Fixed issue with Mariadb service where schemas, users, and grants failed to be created.
+- Added placeholder SOLR and Varnish services so that projects that depend on them still start.
+- Added YAML !include tag.
 
 v0.2.3
 - Initial Python 3 support.

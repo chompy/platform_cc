@@ -21,6 +21,7 @@ import yamlordereddictloader
 import collections
 from .base import BasePlatformParser
 from .yaml_archive import ArchiveTag
+from .yaml_include import IncludeTag
 from platform_cc.exception.parser_error import ParserError
 
 
@@ -50,6 +51,7 @@ class ServicesParser(BasePlatformParser):
     def _readYaml(self, path):
         loadConf = {}
         ArchiveTag.base_path = os.path.dirname(path)
+        IncludeTag.base_path = ArchiveTag.base_path
         with open(path, "r") as f:
             loadConf = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
             for key in loadConf:

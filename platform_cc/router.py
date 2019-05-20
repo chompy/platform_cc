@@ -69,11 +69,12 @@ class PlatformRouter(Container):
     def getVolume(self, name = ""):
         return None
 
-    def generateNginxConfig(self, applications):
+    def generateNginxConfig(self, applications, services):
         """
         Generate Nginx vhost for applications in a project.
 
         :param applications: List of all applications in a project
+        :param services: List of all services in a project
         :return: Nginx configuration
         :rtype: str
         """
@@ -152,6 +153,10 @@ class PlatformRouter(Container):
                         for application in applications:
                             if application.getName() == config.get("upstream"):
                                 upstreamHost = application.getContainerName() # container host name
+                        # fallback to first available app if upstream not found
+                        # TODO support for varnish upstream and upstreams via services
+                        if not upstreamHost:
+                            upstreamHost = applications[0].getContainerName()
                         if not redirectHasRootPath and upstreamHost:
                             location.sections.add(
                                 Location(

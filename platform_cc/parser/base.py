@@ -19,6 +19,7 @@ import os
 import yaml
 import yamlordereddictloader
 from .yaml_archive import ArchiveTag
+from .yaml_include import IncludeTag
 
 
 class BasePlatformParser:
@@ -35,6 +36,9 @@ class BasePlatformParser:
 
         yaml.SafeLoader.add_constructor(
             ArchiveTag.yaml_tag, ArchiveTag.from_yaml
+        )
+        yaml.SafeLoader.add_constructor(
+            IncludeTag.yaml_tag, IncludeTag.from_yaml
         )
         self.projectPath = str(projectPath)
 
