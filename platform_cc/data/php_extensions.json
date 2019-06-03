@@ -16,18 +16,13 @@
         {
             "images" : [
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm"
-            ],
-            "command" : "apt-get install -y libmemcached-dev zlib1g-dev && yes '' | pecl install memcached-2.2.0 || true && docker-php-ext-enable memcached || true"
-        },
-        {
-            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
             ],
-            "command" : "apt-get install -y libmemcached-dev zlib1g-dev && yes '' | pecl install memcached || true && docker-php-ext-enable memcached || true"
+            "command" : "docker-php-ext-enable memcached"
         }
     ],
     "redis" : [
@@ -40,7 +35,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
             ],
-            "command" : "yes '' | pecl install redis || true && docker-php-ext-enable redis || true"
+            "command" : "docker-php-ext-enable redis"
         }
     ],
     "imagick" : [
@@ -53,7 +48,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
             ],
-            "command" : "apt-get install -y imagemagick libmagickcore-dev libmagickwand-dev && yes '' | pecl install imagick || true && docker-php-ext-enable imagick || true"
+            "command" : "docker-php-ext-enable imagick"
         }
     ],
     "newrelic" : [
@@ -73,18 +68,13 @@
         {
             "images" : [
                 "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm"
-            ],
-            "command": "yes '' | pecl install xdebug-2.5.5 || true && docker-php-ext-enable xdebug || true"
-        },
-        {
-            "images" : [
+                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
             ],
-            "command": "yes '' | pecl install xdebug || true && docker-php-ext-enable xdebug || true"
+            "command": "docker-php-ext-enable xdebug"
         }
     ],
     "twig" : [
@@ -115,7 +105,7 @@
                 "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
                 "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
             ],
-            "command" : "yes '' | pecl install igbinary || true && docker-php-ext-enable igbinary || true"
+            "command" : "docker-php-ext-enable igbinary"
         }
     ]
 }
