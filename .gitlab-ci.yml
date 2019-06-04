@@ -10,14 +10,8 @@ build:php54:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php54-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php54
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php54-fpm ./docker/php -f ./docker/php/Dockerfile-php54
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php54-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php54-fpm
     only:
         changes:
@@ -33,14 +27,8 @@ build:php56:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php56-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php56
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php56-fpm ./docker/php -f ./docker/php/Dockerfile-php56
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php56-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php56-fpm
     only:
         changes:
@@ -56,14 +44,8 @@ build:php70:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php70
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm ./docker/php -f ./docker/php/Dockerfile-php70
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php70-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php70-fpm
     only:
         changes:
@@ -79,14 +61,8 @@ build:php71:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php71
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm ./docker/php -f ./docker/php/Dockerfile-php71
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php71-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php71-fpm
     only:
         changes:
@@ -102,14 +78,8 @@ build:php72:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php72
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm ./docker/php -f ./docker/php/Dockerfile-php72
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php72-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php72-fpm
     only:
         changes:
@@ -125,14 +95,8 @@ build:php73:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/php73-fpm:$CI_COMMIT_TAG ./docker/php -f ./docker/php/Dockerfile-php73
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/php73-fpm ./docker/php -f ./docker/php/Dockerfile-php73
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/php73-fpm:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php73-fpm
     only:
         changes:
@@ -148,14 +112,8 @@ build:golang111:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11:$CI_COMMIT_TAG ./docker/golang -f ./docker/golang/Dockerfile-golang111
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11:$CI_COMMIT_TAG ./docker/golang -f ./docker/golang/Dockerfile-golang111
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/golang-1-11:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/golang-1-11
     only:
         changes:
@@ -170,14 +128,8 @@ build:python37:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7:$CI_COMMIT_TAG ./docker/python -f ./docker/python/Dockerfile-python37
-            fi
             docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7 ./docker/python -f ./docker/python/Dockerfile-python37
         - |
-            if [ -z "$CI_COMMIT_TAG" ]; then
-                docker push registry.gitlab.com/contextualcode/platform_cc/python-3-7:$CI_COMMIT_TAG
-            fi
             docker push registry.gitlab.com/contextualcode/platform_cc/python-3-7
     only:
         changes:
