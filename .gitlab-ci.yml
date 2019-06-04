@@ -1,0 +1,93 @@
+stages:
+    - build
+
+build:php54:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php54-fpm ./docker/php -f ./docker/php/Dockerfile-php54
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/php54-fpm
+
+build:php56:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php56-fpm ./docker/php -f ./docker/php/Dockerfile-php56
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/php56-fpm
+
+build:php70:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm ./docker/php -f ./docker/php/Dockerfile-php70
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/php70-fpm
+
+build:php71:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm ./docker/php -f ./docker/php/Dockerfile-php71
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/php71-fpm
+
+build:php72:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm ./docker/php -f ./docker/php/Dockerfile-php72
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/php72-fpm
+
+build:golang111:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11 ./docker/golang -f ./docker/golang/Dockerfile-golang111
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/golang-1-11
+
+build:python37:
+    stage: build
+    image: tmaier/docker-compose:latest
+    services:
+        - docker:dind
+    before_script:
+        - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    script:
+        - |
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7 ./docker/python -f ./docker/python/Dockerfile-python37
+        - |
+            docker push registry.gitlab.com/contextualcode/platform_cc/python-3-7
