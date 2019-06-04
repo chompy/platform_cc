@@ -20,7 +20,9 @@ build:php54:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php54-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php54
 
 build:php56:
     stage: build
@@ -41,7 +43,9 @@ build:php56:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php56-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php56
 
 build:php70:
     stage: build
@@ -62,7 +66,9 @@ build:php70:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php70-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php70
 
 build:php71:
     stage: build
@@ -83,7 +89,9 @@ build:php71:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php71-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php71
 
 build:php72:
     stage: build
@@ -104,7 +112,9 @@ build:php72:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php72-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php72
 
 build:php73:
     stage: build
@@ -125,7 +135,9 @@ build:php73:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/php73-fpm
     only:
-        - /^v.*$/
+        changes:
+            - docker/php/conf/*
+            - docker/php/Dockerfile-php73
 
 build:golang111:
     stage: build
@@ -146,7 +158,8 @@ build:golang111:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/golang-1-11
     only:
-        - /^v.*$/
+        changes:
+            - docker/golang/*
 
 build:python37:
     stage: build
@@ -167,4 +180,5 @@ build:python37:
             fi
             docker push registry.gitlab.com/contextualcode/platform_cc/python-3-7
     only:
-        - /^v.*$/
+        changes:
+            - docker/python/*

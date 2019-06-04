@@ -11,13 +11,15 @@ ln -s -f /usr/bin/node /usr/bin/nodejs
 # apt
 apt-get update
 apt-get install -y rsync git unzip cron python-pip python-dev \
-    gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano libmemcached-dev zlib1g-dev \
-    libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
+    gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano libmemcached-dev  \
+    libmcrypt4 libmcrypt-dev libxslt1.1 libxslt1-dev zlib1g-dev\
     libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-    libpng16-16 libpng-dev libpcre3 libpcre3-dev libedit-dev gnupg apt-transport-https \
+     libpcre3 libpcre3-dev libedit-dev gnupg apt-transport-https \
     imagemagick libmagickcore-dev libmagickwand-dev
-apt-get update
-if [ "$PHP_VER" = "7" ]; then
+if [ "$PHP_VER" = "5" ]; then
+    apt-get install -y libicu52 libicu-dev libpng12-0 libpng-dev
+elif [ "$PHP_VER" = "7" ]; then
+    apt-get install -y libicu57 libicu-dev libpng16-16 libpng-dev
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.libxslt1
     apt-get update
