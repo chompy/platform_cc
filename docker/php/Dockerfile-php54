@@ -1,10 +1,8 @@
 FROM php:5.4-fpm
 LABEL com.contextualcode.platformcc=""
-
-COPY conf/nginx.conf /usr/local/nginx/conf/nginx.conf
-COPY conf/fastcgi_params /usr/local/nginx/conf/fastcgi_params
 COPY conf/*.sh /opt/
-
 RUN PHP_VER=5 /opt/install_dependencies.sh && \
     PHP_VER=5 /opt/config_php.sh && \
     PHP_VER=5 /opt/build_ext.sh
+COPY conf/nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY conf/fastcgi_params /usr/local/nginx/conf/fastcgi_params

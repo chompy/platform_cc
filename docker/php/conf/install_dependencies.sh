@@ -2,7 +2,7 @@
 
 # node.js
 curl https://nodejs.org/dist/v12.3.1/node-v12.3.1.tar.gz -o node.tar.gz
-tar xvfz node.tar.gz
+tar xfz node.tar.gz
 rm node.tar.gz
 mv node-* /opt/nodejs
 ln -s -f /opt/nodejs/bin/* /usr/bin/
@@ -24,3 +24,15 @@ if [ "$PHP_VER" = "7" ]; then
     apt-get install -y yarn
 fi
 apt-get clean
+
+# nginx
+curl -L https://nginx.org/download/nginx-1.14.0.tar.gz -o nginx.tar.gz
+tar xvfz nginx.tar.gz
+rm nginx.tar.gz
+cd nginx*
+git clone --recursive https://github.com/google/ngx_brotli.git
+./configure --with-http_realip_module --with-http_gunzip_module --with-http_gzip_static_module --add-module=ngx_brotli
+make && \
+make install && \
+cd .. && \
+rm -rf nginx* 
