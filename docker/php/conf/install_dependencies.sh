@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # node.js
-curl https://nodejs.org/dist/v12.3.1/node-v12.3.1.tar.gz -o node.tar.gz
-tar xfz node.tar.gz
-rm node.tar.gz
+curl https://nodejs.org/dist/v10.16.0/node-v10.16.0-linux-x64.tar.xz -o node.tar.xz
+tar xf node.tar.xz
+rm node.tar.xz
 mv node-* /opt/nodejs
 ln -s -f /opt/nodejs/bin/* /usr/bin/
 ln -s -f /usr/bin/node /usr/bin/nodejs

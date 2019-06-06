@@ -19,7 +19,7 @@ build_ext()
     cd ${2}*
     phpize && ./configure && make && make install
     cd /tmp
-    rm -rf $2
+    rm -rf $2*
 }
 if [ "$PHP_VER" = "5" ]; then
     build_ext "https://pecl.php.net/get/memcached-2.2.0.tgz" "memcached"
