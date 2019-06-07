@@ -225,3 +225,24 @@ class ProjectInstall(Command):
 
         # run installer
         projectInstall(project, conf, startFrom=self.option("start-from"))
+
+class ProjectPull(Command):
+    """
+    Pull all base project application and service Docker images.
+
+    project:pull
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid, can be provided instead of path.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        appNames = project.getApplicationsParser().getApplicationNames()
+        serviceNames = project.getServicesParser().getServiceNames()
+        for appName in appNames:
+            app = project.getApplication(appName)
+            app.pullImage()
+        for serviceName in serviceNames:
+            service = project.getService(serviceName)
+            service.pullImage()
+        

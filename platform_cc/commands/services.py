@@ -113,4 +113,22 @@ class ServiceShell(Command):
         service.shell(
             command,
             user
-        )        
+        )
+
+class ServicePull(Command):
+    """
+    Pull base service image.
+
+    service:pull
+        {--name=? : Name of service. (Default=first available service)}
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--u|uid=? : Project uid.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        name = self.option("name")
+        if not name:
+            name = project.getServicesParser().getServiceNames()[0]
+        service = project.getService(name)
+        service.pullImage()

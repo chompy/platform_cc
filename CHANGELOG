@@ -1,3 +1,6 @@
+DEV
+- Added project:pull and service:pull command to pull down the latest Docker images.
+
 v0.2.4
 - PHP 7.3 support.
 - PHP containers now use Unix sockets instead of TCP by default.
