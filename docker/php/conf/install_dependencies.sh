@@ -20,12 +20,18 @@ if [ "$PHP_VER" = "5" ]; then
     apt-get install -y libicu52 libicu-dev libpng12-0 libpng-dev
 elif [ "$PHP_VER" = "7" ]; then
     apt-get install -y libicu57 libicu-dev libpng16-16 libpng-dev
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.libxslt1
-    apt-get update
-    apt-get install -y yarn
 fi
 apt-get clean
+
+# yarn
+cd /tmp
+curl -L -o yarn.tgz https://yarnpkg.com/latest.tar.gz
+tar xvfz yarn.tgz
+rm yarn.tgz
+mkdir -p /opt/yarn
+mv yarn-*/* /opt/yarn/
+rm -rf yarn-*
+ln -s /opt/yarn/bin/yarn /usr/bin/yarn
 
 # nginx
 curl -L https://nginx.org/download/nginx-1.14.0.tar.gz -o nginx.tar.gz
