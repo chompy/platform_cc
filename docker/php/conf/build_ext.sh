@@ -24,7 +24,8 @@ build_ext()
 if [ "$PHP_VER" = "5" ]; then
     build_ext "https://pecl.php.net/get/memcached-2.2.0.tgz" "memcached"
     build_ext "https://pecl.php.net/get/xdebug-2.5.5.tgz" "xdebug"
-elif [ "$PHP_VER" = "7"]; then
+fi
+if [ "$PHP_VER" = "7"]; then
     build_ext "https://pecl.php.net/get/memcached-3.1.3.tgz" "memcached"
     build_ext "https://pecl.php.net/get/xdebug-2.7.2.tg" "xdebug"
 fi
