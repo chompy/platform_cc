@@ -23,6 +23,11 @@ elif [ "$PHP_VER" = "7" ]; then
 fi
 apt-get clean
 
+# ruby compass+sass
+gem install compass sass
+ln -s /usr/local/bin/compass /usr/bin/compass
+ln -s /usr/local/bin/sass /usr/bin/sass
+
 # yarn
 cd /tmp
 curl -L -o yarn.tgz https://yarnpkg.com/latest.tar.gz
