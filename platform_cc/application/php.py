@@ -99,51 +99,24 @@ class PhpApplication(BasePlatformApplication):
     def build(self):
         self.prebuild()
         output = ""
-        # add web user
-        self.logger.info(
-            "Add and configure 'web' user."
-        )
-        output += self.runCommand(
-            """
-            useradd -l -d /app -m -p secret~ --uid %s web
-            usermod -a -G staff web
-            mkdir -p /var/lib/gems
-            chown -R web:web /var/lib/gems
-            chown -R root:staff /usr/bin
-            chmod -R g+rw /usr/bin
-            sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/;listen.backlog.*/listen.backlog = 511/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/;listen.owner.*/listen.owner = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/;listen.group.*/listen.group = web/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/;listen.mode.*/listen.mode = 0660/g" /usr/local/etc/php-fpm.d/www.conf
-            sed -i "s/listen.*/listen = \/run\/app.sock/g" /usr/local/etc/php-fpm.d/zz-docker.conf
-            """ % (
-                self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
+        # change web user id
+        userId = self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
+        if userId != self.DEFAULT_WEB_USER_ID:
+            self.logger.info(
+                "Update 'web' user id."
+            )        
+            output += self.runCommand(
+                """
+                usermod -u %s web
+                """ % (
+                    userId
+                )
             )
-        )
-        output += self.runCommand(
-            "usermod -u %s web" % (
-                self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
-            )            
-        )
         # install ssh key + known_hosts
         self.installSsh()
         output += self.runCommand(
             "chown -f -R web /app/.ssh"
         )
-        self.logger.info(
-            "Setup/fix user permission."
-        )
-        try:
-            output += self.runCommand(
-                """
-                chown -f -R web %s
-                chown -f -R web %s
-                """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
-            )
-        except ContainerCommandError:
-            pass
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         output += self.runCommand(
@@ -154,7 +127,7 @@ class PhpApplication(BasePlatformApplication):
         for extension in extInstall:
             if type(extension) is not str: continue
             self.logger.info(
-                "Install/build '%s' extension.",
+                "Enable '%s' extension.",
                 extension
             )
             command = self.getExtensionInstallCommand(extension)
@@ -170,7 +143,7 @@ class PhpApplication(BasePlatformApplication):
                     """
                     php -d memory_limit=-1 /usr/local/bin/composer install
                     """,
-                    "web"
+                    "root"
                 )
             except ContainerCommandError:
                 pass
@@ -181,9 +154,22 @@ class PhpApplication(BasePlatformApplication):
         try:
             output += self.runCommand(
                 self.config.get("hooks", {}).get("build", ""),
-                "web"
+                "root"
             )
         # allow build hooks to fail...for now
+        except ContainerCommandError:
+            pass
+        # attempt to fix file permissions
+        self.logger.info(
+            "Setup/fix user permission."
+        )
+        try:
+            output += self.runCommand(
+                """
+                chown -f -R web %s
+                chown -f -R web %s
+                """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
+            )
         except ContainerCommandError:
             pass
         # clean up
@@ -200,6 +186,7 @@ class PhpApplication(BasePlatformApplication):
             "Commit container."
         )
         self.commit()
+        self.stop()
         return output
 
     def _generateNginxPassthruOptions(self, locationConfig = {}, script = False):

@@ -17,11 +17,11 @@ class SolrService(BasePlatformService):
         #"solr:4.10":            "klabs/solr:ezfind",
         #"solr:6.3":            "solr:6.3-alpine",
         #"solr:6.6":            "solr:6.6-alpine",
-        "solr:3.6":            "busybox",
-        "solr:4.10":           "busybox",
-        "solr:6.3":            "busybox",
-        "solr:6.6":            "busybox",
-        "solr:7.6":            "busybox"        
+        "solr:3.6":            "busybox:1",
+        "solr:4.10":           "busybox:1",
+        "solr:6.3":            "busybox:1",
+        "solr:6.6":            "busybox:1",
+        "solr:7.6":            "busybox:1"        
     }
 
     def getBaseImage(self):

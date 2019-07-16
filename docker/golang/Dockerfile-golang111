@@ -29,5 +29,5 @@ RUN curl -L https://nginx.org/download/nginx-1.14.0.tar.gz -o nginx.tar.gz && \
     make install && \
     cd .. && \
     rm -rf nginx* 
-COPY nginx.conf /usr/local/nginx/conf/nginx.conf
-COPY fastcgi_params /usr/local/nginx/conf/fastcgi_params
+COPY docker/golang/nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY docker/golang/fastcgi_params /usr/local/nginx/conf/fastcgi_params

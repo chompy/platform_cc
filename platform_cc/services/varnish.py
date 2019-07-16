@@ -14,8 +14,8 @@ class VarnishService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "varnish:5.2":            "busybox",
-        "varnish:6.0":            "busybox"
+        "varnish:5.2":            "busybox:1",
+        "varnish:6.0":            "busybox:1"
     }
 
     def getBaseImage(self):
