@@ -91,10 +91,11 @@ class PhpApplication(BasePlatformApplication):
         )
         if not extensionConfEntry: return ""
         for imageConf in extensionConfEntry:
-            if self.getBaseImage() not in imageConf.get("images", []):
-                continue
-            command = imageConf.get("command", "").replace("__EXT_NAME__", extensionName)
-            return command
+            for image in imageConf.get("images", []):
+                if self.getBaseImage() != image.replace("__PCCVER__", PCC_VERSION):
+                    continue
+                command = imageConf.get("command", "").replace("__EXT_NAME__", extensionName)
+                return command
         return ""
 
     def build(self):

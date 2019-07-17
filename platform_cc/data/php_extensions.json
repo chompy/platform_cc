@@ -2,12 +2,12 @@
     "__default__" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command" : "docker-php-ext-install -j$(nproc) __EXT_NAME__"
         }
@@ -15,12 +15,12 @@
     "memcached" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command" : "docker-php-ext-enable memcached"
         }
@@ -28,12 +28,12 @@
     "redis" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command" : "docker-php-ext-enable redis"
         }
@@ -41,12 +41,12 @@
     "imagick" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command" : "docker-php-ext-enable imagick"
         }
@@ -54,12 +54,12 @@
     "newrelic" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command": "cd /opt && curl -o nr.tar.gz https://download.newrelic.com/php_agent/archive/8.6.0.238/newrelic-php5-8.6.0.238-linux.tar.gz && tar xfz nr.tar.gz && cd newrelic* && NR_INSTALL_SILENT=1 ./newrelic-install install && cd .. && rm nr.tar.gz"
         }
@@ -67,12 +67,12 @@
     "xdebug" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command": "docker-php-ext-enable xdebug"
         }
@@ -80,17 +80,17 @@
     "twig" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56"
             ],
             "command": "pear channel-discover pear.twig-project.org && pear install twig/CTwig && docker-php-ext-enable twig || true"
         },
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command": "true"
         }
@@ -98,12 +98,12 @@
     "igbinary" : [
         {
             "images" : [
-                "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-                "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73"
             ],
             "command" : "docker-php-ext-enable igbinary"
         }
