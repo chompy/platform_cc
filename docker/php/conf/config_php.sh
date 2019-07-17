@@ -23,7 +23,7 @@ chown -R web:web /var/lib/gems
 chown -R root:staff /usr/bin
 chmod -R g+rw /usr/bin
 
-# config
+# config php-fpm
 if [ -d /usr/local/etc/php-fpm.d ]; then
     sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
     sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf

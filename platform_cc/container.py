@@ -22,10 +22,10 @@ import tarfile
 import docker
 import logging
 import json
+import pkg_resources
 from dockerpty import PseudoTerminal, ExecOperation
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.container_command_error import ContainerCommandError
-
 
 class Container:
     """
@@ -41,13 +41,6 @@ class Container:
     """ Prefix to use for all Docker labels. """
     LABEL_PREFIX = "com.contextualcode.platformcc"
 
-    """
-    Credientials for Gitlab registry containing prebuilt Docker
-    images for Platform CC.
-    """
-    PCC_GITLAB_REGISTRY_CREDS = [
-        "gitlab+deploy-token-2184", "-SdryhQWhgesCn85S5__"
-    ]
 
     def __init__(self, project, name, dockerClient=None):
         """
@@ -430,11 +423,6 @@ class Container:
             "Pull '%s' image for '%s' container.",
             self.getBaseImage(),
             self.getContainerName()
-        )
-        self.docker.login(
-            username=self.PCC_GITLAB_REGISTRY_CREDS[0],
-            password=self.PCC_GITLAB_REGISTRY_CREDS[1],
-            registry="https://registry.gitlab.com"
         )
         self.docker.images.pull(self.getBaseImage())
 

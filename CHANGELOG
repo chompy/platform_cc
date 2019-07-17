@@ -1,5 +1,9 @@
-DEV
+v0.2.5
 - Added project:pull and service:pull command to pull down the latest Docker images.
+- Moved Docker images to Docker Hub.
+- Fixed issue that caused application containers to be built twice.
+- Numerous fixes and tweaks to PHP Docker images.
+- Application Docker images are now tied to the PCC version.
 
 v0.2.4
 - PHP 7.3 support.

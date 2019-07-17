@@ -33,12 +33,7 @@ from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, 
 from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge, ProjectInstall, ProjectPull
 from platform_cc.commands.mysql import MysqlSql, MysqlDump
 from platform_cc.commands.all import AllStop, AllPurge, AllList
-
-# fetch version
-try:
-    version = pkg_resources.require("platform_cc")[0].version
-except pkg_resources.DistributionNotFound:
-    version = "vDEVELOPMENT"
+from platform_cc.version import PCC_VERSION
 
 # init logging
 LOGGING_CONFIG_JSON = os.path.join(
@@ -53,7 +48,7 @@ logging.config.dictConfig(loggingConfig)
 # init cleo
 cleoApp = Application(
     "Platform.CC -- By Contextual Code",
-    version
+    PCC_VERSION
 )
 cleoApp.add(VariableSet())
 cleoApp.add(VariableGet())

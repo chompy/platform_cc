@@ -22,6 +22,7 @@ from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
+from platform_cc.version import PCC_VERSION
 
 class PhpApplication(BasePlatformApplication):
     """
@@ -30,13 +31,13 @@ class PhpApplication(BasePlatformApplication):
 
     """ Mapping for application type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "php"             : "registry.gitlab.com/contextualcode/platform_cc/php73-fpm",
-        "php:5.4"         : "registry.gitlab.com/contextualcode/platform_cc/php54-fpm",
-        "php:5.6"         : "registry.gitlab.com/contextualcode/platform_cc/php56-fpm",
-        "php:7.0"         : "registry.gitlab.com/contextualcode/platform_cc/php70-fpm",
-        "php:7.1"         : "registry.gitlab.com/contextualcode/platform_cc/php71-fpm",
-        "php:7.2"         : "registry.gitlab.com/contextualcode/platform_cc/php72-fpm",
-        "php:7.3"         : "registry.gitlab.com/contextualcode/platform_cc/php73-fpm"
+        "php"             : "chompy/platform_cc:%s-php73" % PCC_VERSION,
+        "php:5.4"         : "chompy/platform_cc:%s-php54" % PCC_VERSION,
+        "php:5.6"         : "chompy/platform_cc:%s-php56" % PCC_VERSION,
+        "php:7.0"         : "chompy/platform_cc:%s-php70" % PCC_VERSION,
+        "php:7.1"         : "chompy/platform_cc:%s-php71" % PCC_VERSION,
+        "php:7.2"         : "chompy/platform_cc:%s-php72" % PCC_VERSION,
+        "php:7.3"         : "chompy/platform_cc:%s-php73" % PCC_VERSION,
     }
 
     """ Default user id to assign for user 'web' """

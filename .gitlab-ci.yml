@@ -10,7 +10,7 @@ build:php54:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php54-fpm ./docker/php -f ./docker/php/Dockerfile-php54
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php54-fpm . -f ./docker/php/Dockerfile-php54
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php54-fpm
     only:
@@ -27,7 +27,7 @@ build:php56:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php56-fpm ./docker/php -f ./docker/php/Dockerfile-php56
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php56-fpm . -f ./docker/php/Dockerfile-php56
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php56-fpm
     only:
@@ -44,7 +44,7 @@ build:php70:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm ./docker/php -f ./docker/php/Dockerfile-php70
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php70-fpm . -f ./docker/php/Dockerfile-php70
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php70-fpm
     only:
@@ -61,7 +61,7 @@ build:php71:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm ./docker/php -f ./docker/php/Dockerfile-php71
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php71-fpm . -f ./docker/php/Dockerfile-php71
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php71-fpm
     only:
@@ -78,7 +78,7 @@ build:php72:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm ./docker/php -f ./docker/php/Dockerfile-php72
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php72-fpm . -f ./docker/php/Dockerfile-php72
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php72-fpm
     only:
@@ -95,7 +95,7 @@ build:php73:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/php73-fpm ./docker/php -f ./docker/php/Dockerfile-php73
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/php73-fpm . -f ./docker/php/Dockerfile-php73
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/php73-fpm
     only:
@@ -112,7 +112,7 @@ build:golang111:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11 ./docker/golang -f ./docker/golang/Dockerfile-golang111
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/golang-1-11 . -f ./docker/golang/Dockerfile-golang111
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/golang-1-11
     only:
@@ -128,7 +128,7 @@ build:python37:
         - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     script:
         - |
-            docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7 ./docker/python -f ./docker/python/Dockerfile-python37
+            docker build -t registry.gitlab.com/contextualcode/platform_cc/python-3-7 . -f ./docker/python/Dockerfile-python37
         - |
             docker push registry.gitlab.com/contextualcode/platform_cc/python-3-7
     only:

@@ -22,6 +22,7 @@ from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
+from platform_cc.version import PCC_VERSION
 
 class GoApplication(BasePlatformApplication):
     """
@@ -30,7 +31,7 @@ class GoApplication(BasePlatformApplication):
 
     """ Mapping for application type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "golang:1.11"         : "registry.gitlab.com/contextualcode/platform_cc/golang-1-11",  
+        "golang:1.11"         : "chompy/platform_cc:%s-golang111" % PCC_VERSION,  
     }
 
     """ Default user id to assign for user 'web' """

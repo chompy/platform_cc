@@ -22,6 +22,7 @@ from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
+from platform_cc.version import PCC_VERSION
 
 class PythonApplication(BasePlatformApplication):
     """
@@ -31,7 +32,7 @@ class PythonApplication(BasePlatformApplication):
 
     """ Mapping for application type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "python:3.7"         : "registry.gitlab.com/contextualcode/platform_cc/python-3-7",  
+        "python:3.7"         : "chompy/platform_cc:%s-python37" % PCC_VERSION,  
     }
 
     """ Default user id to assign for user 'web' """
