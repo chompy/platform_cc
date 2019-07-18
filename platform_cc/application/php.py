@@ -305,7 +305,7 @@ class PhpApplication(BasePlatformApplication):
             ) 
 
     def start(self, requireServices = True):
-        BasePlatformApplication.start(self, requireServices)
+        BasePlatformApplication.start(self, requireServices=requireServices, setupMounts=False)
         container = self.getContainer()
         if not container: return
         # link php.ini in app root

@@ -569,7 +569,7 @@ class BasePlatformApplication(Container):
         # cron
         self.installCron()
 
-    def start(self, requireServices=True, buildIfNotBuilt=True):
+    def start(self, requireServices=True, buildIfNotBuilt=True, setupMounts=True):
         # ensure all required services are available
         if requireServices:
             projectServices = self.project.get("services", {})
@@ -590,7 +590,7 @@ class BasePlatformApplication(Container):
         if not container:
             return
         # setup mount points
-        self.setupMounts()
+        if setupMounts: self.setupMounts()
         # not yet built/provisioned
         if self.getDockerImage() == self.getBaseImage() and buildIfNotBuilt:
             self.build()

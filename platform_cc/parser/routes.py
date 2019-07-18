@@ -20,6 +20,7 @@ from future.moves.urllib.parse import urlparse
 import os
 import collections
 import yaml
+import yamlordereddictloader
 from .base import BasePlatformParser
 from platform_cc.exception.parser_error import ParserError
 
@@ -50,7 +51,7 @@ class RoutesParser(BasePlatformParser):
         for path in paths:
             with open(path, "r") as f:
                 self._mergeDict(
-                    yaml.load(f),
+                    yaml.load(f, Loader=yamlordereddictloader.SafeLoader),
                     config
                 )
         return config
