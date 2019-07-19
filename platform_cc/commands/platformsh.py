@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from cleo import Command
 from platform_cc.platform_sh.config import PlatformShConfig
 from platform_cc.platform_sh.api import PlatformShApi
+from platform_cc.platform_sh.cloner import PlatformShCloner
 import os
 
 class PlatformShLogin(Command):
@@ -65,9 +66,9 @@ class PlatformShClone(Command):
         if not path:
             path = os.getcwd()
         if not environment: environment = "master"
-        pshApi = PlatformShApi()
-        pshApi.gitCloneProject(
+        pshCloner = PlatformShCloner(
             projectId,
-            environment=environment,
-            path=path
+            environment,
+            path
         )
+        pshCloner.clone()

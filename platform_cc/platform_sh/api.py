@@ -24,7 +24,7 @@ from cryptography.hazmat.backends import default_backend as crypto_default_backe
 import os
 import json
 import requests
-import pygit2
+import platform
 
 class PlatformShApi:
     """
@@ -98,6 +98,15 @@ class PlatformShApi:
             "projects/%s" % str(projectId)
         )
 
+    def getEnvironmentInfo(self, projectId, environmentId = "master"):
+        """ Retrieve environment info. """
+        return self._apiGet(
+            "projects/%s/environments/%s" % (
+                projectId,
+                environmentId
+            )
+        )
+
     def getDeployment(self, projectId, environmentId = "master"):
         """ Retrieve deployment details. """
         return self._apiGet(
@@ -132,7 +141,7 @@ class PlatformShApi:
             "%s/ssh_keys" % self.API_URL,
             json={
                 "value" : publicKey.decode("utf-8"),
-                "title" : self.SSH_KEY_TITLE,
+                "title" : "%s @ %s" % (self.SSH_KEY_TITLE, platform.uname()[1]),
                 "uuid" : uuid
             },
             headers={"Authorization" : "Bearer %s" % self.config.getAccessToken()}
@@ -141,22 +150,3 @@ class PlatformShApi:
         self.config.setSshPublicKey(publicKey.decode("utf-8"))
         self.config.setSshPrivateKey(privateKey.decode("utf-8"))
         return [self.config.getSshPublicKey(), self.config.getSshPrivateKey()]
-
-    def gitCloneProject(self, projectId, path, environment = "master"):
-        """ Git clone a Platform.sh project. """
-        projectInfo = self.getProjectInfo(projectId)
-        gitUrl = projectInfo.get("repository", {}).get("url", "")
-        if not gitUrl:
-            raise PlatformShApiError("Could not locate Git URL for project '%s.'" % projectId)
-        sshKeypair = self.getSshKeypair()
-        pygitKeypair = pygit2.KeypairFromMemory(
-            projectId,
-            *sshKeypair,
-            ""
-        )
-        callbacks = pygit2.RemoteCallbacks(credentials=pygitKeypair)
-        pygit2.clone_repository(
-            "ssh://%s" % gitUrl.replace(":", "/"),
-            os.path.join(path, "%s.git" % projectId),
-            callbacks=callbacks
-        )
