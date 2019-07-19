@@ -17,10 +17,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import urllib
+import json
 from platform_cc.container import Container
 from platform_cc.application.php import PhpApplication
 from .config import PlatformShConfig
 from .api import PlatformShApi
+from .fetch import getPlatformShFetcher
+from platform_cc.project import PlatformProject
 from .exception.api_error import PlatformShApiError
 
 class PlatformShCloner(Container):
@@ -86,36 +89,84 @@ class PlatformShCloner(Container):
         # get project env info
         pshEnv = pshApi.getEnvironmentInfo(self.project.get("_project_id"), self.project.get("_environment"))
         # retrieve ssh url
-        sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href"))
-        # git clone
-        self.logger.info(
-            "Cloning project %s (%s)." % (
-                self.project.get("_project_id"),
-                self.project.get("_environment")
-            )
-        )
+        sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
+        parsedSshUrl = urllib.parse.urlparse(sshUrl)
+        sshUrl = sshUrl.replace("ssh://", "")
+        # start clone container
+        self.start()
+        # setup ssh
         cmd = """
         mkdir -p ~/.ssh
         echo "$PSH_SSH_KEY" > ~/.ssh/id_rsa
         chmod 0600 ~/.ssh/id_rsa
         ssh-keyscan %s > ~/.ssh/known_hosts
+        ssh-keyscan %s >> ~/.ssh/known_hosts
         chmod 0600 ~/.ssh/known_hosts
-        cd %s
-        git clone "%s" --branch "%s"
         """ % (
-            parsedGitUrl.hostname,
-            PhpApplication.APPLICATION_DIRECTORY,
-            pshGitUrl,
-            self.project.get("_environment")
+            parsedSshUrl.hostname,
+            parsedGitUrl.hostname
         )
-        self.start()
         try:
-            self.logger.info(self.runCommand(cmd))
+            self.runCommand(cmd)
         except Exception as e:
             self.stop()
             raise e
 
-        # ssh access to fetch database dumps
-        # TODO
+        # git clone
+        if not os.path.exists(os.path.join(self.project.get("_path"), self.project.get("_project_id"))):
+            self.logger.info(
+                "Cloning project %s (%s)." % (
+                    self.project.get("_project_id"),
+                    self.project.get("_environment")
+                )
+            )
+            cmd = """
+            mkdir -p %s
+            cd %s
+            git clone "%s" --branch "%s"
+            """ % (
+                PhpApplication.APPLICATION_DIRECTORY,
+                PhpApplication.APPLICATION_DIRECTORY,
+                pshGitUrl,
+                self.project.get("_environment")
+            )
+            try:
+                self.runCommand(cmd)
+            except Exception as e:
+                self.stop()
+                raise e
+
+        # start project
+        self.logger.info("Start project.")
+        project = PlatformProject.fromPath(
+            os.path.join(
+                self.project.get("_path"),
+                self.project.get("_project_id")
+            )
+        )
+        project.start()
+
+        # ssh access to fetch assets
+        self.logger.info("Fetch and import assets.")
+        cmd = """
+        ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
+        """ % (
+            sshUrl
+        )
+        try:
+            pshRelationsStr = self.runCommand(cmd)
+            pshRelations = json.loads(pshRelationsStr.strip())
+            for name in pshRelations:
+                for relationship in pshRelations[name]:
+                    fetcher = getPlatformShFetcher(relationship, sshUrl)
+                    if not fetcher: continue
+                    cmd = fetcher.getFetchCommand()
+                    if cmd:
+                        self.runCommand(cmd)
+                        
+
+        except Exception as e:
+            self.stop()
+            raise e
 
         self.stop()
