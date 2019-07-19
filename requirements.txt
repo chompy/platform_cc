@@ -8,3 +8,4 @@ future
 dockerpty
 nginx-config-builder
 boto3
+cryptography

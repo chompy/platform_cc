@@ -96,7 +96,7 @@ class Container:
         :return: Docker image name
         :rtype: str
         """
-        return "busybox:latest"
+        return "busybox:1"
 
     def getCommitImage(self):
         """

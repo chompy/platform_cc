@@ -68,7 +68,8 @@ setup(
         "future",
         "dockerpty",
         "boto3",
-        "nginx-config-builder"
+        "nginx-config-builder",
+        "cryptography"
     ],
 
     # List additional groups of dependencies here (e.g. development
