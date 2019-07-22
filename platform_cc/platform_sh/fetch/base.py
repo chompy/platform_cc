@@ -15,13 +15,66 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+import tempfile
+import hashlib
+import base36
+
 class PlatformShFetcher:
     """ Fetch assets required by Platform.sh services. """
 
-    def __init__(self, relationship, sshUrl):
+    def __init__(self, container, relationship, sshUrl):
+        self.container = container
         self.sshUrl = str(sshUrl)
         self.relationship = dict(relationship)
+        self.dumpPath = tempfile.gettempdir()
+        self.dumpFiles = []
 
-    def fetch(self, project):
-        """ Fetch assets and import to project. """
+    def _runCommandDump(self, cmd):
+        """ Run container command dump the results to temp file. """
+        # generate filename for dump file
+        dumpFilename = "pcc_%s" % base36.dumps(
+            int(
+                hashlib.sha256(
+                    (
+                        "%s%s" % (
+                            self.dumpPath,
+                            cmd
+                        )
+                    ).encode("utf-8")
+                ).hexdigest(),
+                16
+            )
+        )
+        # retrieve docker container
+        dockerContainer = self.container.getContainer()
+        # run command
+        (_, output) = dockerContainer.exec_run(
+            [
+                "sh", "-c", cmd
+            ],
+            user="root",
+            stream=True
+        )
+        # stream results to file
+        dumpFilePath = os.path.join(self.dumpPath, dumpFilename)
+        with open(dumpFilePath, "wb") as f:
+            res = True
+            while (res):
+                res = next(output, False)
+                if res: f.write(res)
+                
+        self.dumpFiles.append(dumpFilePath)
+        return dumpFilePath
+
+    def dump(self):
+        """ Dump assets to temp directory. """
         pass
+
+    def importProject(self, project, dumpPaths = []):
+        pass
+
+    def clean(self):
+        """ Clean up dump assets. """
+        for dumpFilePath in self.dumpFiles:
+            os.remove(dumpFilePath)

@@ -16,11 +16,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .base import BasePlatformService
+from platform_cc.exception.state_error import StateError
 import hashlib
 import base36
 import docker
 import time
-
+import sys
+import io
 
 class MariaDbService(BasePlatformService):
     """
@@ -129,7 +131,7 @@ class MariaDbService(BasePlatformService):
         # wait for mysql to become ready
         exitCode = 1
         while exitCode != 0:
-            (exitCode, output) = container.exec_run(
+            (exitCode, _) = container.exec_run(
                 "mysqladmin ping -h 127.0.0.1 --silent"
             )
             time.sleep(.35)
@@ -140,7 +142,7 @@ class MariaDbService(BasePlatformService):
                 "Create schema '%s' (if it does not exist).",
                 schema
             )
-            (exit_code, output) = container.exec_run(
+            container.exec_run(
                 """
                 mysql -h 127.0.0.1 -uroot --password="%s" \
                 -e "CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 \
@@ -235,3 +237,16 @@ class MariaDbService(BasePlatformService):
                 self.getPassword()
             )
         )
+
+    def executeSqlDump(self, database = "", stdin = None):
+        """ Upload and execute SQL dump. """
+        if not self.isRunning():
+            raise StateError(
+                "Service '%s' is not running." % self.getName()
+            )
+        cmd = "mysql -h 127.0.0.1 -uroot --password=\"%s\"" % (
+            self.getPassword()
+        )
+        if database:
+            cmd += " --database=\"%s\"" % str(database)
+        self.shell(cmd, stdin=stdin)

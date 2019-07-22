@@ -18,28 +18,29 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from .base import PlatformShFetcher
 from platform_cc.application.php import PhpApplication
+from platform_cc.commands.mysql import getMysqlService
 
 class PlatformShFetchMysql(PlatformShFetcher):
     
-    def getSqlDumpPath(self):
-        """ Get filename of SQL dump. """
-        return os.path.join(
-            PhpApplication.APPLICATION_DIRECTORY,
-            "_%s_%s.sql" % (
-                self.relationship.get("service"),
-                self.relationship.get("path")
+    def dump(self):
+        return [self._runCommandDump(
+            """
+            ssh %s -q 'mysqldump -h "%s" -u "%s" --password="%s" %s'
+            """ % (
+                self.sshUrl,
+                self.relationship.get("host", ""),
+                self.relationship.get("username", ""),
+                self.relationship.get("password", ""),
+                self.relationship.get("path", "")
             )
-        )
+        )]
 
-    def getFetchCommand(self):
-        if not self.sshUrl: return ""
-        return """
-        ssh %s -q 'mysqldump -h "%s" -u "%s" --password="%s" %s' > %s
-        """ % (
-            self.sshUrl,
-            self.relationship.get("host", ""),
-            self.relationship.get("username", ""),
-            self.relationship.get("password", ""),
-            self.relationship.get("path", ""),
-            self.getSqlDumpPath()
-        )
+    def importProject(self, project, dumpPaths = []):
+        for dumpPath in dumpPaths:
+            service = getMysqlService(project, self.relationship.get("service"))
+            if not service: continue
+            with open(dumpPath, "rb") as f:
+                service.executeSqlDump(
+                    self.relationship.get("path", None),
+                    f
+                )

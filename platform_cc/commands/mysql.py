@@ -53,41 +53,10 @@ class MysqlSql(Command):
         project = getProject(self)
         serviceName = self.option("service")
         service = getMysqlService(project, serviceName)
-        if not service.isRunning():
-            raise StateError(
-                "Service '%s' is not running." % serviceName
-            )
-        cmd = "mysql -h 127.0.0.1 -uroot --password=\"%s\"" % (
-            service.getPassword()
+        service.executeSqlDump(
+            self.option("database"),
+            sys.stdin
         )
-        if self.option("database"):
-            cmd += " --database=\"%s\"" % self.option("database")
-        
-        # has stdin
-        if not sys.stdin.isatty():
-            stdin = sys.stdin
-            try:
-                stdin = sys.stdin.detach().read()
-            except AttributeError:
-                pass
-            try:
-                stdin = stdin.read()
-            except AttributeError:
-                pass
-            byteIo = io.BytesIO(stdin)
-            service.uploadFile(
-                byteIo,
-                "/stdin.txt"
-            )
-            cmd = ["sh", "-c", "cat /stdin.txt | %s && rm /stdin.txt" % cmd]
-            (exitCode, output) = service.getContainer().exec_run(
-                cmd,
-                user = "root"
-            )
-            self.line(output.decode("utf-8"))
-            return
-
-        service.shell(cmd)
 
 class MysqlDump(Command):
     """

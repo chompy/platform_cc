@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import urllib
 import json
+import ast
 from platform_cc.container import Container
 from platform_cc.application.php import PhpApplication
 from .config import PlatformShConfig
@@ -77,6 +78,10 @@ class PlatformShCloner(Container):
         }
 
     def clone(self):
+        """ 
+        Clone platform.sh environment by using its REST API, git clone
+        and accessing environment via ssh for asset dumps.
+        """
         self.logger.info("Retrieve project information (%s)." % self.project.get("_project_id"))
         pshApi = PlatformShApi(self.config)
         # get project info
@@ -88,6 +93,7 @@ class PlatformShCloner(Container):
         parsedGitUrl = urllib.parse.urlparse("ssh://%s" % pshGitUrl)
         # get project env info
         pshEnv = pshApi.getEnvironmentInfo(self.project.get("_project_id"), self.project.get("_environment"))
+        pshDeploy = pshApi.getDeployment(self.project.get("_project_id"), self.project.get("_environment"))
         # retrieve ssh url
         sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
         parsedSshUrl = urllib.parse.urlparse(sshUrl)
@@ -109,6 +115,7 @@ class PlatformShCloner(Container):
         try:
             self.runCommand(cmd)
         except Exception as e:
+            self.logger.error("An error occured, stopping container...")
             self.stop()
             raise e
 
@@ -123,7 +130,7 @@ class PlatformShCloner(Container):
             cmd = """
             mkdir -p %s
             cd %s
-            git clone "%s" --branch "%s"
+            git clone "%s" --recursive --branch "%s"
             """ % (
                 PhpApplication.APPLICATION_DIRECTORY,
                 PhpApplication.APPLICATION_DIRECTORY,
@@ -133,6 +140,7 @@ class PlatformShCloner(Container):
             try:
                 self.runCommand(cmd)
             except Exception as e:
+                self.logger.error("An error occured, stopping container...")
                 self.stop()
                 raise e
 
@@ -146,6 +154,21 @@ class PlatformShCloner(Container):
         )
         project.start()
 
+        # set vars
+        for var in pshDeploy[0].get("variables", []):
+            key = var.get("name")
+            value = var.get("value", "")
+            if not key: continue
+            self.logger.info("Set project variable '%s.'" % var.get("name"))
+            try:
+                value = ast.literal_eval(value)
+                value = json.dumps(value)
+            except ValueError:
+                pass
+            except SyntaxError:
+                pass
+            project.variables.set(var.get("name"), str(value))
+
         # ssh access to fetch assets
         self.logger.info("Fetch and import assets.")
         cmd = """
@@ -153,20 +176,23 @@ class PlatformShCloner(Container):
         """ % (
             sshUrl
         )
+        # itterate relationships and perform asset dumps
         try:
             pshRelationsStr = self.runCommand(cmd)
             pshRelations = json.loads(pshRelationsStr.strip())
             for name in pshRelations:
+                self.logger.info("Fetch assets for service relationship '%s.'" % name)
                 for relationship in pshRelations[name]:
-                    fetcher = getPlatformShFetcher(relationship, sshUrl)
+                    fetcher = getPlatformShFetcher(self, relationship, sshUrl)
                     if not fetcher: continue
-                    cmd = fetcher.getFetchCommand()
-                    if cmd:
-                        self.runCommand(cmd)
-                        
-
+                    dumpFilePaths = fetcher.dump()
+                    fetcher.importProject(project, dumpFilePaths)
+                    fetcher.clean()
         except Exception as e:
+            self.logger.error("An error occured, stopping container...")
             self.stop()
+            project.stop()
             raise e
 
         self.stop()
+        project.stop()

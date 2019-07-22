@@ -555,18 +555,45 @@ class Container:
             except docker.errors.NotFound:
                 pass
 
-    def shell(self, cmd="bash", user="root"):
+    def shell(self, cmd="bash", user="root", stdin=None):
         """
         Create an interactive shell inside container.
 
         :param cmd: Command to run
         :param user: User to run as
+        :param stdin: Stdin file object
         """
         if not self.isRunning():
             raise StateError(
                 "Container '%s' is not running." % self.getContainerName()
             )
         container = self.getContainer()
+
+        # has stdin
+        if stdin and not stdin.isatty():
+            # stdin object can't be seeked
+            # convert to bytes io if so
+            try:
+                stdin.seek(0)
+            except:
+                stdin = io.BytesIO(str.encode(stdin.read()))
+            # upload stdin object to container
+            self.uploadFile(
+                stdin,
+                "/stdin.txt"
+            )
+            # inject stdin in to original command
+            cmd = ["sh", "-c", "cat /stdin.txt | %s && rm /stdin.txt" % cmd]
+            (_, output) = container.exec_run(
+                cmd,
+                user = "root"
+            )
+            # log output
+            outputStr = output.decode("utf-8")
+            if outputStr:
+                self.logger.info(outputStr)
+            return
+
         execId = self.docker.api.exec_create(
             container.id,
             cmd,
