@@ -448,44 +448,55 @@ class Container:
         )
         self._container = None
         container = self.getContainer()
+        # create docker container
         if not container:
+            # add 'sys_admin' capability if mount volumes are to be used
             useMountVolumes = self.project.get("config", {}).get(
                 "option_use_mount_volumes"
             )
             capAdd = []
             if useMountVolumes:
                 capAdd.append("SYS_ADMIN")
-            self.getNetwork()  # instantiate if not created
-            if not self.getDockerImage():
+            # create a network for docker container if not already created
+            self.getNetwork()  
+            # check if docker image name is defined
+            # if not throw an error
+            dockerImageName = self.getDockerImage()
+            if not dockerImageName:
                 raise StateError(
                     "No Docker image found for container '%s.'" % (
                         self.getContainerName()
                     )
                 )
+            # attempt to load docker image
+            # pull the image if not found
             try:
-                container = self.docker.containers.create(
-                    self.getDockerImage(),
-                    name=self.getContainerName(),
-                    command=self.getContainerCommand(),
-                    detach=True,
-                    stdin_open=True,
-                    tty=True,
-                    environment=self.getContainerEnvironmentVariables(),
-                    extra_hosts=self.getContainerHosts(),
-                    network=self.getNetworkName(),
-                    ports=self.getContainerPorts(),
-                    volumes=self.getContainerVolumes(),
-                    working_dir=self.getContainerWorkingDirectory(),
-                    hostname=self.getContainerName(),
-                    privileged=bool(useMountVolumes),  # needed to mount
-                    cap_add=capAdd,
-                    labels=self.getLabels()
-                )
+                self.docker.images.get(dockerImageName)
             except docker.errors.ImageNotFound:
                 self.pullImage()
-                return self.start()
+            # create a docker container
+            container = self.docker.containers.create(
+                dockerImageName,
+                name=self.getContainerName(),
+                command=self.getContainerCommand(),
+                detach=True,
+                stdin_open=True,
+                tty=True,
+                environment=self.getContainerEnvironmentVariables(),
+                extra_hosts=self.getContainerHosts(),
+                network=self.getNetworkName(),
+                ports=self.getContainerPorts(),
+                volumes=self.getContainerVolumes(),
+                working_dir=self.getContainerWorkingDirectory(),
+                hostname=self.getContainerName(),
+                privileged=bool(useMountVolumes),  # needed to mount
+                cap_add=capAdd,
+                labels=self.getLabels()
+            )
+        # if container already started do nothing
         if container.status == "running":
             return
+        # start container
         container.start()
         self._container = None
 

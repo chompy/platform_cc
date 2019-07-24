@@ -137,6 +137,25 @@
             "command": "true"
         }
     ],
+    "blackfire" : [
+        {
+            "images" : [
+                "chompy/platform_cc:__PCCVER__-php54",
+                "chompy/platform_cc:__PCCVER__-php56",
+                "chompy/platform_cc:php54",
+                "chompy/platform_cc:php56",
+                "chompy/platform_cc:__PCCVER__-php70",
+                "chompy/platform_cc:__PCCVER__-php71",
+                "chompy/platform_cc:__PCCVER__-php72",
+                "chompy/platform_cc:__PCCVER__-php73",
+                "chompy/platform_cc:php70",
+                "chompy/platform_cc:php71",
+                "chompy/platform_cc:php72",
+                "chompy/platform_cc:php73"
+            ],
+            "command": "true"
+        }
+    ],
     "igbinary" : [
         {
             "images" : [

@@ -29,7 +29,7 @@ from .exception.api_error import PlatformShApiError
 
 class PlatformShCloner(Container):
 
-    """ Tools to clone Platform.sh environment. """
+    """ Tools to clone a Platform.sh environment. """
 
     def __init__(self, projectId, environment, path, config = None, dockerClient = None):
         if not config:
@@ -50,7 +50,7 @@ class PlatformShCloner(Container):
         )
 
     def getBaseImage(self):
-        # just use php as the image contains ssh/
+        # just use php as the image contains ssh
         return PhpApplication.DOCKER_IMAGE_MAP["php"]
 
     def getDockerImage(self):
