@@ -515,18 +515,20 @@ class BasePlatformApplication(Container):
         # install ssh
         self.installSsh()
         # run build hooks
-        output = self.runCommand(
-            self.config.get("hooks", {}).get("build", ""),
-            "root",
-            "bash"
+        print("- INTERACTIVE SHELL --------------------------------------")
+        self.shell(
+            """
+            bash -c '%s'
+            """ % self.config.get("hooks", {}).get("build", ""),
+            "root"
         )
+        print("----------------------------------------------------------")
         # commit container
         self.logger.info(
             "Commit container."
         )
         self.commit()
         self.stop()
-        return output
 
     def deploy(self):
         """
@@ -535,11 +537,14 @@ class BasePlatformApplication(Container):
         self.logger.info(
             "Run deploy hooks."
         )
-        return self.runCommand(
-            self.config.get("hooks", {}).get("deploy", ""),
-            "web",
-            "bash"
+        print("- INTERACTIVE SHELL --------------------------------------")
+        self.shell(
+            """
+            bash -c '%s'
+            """ % self.config.get("hooks", {}).get("deploy", ""),
+            "web"
         )
+        print("----------------------------------------------------------")
 
     def getLabels(self):
         labels = Container.getLabels(self)

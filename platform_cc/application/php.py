@@ -100,28 +100,28 @@ class PhpApplication(BasePlatformApplication):
 
     def build(self):
         self.prebuild()
-        output = ""
         # change web user id
         userId = self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
         if userId != self.DEFAULT_WEB_USER_ID:
             self.logger.info(
                 "Update 'web' user id."
-            )        
-            output += self.runCommand(
+            )
+            self.runCommand(
                 """
                 usermod -u %s web
                 """ % (
                     userId
                 )
             )
+
         # install ssh key + known_hosts
         self.installSsh()
-        output += self.runCommand(
+        self.runCommand(
             "chown -f -R web /app/.ssh"
         )
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
-        output += self.runCommand(
+        self.runCommand(
             """
             apt-get update -y
             """
@@ -134,19 +134,21 @@ class PhpApplication(BasePlatformApplication):
             )
             command = self.getExtensionInstallCommand(extension)
             if not command: continue
-            output += self.runCommand(command)
+            self.runCommand(command)
         # build flavor composer
         if self.config.get("build", {}).get("flavor") == "composer":
             self.logger.info(
                 "Composer install."
             )
             try:
-                output += self.runCommand(
+                print("- INTERACTIVE SHELL --------------------------------------")
+                self.shell(
                     """
                     php -d memory_limit=-1 /usr/local/bin/composer install
                     """,
                     "root"
                 )
+                print("----------------------------------------------------------")
             except ContainerCommandError:
                 pass
         # build hooks
@@ -154,10 +156,14 @@ class PhpApplication(BasePlatformApplication):
             "Run build hooks."
         )
         try:
-            output += self.runCommand(
-                self.config.get("hooks", {}).get("build", ""),
+            print("- INTERACTIVE SHELL --------------------------------------")
+            self.shell(
+                """
+                bash -c '%s'
+                """ % self.config.get("hooks", {}).get("build", ""),
                 "root"
             )
+            print("----------------------------------------------------------")
         # allow build hooks to fail...for now
         except ContainerCommandError:
             pass
@@ -166,7 +172,7 @@ class PhpApplication(BasePlatformApplication):
             "Setup/fix user permission."
         )
         try:
-            output += self.runCommand(
+            self.runCommand(
                 """
                 chown -f -R web %s
                 chown -f -R web %s
@@ -178,7 +184,7 @@ class PhpApplication(BasePlatformApplication):
         self.logger.info(
             "Clean up."
         )
-        output += self.runCommand(
+        self.runCommand(
             """
             apt-get clean
             """
@@ -189,7 +195,7 @@ class PhpApplication(BasePlatformApplication):
         )
         self.commit()
         self.stop()
-        return output
+        return ""
 
     def _generateNginxPassthruOptions(self, locationConfig = {}, script = False):
         

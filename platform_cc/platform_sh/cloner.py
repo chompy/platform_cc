@@ -19,6 +19,7 @@ import os
 import urllib
 import json
 import ast
+import base64
 from platform_cc.container import Container
 from platform_cc.application.php import PhpApplication
 from .config import PlatformShConfig
@@ -100,17 +101,29 @@ class PlatformShCloner(Container):
         sshUrl = sshUrl.replace("ssh://", "")
         # start clone container
         self.start()
-        # setup ssh
+        # get current user id
+        try:
+            currentUserId = os.getuid()
+        except AttributeError:
+            currentUserId = 1000
+        if currentUserId <= 0:
+            currentUserId = 1000
+        # setup ssh + update user id
+        # TODO all custom entry in known_hosts
         cmd = """
         mkdir -p ~/.ssh
         echo "$PSH_SSH_KEY" > ~/.ssh/id_rsa
         chmod 0600 ~/.ssh/id_rsa
         ssh-keyscan %s > ~/.ssh/known_hosts
         ssh-keyscan %s >> ~/.ssh/known_hosts
+        ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
         chmod 0600 ~/.ssh/known_hosts
+        usermod -u %s web
         """ % (
             parsedSshUrl.hostname,
-            parsedGitUrl.hostname
+            parsedGitUrl.hostname,
+            currentUserId
         )
         try:
             self.runCommand(cmd)
@@ -131,11 +144,13 @@ class PlatformShCloner(Container):
             mkdir -p %s
             cd %s
             git clone "%s" --recursive --branch "%s"
+            chown -R web:web %s
             """ % (
                 PhpApplication.APPLICATION_DIRECTORY,
                 PhpApplication.APPLICATION_DIRECTORY,
                 pshGitUrl,
-                self.project.get("_environment")
+                self.project.get("_environment"),
+                self.project.get("_project_id")
             )
             try:
                 self.runCommand(cmd)
@@ -144,21 +159,35 @@ class PlatformShCloner(Container):
                 self.stop()
                 raise e
 
-        # start project
-        self.logger.info("Start project.")
+        # get project
         project = PlatformProject.fromPath(
             os.path.join(
                 self.project.get("_path"),
                 self.project.get("_project_id")
             )
         )
-        project.start()
 
+        # add ssh key to project
+        project.config.set(
+            "ssh_key",  
+            base64.b64encode(
+                bytes(
+                    str(
+                        pshApi.getSshKeypair()[1]
+                    ).encode("utf-8")
+                )
+            ).decode("utf-8")
+        )
+        
         # set vars
         for var in pshDeploy[0].get("variables", []):
             key = var.get("name")
             value = var.get("value", "")
+            sensitive = var.get("is_sensitive", False)
             if not key: continue
+            if sensitive:
+                self.logger.info("SKIPPING sensitive project variable '%s.'" % var.get("name"))
+                continue
             self.logger.info("Set project variable '%s.'" % var.get("name"))
             try:
                 value = ast.literal_eval(value)
@@ -168,6 +197,14 @@ class PlatformShCloner(Container):
             except SyntaxError:
                 pass
             project.variables.set(var.get("name"), str(value))
+
+        # CUSTOM contextual code vars 
+        # TODO instead of hard coding maybe add a config file to override vars?
+        project.variables.set("env:BUSINESS_HOURS_IGNORE", "1")
+
+        # start project
+        self.logger.info("Start project.")
+        project.start()
 
         # ssh access to fetch assets
         self.logger.info("Fetch and import assets.")

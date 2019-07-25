@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from .exception.api_error import PlatformShApiError
 from .exception.access_token_error import PlatformShAccessTokenError
+from .exception.config_error import PlatformShConfigError
 from .config import PlatformShConfig
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -117,36 +118,7 @@ class PlatformShApi:
         )
 
     def getSshKeypair(self):
-        """ Retrieve or generate SSH key. """
-        # use stored ssh key if available
-        if self.config.getSshPublicKey() and self.config.getSshPrivateKey():
-            return [self.config.getSshPublicKey(), self.config.getSshPrivateKey()]
-        # otherwise generate one and upload to platform.sh
-        key = rsa.generate_private_key(
-            backend=crypto_default_backend(),
-            public_exponent=65537,
-            key_size=2048
-        )
-        privateKey = key.private_bytes(
-            crypto_serialization.Encoding.PEM,
-            crypto_serialization.PrivateFormat.PKCS8,
-            crypto_serialization.NoEncryption()
-        )
-        publicKey = key.public_key().public_bytes(
-            crypto_serialization.Encoding.OpenSSH,
-            crypto_serialization.PublicFormat.OpenSSH
-        )
-        uuid = self.getUUID()
-        r = requests.post(
-            "%s/ssh_keys" % self.API_URL,
-            json={
-                "value" : publicKey.decode("utf-8"),
-                "title" : "%s @ %s" % (self.SSH_KEY_TITLE, platform.uname()[1]),
-                "uuid" : uuid
-            },
-            headers={"Authorization" : "Bearer %s" % self.config.getAccessToken()}
-        )
-        self._handleApiRequest(r)
-        self.config.setSshPublicKey(publicKey.decode("utf-8"))
-        self.config.setSshPrivateKey(privateKey.decode("utf-8"))
+        """ Retrieve SSH key. """
+        if not self.config.getSshPrivateKey() or not self.config.getSshPublicKey():
+            raise PlatformShConfigError("Missing SSH private or public key. Please set your SSH private key with 'platform_sh:set_ssh.'")
         return [self.config.getSshPublicKey(), self.config.getSshPrivateKey()]

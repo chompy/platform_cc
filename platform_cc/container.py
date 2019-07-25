@@ -280,20 +280,16 @@ class Container:
             pass
         return None
 
-    def getVolume(self, name=""):
+    def _createVolume(self, volumeId):
         """
-        Get a Docker volume to use with this service.
-
-        :return: Docker volume
-        :rtype: docker.client.volumes.Volume
+        Create docker volume if it does not exist.
         """
-        volumeId = self.getVolumeName(name)
         try:
-            return self.docker.volumes.get(volumeId)
+            self.docker.volumes.get(volumeId)
         except docker.errors.NotFound:
             pass
         labels = Container.getLabels(self)
-        return self.docker.volumes.create(
+        self.docker.volumes.create(
             volumeId,
             labels=labels
         )
@@ -474,6 +470,11 @@ class Container:
                 self.docker.images.get(dockerImageName)
             except docker.errors.ImageNotFound:
                 self.pullImage()
+            # create volumes if they don't exist
+            volumes = self.getContainerVolumes()
+            for volumeKey in volumes:
+                if os.path.exists(volumeKey): continue
+                self._createVolume(volumeKey)
             # create a docker container
             container = self.docker.containers.create(
                 dockerImageName,
@@ -486,7 +487,7 @@ class Container:
                 extra_hosts=self.getContainerHosts(),
                 network=self.getNetworkName(),
                 ports=self.getContainerPorts(),
-                volumes=self.getContainerVolumes(),
+                volumes=volumes,
                 working_dir=self.getContainerWorkingDirectory(),
                 hostname=self.getContainerName(),
                 privileged=bool(useMountVolumes),  # needed to mount

@@ -33,7 +33,7 @@ from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, 
 from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge, ProjectInstall, ProjectPull
 from platform_cc.commands.mysql import MysqlSql, MysqlDump
 from platform_cc.commands.all import AllStop, AllPurge, AllList
-from platform_cc.commands.platformsh import PlatformShLogin, PlatformShLogout, PlatformShClone
+from platform_cc.commands.platformsh import PlatformShLogin, PlatformShLogout, PlatformShClone, PlatformShSetSsh
 from platform_cc.version import PCC_VERSION
 
 # init logging
@@ -87,6 +87,7 @@ cleoApp.add(AllList())
 cleoApp.add(PlatformShLogin())
 cleoApp.add(PlatformShLogout())
 cleoApp.add(PlatformShClone())
+cleoApp.add(PlatformShSetSsh())
 
 def main():
     cleoApp.run()

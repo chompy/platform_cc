@@ -21,6 +21,7 @@ from platform_cc.platform_sh.config import PlatformShConfig
 from platform_cc.platform_sh.api import PlatformShApi
 from platform_cc.platform_sh.cloner import PlatformShCloner
 import os
+import sys
 
 class PlatformShLogin(Command):
     """
@@ -48,6 +49,26 @@ class PlatformShLogout(Command):
     def handle(self):
         pshConfig = PlatformShConfig()
         pshConfig.setAccessToken("")
+
+class PlatformShSetSsh(Command):
+    """
+    Set SSH private key to use to clone Platform.sh Git repository.
+
+    platform_sh:set_ssh
+    {--p|path=? : Path to SSH private key file. (Default=read from STDIN)}
+    """
+
+    def handle(self):
+        # read private key
+        path = self.option("path")
+        sshPrivateKey = ""
+        if path:
+            with open(path, "r") as f:
+                sshPrivateKey = f.read(4096)
+        if not sshPrivateKey:
+            sshPrivateKey = sys.stdin.read(4096)
+        pshConfig = PlatformShConfig()
+        pshConfig.setSshPrivateKey(sshPrivateKey)
 
 class PlatformShClone(Command):
     """
