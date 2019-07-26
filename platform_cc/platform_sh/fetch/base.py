@@ -23,12 +23,11 @@ import base36
 class PlatformShFetcher:
     """ Fetch assets required by Platform.sh services. """
 
-    def __init__(self, container, relationship, sshUrl):
-        self.container = container
+    def __init__(self, project, relationship, sshUrl):
+        self.project = project
         self.sshUrl = str(sshUrl)
         self.relationship = dict(relationship)
         self.dumpPath = tempfile.gettempdir()
-        self.dumpFiles = []
 
     def _runCommandDump(self, cmd):
         """ Run container command dump the results to temp file. """
@@ -47,15 +46,17 @@ class PlatformShFetcher:
             )
         )
         # retrieve docker container
-        dockerContainer = self.container.getContainer()
+        app = self.project.getApplication()
+        dockerContainer = app.getContainer()
         # run command
         (_, output) = dockerContainer.exec_run(
             [
                 "sh", "-c", cmd
             ],
-            user="root",
+            user="web",
             stream=True
         )
+
         # stream results to file
         dumpFilePath = os.path.join(self.dumpPath, dumpFilename)
         with open(dumpFilePath, "wb") as f:
@@ -63,18 +64,9 @@ class PlatformShFetcher:
             while (res):
                 res = next(output, False)
                 if res: f.write(res)
-                
-        self.dumpFiles.append(dumpFilePath)
         return dumpFilePath
 
-    def dump(self):
-        """ Dump assets to temp directory. """
+    def fetch(self):
+        """ Fetch asset and import to project. """
         pass
 
-    def importProject(self, project, dumpPaths = []):
-        pass
-
-    def clean(self):
-        """ Clean up dump assets. """
-        for dumpFilePath in self.dumpFiles:
-            os.remove(dumpFilePath)

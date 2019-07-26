@@ -18,14 +18,14 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from .base import PlatformShFetcher
 from platform_cc.application.php import PhpApplication
-from platform_cc.commands.mysql import getMysqlService
 
 class PlatformShFetchMysql(PlatformShFetcher):
     
-    def dump(self):
-        return [self._runCommandDump(
+    def fetch(self):
+        # TODO could be more then one database
+        dumpPath = self._runCommandDump(
             """
-            ssh %s -q 'mysqldump -h "%s" -u "%s" --password="%s" %s'
+            ssh %s -q 'mysqldump -h "%s" -u "%s" --password="%s" %s | gzip -c' | gunzip
             """ % (
                 self.sshUrl,
                 self.relationship.get("host", ""),
@@ -33,14 +33,17 @@ class PlatformShFetchMysql(PlatformShFetcher):
                 self.relationship.get("password", ""),
                 self.relationship.get("path", "")
             )
-        )]
-
-    def importProject(self, project, dumpPaths = []):
-        for dumpPath in dumpPaths:
-            service = getMysqlService(project, self.relationship.get("service"))
-            if not service: continue
+        )
+        if dumpPath and os.path.exists(dumpPath):
+            serviceList = self.project.dockerFetch(
+                "service",
+                self.relationship.get("service")
+            )
+            if len(serviceList) == 0: return
+            service = serviceList[0]
             with open(dumpPath, "rb") as f:
                 service.executeSqlDump(
                     self.relationship.get("path", None),
                     f
                 )
+            os.remove(dumpPath)

@@ -353,16 +353,12 @@ class BasePlatformApplication(Container):
                 output += str(nginxLocation)
         return output
 
-    def setupMounts(self):
+    def getMounts(self):
         """
-        Setup application defined mount points.
+        Get mount points.
         """
-        # project option 'use_mount_volumes' must be true
         configMounts = self.config.get("mounts", {})
-        self.logger.info(
-            "Found %s mount point(s).",
-            len(configMounts)
-        )
+        output = {}
         for mountDest, config in configMounts.items():
             mountSrc = ""
             if type(config) is dict:
@@ -376,6 +372,20 @@ class BasePlatformApplication(Container):
                 mountSrc = config[len(localMountPrefx):].strip("/")
             else:
                 continue
+            output[mountSrc.strip("/")] = mountDest.strip("/")
+        return output
+
+    def setupMounts(self):
+        """
+        Setup application defined mount points.
+        """
+        # project option 'use_mount_volumes' must be true
+        mounts = self.getMounts()
+        self.logger.info(
+            "Found %s mount point(s).",
+            len(mounts)
+        )
+        for mountSrc, mountDest in mounts.items():
             self.logger.debug(
                 "Bind mount point '%s.'.",
                 mountSrc

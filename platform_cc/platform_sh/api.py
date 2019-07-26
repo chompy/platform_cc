@@ -93,6 +93,10 @@ class PlatformShApi:
         self.uuid = resp.get("uuid")
         return self.uuid
 
+    def getProjects(self):
+        """ Retrieve list of projects. """
+        return self._apiGet("projects")
+
     def getProjectInfo(self, projectId):
         """ Retrieve project info. """
         return self._apiGet(

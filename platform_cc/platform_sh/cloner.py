@@ -20,6 +20,7 @@ import urllib
 import json
 import ast
 import base64
+import logging
 from platform_cc.container import Container
 from platform_cc.application.php import PhpApplication
 from .config import PlatformShConfig
@@ -27,6 +28,7 @@ from .api import PlatformShApi
 from .fetch import getPlatformShFetcher
 from platform_cc.project import PlatformProject
 from .exception.api_error import PlatformShApiError
+from platform_cc.exception.container_command_error import ContainerCommandError
 
 class PlatformShCloner(Container):
 
@@ -48,6 +50,9 @@ class PlatformShCloner(Container):
             },
             name="psh_clone",
             dockerClient=dockerClient
+        )
+        self.logger = logging.getLogger(
+            __name__
         )
 
     def getBaseImage(self):
@@ -178,7 +183,7 @@ class PlatformShCloner(Container):
                 )
             ).decode("utf-8")
         )
-        
+
         # set vars
         for var in pshDeploy[0].get("variables", []):
             key = var.get("name")
@@ -206,6 +211,48 @@ class PlatformShCloner(Container):
         self.logger.info("Start project.")
         project.start()
 
+        # add known hosts
+        try:
+            project.getApplication().runCommand(
+                """
+                mkdir -p ~/.ssh
+                ssh-keyscan %s > ~/.ssh/known_hosts
+                ssh-keyscan %s >> ~/.ssh/known_hosts
+                ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+                ssh-keyscan github.com >> ~/.ssh/known_hosts            
+                chmod 0600 ~/.ssh/known_hosts
+                """ % (
+                    parsedSshUrl.hostname,
+                    parsedGitUrl.hostname,
+                ),
+                "web"
+            )
+        except Exception as e:
+            self.logger.error("An error occured, stopping container...")
+            self.stop()
+            raise e
+
+        # rsync mounts
+        app = project.getApplication()
+        mounts = app.getMounts()
+        for _, mountDest in mounts.items():
+            self.logger.info("Rsync mounts '%s.'" % mountDest)
+            try:
+                app.runCommand(
+                    """
+                    cd %s
+                    rsync -a  -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --max-size=2M %s:%s/ %s/
+                    """ % (
+                        app.APPLICATION_DIRECTORY,
+                        sshUrl,
+                        mountDest,
+                        mountDest
+                    ),
+                    "web"
+                )
+            except ContainerCommandError:
+                pass
+
         # ssh access to fetch assets
         self.logger.info("Fetch and import assets.")
         cmd = """
@@ -220,11 +267,9 @@ class PlatformShCloner(Container):
             for name in pshRelations:
                 self.logger.info("Fetch assets for service relationship '%s.'" % name)
                 for relationship in pshRelations[name]:
-                    fetcher = getPlatformShFetcher(self, relationship, sshUrl)
+                    fetcher = getPlatformShFetcher(project, relationship, sshUrl)
                     if not fetcher: continue
-                    dumpFilePaths = fetcher.dump()
-                    fetcher.importProject(project, dumpFilePaths)
-                    fetcher.clean()
+                    fetcher.fetch()
         except Exception as e:
             self.logger.error("An error occured, stopping container...")
             self.stop()
