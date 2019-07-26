@@ -145,29 +145,30 @@ class PlatformShCloner(Container):
                     self.project.get("_environment")
                 )
             )
-            cmd = """
-            mkdir -p %s
-            cd %s
-            git clone "%s" --recursive --branch "%s"
-            chown -R web:web %s
-            chmod -R g+rw %s
-            """ % (
-                PhpApplication.APPLICATION_DIRECTORY,
-                PhpApplication.APPLICATION_DIRECTORY,
-                pshGitUrl,
-                self.project.get("_environment"),
-                self.project.get("_project_id"),
-                self.project.get("_project_id")
-            )
             try:
-                self.runCommand(cmd)
+                self.runCommand(
+                    """
+                    mkdir -p %s
+                    cd %s
+                    git clone "%s" --recursive --branch "%s"
+                    chown -R web:web %s
+                    chmod -R g+rw %s
+                    """ % (
+                        PhpApplication.APPLICATION_DIRECTORY,
+                        PhpApplication.APPLICATION_DIRECTORY,
+                        pshGitUrl,
+                        self.project.get("_environment"),
+                        self.project.get("_project_id"),
+                        self.project.get("_project_id")
+                    )                    
+                )
             except Exception as e:
                 self.logger.error("An error occured, stopping container...")
                 self.stop()
                 raise e
 
-        # get project
-        project = PlatformProject.fromPath(
+        # get PCC project
+        pccProject = PlatformProject.fromPath(
             os.path.join(
                 self.project.get("_path"),
                 self.project.get("_project_id")
@@ -175,7 +176,7 @@ class PlatformShCloner(Container):
         )
 
         # add ssh key to project
-        project.config.set(
+        pccProject.config.set(
             "ssh_key",  
             base64.b64encode(
                 bytes(
@@ -203,19 +204,49 @@ class PlatformShCloner(Container):
                 pass
             except SyntaxError:
                 pass
-            project.variables.set(var.get("name"), str(value))
+            pccProject.variables.set(var.get("name"), str(value))
 
         # CUSTOM contextual code vars 
         # TODO instead of hard coding maybe add a config file to override vars?
-        project.variables.set("env:BUSINESS_HOURS_IGNORE", "1")
+        pccProject.variables.set("env:BUSINESS_HOURS_IGNORE", "1")
+
+        # CUSTOM contextual code behavior, use 'env:PRIMARY_REPO' to change the git repo remote
+        primaryRepo = pccProject.variables.get("env:PRIMARY_REPO")
+        if primaryRepo:
+            self.logger.info("Updated Git remote to '%s.'" % primaryRepo)
+            try:
+                self.runCommand(
+                    """
+                    cd %s
+                    git remote rename origin psh
+                    git remote add origin %s
+                    """ % (
+                        os.path.join(PhpApplication.APPLICATION_DIRECTORY, self.project.get("_project_id")),
+                        primaryRepo
+                    )
+                )
+            except Exception as e:
+                self.logger.error("An error occured, stopping container...")
+                self.stop()
+                pccProject.stop()
+                raise e
+
+        # set psh project id to env var
+        pccProject.variables.set("env:PSH_PROJECT_ID", self.project.get("_project_id"))
 
         # start project
         self.logger.info("Start project.")
-        project.start()
+        try:
+            pccProject.start()
+        except Exception as e:
+            self.logger.error("An error occured, stopping container...")
+            self.stop()
+            pccProject.stop()
+            raise e
 
         # add known hosts
         try:
-            project.getApplication().runCommand(
+            pccProject.getApplication().runCommand(
                 """
                 mkdir -p ~/.ssh
                 ssh-keyscan %s > ~/.ssh/known_hosts
@@ -232,10 +263,11 @@ class PlatformShCloner(Container):
         except Exception as e:
             self.logger.error("An error occured, stopping container...")
             self.stop()
+            pccProject.stop()
             raise e
 
         # rsync mounts
-        app = project.getApplication()
+        app = pccProject.getApplication()
         mounts = app.getMounts()
         for _, mountDest in mounts.items():
             self.logger.info("Rsync mounts '%s.'" % mountDest)
@@ -266,26 +298,27 @@ class PlatformShCloner(Container):
 
         # ssh access to fetch assets
         self.logger.info("Fetch and import assets.")
-        cmd = """
-        ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
-        """ % (
-            sshUrl
-        )
         # itterate relationships and perform asset dumps
         try:
-            pshRelationsStr = self.runCommand(cmd)
+            pshRelationsStr = self.runCommand(
+                """
+                ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
+                """ % (
+                    sshUrl
+                )
+            )
             pshRelations = json.loads(pshRelationsStr.strip())
             for name in pshRelations:
                 self.logger.info("Fetch assets for service relationship '%s.'" % name)
                 for relationship in pshRelations[name]:
-                    fetcher = getPlatformShFetcher(project, relationship, sshUrl)
+                    fetcher = getPlatformShFetcher(pccProject, relationship, sshUrl)
                     if not fetcher: continue
                     fetcher.fetch()
         except Exception as e:
             self.logger.error("An error occured, stopping container...")
             self.stop()
-            project.stop()
+            pccProject.stop()
             raise e
 
         self.stop()
-        project.stop()
+        pccProject.stop()

@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import os
 import json
 from .base import BasePlatformVariables
@@ -27,16 +26,24 @@ class DictVariables(BasePlatformVariables):
 
     def __init__(self, config = {}):
         BasePlatformVariables.__init__(self, config)
+        self._globalVars = config.get("global_vars", {})
         self._vars = dict(self.config.get("dict_vars", {}))
 
     def set(self, key, value):
         self._vars[str(key)] = value
 
     def get(self, key, default = None):
-        return self._vars.get(str(key), default)
+        key = str(key)
+        if key in self._vars:
+            return self._vars.get(key)
+        if key in self._globalVars:
+            return self._globalVars.get(key)
+        return default
 
     def delete(self, key):
         self._vars.pop(str(key), None)
 
     def all(self):
-        return self._vars.copy()
+        output = self._globalVars
+        output.update(self._vars)
+        return output

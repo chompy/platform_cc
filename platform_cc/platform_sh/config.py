@@ -23,6 +23,7 @@ class PlatformShConfig:
 
     """ Platform.sh configuration. """
 
+    CONFIG_API_TOKEN_KEY = "platform_sh_api_token"
     CONFIG_ACCESS_TOKEN_KEY = "platform_sh_access_token"
     CONFIG_SSH_PUBLIC_KEY = "platform_sh_ssh_public_key"
     CONFIG_SSH_PRIVATE_KEY = "platform_sh_ssh_private_key"
@@ -33,6 +34,14 @@ class PlatformShConfig:
             globalConfig = PlatformConfig()
         self.globalConfig = globalConfig
 
+    def getApiToken(self):
+        """ Retrieve API token. """
+        return self.globalConfig.get(self.CONFIG_API_TOKEN_KEY, "")
+
+    def setApiToken(self, apiToken = ""):
+        """ Set API token. """
+        self.globalConfig.set(self.CONFIG_API_TOKEN_KEY, apiToken)
+
     def getAccessToken(self):
         """ Retrieve access token. """
         return self.globalConfig.get(self.CONFIG_ACCESS_TOKEN_KEY, "")
@@ -40,7 +49,6 @@ class PlatformShConfig:
     def setAccessToken(self, accessToken = ""):
         """ Set access token. """
         self.globalConfig.set(self.CONFIG_ACCESS_TOKEN_KEY, accessToken)
-        self.globalConfig.save()
 
     def getSshPublicKey(self):
         """ Get SSH public key. """
@@ -56,7 +64,6 @@ class PlatformShConfig:
         if not sshKey:
             self.globalConfig.set(self.CONFIG_SSH_PUBLIC_KEY, "")
             self.globalConfig.set(self.CONFIG_SSH_PRIVATE_KEY, "")
-            self.globalConfig.save()
             return
         # load private key to verify + get public key
         privateKey = cryptography.hazmat.primitives.serialization.load_pem_private_key(
@@ -75,4 +82,3 @@ class PlatformShConfig:
         )
         self.globalConfig.set(self.CONFIG_SSH_PUBLIC_KEY, publicKeyBytes.decode("utf-8"))
         self.globalConfig.set(self.CONFIG_SSH_PRIVATE_KEY, privateKeyBytes.decode("utf-8"))
-        self.globalConfig.save()

@@ -26,18 +26,20 @@ import io
 import docker
 import logging
 import collections
-from platform_cc.variables import getVariableStorage
-from platform_cc.variables.base import BasePlatformVariables
-from platform_cc.parser.services import ServicesParser
-from platform_cc.parser.applications import ApplicationsParser
-from platform_cc.parser.routes import RoutesParser
-from platform_cc.services import getService
-from platform_cc.application import getApplication
-from platform_cc.router import PlatformRouter
-from platform_cc.container import Container
-from platform_cc.exception.state_error import StateError
-from platform_cc.exception.parser_error import ParserError
-from platform_cc.exception.container_not_found_error import ContainerNotFoundError
+from .variables import getVariableStorage
+from .variables.base import BasePlatformVariables
+from .parser.services import ServicesParser
+from .parser.applications import ApplicationsParser
+from .parser.routes import RoutesParser
+from .services import getService
+from .application import getApplication
+from .router import PlatformRouter
+from .container import Container
+from .config import PlatformConfig
+from .exception.state_error import StateError
+from .exception.parser_error import ParserError
+from .exception.container_not_found_error import ContainerNotFoundError
+from .exception.project_init_error import ProjectInitError
 
 class PlatformProject:
     """
@@ -76,7 +78,7 @@ class PlatformProject:
 
         # validate project path
         if self.path and not os.path.isdir(self.path):
-            raise ValueError("Project path does not exist.")
+            raise ProjectInitError("Project path does not exist.")
 
         # get logger
         self.logger = logging.getLogger(__name__)
@@ -136,7 +138,18 @@ class PlatformProject:
 
         # validate project path
         if not os.path.isdir(projectPath):
-            raise ValueError("Project path does not exist.")
+            raise ProjectInitError("Project path does not exist.")
+
+        # ensure a platform.sh related yaml file exists
+        mustContainOneOf = ServicesParser.YAML_PATHS + RoutesParser.YAML_PATHS + ApplicationsParser.YAML_FILENAMES
+        containsOne = False
+        for i in mustContainOneOf:
+            pathTo = os.path.join(projectPath, i)
+            if os.path.exists(pathTo):
+                containsOne = True
+                break
+        if not containsOne:
+            raise ProjectInitError("No project configuration files found.")
 
         # load config (use JsonFileVariables class to do this
         # as it already contains the functionality)
@@ -151,7 +164,8 @@ class PlatformProject:
         projectVars = getVariableStorage(
             {
                 "storage_handler"        : "json_file",
-                "json_path"              : os.path.join(projectPath, PlatformProject.PROJECT_VAR_STORAGE_FILE)
+                "json_path"              : os.path.join(projectPath, PlatformProject.PROJECT_VAR_STORAGE_FILE),
+                "global_vars"            : PlatformConfig().getGlobalProjectVars()
             }
         )
 
@@ -198,7 +212,7 @@ class PlatformProject:
                 }
             )
         if not networkList:
-            raise ValueError("Cannot find active project with uid '%s' in current Docker environment." % projectUid)
+            raise ProjectInitError("Cannot find active project with uid '%s' in current Docker environment." % projectUid)
 
         # fetch network labels
         labels = networkList[0].attrs.get("Labels", {})

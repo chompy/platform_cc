@@ -18,6 +18,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 from cleo import Command
 from platform_cc.commands import getProject, outputJson, outputTable
+from platform_cc.config import PlatformConfig
+from platform_cc.exception.project_init_error import ProjectInitError
+
+GLOBAL_VAR_CONFIG_PREFIX = "global_project_var:"
 
 class VariableSet(Command):
     """
@@ -27,9 +31,19 @@ class VariableSet(Command):
         {key : Name of variable to set.}
         {value : Value of variable.}
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--g|global : Set as global project variable. }
     """
 
     def handle(self):
+        # set global
+        if self.option("global"):
+            config = PlatformConfig()
+            config.set(
+                "%s%s" % (GLOBAL_VAR_CONFIG_PREFIX, self.argument("key")),
+                self.argument("value")
+            )
+            return
+        # set project
         project = getProject(self)
         project.variables.set(
             self.argument("key"),
@@ -41,7 +55,7 @@ class VariableGet(Command):
     Get a project variable.
 
     variable:get
-        {key : Name of variable to set.}
+        {key : Name of variable to get.}
         {--p|path=? : Path to project root. (Default=current directory)}
     """
 
@@ -58,11 +72,20 @@ class VariableDelete(Command):
     Delete a project variable.
 
     variable:delete
-        {key : Name of variable to set.}
+        {key : Name of variable to delete.}
         {--p|path=? : Path to project root. (Default=current directory)}
+        {--g|global : Delete global project variable. }
     """
 
     def handle(self):
+        # delete global var
+        if self.option("global"):
+            config = PlatformConfig()
+            config.delete(
+                "%s%s" % (GLOBAL_VAR_CONFIG_PREFIX, self.argument("key"))
+            )
+            return
+        # delete project var
         project = getProject(self)
         project.variables.delete(
             self.argument("key")
@@ -70,16 +93,25 @@ class VariableDelete(Command):
 
 class VariableList(Command):
     """
-    List all project variables as JSON.
+    List all project variables.
 
     variable:list
         {--p|path=? : Path to project root. (Default=current directory)}
-        {--j|json : If set output in JSON.}
+        {--j|json : Output as JSON.}
+        {--g|global : Only display global project variable. }
     """
 
     def handle(self):
-        project = getProject(self)
-        allVars = project.variables.all()
+        allVars = None
+        project = None
+        if not self.option("global"):
+            try:
+                project = getProject(self)
+                allVars = project.variables.all()
+            except ProjectInitError:
+                pass
+        if not allVars:
+            allVars = PlatformConfig().getGlobalProjectVars()
 
         # json output
         if self.option("json"):
@@ -96,6 +128,6 @@ class VariableList(Command):
             )
         outputTable(
             self,
-            "Project '%s' - Variables" % project.getUid()[0:6],
+            "Project '%s' - Variables" % project.getUid()[0:6] if project else "Global Project Variables",
             tableData
         )

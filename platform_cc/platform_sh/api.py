@@ -16,7 +16,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .exception.api_error import PlatformShApiError
-from .exception.access_token_error import PlatformShAccessTokenError
+from .exception.access_error import PlatformShAccessError
 from .exception.config_error import PlatformShConfigError
 from .config import PlatformShConfig
 from cryptography.hazmat.primitives import serialization as crypto_serialization
@@ -42,39 +42,45 @@ class PlatformShApi:
         self.config = config
         self.uuid = ""
 
-    @classmethod
-    def getAccessToken(cls, apiToken):
-        """ Retrieve access token from API token. """
+    def _fetchAccessToken(self):
+        """ Fetch access token and update config. """
+        # must have API token
+        if not self.config.getApiToken():
+            raise PlatformShAccessError("API token not set. Please login first with 'platform_sh:login.'")
         r = requests.post(
-            cls.OAUTH_URL,
+            self.OAUTH_URL,
             json = {
                 "client_id" : "platform-api-user",
                 "grant_type" : "api_token",
-                "api_token" : str(apiToken)
+                "api_token" : self.config.getApiToken()
             }
         )
         if not r.text:
-            raise PlatformShApiError("API returned empty response.")
+            raise PlatformShApiError("API returned empty response while trying to retrieve access token.")
         resp = r.json()
         if resp.get("error"):
             raise PlatformShApiError(
                 "%s (%s)" % (resp.get("error_description"), resp.get("error"))
             )
-        return resp.get("access_token")
+        self.config.setAccessToken(resp.get("access_token"))
 
-    def _apiGet(self, resource):
+    def _apiGet(self, resource, tryAccessTokenFetch=True):
         """ Perform GET request to given API resource. """
         if not self.config.getAccessToken():
-            raise PlatformShAccessTokenError("Access token not set. Please login first with 'platform_sh:login.'")
+            self._fetchAccessToken()
         r = requests.get(
             "%s/%s" % (self.API_URL, resource),
             headers={"Authorization" : "Bearer %s" % self.config.getAccessToken()}
         )
+        if r.status_code == 401 and tryAccessTokenFetch:               
+            self._fetchAccessToken()
+            return self._apiGet(resource, tryAccessTokenFetch=False)
         return self._handleApiRequest(r)
 
     def _handleApiRequest(self, r):
+        """ Handle an API request. """
         if r.status_code == 401:
-            raise PlatformShAccessTokenError("Invalid or expired access token provided. Please refresh your access token with 'platform_sh:login.'")
+            raise PlatformShAccessError("Invalid or expired access token provided. Please refresh your API token with 'platform_sh:login.'")
         r.raise_for_status()
         if not r.text:
             raise PlatformShApiError("API returned empty response.")
@@ -84,7 +90,6 @@ class PlatformShApi:
                 "%s (%s)" % (resp.get("error_description"), resp.get("error"))
             )
         return resp
-
 
     def getUUID(self):
         """ Retrieve user UUID. """

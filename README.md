@@ -68,7 +68,7 @@ You can clone a project straight from Platform.sh. Follow these steps...
     ```
     $ platform_cc platform_sh:login <API_TOKEN>
     ```
-3) Add your SSH private key to Platform.cc by running the following command...
+3) Add your SSH private key to Platform.CC by running the following command...
 
     ```
     $ platform_cc platform_sh:set_ssh -p ~/.ssh/id_rsa
@@ -102,7 +102,10 @@ This assumes that you have a project ready to go with all the appropiate configu
 
     Composer auth example...
     ```
-    $ platform_cc var:set 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+    $ platform_cc var:set -g 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+    ```
+
+    Also note the `-g` option. It allows you to set global variables that affect all projects ran under the same user.
 
 
 2) Start in the root directory of the project.
@@ -205,11 +208,13 @@ Platform.CC contains a few additional features that are disabled by default. The
 disabled by using the 'project:option_set' command. A project restart is required to fully enable and
 disable the features. For a list of features and their current status use the 'project:options' command.
 
-**USE_MOUNT_VOLUMES**
-When enabled mount points defined in .platform.app.yaml are mounted to a Docker volume. Setting this to `true` is important for performance on Macs.
+- **USE_MOUNT_VOLUMES**
 
-**ENABLE_CRON**
-Enables Cron tasks as defined in .platform.app.yaml.
+    When enabled mount points defined in .platform.app.yaml are mounted to a Docker volume. Setting this to `true` is important for performance on Macs.
+
+- **ENABLE_CRON**
+    
+    Enables Cron tasks as defined in .platform.app.yaml.
 
 
 Platform.CC Specific Configurations

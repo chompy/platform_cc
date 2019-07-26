@@ -15,9 +15,9 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-class PlatformShAccessTokenError(Exception):
+class PlatformShAccessError(Exception):
     """
-    Raised when attempting to make API request to Platform.sh
-    but access token is missing or invalid.
+    Raised when attempting access to Platform.sh was denied,
+    most likely due to invalid access credientials.
     """
     pass

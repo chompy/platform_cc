@@ -28,16 +28,13 @@ class PlatformShLogin(Command):
     Login to Platform.sh using an API token.
 
     platform_sh:login
-        {token : Access token.}
+        {token : API token. (Generate your at https://accounts.platform.sh/user/api-tokens.) }
     """
 
     def handle(self):
         pshConfig = PlatformShConfig()
-        accessToken = PlatformShApi.getAccessToken(
-            self.argument("token")
-        )
-        if accessToken:
-            pshConfig.setAccessToken(accessToken)
+        pshConfig.setApiToken(self.argument("token"))
+        pshConfig.setAccessToken("")
 
 class PlatformShLogout(Command):
     """
@@ -49,6 +46,7 @@ class PlatformShLogout(Command):
     def handle(self):
         pshConfig = PlatformShConfig()
         pshConfig.setAccessToken("")
+        pshConfig.setApiToken("")
 
 class PlatformShSetSsh(Command):
     """
