@@ -10,9 +10,9 @@ Requirements / Installation
 
 ### Requirements
 
-- Python 2.7+
+- Python 3.6+ (2.7+ has worked in the past but is no longer supported.)
 - Docker
-    - Mac:
+    - Mac OS:
         1.  Install Version 17.09.1-ce-mac42 https://download.docker.com/mac/stable/21090/Docker.dmg. If you are unable to install that version - try to upgrade your OS.
         2.  Open Docker -> Preferences -> File Sharing and remove all directories except `/tmp`.
         3.  Open Docker -> Preferences -> Advanced and increase memory to 4.0 GB.
@@ -25,18 +25,25 @@ Requirements / Installation
                 $ sudo rm /etc/exports && sudo touch /etc/exports
                 $ ./d4m-nfs.sh
 
-    - Linux:
+    - Linux
+        - Debian
 
-        Follow the instructions here https://github.com/docker/docker-install.
-        You might have to add yourself to the docker user group:
+            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/debian/
 
-            $ sudo addgroup --system docker && sudo adduser $USER docker && newgrp docker
+        - Ubuntu
+
+            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/ubuntu/
+
+        - CentOS
+
+            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/centos/
+
 
 ### Installation
 
-Install Python 2.7 and Pip if needed.
+Make sure you have Python 3 and Pip installed then run one of the following set of commands...
 
-    $ pip install git+https://gitlab.com/contextualcode/platform_cc    
+    $ python3 -m pip install git+https://gitlab.com/contextualcode/platform_cc    
 
 OR
 
@@ -46,53 +53,97 @@ OR
     $ pip install -r requirements.txt
     $ sudo python setup.py install
 
-
 Quick Start
 -----------
 
-This assumes that you have a project ready to go with all the appropiate configuration files (.platform.app.yaml, etc).
+### Platform.sh Cloner
 
-1) Install Composer credentials, ssh keys, etc.
+The following assumes you already have a project up and running on Platform.sh and that you have added your SSH key.
 
-    You can use the "var:set" command to set environment variables. This can be use to
-    setup Composer credientials for your project. The below command is an example
-    of how one might copy their .composer/auth.json in to their project.
+You can clone a project straight from Platform.sh. Follow these steps...
 
+1) Visit https://accounts.platform.sh/user/api-tokens to create an API token.
+2) Run the following command...
 
-        $ platform_cc var:set 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+    ```
+    $ platform_cc platform_sh:login <API_TOKEN>
+    ```
+3) Add your SSH private key to Platform.cc by running the following command...
 
-        $ platform_cc var:set project:ssh_key `cat ~/.ssh/id_rsa | base64 -w 0`
+    ```
+    $ platform_cc platform_sh:set_ssh -p ~/.ssh/id_rsa
+    ```
+4) Obtain the Platform.sh project ID. You can obtain a list of your project ids from the Platform.sh CLI tool or visit the project dashboard and copy it from the URL... `https://console.platform.sh/<USERNAME>/<PROJECT_ID>`
 
-        $ platform_cc var:set project:known_hosts `cat ~/.ssh/known_hosts | base64 -w 0`
+5) Run the following command to start the cloning process...
 
-    (Use `base64 -b 0` on Macs)
+    ```
+    $ platform_cc platform_sh:clone <PROJECT_ID>
+    ```
+
+### Local Project
+
+This assumes that you have a project ready to go with all the appropiate configuration files (.platform.app.yaml, etc). Before running any `platform_cc` commands you should make sure that you are in the project's root directory.
+
+1) (Optional) Set project environment variables.
+
+    Often times environment variables are used to expose secure credientials to a project.
+    You can use the `var:set` command to set environment variables.
+
+    In order to specifically set an environment variable the variable name must be prefixed with `env:`.
+
+    Example...
+    ```
+    $ platform_cc var:set env:ACCESS_TOKEN secret_token_here
+    ```
+
+    A common use case might be to set the 'COMPOSER_AUTH' environment variable so that Composer can run
+    without user interaction being required.
+
+    Composer auth example...
+    ```
+    $ platform_cc var:set 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+
 
 2) Start in the root directory of the project.
 
-        $ platform_cc project:start
+    ```
+    $ platform_cc project:start
+    ```
 
     This will pull all the needed Docker images and run the build commands for your application(s).
     
-3) Setup Databases and Other Services
+3) (Optional) Install database dumps.
 
-    You should now install databases and setup other services.
+    As of writting this MySQL is the only supported database. You can use the `mysql:sql` command to access the MySQL interactive shell and run queries. You can also pass queries in through STDIN.
 
-    You can use the 'mysql:sql' command to run SQL queries and gain access to the MySQL console.
+    STDIN example...
 
-    For example:
+    ```
+    $ cat db_dump.sql | platform_cc mysql:sql -d main
+    ```
 
+    Platform.sh CLI example...
+
+    ```
     $ platform db:dump -emaster -fdb_dump.sql
-
-    $ cat db_dump.sql | platform_cc mysql:sql -dmain
+    $ cat db_dump.sql | platform_cc mysql:sql -d main
+    ```
 
 4) Run deploy hooks.
 
-        $ platform_cc application:deploy   
+    Deploy hooks are not ran automatically. You can run your project's deploy hooks with the following command...
+
+    ```
+    $ platform_cc application:deploy
+    ```
 
     This runs the deploy hooks defined in .platform.app.yaml. If you have multiple applications you will
     need to run this command for each application.
 
-        $ platform_cc application:deploy --name=application_name
+    ```
+    $ platform_cc application:deploy --name application_name
+    ```
 
 
 Supported Languages
@@ -105,6 +156,7 @@ Platform.CC was primarily designed to aid with PHP development, however addition
 - PHP 7.0
 - PHP 7.1
 - PHP 7.2
+- PHP 7.3
 - Go 1.11
 - Python 3.7
 
@@ -137,20 +189,13 @@ is released. There are cases where old application images will no longer be comp
 new version of Platform.CC. In that event you can upgrade your application by running the following
 commands...
 
-        $ platform_cc application:pull
-        $ platform_cc application:build
+```
+$ platform_cc application:pull
+$ platform_cc application:build
+```
 
 If your project contains multiple applications you will likely need to run the command for each of them
 using the --name argument to specify the application.
-
-
-More On Variables
------------------
-
-The 'platform_cc var:set' command allows you to set variables that are exposed to your
-project. All the variables are exposed to your application via the PROJECT_VARIABLES
-environment variable. Additionally any variable prefixed with "env:" will be set as an
-environment variable.
 
 
 Extra Options
@@ -167,36 +212,27 @@ When enabled mount points defined in .platform.app.yaml are mounted to a Docker 
 Enables Cron tasks as defined in .platform.app.yaml.
 
 
-Custom config
--------------
+Platform.CC Specific Configurations
+-----------------------------------
 
-If you find that you need some variables that are specific only to your Platform.CC projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
+If you find that you need some configurations that are specific only to your Platform.CC projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
 
-For example, if you wanted to have the environment variable `$SYMFONY_ENV` set to `dev`, you could set it with `var:set`:
+A simple example scenario is to enforce 'dev' mode for your project when ran through Platform.CC. If you added the following to `.platform.app.pcc.yaml`...
 
-    $ platform_cc var:set 'env:SYMFONY_ENV' 'dev'
+```
+variables:
+    env:
+        SYMFONY_ENV: dev
+```
 
-But this would have to be ran each time you restarted the project. If you wanted `$SYMFONY_ENV` to always be `dev` when in Platform.CC, you can create `.platform.app.pcc.yaml` file with contents:
-
-    variables:
-        env:
-            SYMFONY_ENV: dev
-
-In this way, you can have variables and settings that are only and automatically set in your local development environments. And importantly, it uses the same syntax as your `.platform.app.yaml` files.
+Then the environment variables `SYMFONY_DEV` would always get set to `dev` in Platform.CC but not on Platform.sh. This also works for `services.yaml` and `routes.yaml` which would be named `services.pcc.yaml` and `routes.pcc.yaml` respectively.
 
 
 Missing Features
 ----------------
 
-See TODO for list of features the still need to be implementd.
+Platform.sh adds new features all the time. Keeping up with them was never the goal of Platform.CC...rather the goal is to focus on functionality we at Contextual Code need for our day to day development.
 
-Currently Unsupported Functionality:
+### Known Missing Features
 
-- Worker container.
-
-Currently Unplanned Functionality:
-
-- Non PHP applications (Go 1.11 and Python 3.7 are currently supported however)
-- Limiting app size and disk space
-- Web upstream,socket_family (PHP doesn't really need this?)
-
+- Workers

@@ -150,11 +150,13 @@ class PlatformShCloner(Container):
             cd %s
             git clone "%s" --recursive --branch "%s"
             chown -R web:web %s
+            chmod -R g+rw %s
             """ % (
                 PhpApplication.APPLICATION_DIRECTORY,
                 PhpApplication.APPLICATION_DIRECTORY,
                 pshGitUrl,
                 self.project.get("_environment"),
+                self.project.get("_project_id"),
                 self.project.get("_project_id")
             )
             try:
@@ -238,6 +240,15 @@ class PlatformShCloner(Container):
         for _, mountDest in mounts.items():
             self.logger.info("Rsync mounts '%s.'" % mountDest)
             try:
+                app.runCommand(
+                    """
+                    cd %s
+                    chown -R web:web %s
+                    """ % (
+                        app.APPLICATION_DIRECTORY,
+                        mountDest
+                    )
+                )
                 app.runCommand(
                     """
                     cd %s
