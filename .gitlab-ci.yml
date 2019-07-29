@@ -1,5 +1,15 @@
 stages:
+    - test
     - build
+
+test:unittests:
+    stage: test
+    image: python:3
+    before_script:
+        - pip install -r requirements.txt
+    script:
+        - |
+            python3 -m unittest
 
 build:php54:
     stage: build
