@@ -1,4 +1,4 @@
-vDEVELOPMENT
+v0.3.0
 - Fixed issue where mount points were setup twice during PHP app start.
 - Fixed issue that caused YAML.load deprecation warning.
 - Fixed error thrown when pulling Docker image on app build.
