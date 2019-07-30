@@ -1,0 +1,32 @@
+name: test_app
+type: php:7.3
+build:
+    flavor: none
+variables:
+    env:
+        TEST_ENV: 'yes'
+relationships:
+    database: mysqldb:mysql
+    cache: memcached:memcached
+web:
+    locations:
+        /:
+            root: web
+            passthru: /index.php
+            expires: 3600
+mounts:
+    /test: test
+runtime:
+    extensions:
+        - imagick
+        - xsl
+hooks:
+    build: |
+        echo "BUILD"
+    deploy: |
+        echo "DEPLOY"
+crons:
+    test:
+        spec: "*/5 * * * *"
+        cmd: |
+            echo "TEST"

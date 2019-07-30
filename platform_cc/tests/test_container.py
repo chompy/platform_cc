@@ -18,16 +18,26 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import unittest
 import io
 import docker
+import logging
 from .mock_docker import MockDocker
 from platform_cc.container import Container
 from platform_cc.exception.state_error import StateError
+from platform_cc.exception.container_command_error import ContainerCommandError
 
 class TestContainer(unittest.TestCase):
 
     """ Test container class. """
 
     def _createMockContainer(self):
-        return Container(
+        class MockVolumeContainer(Container):
+            def getContainerVolumes(self):
+                return {
+                    self.getVolumeName(): {
+                        "bind": "/var/lib/vol1",
+                        "mode": "rw"
+                    }
+                }
+        return MockVolumeContainer(
             {
                 "uid" : "abcdefgh",
                 "short_uid" : "abcd"
@@ -64,12 +74,15 @@ class TestContainer(unittest.TestCase):
     def testUploadFile(self):
         container = self._createMockContainer()
         fileObj = io.BytesIO(bytes("TEST".encode("utf-8")))
+        self.assertEqual(fileObj.tell(), 0, "upload file object not yet read")
         # should fail if container isn't started
         with self.assertRaises(StateError):
             container.uploadFile(fileObj, "/app/test")
+        self.assertEqual(fileObj.tell(), 0, "upload file object not read when container isn't running")
         container.start()
         container.uploadFile(fileObj, "/app/test")
-
+        self.assertEqual(fileObj.tell(), 4, "upload file object has been read")
+        
     def testGetImage(self):
         container = self._createMockContainer()
         with self.assertRaises(docker.errors.NotFound):
@@ -96,9 +109,12 @@ class TestContainer(unittest.TestCase):
         container.start()
         container.commit()
         container.docker.images.get(container.getDockerImage())
+        container.docker.volumes.get(container.getVolumeName())
         container.purge()
         with self.assertRaises(docker.errors.NotFound):
             container.docker.images.get(container.getDockerImage())
+        with self.assertRaises(docker.errors.NotFound):
+            container.docker.volumes.get(container.getVolumeName())
 
     def testVolumes(self):
         class MockVolumeContainer(Container):
@@ -133,6 +149,33 @@ class TestContainer(unittest.TestCase):
         for key in container.getContainerVolumes():
             with self.assertRaises(docker.errors.NotFound):
                 container.docker.volumes.get(key)
+
+    def testRunCommand(self):
+        container = self._createMockContainer()
+        logging.disable(logging.ERROR)
+        with self.assertRaises(StateError):
+            container.runCommand("test cmd")
+        container.start()
+        output = container.runCommand("test cmd")
+        self.assertEqual(output, "PASS", "run command output PASS")
+        with self.assertRaises(ContainerCommandError):
+            output = container.runCommand("test cmd", user="error")
+
+    def testShell(self):
+        container = self._createMockContainer()
+        with self.assertRaises(StateError):
+            container.shell()
+        # can't shell in to mock docker but ensure an attempt is made
+        # and an expected exception is thrown
+        container.start()
+        with self.assertRaises(io.UnsupportedOperation):
+            container.shell()
+        # test stdin
+        dataStr = "TEST-123"
+        data = io.BytesIO(dataStr.encode("utf-8"))
+        self.assertEqual(data.tell(), 0, "new stdin data at position 0")
+        container.shell(stdin=data)
+        self.assertEqual(data.tell(), len(dataStr), "stdin passed in to shell has been read")
 
 if __name__ == '__main__':
     unittest.main()

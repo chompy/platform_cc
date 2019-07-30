@@ -44,6 +44,6 @@ class DictVariables(BasePlatformVariables):
         self._vars.pop(str(key), None)
 
     def all(self):
-        output = self._globalVars
+        output = self._globalVars.copy()
         output.update(self._vars)
         return output

@@ -18,6 +18,23 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import docker
 import io
 
+class MockDockerApi:
+    def exec_create(self, containerId, cmd, **kwargs):
+        self.id = containerId
+        return containerId
+
+    def exec_start(self, execId, **kwargs):
+        return io.BytesIO("PASS".encode("utf-8"))
+    
+    def exec_inspect(self, execId):
+        return {
+            "id" : self.id,
+            "test" : True,
+            "ProcessConfig" : {
+                "tty" : False
+            }
+        }
+
 class MockDockerVolume:
 
     def __init__(self, volumes, name, **kwargs):
@@ -98,6 +115,7 @@ class MockDockerContainer:
         self.images = images
         self.imageName = image
         self.args = kwargs
+        self.id = 1
         self.stop()
 
     def start(self):
@@ -111,6 +129,11 @@ class MockDockerContainer:
 
     def remove(self):
         return
+
+    def exec_run(self, cmd, **kwargs):
+        if (kwargs.get("user") == "error"):
+            return (1, "FAIL".encode("utf-8"))
+        return (0, "PASS".encode("utf-8"))
 
     def put_archive(self, path, data):
         if type(data) is not io.BytesIO:
@@ -147,6 +170,7 @@ class MockDocker:
         self.containers = MockDockerContainers(self.images)
         self.networks = MockDockerNetworks()
         self.volumes = MockDockerVolumes()
+        self.api = MockDockerApi()
 
     @classmethod
     def from_env(cls, timeout=30):
