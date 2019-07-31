@@ -1,0 +1,19 @@
+.cache_content: &cache_content
+    enabled: true
+    cookies: ['PHPSESSID']
+    headers: ['Accept', 'Accept-Language']
+    default_ttl: 60
+
+https://www.example.com:
+    type: upstream
+    upstream: test_app:http
+    cache: *cache_content
+    redirects:
+        paths:
+            /test2:
+                to: "/test1"
+                prefix: false
+
+https://example.com:
+    type: redirect
+    to: https://www.example.com

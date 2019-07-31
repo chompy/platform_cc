@@ -1,0 +1,12 @@
+mysqldb:
+    type: mysql:10.0
+    configuration:
+        schemas:
+            - main
+        endpoints:
+            mysql:
+                default_schema: main
+                privileges:
+                    main: admin
+memcached:
+    type: memcached:1.4

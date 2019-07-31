@@ -1,0 +1,10 @@
+mysqldb:
+    configuration:
+        schemas:
+            - test
+            - main
+        endpoints:
+            test_endpoint:
+                default_schema: test
+                privileges:
+                    test: admin

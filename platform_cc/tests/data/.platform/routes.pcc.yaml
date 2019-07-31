@@ -1,0 +1,3 @@
+https://test.example.com:
+    type: redirect
+    to: https://www.example.com
