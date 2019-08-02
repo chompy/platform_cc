@@ -83,7 +83,7 @@ class PlatformShCloner(Container):
             }
         }
 
-    def clone(self):
+    def clone(self, skipMountSync=False, skipServiceSync=False):
         """ 
         Clone platform.sh environment by using its REST API, git clone
         and accessing environment via ssh for asset dumps.
@@ -226,10 +226,7 @@ class PlatformShCloner(Container):
                     )
                 )
             except Exception as e:
-                self.logger.error("An error occured, stopping container...")
-                self.stop()
-                pccProject.stop()
-                raise e
+                pass
 
         # set psh project id to env var
         pccProject.variables.set("env:PSH_PROJECT_ID", self.project.get("_project_id"))
@@ -267,58 +264,60 @@ class PlatformShCloner(Container):
             raise e
 
         # rsync mounts
-        app = pccProject.getApplication()
-        mounts = app.getMounts()
-        for _, mountDest in mounts.items():
-            self.logger.info("Rsync mounts '%s.'" % mountDest)
+        if not skipMountSync:
+            app = pccProject.getApplication()
+            mounts = app.getMounts()
+            for _, mountDest in mounts.items():
+                self.logger.info("Rsync mounts '%s.'" % mountDest)
+                try:
+                    app.runCommand(
+                        """
+                        cd %s
+                        chown -R web:web %s
+                        """ % (
+                            app.APPLICATION_DIRECTORY,
+                            mountDest
+                        )
+                    )
+                    app.runCommand(
+                        """
+                        cd %s
+                        rsync -a  -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --max-size=2M %s:%s/ %s/
+                        """ % (
+                            app.APPLICATION_DIRECTORY,
+                            sshUrl,
+                            mountDest,
+                            mountDest
+                        ),
+                        "web"
+                    )
+                except ContainerCommandError:
+                    pass
+
+        if not skipServiceSync:
+            # ssh access to fetch assets
+            self.logger.info("Fetch and import assets.")
+            # itterate relationships and perform asset dumps
             try:
-                app.runCommand(
+                pshRelationsStr = self.runCommand(
                     """
-                    cd %s
-                    chown -R web:web %s
+                    ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
                     """ % (
-                        app.APPLICATION_DIRECTORY,
-                        mountDest
+                        sshUrl
                     )
                 )
-                app.runCommand(
-                    """
-                    cd %s
-                    rsync -a  -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --max-size=2M %s:%s/ %s/
-                    """ % (
-                        app.APPLICATION_DIRECTORY,
-                        sshUrl,
-                        mountDest,
-                        mountDest
-                    ),
-                    "web"
-                )
-            except ContainerCommandError:
-                pass
-
-        # ssh access to fetch assets
-        self.logger.info("Fetch and import assets.")
-        # itterate relationships and perform asset dumps
-        try:
-            pshRelationsStr = self.runCommand(
-                """
-                ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
-                """ % (
-                    sshUrl
-                )
-            )
-            pshRelations = json.loads(pshRelationsStr.strip())
-            for name in pshRelations:
-                self.logger.info("Fetch assets for service relationship '%s.'" % name)
-                for relationship in pshRelations[name]:
-                    fetcher = getPlatformShFetcher(pccProject, relationship, sshUrl)
-                    if not fetcher: continue
-                    fetcher.fetch()
-        except Exception as e:
-            self.logger.error("An error occured, stopping container...")
-            self.stop()
-            pccProject.stop()
-            raise e
+                pshRelations = json.loads(pshRelationsStr.strip())
+                for name in pshRelations:
+                    self.logger.info("Fetch assets for service relationship '%s.'" % name)
+                    for relationship in pshRelations[name]:
+                        fetcher = getPlatformShFetcher(pccProject, relationship, sshUrl)
+                        if not fetcher: continue
+                        fetcher.fetch()
+            except Exception as e:
+                self.logger.error("An error occured, stopping container...")
+                self.stop()
+                pccProject.stop()
+                raise e
 
         self.stop()
         pccProject.stop()

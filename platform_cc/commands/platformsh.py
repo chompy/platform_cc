@@ -76,6 +76,8 @@ class PlatformShClone(Command):
         {project_id : Project ID.}
         {--p|path=? : Path to clone project to. (Default=current directory)}
         {--e|environment=? : Environment ID. (Default=master)}
+        {--skip-mount-sync : Skip syncing mount directories.}
+        {--skip-service-sync : Skip syncing service assets.}
     """
 
     def handle(self):
@@ -90,4 +92,7 @@ class PlatformShClone(Command):
             environment,
             path
         )
-        pshCloner.clone()
+        pshCloner.clone(
+            skipMountSync=self.option("skip-mount-sync"),
+            skipServiceSync=self.option("skip-service-sync")
+        )
