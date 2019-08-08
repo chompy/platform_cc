@@ -588,7 +588,7 @@ class Container:
             try:
                 stdin.seek(0)
             except:
-                stdin = io.BytesIO(str.encode(stdin.read()))
+                stdin = io.BytesIO(str.encode(stdin.read(), "utf-8"))
             # upload stdin object to container
             self.uploadFile(
                 stdin,
