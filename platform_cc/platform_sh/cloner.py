@@ -218,11 +218,14 @@ class PlatformShCloner(Container):
                 self.runCommand(
                     """
                     cd %s
-                    git remote rename origin psh
-                    git remote add origin %s
+                    git remote set-url origin %s
+                    git remote add platform %s || true
+                    git remote set-url platform %s
                     """ % (
                         os.path.join(PhpApplication.APPLICATION_DIRECTORY, self.project.get("_project_id")),
-                        primaryRepo
+                        primaryRepo,
+                        sshUrl,
+                        sshUrl
                     )
                 )
             except Exception as e:
