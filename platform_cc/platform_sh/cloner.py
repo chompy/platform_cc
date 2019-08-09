@@ -282,8 +282,8 @@ class PlatformShCloner(Container):
                         os.path.join(PhpApplication.APPLICATION_DIRECTORY, projDirName),
                         os.path.join(PhpApplication.APPLICATION_DIRECTORY, projDirName),
                         primaryRepo,
-                        sshUrl,
-                        sshUrl
+                        pshGitUrl,
+                        pshGitUrl
                     )
                 )
             except Exception as e:
