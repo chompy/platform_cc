@@ -130,12 +130,13 @@ class PlatformShSync(Command):
                 )
             )
         environment = self.option("environment")
+        if not environment: environment = "master"
         # warn user about sync
         self.line(
             "<question>!!! Sync of project '%s' with Platform.sh (%s:%s) will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
                 project.getShortUid(),
                 pshProjectId,
-                "master" if not environment else environment
+                environment
             )
         )
         time.sleep(5)
