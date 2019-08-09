@@ -53,7 +53,7 @@ class PlatformShFetcher:
             [
                 "sh", "-c", cmd
             ],
-            user="web",
+            user="root",
             stream=True
         )
 

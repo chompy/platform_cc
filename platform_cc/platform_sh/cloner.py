@@ -145,7 +145,7 @@ class PlatformShCloner(Container):
         ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
         ssh-keyscan github.com >> ~/.ssh/known_hosts
         chmod 0600 ~/.ssh/known_hosts
-        usermod -u %s web
+        usermod -u %s web || true
         """ % (
             parsedSshUrl.hostname,
             parsedGitUrl.hostname,

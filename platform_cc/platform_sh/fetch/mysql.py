@@ -49,7 +49,11 @@ class PlatformShFetchMysql(PlatformShFetcher):
             service = serviceList[0]
             with open(dumpPath, "rb") as f:
                 service.executeSqlDump(
-                    stdin=io.BytesIO(str.encode("DROP SCHEMA IF EXISTS `%s`; CREATE SCHEMA `%s`" % (databaseName, databaseName), "utf-8"))
+                    stdin=io.BytesIO(str.encode(
+                        """
+                        DROP SCHEMA IF EXISTS `%s`;
+                        CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin;
+                        """ % (databaseName, databaseName), "utf-8"))
                 )
                 service.executeSqlDump(
                     databaseName,
