@@ -16,12 +16,18 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import io
 from .base import PlatformShFetcher
 from platform_cc.application.php import PhpApplication
 
 class PlatformShFetchMysql(PlatformShFetcher):
     
     def fetch(self):
+
+        # must have a database
+        databaseName = self.relationship.get("path", "")
+        if not databaseName: return
+
         # TODO could be more then one database
         dumpPath = self._runCommandDump(
             """
@@ -31,7 +37,7 @@ class PlatformShFetchMysql(PlatformShFetcher):
                 self.relationship.get("host", ""),
                 self.relationship.get("username", ""),
                 self.relationship.get("password", ""),
-                self.relationship.get("path", "")
+                databaseName
             )
         )
         if dumpPath and os.path.exists(dumpPath):
@@ -43,7 +49,10 @@ class PlatformShFetchMysql(PlatformShFetcher):
             service = serviceList[0]
             with open(dumpPath, "rb") as f:
                 service.executeSqlDump(
-                    self.relationship.get("path", None),
+                    stdin=io.BytesIO(str.encode("DROP SCHEMA IF EXISTS `%s`; CREATE SCHEMA `%s`" % (databaseName, databaseName), "utf-8"))
+                )
+                service.executeSqlDump(
+                    databaseName,
                     f
                 )
             os.remove(dumpPath)

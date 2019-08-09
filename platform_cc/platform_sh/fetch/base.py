@@ -23,7 +23,8 @@ import base36
 class PlatformShFetcher:
     """ Fetch assets required by Platform.sh services. """
 
-    def __init__(self, project, relationship, sshUrl):
+    def __init__(self, cloner, project, relationship, sshUrl):
+        self.cloner = cloner
         self.project = project
         self.sshUrl = str(sshUrl)
         self.relationship = dict(relationship)
@@ -46,8 +47,7 @@ class PlatformShFetcher:
             )
         )
         # retrieve docker container
-        app = self.project.getApplication()
-        dockerContainer = app.getContainer()
+        dockerContainer = self.cloner.getContainer()
         # run command
         (_, output) = dockerContainer.exec_run(
             [

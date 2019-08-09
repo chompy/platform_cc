@@ -25,17 +25,17 @@ chown -R web:web /var/lib/gems
 chown -R root:staff /usr/bin
 chmod -R g+rw /usr/bin
 
-# config php-fpm
-if [ -d /usr/local/etc/php-fpm.d ]; then
-    sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/;listen.backlog.*/listen.backlog = 511/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/;listen.owner.*/listen.owner = web/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/;listen.group.*/listen.group = web/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/;listen.mode.*/listen.mode = 0660/g" /usr/local/etc/php-fpm.d/www.conf
-    sed -i "s/listen.*/listen = \/run\/app.sock/g" /usr/local/etc/php-fpm.d/zz-docker.conf
-else
-    sed -i "s/user = .*/user = web/g" /usr/local/etc/php-fpm.conf
-    sed -i "s/group = .*/group = web/g" /usr/local/etc/php-fpm.conf
-    sed -i "s/;listen.backlog.*/listen.backlog = 511/g" /usr/local/etc/php-fpm.conf
-fi
+# create php-fpm config structure like PSH
+mkdir -p /etc/php/7.0/fpm
+mkdir -p /etc/php/7.1-zts
+mkdir -p /etc/php/7.2-zts
+mkdir -p /etc/php/7.3-zts
+mkdir -p /etc/php5
+ln -s /etc/php/7.0/fpm /etc/php/7.1-zts/fpm
+ln -s /etc/php/7.0/fpm /etc/php/7.2-zts/fpm
+ln -s /etc/php/7.0/fpm /etc/php/7.3-zts/fpm
+ln -s /etc/php/7.0/fpm /etc/php5/fpm
+rm /usr/local/etc/php-fpm.conf
+ln -s /etc/php/7.0/fpm/php-fpm.conf /usr/local/etc/php-fpm.conf
+chmod +r /etc/php/7.0/fpm/*
+chmod +r /usr/local/etc/*

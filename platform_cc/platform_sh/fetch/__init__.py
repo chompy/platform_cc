@@ -21,8 +21,8 @@ PSH_FETCHERS = {
     "mysql" : PlatformShFetchMysql
 }
 
-def getPlatformShFetcher(container, relationship, sshUrl = ""):
+def getPlatformShFetcher(cloner, container, relationship, sshUrl = ""):
     """ Get Platform.sh asset fetcher for given service relationship. """
     fetcher = PSH_FETCHERS.get(relationship.get("scheme"))
     if not fetcher: return None
-    return fetcher(container, relationship, sshUrl)
+    return fetcher(cloner, container, relationship, sshUrl)

@@ -20,8 +20,11 @@ from cleo import Command
 from platform_cc.platform_sh.config import PlatformShConfig
 from platform_cc.platform_sh.api import PlatformShApi
 from platform_cc.platform_sh.cloner import PlatformShCloner
+from platform_cc.commands import getProject
+from platform_cc.platform_sh.exception.config_error import PlatformShConfigError
 import os
 import sys
+import time
 
 class PlatformShLogin(Command):
     """
@@ -83,6 +86,14 @@ class PlatformShClone(Command):
     def handle(self):
         projectId = self.argument("project_id")
         environment = self.option("environment")
+        # warn user about clone
+        self.line(
+            "<question>!!! Clone of Platform.sh project '%s:%s' will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
+                projectId,
+                "master" if not environment else environment
+            )
+        )
+        time.sleep(5)
         path = self.option("path")
         if not path:
             path = os.getcwd()
@@ -96,3 +107,58 @@ class PlatformShClone(Command):
             skipMountSync=self.option("skip-mount-sync"),
             skipServiceSync=self.option("skip-service-sync")
         )
+
+class PlatformShSync(Command):
+    """
+    Sync an Platform.sh project.
+
+    platform_sh:sync
+        {--p|path=? : Path to project root. (Default=current directory)}
+        {--e|environment=? : Environment ID. (Default=master)}
+        {--skip-var-sync : Skip syncing project variables.}
+        {--skip-mount-sync : Skip syncing mount directories.}
+        {--skip-service-sync : Skip syncing service assets.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        pshProjectId = project.variables.get("env:PSH_PROJECT_ID")
+        if not pshProjectId:
+            raise PlatformShConfigError(
+                "Project '%s' does not have a Platform.sh project id set. You can set it with 'var:set env:PSH_PROJECT_ID <project_id>'." % (
+                    project.getShortUid()
+                )
+            )
+        environment = self.option("environment")
+        # warn user about sync
+        self.line(
+            "<question>!!! Sync of project '%s' with Platform.sh (%s:%s) will commence in 5 seconds. Press CTRL+C to cancel. !!!</question>" % (
+                project.getShortUid(),
+                pshProjectId,
+                "master" if not environment else environment
+            )
+        )
+        time.sleep(5)
+        # sync using cloner class
+        pshCloner = PlatformShCloner(
+            pshProjectId,
+            environment,
+            project.path
+        )
+        
+        try:
+            pshCloner.start()
+            if not self.option("skip-var-sync"):
+                pshCloner.syncVars(project)
+            project.start()
+            if not self.option("skip-mount-sync"):
+                pshCloner.syncMounts(project)
+            if not self.option("skip-service-sync"):
+                pshCloner.syncServices(project)
+        except Exception as e:
+            pshCloner.logger.error("An error occured, stopping container...")
+            project.stop()
+            pshCloner.stop()
+            raise e
+        project.stop()
+        pshCloner.stop()

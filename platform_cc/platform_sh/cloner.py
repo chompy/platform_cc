@@ -29,6 +29,7 @@ from .fetch import getPlatformShFetcher
 from platform_cc.project import PlatformProject
 from .exception.api_error import PlatformShApiError
 from platform_cc.exception.container_command_error import ContainerCommandError
+from platform_cc.exception.state_error import StateError
 
 class PlatformShCloner(Container):
 
@@ -54,6 +55,30 @@ class PlatformShCloner(Container):
         self.logger = logging.getLogger(
             __name__
         )
+        self._pshProject = None
+        self._pshDeploy = None
+        self._pshEnv = None
+
+    def _getPshProject(self):
+        if self._pshProject:
+            return self._pshProject
+        pshApi = PlatformShApi(self.config)
+        self._pshProject = pshApi.getProjectInfo(self.project.get("_project_id"))
+        return self._pshProject
+
+    def _getPshEnv(self):
+        if self._pshEnv:
+            return self._pshEnv
+        pshApi = PlatformShApi(self.config)
+        self._pshEnv = pshApi.getEnvironmentInfo(self.project.get("_project_id"), self.project.get("_environment"))
+        return self._pshEnv
+    
+    def _getPshDeploy(self):
+        if self._pshDeploy:
+            return self._pshDeploy
+        pshApi = PlatformShApi(self.config)
+        self._pshDeploy = pshApi.getDeployment(self.project.get("_project_id"), self.project.get("_environment"))
+        return self._pshDeploy
 
     def getBaseImage(self):
         # just use php as the image contains ssh
@@ -83,29 +108,24 @@ class PlatformShCloner(Container):
             }
         }
 
-    def clone(self, skipMountSync=False, skipServiceSync=False):
-        """ 
-        Clone platform.sh environment by using its REST API, git clone
-        and accessing environment via ssh for asset dumps.
-        """
-        self.logger.info("Retrieve project information (%s)." % self.project.get("_project_id"))
-        pshApi = PlatformShApi(self.config)
-        # get project info
-        pshProject = pshApi.getProjectInfo(self.project.get("_project_id"))
-        # retrieve git url
+    def start(self):
+
+        # get git url to use to add ssh known host
+        pshProject = self._getPshProject()
         pshGitUrl = pshProject.get("repository", {}).get("url", "")
         if not pshGitUrl:
             raise PlatformShApiError("Could not fetch Git URL for project '%s'" % self.project.get("_project_id"))
         parsedGitUrl = urllib.parse.urlparse("ssh://%s" % pshGitUrl)
-        # get project env info
-        pshEnv = pshApi.getEnvironmentInfo(self.project.get("_project_id"), self.project.get("_environment"))
-        pshDeploy = pshApi.getDeployment(self.project.get("_project_id"), self.project.get("_environment"))
+
         # retrieve ssh url
+        pshEnv = self._getPshEnv()
         sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
         parsedSshUrl = urllib.parse.urlparse(sshUrl)
         sshUrl = sshUrl.replace("ssh://", "")
-        # start clone container
-        self.start()
+
+        # start container
+        Container.start(self)
+
         # get current user id
         try:
             currentUserId = os.getuid()
@@ -113,6 +133,7 @@ class PlatformShCloner(Container):
             currentUserId = 1000
         if currentUserId <= 0:
             currentUserId = 1000
+
         # setup ssh + update user id
         # TODO all custom entry in known_hosts
         cmd = """
@@ -136,6 +157,31 @@ class PlatformShCloner(Container):
             self.logger.error("An error occured, stopping container...")
             self.stop()
             raise e
+
+    def clone(self, skipMountSync=False, skipServiceSync=False):
+        """ 
+        Clone platform.sh environment by using its REST API, git clone
+        and accessing environment via ssh for asset dumps.
+        """
+        
+        self.logger.info("Retrieve project information (%s)." % self.project.get("_project_id"))
+        pshApi = PlatformShApi(self.config)
+        
+        # get project info to retrieve git URL
+        pshProject = pshApi.getProjectInfo(self.project.get("_project_id"))
+        pshGitUrl = pshProject.get("repository", {}).get("url", "")
+        if not pshGitUrl:
+            raise PlatformShApiError("Could not fetch Git URL for project '%s'" % self.project.get("_project_id"))
+        parsedGitUrl = urllib.parse.urlparse("ssh://%s" % pshGitUrl)
+        
+        # retrieve ssh url
+        pshEnv = self._getPshEnv()
+        sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
+        parsedSshUrl = urllib.parse.urlparse(sshUrl)
+        sshUrl = sshUrl.replace("ssh://", "")
+
+        # start clone container
+        self.start()
 
         # git clone
         if not os.path.exists(os.path.join(self.project.get("_path"), self.project.get("_project_id"))):
@@ -188,41 +234,53 @@ class PlatformShCloner(Container):
         )
 
         # set vars
-        for var in pshDeploy[0].get("variables", []):
-            key = var.get("name")
-            value = var.get("value", "")
-            sensitive = var.get("is_sensitive", False)
-            if not key: continue
-            if sensitive:
-                self.logger.info("SKIPPING sensitive project variable '%s.'" % var.get("name"))
-                continue
-            self.logger.info("Set project variable '%s.'" % var.get("name"))
-            try:
-                value = ast.literal_eval(value)
-                value = json.dumps(value)
-            except ValueError:
-                pass
-            except SyntaxError:
-                pass
-            pccProject.variables.set(var.get("name"), str(value))
+        self.syncVars(pccProject)
 
         # CUSTOM contextual code vars 
         # TODO instead of hard coding maybe add a config file to override vars?
         pccProject.variables.set("env:BUSINESS_HOURS_IGNORE", "1")
 
-        # CUSTOM contextual code behavior, use 'env:PRIMARY_REPO' to change the git repo remote
+        # CUSTOM contextual code behavior, use 'env:PRIMARY_REPO' to change the project
+        # dirname and update the git repo remote
         primaryRepo = pccProject.variables.get("env:PRIMARY_REPO")
         if primaryRepo:
+            # rename to project name based on primary repo
+            projDirName = os.path.splitext(os.path.basename(primaryRepo))[0]
+            projFullPath = os.path.join(
+                self.project.get("_path"),
+                projDirName
+            )
+            i = 2
+            while os.path.exists(projFullPath):
+                projDirName = "%s-%d" % (projDirName, i)
+                projFullPath = os.path.join(
+                    self.project.get("_path"),
+                    projDirName
+                )
+                i += 1
+            self.logger.info("Rename project directory to '%s.'" % projDirName)
+            self.runCommand(
+                """
+                mv %s %s
+                """ % (
+                    os.path.join(PhpApplication.APPLICATION_DIRECTORY, self.project.get("_project_id")),
+                    os.path.join(PhpApplication.APPLICATION_DIRECTORY, projDirName),
+                )
+            )
+            # update git remote
             self.logger.info("Updated Git remote to '%s.'" % primaryRepo)
             try:
                 self.runCommand(
                     """
+                    mv %s %s
                     cd %s
                     git remote set-url origin %s
                     git remote add platform %s || true
                     git remote set-url platform %s
                     """ % (
                         os.path.join(PhpApplication.APPLICATION_DIRECTORY, self.project.get("_project_id")),
+                        os.path.join(PhpApplication.APPLICATION_DIRECTORY, projDirName),
+                        os.path.join(PhpApplication.APPLICATION_DIRECTORY, projDirName),
                         primaryRepo,
                         sshUrl,
                         sshUrl
@@ -230,6 +288,7 @@ class PlatformShCloner(Container):
                 )
             except Exception as e:
                 pass
+            pccProject = PlatformProject.fromPath(projFullPath)
 
         # set psh project id to env var
         pccProject.variables.set("env:PSH_PROJECT_ID", self.project.get("_project_id"))
@@ -268,10 +327,55 @@ class PlatformShCloner(Container):
 
         # rsync mounts
         if not skipMountSync:
-            app = pccProject.getApplication()
+            self.syncMounts(pccProject)
+        # sync services
+        if not skipServiceSync:
+            try:
+                self.syncServices(pccProject)
+            except Exception as e:
+                self.logger.error("An error occured, stopping container...")
+                self.stop()
+                pccProject.stop()
+                raise e
+
+        self.stop()
+        pccProject.stop()
+
+    def syncVars(self, pccProject):
+        """ Sync project vars with Platform.sh. """
+        pshDeploy = self._getPshDeploy()
+        for var in pshDeploy[0].get("variables", []):
+            key = var.get("name")
+            value = var.get("value", "")
+            sensitive = var.get("is_sensitive", False)
+            if not key: continue
+            if sensitive:
+                self.logger.info("SKIPPING sensitive project variable '%s.'" % var.get("name"))
+                continue
+            self.logger.info("Set project variable '%s.'" % var.get("name"))
+            try:
+                value = ast.literal_eval(value)
+                value = json.dumps(value)
+            except ValueError:
+                pass
+            except SyntaxError:
+                pass
+            pccProject.variables.set(var.get("name"), str(value))
+
+    def syncMounts(self, pccProject):
+        """ Sync project mounts with Platform.sh. (Rsync) """
+        # get project env info
+        pshEnv = self._getPshEnv()
+        # retrieve ssh url
+        sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
+        sshUrl = sshUrl.replace("ssh://", "")
+        # itterate mount points and perform rsync
+        appNames = pccProject.getApplicationsParser().getApplicationNames()
+        for appName in appNames:
+            app = pccProject.getApplication(appName)
             mounts = app.getMounts()
             for _, mountDest in mounts.items():
-                self.logger.info("Rsync mounts '%s.'" % mountDest)
+                self.logger.info("Rsync mount '%s' for application '%s.'" % (mountDest, appName))
                 try:
                     app.runCommand(
                         """
@@ -297,30 +401,28 @@ class PlatformShCloner(Container):
                 except ContainerCommandError:
                     pass
 
-        if not skipServiceSync:
-            # ssh access to fetch assets
-            self.logger.info("Fetch and import assets.")
-            # itterate relationships and perform asset dumps
-            try:
-                pshRelationsStr = self.runCommand(
-                    """
-                    ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
-                    """ % (
-                        sshUrl
-                    )
-                )
-                pshRelations = json.loads(pshRelationsStr.strip())
-                for name in pshRelations:
-                    self.logger.info("Fetch assets for service relationship '%s.'" % name)
-                    for relationship in pshRelations[name]:
-                        fetcher = getPlatformShFetcher(pccProject, relationship, sshUrl)
-                        if not fetcher: continue
-                        fetcher.fetch()
-            except Exception as e:
-                self.logger.error("An error occured, stopping container...")
-                self.stop()
-                pccProject.stop()
-                raise e
-
-        self.stop()
-        pccProject.stop()
+    def syncServices(self, pccProject):
+        """ Sync project service assets with Platform.sh. """
+        if not self.isRunning():
+            raise StateError("Cannot sync services, Platform.sh clone container is not running.") 
+        self.logger.info("Fetch service assets.")
+        # get project env info
+        pshEnv = self._getPshEnv()
+        # retrieve ssh url
+        sshUrl = pshEnv.get("_links", {}).get("ssh", {}).get("href")
+        sshUrl = sshUrl.replace("ssh://", "")
+        # itterate relationships and perform asset dumps
+        pshRelationsStr = self.runCommand(
+            """
+            ssh %s -q 'echo $PLATFORM_RELATIONSHIPS | base64 -d 2> /dev/null'
+            """ % (
+                sshUrl
+            )
+        )
+        pshRelations = json.loads(pshRelationsStr.strip())
+        for name in pshRelations:
+            self.logger.info("Fetch assets for service relationship '%s.'" % name)
+            for relationship in pshRelations[name]:
+                fetcher = getPlatformShFetcher(self, pccProject, relationship, sshUrl)
+                if not fetcher: continue
+                fetcher.fetch()

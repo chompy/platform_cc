@@ -1,3 +1,9 @@
+v0.3.1
+- Added platform_sh:sync command.
+- Platform.sh cloner now renames cloned project when variable env:PRIMARY_REPO exists.
+- Tweak to potientially fix issue with mysql:sql stdin query in earlier Python versions. (Not tested.)
+- Updated php-fpm configuration in PHP containers to match closer to Platform.sh.
+
 v0.3.0
 - Fixed issue where mount points were setup twice during PHP app start.
 - Fixed issue that caused YAML.load deprecation warning.

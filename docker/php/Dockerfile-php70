@@ -1,6 +1,7 @@
 FROM php:7.0-fpm
 LABEL com.contextualcode.platformcc=""
 COPY docker/php/conf/*.sh /opt/
+COPY docker/php/conf/php-fpm.conf /etc/php/7.0/fpm/php-fpm.conf
 RUN PHP_VER=7 /opt/install_dependencies.sh && \
     PHP_VER=7 /opt/config_php.sh && \
     PHP_VER=7 /opt/build_ext.sh
