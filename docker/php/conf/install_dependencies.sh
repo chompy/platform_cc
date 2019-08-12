@@ -15,12 +15,13 @@ apt-get install -y rsync git unzip cron python-pip python-dev \
     libmcrypt4 libmcrypt-dev libxslt1.1 libxslt1-dev zlib1g-dev\
     libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
     libpcre3 libpcre3-dev libedit-dev gnupg apt-transport-https \
-    imagemagick libmagickcore-dev libmagickwand-dev
+    imagemagick libmagickcore-dev libmagickwand-dev \
+    advancecomp jpegoptim libjpeg-turbo-progs optipng pngcrush
 if [ "$PHP_VER" = "5" ]; then
     apt-get install -y libicu52 libicu-dev libpng12-0 libpng-dev
 fi
 if [ "$PHP_VER" = "7" ]; then
-    apt-get install -y libicu57 libicu-dev libpng16-16 libpng-dev
+    apt-get install -y libicu63 libicu-dev libpng16-16 libpng-dev
     ln -s /usr/lib/x86_64-linux-gnu/libicuuc.so /usr/lib/x86_64-linux-gnu/libicuuc.so.57
     ln -s /usr/lib/x86_64-linux-gnu/libicui18n.so /usr/lib/x86_64-linux-gnu/libicui18n.so.57
 fi
