@@ -1,3 +1,7 @@
+v0.3.2
+- Platform.sh sync bug fixes.
+- Added new apt packages to all Docker images... advancecomp, jpegoptim, libjpeg-turbo-progs, optipng, pngcrush
+
 v0.3.1
 - Added platform_sh:sync command.
 - Platform.sh cloner now renames cloned project when variable env:PRIMARY_REPO exists.
