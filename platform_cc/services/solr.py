@@ -4,7 +4,8 @@ import base36
 import docker
 import time
 import requests
-
+import io
+import os
 
 class SolrService(BasePlatformService):
     """
@@ -19,8 +20,8 @@ class SolrService(BasePlatformService):
         #"solr:6.6":            "solr:6.6-alpine",
         "solr:3.6":            "busybox:1",
         "solr:4.10":           "busybox:1",
-        "solr:6.3":            "busybox:1",
-        "solr:6.6":            "busybox:1",
+        "solr:6.3":            "solr:6.3-alpine",
+        "solr:6.6":            "solr:6.6-alpine",
         "solr:7.6":            "busybox:1"        
     }
 
@@ -30,7 +31,7 @@ class SolrService(BasePlatformService):
     def getContainerVolumes(self):
         return {
             self.getVolumeName(): {
-                "bind": "/solr_data",
+                "bind": "/mnt/data",
                 "mode": "rw"
             }
         }
@@ -59,27 +60,54 @@ class SolrService(BasePlatformService):
 
     def start(self):
         BasePlatformService.start(self)
-        # TODO
-        #container = self.getContainer()
-        #if not container:
-        #    return
+
+        # link data
+        self.runCommand(
+            """
+            bash -c '[ ! -f /mnt/data/solr.xml ] && cp -rf /opt/solr/server/solr/* /mnt/data/'
+            rm -rf /opt/solr/server/solr
+            ln -s /mnt/data /opt/solr/server/solr
+            chown -R solr:solr /mnt/data
+            """,
+            user = "root"
+        )
 
         # copy configsets
+        for core, config in self.config.get("cores", {}).items():
+            self.logger.info(
+                "Create/update core '%s'.",
+                core
+            )
+            solrConfData = config.get("conf_dir", {})
+            if solrConfData:
+                for path, data in solrConfData.items():
+                    fObj = io.BytesIO(data.encode())
+                    fullPath = os.path.join("/tmp/solr_conf/%s" % core, path)
+                    self.runCommand(
+                        """
+                        mkdir -p "%s"
+                        chown -R solr:solr /tmp/solr_conf/%s
+                        """ % (
+                            os.path.dirname(fullPath),
+                            core
+                        ),
+                        user = "root"
+                    )
+                    self.uploadFile(
+                        fObj,
+                        os.path.join("/tmp/solr_conf/%s" % core, path)
+                    )
+            # TODO we might need to manually copy conf updates at each start up
+            self.shell(
+                """
+                solr create_core -c %s -d %s
+                """ % (
+                    core,
+                    "/tmp/solr_conf/%s" % core
+                ),
+                user = "solr"
+            )
 
-        # copy config
-        #container.runCommand(
-        #    """
-        #    mkdir /solr_conf
-        #    """
-        #)
-        #data = BasePlatformService.getServiceData(self)
-        #containerIp = data.get("ip", "")
+        # restart for config to take effect
+        self.getContainer().restart()
 
-        # configure cores
-        # /solr/admin/cores?action=CREATE&name=%s&instanceDir=/opt/solr/data/%s&config=solrconfig.xml&dataDir=data
-        # try:
-        #    r = request.get("http://%s" % data.get("ip", ""))
-        # except requests.exceptions.ConnectionError:
-        #    pass
-
-        # TODO
