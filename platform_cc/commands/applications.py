@@ -181,3 +181,21 @@ class ApplicationPull(Command):
             name = project.getApplicationsParser().getApplicationNames()[0]
         application = project.getApplication(name)
         application.pullImage()
+
+class ApplicationNginxConfig(Command):
+    """
+    Get application Nginx config.
+
+    application:nginx
+        {--name=? : Name of application. (Default=first available application)}
+        {--p|path=? : Path to project root. (Default=current directory)}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        name = self.option("name")
+        if not name:
+            name = project.getApplicationsParser().getApplicationNames()[0]
+        application = project.getApplication(name)
+        application.logger.propagate = False
+        self.line(application.generateNginxConfig())

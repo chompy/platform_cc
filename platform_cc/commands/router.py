@@ -78,3 +78,19 @@ class RouterRemove(Command):
     def handle(self):
         project = getProject(self)
         project.removeRouter()
+
+class RouterNginx(Command):
+    """
+    Get Nginx configuration for given project.
+
+    router:nginx
+    {--p|path=? : Path to project root. (Default=current directory)}
+    {--u|uid=? : Project uid, can be provided instead of path.}
+    """
+
+    def handle(self):
+        project = getProject(self)
+        router = project.getRouter()
+        router.logger.propagate = False
+        nginxConfig = project.buildRouterNginxConfig()
+        self.line(nginxConfig)

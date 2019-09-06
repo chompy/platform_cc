@@ -558,6 +558,21 @@ class PlatformProject:
         self._router = PlatformRouter()
         return self._router
 
+    def buildRouterNginxConfig(self):
+        """
+        Get Nginx configuration for router.
+        """
+        # get router
+        router = self.getRouter()
+        # retrieve all applications
+        appParser = self.getApplicationsParser()
+        for appName in appParser.getApplicationNames():
+            self.getApplication(appName)
+        if len(self._applications) == 0:
+            raise Exception("Project must contain at least one application.")
+        # generate nginx config
+        return router.generateNginxConfig(self._applications, self._services)        
+
     def addRouter(self):
         """
         Add this project to the router.
@@ -569,14 +584,8 @@ class PlatformProject:
         # get router
         router = self.getRouter()
         if not router.isRunning(): router.start()
-        # retrieve all applications
-        appParser = self.getApplicationsParser()
-        for appName in appParser.getApplicationNames():
-            self.getApplication(appName)
-        if len(self._applications) == 0:
-            raise Exception("Project must contain at least one application.")
         # generate nginx config
-        nginxConfig = router.generateNginxConfig(self._applications, self._services)
+        nginxConfig = self.buildRouterNginxConfig()
         # upload nginx config to router
         nginxConfigFile = io.BytesIO(
             bytes(str(nginxConfig).encode("utf-8"))

@@ -28,8 +28,8 @@ import pkg_resources
 from cleo import Application
 from platform_cc.commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
 from platform_cc.commands.services import ServiceRestart, ServiceList, ServiceShell, ServicePull
-from platform_cc.commands.applications import ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull
-from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove
+from platform_cc.commands.applications import ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull, ApplicationNginxConfig
+from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove, RouterNginx
 from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge, ProjectInstall, ProjectPull
 from platform_cc.commands.mysql import MysqlSql, MysqlDump
 from platform_cc.commands.all import AllStop, AllPurge, AllList
@@ -65,11 +65,13 @@ cleoApp.add(ApplicationShell())
 cleoApp.add(ApplicationBuild())
 cleoApp.add(ApplicationDeployHook())
 cleoApp.add(ApplicationPull())
+cleoApp.add(ApplicationNginxConfig())
 cleoApp.add(RouterStart())
 cleoApp.add(RouterStop())
 cleoApp.add(RouterRestart())
 cleoApp.add(RouterAdd())
 cleoApp.add(RouterRemove())
+cleoApp.add(RouterNginx())
 cleoApp.add(ProjectStart())
 cleoApp.add(ProjectStop())
 cleoApp.add(ProjectRestart())
