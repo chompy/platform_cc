@@ -144,7 +144,7 @@ class BasePlatformApplication(Container):
                 bytes(str(
                     json.dumps(routesParser.getRoutesEnvironmentVariable())
                 ).encode("utf-8"))
-            ),
+            ).decode("utf-8"),
             "PLATFORM_TREE_ID":           ''.join(random.choice(
                 string.ascii_lowercase + string.digits) for _ in range(40)
             ),
