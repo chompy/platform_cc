@@ -69,15 +69,31 @@ class PlatformRouter(Container):
     def getVolume(self, name = ""):
         return None
 
-    def generateNginxConfig(self, applications, services):
+    def generateNginxConfig(self, applications, services, params={}):
         """
         Generate Nginx vhost for applications in a project.
 
         :param applications: List of all applications in a project
         :param services: List of all services in a project
+        :param params: Additional configuration params for Nginx config.
         :return: Nginx configuration
         :rtype: str
         """
+        # default config params
+        defaultUpstreams = {}
+        for application in applications:
+            defaultUpstreams[application.getName()] = application.getContainerName()        
+        defaultParams = {
+            "resolver" : "127.0.0.11",
+            "default_ssl_certificate" : ["/etc/nginx/ssl/server.crt", "/etc/nginx/ssl/server.key"],
+            "ssl_certificate_hosts" : {}, 
+            "default_upstream" : applications[0].getContainerName(),
+            "upstreams" : defaultUpstreams,
+            "client_max_body_size" : "200M"
+        }
+        _params = defaultParams.copy()
+        _params.update(params)
+        params = _params
         self.logger.info(
             "Generate router Nginx configuration for project '%s.'.",
             applications[0].project.get("short_uid")
@@ -105,15 +121,20 @@ class PlatformRouter(Container):
                 # create server section
                 server = Block(
                     "server",
-                    resolver = "127.0.0.11",
+                    resolver = params.get("resolver"),
                     server_name = hostname,
                     listen = listen,
-                    client_max_body_size = "200M"
+                    client_max_body_size = params.get("client_max_body_size")
                 )
                 # add ssl
                 if scheme == "https" and not disableHttps:
-                    server.options["ssl_certificate"] = "/etc/nginx/ssl/server.crt"
-                    server.options["ssl_certificate_key"] = "/etc/nginx/ssl/server.key"
+
+                    sslCertif = params.get("ssl_certificate_hosts", {}).get(hostname)
+                    if not sslCertif:
+                        sslCertif = params.get("default_ssl_certificate")
+                    if sslCertif:
+                        server.options["ssl_certificate"] = sslCertif[0]
+                        server.options["ssl_certificate_key"] = sslCertif[1]
                 # if https is disabled and both http and https schemes have
                 # routes then assume https is the desired route
                 hasRouteForScheme = False
@@ -149,14 +170,11 @@ class PlatformRouter(Container):
                                 )
                             )
                         # upstream, proxy_pass
-                        upstreamHost = ""
-                        for application in applications:
-                            if application.getName() == config.get("upstream"):
-                                upstreamHost = application.getContainerName() # container host name
-                        # fallback to first available app if upstream not found
+                        upstreamHost = params["default_upstream"]
+                        for appName in params["upstreams"]:
+                            if appName == config.get("upstream"):
+                                upstreamHost = params["upstreams"][appName]
                         # TODO support for varnish upstream and upstreams via services
-                        if not upstreamHost:
-                            upstreamHost = applications[0].getContainerName()
                         if not redirectHasRootPath and upstreamHost:
                             location.sections.add(
                                 Location(
