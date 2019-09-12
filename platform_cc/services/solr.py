@@ -28,6 +28,9 @@ class SolrService(BasePlatformService):
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
+    def getContainerCommand(self):
+        return ["solr-foreground", "-Dsolr.disable.shardsWhitelist=true"]
+
     def getContainerVolumes(self):
         return {
             self.getVolumeName(): {
