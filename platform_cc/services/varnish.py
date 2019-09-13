@@ -41,9 +41,17 @@ class VarnishService(BasePlatformService):
         vclStr += "import directors;\n"
         for name, value in self.config.get("_relationships", {}).items():
             value = value.strip().split(":")
-            vclStr += "backend %s {\n\t.host = \"%s\";\n\t.port=\"%s\";\n}\n" % (
+            vclStr += "backend %s-server {\n    .host = \"%s\";\n    .port = \"%s\";\n}\n" % (
                 name, "pcc_%s_%s" % (self.project.get("short_uid"), value[0]), 80
             )
+        vclStr += "sub vcl_init {\n"
+        for name, value in self.config.get("_relationships", {}).items():
+            vclStr += "new %s = directors.round_robin();\n%s.add_backend(%s-server);\n" % (
+                name,
+                name,
+                name
+            )
+        vclStr += "}\n"
         vclStr += self.config.get("vcl", "")
         return vclStr
 

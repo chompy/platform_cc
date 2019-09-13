@@ -80,22 +80,26 @@ class PlatformRouter(Container):
         :rtype: str
         """
         # default config params
-        defaultUpstreams = {}
-        for application in applications:
-            defaultUpstreams[application.getName()] = application.getContainerName()
-        for service in services:
-            defaultUpstreams[service.getName()] = service.getContainerName()
         defaultParams = {
             "resolver" : "127.0.0.11",
             "default_ssl_certificate" : ["/etc/nginx/ssl/server.crt", "/etc/nginx/ssl/server.key"],
             "ssl_certificate_hosts" : {}, 
             "default_upstream" : applications[0].getContainerName(),
-            "upstreams" : defaultUpstreams,
-            "client_max_body_size" : "200M"
+            "client_max_body_size" : "200M",
+            "_enable_service_routes" : True
         }
         _params = defaultParams.copy()
         _params.update(params)
         params = _params
+        # default upstreams
+        defaultUpstreams = {}
+        for application in applications:
+            defaultUpstreams[application.getName()] = application.getContainerName()
+        if params.get("_enable_service_routes"):
+            for service in services:
+                defaultUpstreams[service.getName()] = service.getContainerName()
+        if not params.get("upstreams"):
+            params["upstreams"] = defaultUpstreams
         self.logger.info(
             "Generate router Nginx configuration for project '%s.'.",
             applications[0].project.get("short_uid")

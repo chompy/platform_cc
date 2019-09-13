@@ -146,6 +146,11 @@ class ProjectOptionList(Command):
                 "name"          : "enable_cron",
                 "description"   : "Enable Cron jobs inside application containers.",
                 "enabled"       : bool(project.config.get("option_enable_cron", False))
+            },
+            {
+                "name"          : "enable_service_routes",
+                "description"   : "Enable routing to services (Varnish, etc).",
+                "enabled"       : bool(project.config.get("option_enable_service_routes", False))
             }
         ]
         # json output

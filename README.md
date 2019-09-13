@@ -216,6 +216,10 @@ disable the features. For a list of features and their current status use the 'p
     
     Enables Cron tasks as defined in .platform.app.yaml.
 
+- **ENABLE_SERVICE_ROUTES**
+
+    Enables routing through services. This is mostly used to enable Varnish. Since Platform.CC is a development platform first this option is disabled by default.
+
 
 Platform.CC Specific Configurations
 -----------------------------------
