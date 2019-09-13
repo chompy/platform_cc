@@ -82,7 +82,9 @@ class PlatformRouter(Container):
         # default config params
         defaultUpstreams = {}
         for application in applications:
-            defaultUpstreams[application.getName()] = application.getContainerName()        
+            defaultUpstreams[application.getName()] = application.getContainerName()
+        for service in services:
+            defaultUpstreams[service.getName()] = service.getContainerName()
         defaultParams = {
             "resolver" : "127.0.0.11",
             "default_ssl_certificate" : ["/etc/nginx/ssl/server.crt", "/etc/nginx/ssl/server.key"],
@@ -174,7 +176,7 @@ class PlatformRouter(Container):
                         for appName in params["upstreams"]:
                             if appName == config.get("upstream"):
                                 upstreamHost = params["upstreams"][appName]
-                        # TODO support for varnish upstream and upstreams via services
+                    
                         if not redirectHasRootPath and upstreamHost:
                             location.sections.add(
                                 Location(

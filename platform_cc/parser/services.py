@@ -97,6 +97,19 @@ class ServicesParser(BasePlatformParser):
 
         return self.services[name].get("type", "")
 
+    def getServiceRelationships(self, name):
+        """
+        Get relationships for given service.
+
+        :param name: Service name
+        :return: Dictionary with relationships
+        :rtype: dict
+        """
+        name = str(name)
+        if name not in self.services:
+            raise ParserError("Service '%s' is not defined." % name)
+        return self.services[name].get("relationships", {})
+
     def getServiceConfiguration(self, name):
         """
         Get dictionary containing configuration for a

@@ -26,6 +26,11 @@ class BasePlatformService(Container):
     Base class for Platform.sh services.
     """
 
+    START_PRE_APP_A = "preapp-a"
+    START_PRE_APP_B = "preapp-b"
+    START_POST_APP_A = "postapp-a"
+    START_POST_APP_B = "postapp-b"
+
     def __init__(self, project, config, dockerClient=None):
         """
         Constructor.
@@ -66,6 +71,13 @@ class BasePlatformService(Container):
                     ServicesParser.YAML_PATHS[1]
                 )
             )
+
+    def getStartGroup(self):
+        """
+        Define start group to determine when to start
+        service.
+        """
+        return self.START_PRE_APP_A
 
     def getType(self):
         """

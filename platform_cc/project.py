@@ -32,6 +32,7 @@ from .parser.services import ServicesParser
 from .parser.applications import ApplicationsParser
 from .parser.routes import RoutesParser
 from .services import getService
+from .services.base import BasePlatformService
 from .application import getApplication
 from .router import PlatformRouter
 from .container import Container
@@ -484,6 +485,7 @@ class PlatformProject:
                 self.getShortUid()
             )
             serviceConfig = servicesParser.getServiceConfiguration(name)
+            serviceConfig["_relationships"] = servicesParser.getServiceRelationships(name)
             service = getService(
                 self.getProjectData(),
                 serviceConfig
@@ -709,14 +711,27 @@ class PlatformProject:
         
     def start(self):
         """ Start project. """
+        # start pre-app services
+        startGroups = [BasePlatformService.START_PRE_APP_A, BasePlatformService.START_PRE_APP_B]
         servicesParser = self.getServicesParser()
-        for serviceName in servicesParser.getServiceNames():
-            service = self.getService(serviceName)
-            service.start()
+        for startGroup in startGroups:
+            for serviceName in servicesParser.getServiceNames():
+                service = self.getService(serviceName)
+                if service.getStartGroup() == startGroup:
+                    service.start()
+        # start applications
         applicationsParser = self.getApplicationsParser()
         for applicationName in applicationsParser.getApplicationNames():
             application = self.getApplication(applicationName)
             application.start()
+        # start post-app services
+        startGroups = [BasePlatformService.START_POST_APP_A, BasePlatformService.START_POST_APP_B]
+        for startGroup in startGroups:
+            for serviceName in servicesParser.getServiceNames():
+                service = self.getService(serviceName)
+                if service.getStartGroup() == startGroup:
+                    service.start()
+        # update router
         self.addRouter()
 
     def stop(self):
