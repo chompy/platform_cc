@@ -4,10 +4,10 @@ LABEL com.contextualcode.platformcc=""
 # install dependencies via apt-get
 RUN apt-get update && \
     apt-get install -y rsync git unzip cron python-pip python-dev \
-        gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano \
-        libmcrypt4 libmcrypt-dev libicu57 libicu-dev libxslt1.1 libxslt1-dev \
-        libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
-        libpng16-16 libpng-dev libpcre3 libpcre3-dev libedit-dev \
+        gem libyaml-dev ruby ruby-dev less nano \
+        libmcrypt-dev libicu-dev libxslt1-dev \
+        libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
+        libpng-dev libpcre3-dev libedit-dev \
         advancecomp jpegoptim libjpeg-turbo-progs optipng pngcrush && \
     apt-get clean
 
