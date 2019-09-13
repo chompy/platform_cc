@@ -1,3 +1,8 @@
+v0.3.3
+- Added Solr service support.
+- Added Varnish service support. (Needs ENABLE_SERVICE_ROUTES option enabled.)
+- Fixed bug with PLATFORM_ROUTES environment variable.
+
 v0.3.2
 - Platform.sh sync bug fixes.
 - Added new apt packages to all Docker images... advancecomp, jpegoptim, libjpeg-turbo-progs, optipng, pngcrush
