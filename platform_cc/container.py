@@ -438,6 +438,7 @@ class Container:
         """
         Start Docker container for service.
         """
+
         self.logger.info(
             "Start '%s' container.",
             self.getContainerName()
@@ -475,6 +476,7 @@ class Container:
             for volumeKey in volumes:
                 if os.path.exists(volumeKey): continue
                 self._createVolume(volumeKey)
+
             # create a docker container
             container = self.docker.containers.create(
                 dockerImageName,

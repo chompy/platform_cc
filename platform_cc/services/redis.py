@@ -32,7 +32,11 @@ class RedisService(BasePlatformService):
         "redis:2.8":              "redis:2.8-alpine",
         "redis-persistent:2.8":   "redis:2.8-alpine",
         "redis:3.0":              "redis:3.0-alpine",
-        "redis-persistent:3.0":   "redis:3.0-alpine"
+        "redis-persistent:3.0":   "redis:3.0-alpine",
+        "redis:4.0":              "redis:4.0-alpine",
+        "redis-persistent:4.0":   "redis:4.0-alpine",
+        "redis:5.0":              "redis:5.0-alpine",
+        "redis-persistent:5.0":   "redis:5.0-alpine"
     }
 
     def getBaseImage(self):

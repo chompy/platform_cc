@@ -1,5 +1,7 @@
 v0.3.4
 - Fixed igbinary support in PHP 5.X.
+- Improved SOLR start up speed after initial core creation.
+- Added service hostnames as routes to PLATFORM_ROUTES to expose data needed to make Varnish PURGE requests.
 
 v0.3.3
 - Added Solr service support.

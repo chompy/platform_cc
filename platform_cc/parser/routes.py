@@ -162,7 +162,25 @@ class RoutesParser(BasePlatformParser):
         :rtype: dict
         """
         routes = self.getRoutes()
-        output = {}
+        output = collections.OrderedDict()
+
+        # create upstreams to services
+        if self.project:
+            projectServices = self.project.get("services", {})
+            for serviceName, serviceConf in projectServices.items():
+                platformRelationships = serviceConf.get("platform_relationships", {})
+                if not platformRelationships: continue
+                firstPR = platformRelationships[list(platformRelationships.keys())[0]]
+                if not firstPR.get("host", ""): continue
+                path = "http://%s:%s" % (
+                    firstPR.get("host", ""),
+                    firstPR.get("port", "80")
+                )
+                output[path] = {
+                    "type" : "upstream",
+                    "upstream" : serviceName
+                }
+
         for route in routes:
             hostnames = route.pop("hostnames", [])
             route.pop("redirects")

@@ -97,7 +97,12 @@ class PlatformRouter(Container):
             defaultUpstreams[application.getName()] = application.getContainerName()
         if params.get("_enable_service_routes"):
             for service in services:
-                defaultUpstreams[service.getName()] = service.getContainerName()
+                platformRelationships = service.getServiceData().get("platform_relationships", {})
+                firstPR = platformRelationships[list(platformRelationships.keys())[0]]
+                defaultUpstreams[service.getName()] = "%s:%s" % (
+                    service.getContainerName(),
+                    firstPR.get("port", 80)
+                )
         if not params.get("upstreams"):
             params["upstreams"] = defaultUpstreams
         self.logger.info(

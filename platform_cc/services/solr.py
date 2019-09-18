@@ -1,11 +1,7 @@
 from .base import BasePlatformService
-import hashlib
-import base36
-import docker
-import time
-import requests
 import io
 import os
+import json
 
 class SolrService(BasePlatformService):
     """
@@ -77,10 +73,22 @@ class SolrService(BasePlatformService):
 
         # copy configsets
         for core, config in self.config.get("cores", {}).items():
-            self.logger.info(
-                "Create/update core '%s'.",
-                core
+
+            # already exists
+            output = self.runCommand(
+                """
+                [ -d /mnt/data/%s ] && echo "TRUE" || true
+                """ % core
             )
+            if output.strip():
+                continue
+
+            self.logger.info(
+                "Create core '%s'.",
+                core
+            )            
+
+            # upload custom config
             solrConfData = config.get("conf_dir", {})
             if solrConfData:
                 for path, data in solrConfData.items():
@@ -100,16 +108,24 @@ class SolrService(BasePlatformService):
                         fObj,
                         os.path.join("/tmp/solr_conf/%s" % core, path)
                     )
-            # TODO we might need to manually copy conf updates at each start up
-            self.shell(
-                """
-                solr create_core -c %s -d %s
-                """ % (
-                    core,
-                    "/tmp/solr_conf/%s" % core
-                ),
-                user = "solr"
-            )
+                self.shell(
+                    """
+                    solr create_core -c %s -d %s
+                    """ % (
+                        core,
+                        "/tmp/solr_conf/%s" % core
+                    ),
+                    user = "solr"
+                )
+            else:
+                self.shell(
+                    """
+                    solr create_core -c %s
+                    """ % (
+                        core
+                    ),
+                    user = "solr"
+                )
 
         # restart for config to take effect
         self.getContainer().restart()
