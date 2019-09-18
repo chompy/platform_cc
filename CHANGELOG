@@ -1,3 +1,6 @@
+v0.3.4
+- Fixed igbinary support in PHP 5.X.
+
 v0.3.3
 - Added Solr service support.
 - Added Varnish service support. (Needs ENABLE_SERVICE_ROUTES option enabled.)
