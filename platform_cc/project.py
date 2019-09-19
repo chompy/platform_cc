@@ -573,6 +573,8 @@ class PlatformProject:
         if len(self._applications) == 0:
             raise Exception("Project must contain at least one application.")
         params["_enable_service_routes"] = self.config.get("option_enable_service_routes")
+        if params.get("extra_domain_suffix"):
+            router.extraDomainSuffix = params.get("extra_domain_suffix")
         # generate nginx config
         return router.generateNginxConfig(self._applications, self._services, params=params)        
 

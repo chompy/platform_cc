@@ -109,7 +109,7 @@ class PlatformRouter(Container):
             "Generate router Nginx configuration for project '%s.'.",
             applications[0].project.get("short_uid")
         )
-        routesParser = RoutesParser(applications[0].project)
+        routesParser = RoutesParser(applications[0].project, params.get("extra_domain_suffix"))
         routeHostnames = routesParser.getRoutesByHostname()
         disableHttps = "PCC_DISABLE_HTTPS" in os.environ
         output = ""
@@ -139,7 +139,6 @@ class PlatformRouter(Container):
                 )
                 # add ssl
                 if scheme == "https" and not disableHttps:
-
                     sslCertif = params.get("ssl_certificate_hosts", {}).get(hostname)
                     if not sslCertif:
                         sslCertif = params.get("default_ssl_certificate")
