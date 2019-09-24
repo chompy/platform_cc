@@ -109,7 +109,8 @@ class BasePlatformService(Container):
         return {
             "running":                    self.isRunning(),
             "ip":                         self.getContainerIpAddress(),
-            "platform_relationships":     {}
+            "platform_relationships":     {},
+            "start_group":                self.getStartGroup()
         }
 
     def getLabels(self):

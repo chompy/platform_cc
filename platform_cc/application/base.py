@@ -32,6 +32,7 @@ from platform_cc.container import Container
 from platform_cc.parser.routes import RoutesParser
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.container_command_error import ContainerCommandError
+from platform_cc.services.base import BasePlatformService
 
 
 class BasePlatformApplication(Container):
@@ -594,6 +595,8 @@ class BasePlatformApplication(Container):
                 serviceName = serviceName.strip().split(":")[0]
                 projectService = projectServices.get(serviceName)
                 if not projectService or not projectService.get("running"):
+                    if projectService and projectService.get("start_group") not in [BasePlatformService.START_PRE_APP_A, BasePlatformService.START_PRE_APP_B]:
+                        continue
                     raise StateError(
                         "Application '%s' depends on service '%s' which is not running." % (
                             self.getName(),
