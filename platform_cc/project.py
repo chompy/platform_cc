@@ -335,7 +335,8 @@ class PlatformProject:
             "entropy"           : self.getEntropy(),
             "config"            : self.config.all(),
             "variables"         : self.variables.all(),
-            "services"          : serviceData # service data needed by applications
+            "services"          : serviceData, # service data needed by applications
+            "_enable_service_routes" : self.config.get("option_enable_service_routes")
         }
 
     def getServicesParser(self):

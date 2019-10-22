@@ -168,7 +168,7 @@ class RoutesParser(BasePlatformParser):
         output = collections.OrderedDict()
 
         # create upstreams to services
-        if self.project:
+        if self.project and self.project.get("_enable_service_routes"):
             projectServices = self.project.get("services", {})
             for serviceName, serviceConf in projectServices.items():
                 platformRelationships = serviceConf.get("platform_relationships", {})

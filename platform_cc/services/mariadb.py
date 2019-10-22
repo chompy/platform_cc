@@ -123,6 +123,38 @@ class MariaDbService(BasePlatformService):
             }
         return data
 
+    def getCreateUserQuery(self, user):
+        endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
+        endpoint = endpoints.get(user, {})
+        if not endpoint: return ""
+        # (re)create user
+        output = "DROP USER IF EXISTS '%s'@'%%'; CREATE USER '%s'@'%%' IDENTIFIED BY '%s'; " % (
+            user,
+            user,
+            self.getPassword(user)
+        )
+        # grant privileges
+        privileges = endpoint.get("privileges", {})
+        for schema in privileges:
+            privilege = privileges[schema]
+            if privilege == "admin":
+                output += "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%'; " % (
+                    schema,
+                    user
+                )
+            elif privilege == "ro":
+                output += "GRANT SELECT ON %s.* TO '%s'@'%%'; " % (
+                    schema,
+                    user
+                )
+            elif privilege == "rw":
+                output += "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* TO '%s'@'%%'; " % (
+                    schema,
+                    user
+                )
+        output += "FLUSH PRIVILEGES;"
+        return output
+
     def start(self):
         BasePlatformService.start(self)
         container = self.getContainer()
@@ -152,91 +184,22 @@ class MariaDbService(BasePlatformService):
                     str(schema)
                 )
             )
-        # create users
+        # (re)create users
         endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         for endpoint in endpoints:
             self.logger.info(
-                "Create user '%s' (if it does not exist).",
+                "(Re)create user '%s'.",
                 endpoint
             )
             container.exec_run(
                 """
                 mysql -h 127.0.0.1 -uroot --password="%s" \
-                -e "DROP USER '%s'@'%%';"
+                -e "%s"
                 """ % (
                     self.getPassword(),
-                    endpoint
+                    self.getCreateUserQuery(endpoint)
                 )
             )
-            container.exec_run(
-                """
-                mysql -h 127.0.0.1 -uroot --password="%s" \
-                -e "CREATE USER '%s'@'%%' IDENTIFIED BY '%s';"
-                """ % (
-                    self.getPassword(),
-                    endpoint,
-                    self.getPassword(endpoint)
-                )
-            )
-            privileges = endpoints[endpoint].get("privileges", {})
-            for schema in privileges:
-                privilege = privileges[schema]
-                if privilege == "admin":
-                    self.logger.info(
-                        "Grant user '%s' admin privilege on schema '%s.'",
-                        endpoint,
-                        schema
-                    )
-                    container.exec_run(
-                        """
-                        mysql -h 127.0.0.1 -uroot --password=\"%s\" \
-                        -e "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%';"
-                        """ % (
-                            self.getPassword(),
-                            schema,
-                            endpoint
-                        )
-                    )
-                elif privilege == "ro":
-                    self.logger.info(
-                        "Grant user '%s' read-only privilege on schema '%s.'",
-                        endpoint,
-                        schema
-                    )
-                    container.exec_run(
-                        """
-                        mysql -h 127.0.0.1 -uroot --password="%s" \
-                        -e "GRANT SELECT ON %s.* TO '%s'@'%%';"
-                        """ % (
-                            self.getPassword(),
-                            schema,
-                            endpoint
-                        )
-                    )
-                elif privilege == "rw":
-                    self.logger.info(
-                        "Grant user '%s' read/write privilege on schema '%s.'",
-                        endpoint,
-                        schema
-                    )
-                    container.exec_run(
-                        """
-                        mysql -h 127.0.0.1 -uroot --password="%s" \
-                        -e "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* \
-                        TO '%s'@'%%';"
-                        """ % (
-                            self.getPassword(),
-                            schema,
-                            endpoint
-                        )
-                    )
-        container.exec_run(
-            """
-            mysql -h 127.0.0.1 -uroot --password="%s" -e "FLUSH PRIVILEGES;"
-            """ % (
-                self.getPassword()
-            )
-        )
 
     def executeSqlDump(self, database = "", stdin = None):
         """ Upload and execute SQL dump. """
