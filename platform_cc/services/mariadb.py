@@ -127,30 +127,28 @@ class MariaDbService(BasePlatformService):
         endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         endpoint = endpoints.get(user, {})
         if not endpoint: return ""
-        # (re)create user
-        output = "DROP USER IF EXISTS '%s'@'%%'; CREATE USER '%s'@'%%' IDENTIFIED BY '%s'; " % (
-            user,
-            user,
-            self.getPassword(user)
-        )
+        output = ""
         # grant privileges
         privileges = endpoint.get("privileges", {})
         for schema in privileges:
             privilege = privileges[schema]
             if privilege == "admin":
-                output += "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%'; " % (
+                output += "GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'; " % (
                     schema,
-                    user
+                    user,
+                    self.getPassword(user)
                 )
             elif privilege == "ro":
-                output += "GRANT SELECT ON %s.* TO '%s'@'%%'; " % (
+                output += "GRANT SELECT ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'; " % (
                     schema,
-                    user
+                    user,
+                    self.getPassword(user)
                 )
             elif privilege == "rw":
-                output += "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* TO '%s'@'%%'; " % (
+                output += "GRANT SELECT, INSERT, UPDATE, DELETE ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'; " % (
                     schema,
-                    user
+                    user,
+                    self.getPassword(user)
                 )
         output += "FLUSH PRIVILEGES;"
         return output
