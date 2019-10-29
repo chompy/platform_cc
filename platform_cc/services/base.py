@@ -119,6 +119,11 @@ class BasePlatformService(Container):
         labels["%s.type" % Container.LABEL_PREFIX] = "service"
         return labels
 
+    def getContainerCommand(self):
+        # override default so that we can inject custom scripts
+        image = self.docker.images.get(self.getDockerImage())
+        return image.attrs.get("Config", {}).get("Cmd", [])
+
     def start(self):
         self.logger.info("Start '%s' service." % self.getName())
         # if not platform.sh compatiable service and service definition

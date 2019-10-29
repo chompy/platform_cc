@@ -124,6 +124,7 @@ class MariaDbService(BasePlatformService):
         return data
 
     def getCreateUserQuery(self, user):
+        """ Get database query to create a user and grant nessacary prillvileges. """
         endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
         endpoint = endpoints.get(user, {})
         if not endpoint: return ""
@@ -150,7 +151,23 @@ class MariaDbService(BasePlatformService):
                     user,
                     self.getPassword(user)
                 )
-        output += "FLUSH PRIVILEGES;"
+        output += "FLUSH PRIVILEGES; "
+        return output
+
+    def getCreateUsersQuery(self):
+        """ Get database query to create all users and grant them nessacary prillvileges. """
+        output = ""
+        endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
+        for endpoint in endpoints:
+            output += self.getCreateUserQuery(endpoint)
+        return output
+
+    def getCreateSchemasQuery(self):
+        """ Get database query to create schemas. """
+        output = ""
+        schemas = self.config.get("schemas", self.DEFAULT_SCHEMAS)
+        for schema in schemas:
+            output += "CREATE SCHEMA IF NOT EXISTS %s CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin; " % str(schema)
         return output
 
     def start(self):
@@ -166,38 +183,27 @@ class MariaDbService(BasePlatformService):
             )
             time.sleep(.35)
         # create schemas
-        schemas = self.config.get("schemas", self.DEFAULT_SCHEMAS)
-        for schema in schemas:
-            self.logger.info(
-                "Create schema '%s' (if it does not exist).",
-                schema
+        self.logger.info("Create database schemas.")
+        self.runCommand(
+            """
+            mysql -h 127.0.0.1 -uroot --password="%s" \
+            -e "%s"
+            """ % (
+                self.getPassword(),
+                self.getCreateSchemasQuery()
             )
-            container.exec_run(
-                """
-                mysql -h 127.0.0.1 -uroot --password="%s" \
-                -e "CREATE SCHEMA `%s` CHARACTER SET UTF8mb4 \
-                COLLATE utf8mb4_bin;"
-                """ % (
-                    self.getPassword(),
-                    str(schema)
-                )
-            )
+        )
         # (re)create users
-        endpoints = self.config.get("endpoints", self.DEFAULT_ENDPOINT)
-        for endpoint in endpoints:
-            self.logger.info(
-                "(Re)create user '%s'.",
-                endpoint
+        self.logger.info("(Re)create database users.")
+        self.runCommand(
+            """
+            mysql -h 127.0.0.1 -uroot --password="%s" \
+            -e "%s"
+            """ % (
+                self.getPassword(),
+                self.getCreateUsersQuery()
             )
-            container.exec_run(
-                """
-                mysql -h 127.0.0.1 -uroot --password="%s" \
-                -e "%s"
-                """ % (
-                    self.getPassword(),
-                    self.getCreateUserQuery(endpoint)
-                )
-            )
+        )
 
     def executeSqlDump(self, database = "", stdin = None):
         """ Upload and execute SQL dump. """

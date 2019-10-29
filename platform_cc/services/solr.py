@@ -2,6 +2,7 @@ from .base import BasePlatformService
 import io
 import os
 import json
+import tarfile
 
 class SolrService(BasePlatformService):
     """
@@ -21,6 +22,9 @@ class SolrService(BasePlatformService):
         "solr:7.6":            "busybox:1"        
     }
 
+    SAVE_PATH = "/mnt/data"
+    CONF_PATH = "/mnt/config"
+
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
@@ -30,7 +34,7 @@ class SolrService(BasePlatformService):
     def getContainerVolumes(self):
         return {
             self.getVolumeName(): {
-                "bind": "/mnt/data",
+                "bind": self.SAVE_PATH,
                 "mode": "rw"
             }
         }
@@ -57,76 +61,82 @@ class SolrService(BasePlatformService):
             }
         return data
 
-    def start(self):
-        BasePlatformService.start(self)
+    def getSolrConfigData(self):
+        """ Get SOLR config data files in tar.gz format. """
+        tarIO = io.BytesIO()
+        with tarfile.open(fileobj=tarIO, mode="w:gz") as tf:
+            for core, config in self.config.get("cores", {}).items():
+                solrConfData = config.get("conf_dir", {})
+                if not solrConfData: continue
+                for path, data in solrConfData.items():
+                    tarInfo = tarfile.TarInfo("%s/%s" % (core, path))
+                    tarInfo.size = len(data)
+                    tf.addfile(tarInfo, io.BytesIO(data.encode()))
+        tarIO.seek(0)
+        return tarIO
 
-        # link data
-        self.runCommand(
-            """
-            bash -c '[ ! -f /mnt/data/solr.xml ] && cp -rf /opt/solr/server/solr/* /mnt/data/'
+    def getStartCommand(self):
+        return """
+            bash -c '[ ! -f %s/solr.xml ] && cp -rf /opt/solr/server/solr/* %s/'
             rm -rf /opt/solr/server/solr
-            ln -s /mnt/data /opt/solr/server/solr
-            chown -R solr:solr /mnt/data
-            """,
-            user = "root"
+            ln -s %s /opt/solr/server/solr
+            chown -R solr:solr %s
+            sleep 5
+        """ % (
+            self.SAVE_PATH,
+            self.SAVE_PATH,
+            self.SAVE_PATH,
+            self.SAVE_PATH
         )
 
-        # copy configsets
-        for core, config in self.config.get("cores", {}).items():
-
-            # already exists
-            output = self.runCommand(
-                """
-                [ -d /mnt/data/%s ] && echo "TRUE" || true
-                """ % core
+    def getCreateCoresCommand(self):
+        """ Get shell commands needed to create SOLR cores. """
+        output = ""
+        for core in self.config.get("cores", {}):
+            savePath = "%s/%s" % (self.SAVE_PATH, core)
+            confPath = "%s/%s" % (self.CONF_PATH, core)
+            output += """
+                if [ ! -d %s ]; then
+                    su solr -s /bin/bash -c "solr create_core -c %s -d %s"
+                fi
+            """ % (
+                savePath,
+                core,
+                confPath
             )
-            if output.strip():
-                continue
+        return output
 
-            self.logger.info(
-                "Create core '%s'.",
-                core
-            )            
-
-            # upload custom config
-            solrConfData = config.get("conf_dir", {})
-            if solrConfData:
-                for path, data in solrConfData.items():
-                    fObj = io.BytesIO(data.encode())
-                    fullPath = os.path.join("/tmp/solr_conf/%s" % core, path)
-                    self.runCommand(
-                        """
-                        mkdir -p "%s"
-                        chown -R solr:solr /tmp/solr_conf/%s
-                        """ % (
-                            os.path.dirname(fullPath),
-                            core
-                        ),
-                        user = "root"
-                    )
-                    self.uploadFile(
-                        fObj,
-                        os.path.join("/tmp/solr_conf/%s" % core, path)
-                    )
-                self.shell(
-                    """
-                    solr create_core -c %s -d %s
-                    """ % (
-                        core,
-                        "/tmp/solr_conf/%s" % core
-                    ),
-                    user = "solr"
-                )
-            else:
-                self.shell(
-                    """
-                    solr create_core -c %s
-                    """ % (
-                        core
-                    ),
-                    user = "solr"
-                )
-
+    def start(self):
+        BasePlatformService.start(self)
+        # start up command
+        self.runCommand(
+            self.getStartCommand(),
+            user="root"
+        )
+        # upload config
+        configData = self.getSolrConfigData()
+        self.runCommand(
+            "mkdir %s" % self.CONF_PATH,
+            user="root"
+        )
+        self.uploadFile(
+            configData,
+            "%s/config.tar.gz" % self.CONF_PATH
+        )
+        self.runCommand(
+            """
+            cd %s
+            tar xvfz %s/config.tar.gz
+            """ % (
+                self.CONF_PATH,
+                self.CONF_PATH
+            )
+        )
+        # create cores
+        self.runCommand(
+            self.getCreateCoresCommand(),
+            user="root"
+        )
         # restart for config to take effect
         self.getContainer().restart()
 
