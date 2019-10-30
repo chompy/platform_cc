@@ -13,7 +13,7 @@ class ArchiveTag(yaml.YAMLObject):
     base_path = "/"
 
     def __init__(self, path):
-        self.path = os.path.join(ArchiveTag.base_path, path)
+        self.path = os.path.abspath(os.path.join(ArchiveTag.base_path, path))
 
     def build(self):
         res = {}

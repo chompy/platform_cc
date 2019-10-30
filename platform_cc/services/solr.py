@@ -81,7 +81,6 @@ class SolrService(BasePlatformService):
             rm -rf /opt/solr/server/solr
             ln -s %s /opt/solr/server/solr
             chown -R solr:solr %s
-            sleep 5
         """ % (
             self.SAVE_PATH,
             self.SAVE_PATH,
@@ -116,7 +115,7 @@ class SolrService(BasePlatformService):
         # upload config
         configData = self.getSolrConfigData()
         self.runCommand(
-            "mkdir %s" % self.CONF_PATH,
+            "mkdir -p %s" % self.CONF_PATH,
             user="root"
         )
         self.uploadFile(
