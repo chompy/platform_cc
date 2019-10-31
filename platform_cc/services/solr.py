@@ -96,7 +96,7 @@ class SolrService(BasePlatformService):
             confPath = "%s/%s" % (self.CONF_PATH, core)
             output += """
                 if [ ! -d %s ]; then
-                    su solr -s /bin/bash -c "solr create_core -c %s -d %s"
+                    solr create_core -c %s -d %s
                 fi
             """ % (
                 savePath,
@@ -134,7 +134,7 @@ class SolrService(BasePlatformService):
         # create cores
         self.runCommand(
             self.getCreateCoresCommand(),
-            user="root"
+            user="solr"
         )
         # restart for config to take effect
         self.getContainer().restart()
