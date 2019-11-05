@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import json
+import docker
 from platform_cc.container import Container
 from platform_cc.parser.services import ServicesParser
 
@@ -121,7 +122,11 @@ class BasePlatformService(Container):
 
     def getContainerCommand(self):
         # override default so that we can inject custom scripts
-        image = self.docker.images.get(self.getDockerImage())
+        try:
+            image = self.docker.images.get(self.getDockerImage())
+        except docker.errors.ImageNotFound:
+            self.docker.images.pull(self.getDockerImage())
+            image = self.docker.images.get(self.getDockerImage())
         return image.attrs.get("Config", {}).get("Cmd", [])
 
     def start(self):
