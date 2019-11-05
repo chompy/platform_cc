@@ -35,14 +35,18 @@ class VarnishService(BasePlatformService):
         )
         return data
 
-    def generateVcl(self):
+    def generateVcl(self, hostmap = {}):
         vclStr = "vcl 4.1;\n"
         vclStr += "import std;\n"
         vclStr += "import directors;\n"
         for name, value in self.config.get("_relationships", {}).items():
             value = value.strip().split(":")
+            if value[1] != "http": continue
+            hostname = "pcc_%s_%s" % (self.project.get("short_uid"), value[0])
+            if name in hostmap:
+                hostname = hostmap[name]
             vclStr += "backend %s-server {\n    .host = \"%s\";\n    .port = \"%s\";\n}\n" % (
-                name, "pcc_%s_%s" % (self.project.get("short_uid"), value[0]), 80
+                name, hostname, 80
             )
         vclStr += "sub vcl_init {\n"
         for name, value in self.config.get("_relationships", {}).items():
