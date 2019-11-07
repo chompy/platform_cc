@@ -135,6 +135,39 @@ class PhpApplication(BasePlatformApplication):
             command = self.getExtensionInstallCommand(extension)
             if not command: continue
             self.runCommand(command)
+
+        # dependencies/php
+        phpDependencies = self.config.get("dependencies", {}).get("php", {})
+        for key, value in phpDependencies.items():
+            self.logger.info(
+                "Install dependency '%s.'" % key
+            )
+            try:
+                print("- INTERACTIVE SHELL --------------------------------------")
+                pathTo = os.path.join("/opt", key.replace("/", "_"))
+                self.shell(
+                    """
+                    bash -c '\\
+                        mkdir -p %s && \\
+                        chown web:web -R %s && \\
+                        cd %s && \\
+                        su web -c "php -d memory_limit=-1 /usr/local/bin/composer require %s:%s" && \\
+                        ln -s %s/vendor/bin/* /usr/local/bin/ \\
+                    '
+                    """ % (
+                        pathTo,
+                        pathTo,
+                        pathTo,
+                        key,
+                        value,
+                        pathTo
+                    ),
+                    "root"
+                )
+                print("----------------------------------------------------------")
+            except ContainerCommandError:
+                pass
+
         # build flavor composer
         if self.config.get("build", {}).get("flavor") == "composer":
             self.logger.info(
