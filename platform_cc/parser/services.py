@@ -125,6 +125,7 @@ class ServicesParser(BasePlatformParser):
         serviceConf = self.services[name].get("configuration", {}).copy()
         serviceConf["_name"] = name
         serviceConf["_type"] = self.getServiceType(name)
+        serviceConf["_disk"] = self.services[name].get("disk", 0)
         serviceConf["_is_default_config"] = os.path.basename(
             self.services[name].get("_path", "")
         ) == os.path.basename(self.YAML_PATHS[0])
