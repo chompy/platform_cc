@@ -142,6 +142,7 @@ class ApplicationBuild(Command):
             )
         )
         time.sleep(5)
+        project.stop()
         output = application.build()
         if self.output.get_verbosity() >= Output.VERBOSITY_VERBOSE:
             self.line(output)
