@@ -86,7 +86,9 @@ class PlatformRouter(Container):
             "ssl_certificate_hosts" : {}, 
             "default_upstream" : applications[0].getContainerName(),
             "client_max_body_size" : "200M",
-            "_enable_service_routes" : True
+            "_enable_service_routes" : True,
+            "_disable_https" : "PCC_DISABLE_HTTPS" in os.environ,
+            "_disable_http" : False
         }
         _params = defaultParams.copy()
         _params.update(params)
@@ -111,7 +113,8 @@ class PlatformRouter(Container):
         )
         routesParser = RoutesParser(applications[0].project, params.get("extra_domain_suffix"))
         routeHostnames = routesParser.getRoutesByHostname()
-        disableHttps = "PCC_DISABLE_HTTPS" in os.environ
+        disableHttps = params.get("_disable_https", False)
+        disableHttp = params.get("_disable_http", False)
         output = ""
         for hostname, routes in routeHostnames.items():
             self.logger.info(
@@ -125,6 +128,8 @@ class PlatformRouter(Container):
                 finalScheme = scheme
                 if disableHttps:
                     finalScheme = "http"
+                if disableHttp and scheme == "http":
+                    continue
                 # determine what port to listen on
                 listen = "443 ssl"
                 if scheme == "http" or disableHttps:
