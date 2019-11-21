@@ -8,6 +8,7 @@ ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.0
 ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.1-zts
 ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.2-zts
 ln -s -f /usr/local/sbin/php-fpm /usr/sbin/php-fpm7.3-zts
+ln -s -f /app /usr/local/lib/php/extensions/*/
 
 # install composer
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
