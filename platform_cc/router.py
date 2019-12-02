@@ -148,8 +148,8 @@ class PlatformRouter(Container):
                     if not sslCertif:
                         sslCertif = params.get("default_ssl_certificate")
                     if sslCertif:
-                        server.options["ssl_certificate"] = sslCertif[0]
-                        server.options["ssl_certificate_key"] = sslCertif[1]
+                        server.options["ssl_certificate"] = sslCertif[0].replace("{DOMAIN}", hostname)
+                        server.options["ssl_certificate_key"] = sslCertif[1].replace("{DOMAIN}", hostname)
                 # if https is disabled and both http and https schemes have
                 # routes then assume https is the desired route
                 hasRouteForScheme = False
