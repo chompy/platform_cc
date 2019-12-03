@@ -18,8 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import os
 import json
-from nginx.config.api import Location
-from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from platform_cc.exception.container_command_error import ContainerCommandError
 from platform_cc.version import PCC_VERSION

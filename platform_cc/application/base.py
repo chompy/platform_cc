@@ -255,67 +255,85 @@ class BasePlatformApplication(Container):
             )
         return output
 
-    def _generateNginxLocations(self, path, locationConfig={}):
+    def _generateNginxLocationOptions(self, locationConfig={}):
         """
-        Generate nginx location configuration(s) for given path.
-
-        :param path: Location path
-        :param locationConfig: Dict of location configuration
-        :return: List of nginx locations
-        :rtype: list
+        Get options to generate Nginx location.
         """
-
-        # params
+        output = []
+        # alias
         root = locationConfig.get("root", "") or ""
-        passthru = locationConfig.get("passthru", False)
-        pathStrip = "/%s/" % path.strip("/")
-        if pathStrip == "//":
-            pathStrip = "/"
+        output.append(
+            KeyValueOption(
+                "alias",
+                "%s/" % ("%s/%s" % (
+                    self.APPLICATION_DIRECTORY, root.strip("/")
+                )).rstrip("/")
+            )
+        )
+        # index
         index = locationConfig.get("index", [])
         if type(index) is not list:
             index = [index]
-
-        # generate root location
-        rootLocation = Location(
-            "= \"%s\"" % path.rstrip("/"),
-            alias=("%s/%s" % (
-                self.APPLICATION_DIRECTORY,
-                root.strip("/")
-            )).rstrip("/")
-        )
         if index:
-            rootLocation.options["index"] = " ".join(index)
-
-        # base options
-        options = [
-            KeyValueOption("alias", "%s/" % ("%s/%s" % (
-                self.APPLICATION_DIRECTORY, root.strip("/")
-            )).rstrip("/"))
-        ]
-
+            output.append(
+                KeyValueOption("index", " ".join(index))
+            )
+        # expires
+        expires = locationConfig.get("expires", "-1s")
+        if type(expires) is not str:
+            expires = "%ds" % expires
+        output.append(
+            KeyValueOption("expires", expires)
+        )
+        if expires != "-1s":
+            output.append(
+                KeyValueOption("gzip", "on")
+            )
+            output.append(
+                KeyValueOption("brotli", "on")
+            )
         # headers
         headers = locationConfig.get("headers", {})
         if headers:
-            options.append(
+            output.append(
                 KeyValuesMultiLines(
                     "add_header",
-                    ["%s %s" % (k, v) for k, v in headers.items()]
+                    ["\"%s\" \"%s\"" % (k, v) for k, v in headers.items()]
                 )
             )
+        return output
 
-        # index
-        if index:
-            options.append(
-                KeyValueOption("index", " ".join(index))
-            )
+    def _generateNginxRootLocation(self, path, locationConfig={}):
+        """
+        Generate nginx root location configuration.
+        """
+        locationConfig = locationConfig.copy()
+        locationConfig["rules"] = {}
+        rootLocation = Location(
+            "= \"%s\"" % path.rstrip("/"),
+            *self._generateNginxLocationOptions(locationConfig)
+        )
+        return rootLocation
 
+    def _generateNginxLocation(self, path, locationConfig={}):
+        """
+        Generate nginx location configuration for given path.
+
+        :param path: Location path
+        :param locationConfig: Dict of location configuration
+        :return: Nginx location
+        :rtype: Location
+        """
         # create location
+        pathStrip = "/%s/" % path.strip("/")
+        if pathStrip == "//":
+            pathStrip = "/"
         location = Location(
             "\"%s\"" % pathStrip,
-            *options
+            *self._generateNginxLocationOptions(locationConfig)
         )
-
         # passthru
+        passthru = locationConfig.get("passthru", False)
         if passthru:
             passthruLocation = Location(
                 "~ /",
@@ -323,11 +341,19 @@ class BasePlatformApplication(Container):
                 *self._generateNginxPassthruOptions(locationConfig)
             )
             location.sections.add(passthruLocation)
-
-        # TODO rules
-
+        # rules, add extra locations
+        for key, val in locationConfig.get("rules", {}).items():
+            ruleConfig = locationConfig.copy()
+            ruleConfig.update(val)
+            ruleConfig["rules"] = {}
+            location.sections.add(
+                self._generateNginxLocation(
+                    key,
+                    ruleConfig
+                )
+            )
         # output
-        return [rootLocation, location]
+        return location
 
     def generateNginxConfig(self):
         """
@@ -345,14 +371,14 @@ class BasePlatformApplication(Container):
                 "allow":      False,
                 "passthru":   True
             }
-
         output = "charset UTF-8;\n"
-        for path in locations:
-            nginxLocations = self._generateNginxLocations(
-                path, locations[path]
-            )
-            for nginxLocation in nginxLocations:
-                output += str(nginxLocation)
+        for path, config in locations.items():
+            output += str(self._generateNginxRootLocation(
+                path, config
+            ))
+            output += str(self._generateNginxLocation(
+                path, config
+            ))
         return output
 
     def getMounts(self):

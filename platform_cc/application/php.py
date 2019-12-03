@@ -231,7 +231,6 @@ class PhpApplication(BasePlatformApplication):
         return ""
 
     def _generateNginxPassthruOptions(self, locationConfig = {}, script = False):
-        
         # force fastcgi/tcp upstream for php
         if not "web" in self.config:
             self.config["web"] = {}
@@ -241,7 +240,6 @@ class PhpApplication(BasePlatformApplication):
             self.config["web"]["upstream"]["socket_family"] = "socket"
         if not "protocol" in self.config["web"]["upstream"]:
             self.config["web"]["upstream"]["protocol"] = "fastcgi"            
-
         options = BasePlatformApplication._generateNginxPassthruOptions(self, locationConfig)
         setOptions = [
             "$_document_root $document_root",
@@ -267,7 +265,15 @@ class PhpApplication(BasePlatformApplication):
         )
         return options
 
-    def _generateNginxLocations(self, path, locationConfig = {}):
+    def _generateNginxRootLocation(self, path, locationConfig = {}):
+        location = BasePlatformApplication._generateNginxRootLocation(self, path, locationConfig)
+        passthru = locationConfig.get("passthru", False)
+        if passthru:
+            location.options["try_files"] = "$uri @rewrite"
+            location.options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
+        return location
+
+    def _generateNginxLocation(self, path, locationConfig = {}):
 
         # params
         pathStrip = "/%s/" % path.strip("/")
@@ -278,27 +284,19 @@ class PhpApplication(BasePlatformApplication):
         scripts = locationConfig.get("scripts", False)
         index = locationConfig.get("index", [])
         if type(index) is not list: index = [index]
-
         # get base locations
-        locations = BasePlatformApplication._generateNginxLocations(self, path, locationConfig)
-
-        # update root location
-        if passthru:
-            locations[0].options["try_files"] = "$uri @rewrite"
-        locations[0].options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
-
+        location = BasePlatformApplication._generateNginxLocation(self, path, locationConfig)
         # update main location
         # php specific passthru
         if passthru:
-            locations[1].sections.pop("location ~ /")
-            locations[1].sections.add(
+            location.sections.pop("location ~ /")
+            location.sections.add(
                 Location(
                     "~ \".+?\.php(?=$|/)\"",
                     allow = "all",
                     *self._generateNginxPassthruOptions(locationConfig, passthru)
                 )
             )
-
         # php sub location
         subLocationOptions = {}
         if index:
@@ -306,13 +304,12 @@ class PhpApplication(BasePlatformApplication):
         if passthru:
             subLocationOptions["set"] = "$_rewrite_path \"/%s\"" % passthru.strip("/")
             subLocationOptions["try_files"] = "$uri @rewrite"
-        locations[1].sections.add(
+        location.sections.add(
             Location(
                 pathStrip,
                 **subLocationOptions
             )
         )
-
         # php scripts
         if scripts:
             options = self._generateNginxPassthruOptions(locationConfig)
@@ -320,14 +317,13 @@ class PhpApplication(BasePlatformApplication):
                 options.append(
                     KeyValueOption("fastcgi_index", passthru.lstrip("/"))
                 )
-            locations.append(
+            location.append(
                 Location(
                     "~ [^/]\\.php(/|$)",
                     *options
                 )
             )
-
-        return locations
+        return location
 
     def startServices(self):
         BasePlatformApplication.startServices(self)
