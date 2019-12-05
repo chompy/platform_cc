@@ -36,16 +36,14 @@ class RoutesParser(BasePlatformParser):
         ".platform/routes.pcc.yaml"
     ]
 
-    def __init__(self, project, extraDomainSuffix = None):
+    def __init__(self, project, params={}):
         """
         :param project: Project data dictionary
         """
         BasePlatformParser.__init__(self, project.get("path"))
         self.project = project
         self._routes = None
-        if not extraDomainSuffix:
-            extraDomainSuffix = self.getDefaultDomain()
-        self.extraDomainSuffix = extraDomainSuffix
+        self.params = params
 
     def _readYaml(self, paths):
         config = {}
@@ -115,13 +113,15 @@ class RoutesParser(BasePlatformParser):
             if newHostname != parseRouteSyntax.hostname:
                 hostnames.append(newHostname)
             if not hostnames:
-                hostnames.append(parseRouteSyntax.hostname)
-                hostnames.append(
-                    "%s.%s" % (
-                        parseRouteSyntax.hostname,
-                        self.extraDomainSuffix
+                if not self.params.get("disable_main_routes"):
+                    hostnames.append(parseRouteSyntax.hostname)
+                if not self.params.get("disable_extra_routes"):
+                    hostnames.append(
+                        "%s.%s" % (
+                            parseRouteSyntax.hostname.rstrip("."),
+                            self.params.get("extra_domain_suffix", self.getDefaultDomain()).lstrip(".")
+                        )
                     )
-                )
             upstream = ["", ""]
             if routeConfig.get("type", "upstream") == "upstream":
                 upstream = routeConfig.get("upstream", "").split(":")

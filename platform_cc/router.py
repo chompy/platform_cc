@@ -111,7 +111,7 @@ class PlatformRouter(Container):
             "Generate router Nginx configuration for project '%s.'.",
             applications[0].project.get("short_uid")
         )
-        routesParser = RoutesParser(applications[0].project, params.get("extra_domain_suffix"))
+        routesParser = RoutesParser(applications[0].project, params)
         routeHostnames = routesParser.getRoutesByHostname()
         disableHttps = params.get("_disable_https", False)
         disableHttp = params.get("_disable_http", False)
