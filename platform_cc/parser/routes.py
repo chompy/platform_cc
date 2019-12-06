@@ -116,10 +116,12 @@ class RoutesParser(BasePlatformParser):
                 if not self.params.get("disable_main_routes"):
                     hostnames.append(parseRouteSyntax.hostname)
                 if not self.params.get("disable_extra_routes"):
+                    extraSubDomainSep = self.params.get("extra_domain_seperator", ".")
                     hostnames.append(
-                        "%s-%s" % (
-                            parseRouteSyntax.hostname.rstrip(".").replace(".", "-"),
-                            self.params.get("extra_domain_suffix", self.getDefaultDomain()).lstrip(".")
+                        "%s%s%s" % (
+                            parseRouteSyntax.hostname.rstrip(".").replace(".", extraSubDomainSep),
+                            extraSubDomainSep,
+                            self.params.get("extra_domain_suffix", self.getDefaultDomain()).lstrip(".").lstrip("-")
                         )
                     )
             upstream = ["", ""]

@@ -268,13 +268,14 @@ class PhpApplication(BasePlatformApplication):
     def _generateNginxRootLocation(self, path, locationConfig = {}):
         location = BasePlatformApplication._generateNginxRootLocation(self, path, locationConfig)
         passthru = locationConfig.get("passthru", False)
+        if passthru == True: passthru = "/index.php"
+        if passthru != False: passthru = str(passthru)
         if passthru:
             location.options["try_files"] = "$uri @rewrite"
             location.options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
         return location
 
     def _generateNginxLocation(self, path, locationConfig = {}):
-
         # params
         pathStrip = "/%s/" % path.strip("/")
         if pathStrip == "//": pathStrip = "/"
