@@ -117,8 +117,8 @@ class RoutesParser(BasePlatformParser):
                     hostnames.append(parseRouteSyntax.hostname)
                 if not self.params.get("disable_extra_routes"):
                     hostnames.append(
-                        "%s.%s" % (
-                            parseRouteSyntax.hostname.rstrip("."),
+                        "%s-%s" % (
+                            parseRouteSyntax.hostname.rstrip(".").replace(".", "-"),
                             self.params.get("extra_domain_suffix", self.getDefaultDomain()).lstrip(".")
                         )
                     )
