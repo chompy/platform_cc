@@ -86,6 +86,7 @@ class PlatformRouter(Container):
             "ssl_certificate_hosts" : {}, 
             "default_upstream" : applications[0].getContainerName(),
             "client_max_body_size" : "200M",
+            "nginx_include" : "",
             "_enable_service_routes" : True,
             "_disable_https" : "PCC_DISABLE_HTTPS" in os.environ,
             "_disable_http" : False
@@ -235,6 +236,10 @@ class PlatformRouter(Container):
                             )
                         )
                     )
+
+                # extra include
+                if params.get("nginx_include"):
+                    server.options["include"] = params.get("nginx_include")
                 
                 # add server output
                 output += str(server)
