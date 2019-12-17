@@ -1,5 +1,7 @@
-vDEV
+v0.3.6
 - Define default ssl certificate location for router with domain name wildcard.
+- Added a number of new options for router Nginx config generator.
+- Added java to PHP docker images.
 
 v0.3.5
 - app:build now stops the project.
