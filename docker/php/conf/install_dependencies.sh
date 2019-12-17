@@ -9,8 +9,10 @@ ln -s -f /opt/nodejs/bin/* /usr/bin/
 ln -s -f /usr/bin/node /usr/bin/nodejs
 
 # apt
+mkdir -p /usr/share/man/man1
 apt-get update
 apt-get install -y rsync git unzip cron python-pip python-dev \
+    default-jdk-headless ant libcommons-lang3-java libbcprov-java \
     gem libyaml-0-2 libyaml-dev ruby ruby-dev less nano libmemcached-dev  \
     libmcrypt4 libmcrypt-dev libxslt1.1 libxslt1-dev zlib1g-dev\
     libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
@@ -22,7 +24,6 @@ if [ "$PHP_VER" = "7" ]; then
     ln -s /usr/lib/x86_64-linux-gnu/libicuuc.so /usr/lib/x86_64-linux-gnu/libicuuc.so.57
     ln -s /usr/lib/x86_64-linux-gnu/libicui18n.so /usr/lib/x86_64-linux-gnu/libicui18n.so.57
 fi
-
 apt-get clean
 
 # ruby compass+sass
