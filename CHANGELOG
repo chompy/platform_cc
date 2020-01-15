@@ -1,3 +1,6 @@
+DEV
+- Solr service waits for solr to start before running commands.
+
 v0.3.6
 - Define default ssl certificate location for router with domain name wildcard.
 - Added a number of new options for router Nginx config generator.

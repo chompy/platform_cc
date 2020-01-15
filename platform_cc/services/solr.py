@@ -2,6 +2,7 @@ from .base import BasePlatformService
 import io
 import os
 import json
+import time
 import tarfile
 
 class SolrService(BasePlatformService):
@@ -131,6 +132,13 @@ class SolrService(BasePlatformService):
                 self.CONF_PATH
             )
         )
+        # wait for solr to become ready
+        exitCode = 1
+        while exitCode != 0:
+            (exitCode, _) = self.getContainer().exec_run(
+                "nc -z 127.0.0.1 8983"
+            )
+            time.sleep(.35)
         # create cores
         self.runCommand(
             self.getCreateCoresCommand(),
