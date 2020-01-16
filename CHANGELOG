@@ -1,5 +1,6 @@
-DEV
+v0.3.7
 - Solr service waits for solr to start before running commands.
+- Added libzip to PHP docker images.
 
 v0.3.6
 - Define default ssl certificate location for router with domain name wildcard.

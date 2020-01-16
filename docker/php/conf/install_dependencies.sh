@@ -17,7 +17,7 @@ apt-get install -y rsync git unzip cron python-pip python-dev \
     libfreetype6 libfreetype6-dev libjpeg62-turbo libjpeg62-turbo-dev \
     libpcre3 libpcre3-dev libedit-dev gnupg apt-transport-https \
     imagemagick libmagickcore-dev libmagickwand-dev \
-    libicu-dev libpng-dev \
+    libicu-dev libpng-dev libzip-dev \
     advancecomp jpegoptim libjpeg-turbo-progs optipng pngcrush
 if [ "$PHP_VER" = "5" ]; then
     apt-get install -y default-jdk ant libcommons-lang3-java libbcprov-java

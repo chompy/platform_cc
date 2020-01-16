@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # install default extensions
-docker-php-ext-install -j$(nproc) bcmath intl xsl mysqli pdo_mysql sockets exif
+docker-php-ext-install -j$(nproc) bcmath intl xsl mysqli pdo_mysql sockets exif zip
 if [ "$PHP_VER" = "5" ]; then
     docker-php-ext-install -j$(nproc) mysql mcrypt
 fi
