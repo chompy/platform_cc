@@ -17,7 +17,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
+DATA_DIR = os.path.join(
+    os.path.dirname(__file__), "data"
+)
+
 LOGGING_CONFIG_JSON = os.path.join(
-    os.path.dirname(__file__),
-    "data", "logging.json"
+    DATA_DIR, "logging.json"
 )

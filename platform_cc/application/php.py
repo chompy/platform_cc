@@ -22,6 +22,7 @@ from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
 from ..exception.container_command_error import ContainerCommandError
+from ..core import DATA_DIR
 from ..core.version import PCC_VERSION
 
 class PhpApplication(BasePlatformApplication):
@@ -47,14 +48,8 @@ class PhpApplication(BasePlatformApplication):
 
     """ Path to PHP extension configuration JSON. """
     EXTENSION_CONF_JSON = os.path.join(
-        os.path.dirname(__file__),
-        "../data/php_extensions.json"
-    )
-
-    """ Path to PHP nginx configuration. """
-    NGINX_CONF = os.path.join(
-        os.path.dirname(__file__),
-        "../data/php_nginx.conf"
+        DATA_DIR,
+        "php_extensions.json"
     )
 
     def getContainerCommand(self):

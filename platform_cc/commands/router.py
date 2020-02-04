@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 import os
 from cleo import Command
+from .common import getProject
 from ..core.router import PlatformRouter
 
 class RouterStart(Command):

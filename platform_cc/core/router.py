@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import docker
 import logging
+from . import DATA_DIR
 from .container import Container
 from ..parser.routes import RoutesParser
 from nginx.config.api import Location, Block
@@ -31,8 +32,7 @@ class PlatformRouter(Container):
 
     """ Path to main nginx configuration. """
     NGINX_CONF = os.path.join(
-        os.path.dirname(__file__),
-        "data/router_nginx.conf"
+        DATA_DIR, "router_nginx.conf"
     )
 
     """ Path to Nginx project config files inside container. """
