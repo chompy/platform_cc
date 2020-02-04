@@ -154,12 +154,12 @@ Supported Languages
 
 Platform.CC was primarily designed to aid with PHP development, however additional language support has been and can be added. Here is a list of the currently supported languages and their versions...
 
-- PHP 5.4
 - PHP 5.6
 - PHP 7.0
 - PHP 7.1
 - PHP 7.2
 - PHP 7.3
+- PHP 7.4
 - Go 1.11
 - Python 3.7
 

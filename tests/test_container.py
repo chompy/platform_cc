@@ -20,7 +20,7 @@ import io
 import docker
 import logging
 from .mock_docker import MockDocker
-from platform_cc.container import Container
+from platform_cc.core.container import Container
 from platform_cc.exception.state_error import StateError
 from platform_cc.exception.container_command_error import ContainerCommandError
 
