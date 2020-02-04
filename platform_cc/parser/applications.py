@@ -17,7 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from .base import BasePlatformParser
-from platform_cc.exception.parser_error import ParserError
+from ..exception.parser_error import ParserError
 
 
 class ApplicationsParser(BasePlatformParser):

@@ -17,11 +17,11 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
 from cleo import Command
-from platform_cc.platform_sh.config import PlatformShConfig
-from platform_cc.platform_sh.api import PlatformShApi
-from platform_cc.platform_sh.cloner import PlatformShCloner
-from platform_cc.commands import getProject
-from platform_cc.platform_sh.exception.config_error import PlatformShConfigError
+from ..platform_sh.config import PlatformShConfig
+from ..platform_sh.api import PlatformShApi
+from ..platform_sh.cloner import PlatformShCloner
+from .common import getProject
+from ..platform_sh.exception.config_error import PlatformShConfigError
 import os
 import sys
 import time

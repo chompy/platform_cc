@@ -18,7 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import io
 from .base import PlatformShFetcher
-from platform_cc.application.php import PhpApplication
+from ...application.php import PhpApplication
 
 class PlatformShFetchMysql(PlatformShFetcher):
     

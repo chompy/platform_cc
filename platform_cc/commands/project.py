@@ -20,9 +20,9 @@ import os
 import time
 import docker
 from cleo import Command
-from platform_cc.commands import getProject, outputJson, outputTable
-from platform_cc.exception.state_error import StateError
-from platform_cc.project_installer import loadInstallFile, projectInstall
+from .common import getProject, outputJson, outputTable
+from ..exception.state_error import StateError
+from ..project_installer import loadInstallFile, projectInstall
 
 class ProjectStart(Command):
     """

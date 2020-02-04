@@ -21,15 +21,15 @@ import json
 import ast
 import base64
 import logging
-from platform_cc.container import Container
-from platform_cc.application.php import PhpApplication
+from ..core.container import Container
+from ..application.php import PhpApplication
 from .config import PlatformShConfig
 from .api import PlatformShApi
 from .fetch import getPlatformShFetcher
-from platform_cc.project import PlatformProject
+from ..core.project import PlatformProject
 from .exception.api_error import PlatformShApiError
-from platform_cc.exception.container_command_error import ContainerCommandError
-from platform_cc.exception.state_error import StateError
+from ..exception.container_command_error import ContainerCommandError
+from ..exception.state_error import StateError
 
 class PlatformShCloner(Container):
 

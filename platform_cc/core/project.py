@@ -26,21 +26,21 @@ import io
 import docker
 import logging
 import collections
-from .variables import getVariableStorage
-from .variables.base import BasePlatformVariables
-from .parser.services import ServicesParser
-from .parser.applications import ApplicationsParser
-from .parser.routes import RoutesParser
-from .services import getService
-from .services.base import BasePlatformService
-from .application import getApplication
+from ..variables import getVariableStorage
+from ..variables.base import BasePlatformVariables
+from ..parser.services import ServicesParser
+from ..parser.applications import ApplicationsParser
+from ..parser.routes import RoutesParser
+from ..services import getService
+from ..services.base import BasePlatformService
+from ..application import getApplication
 from .router import PlatformRouter
 from .container import Container
 from .config import PlatformConfig
-from .exception.state_error import StateError
-from .exception.parser_error import ParserError
-from .exception.container_not_found_error import ContainerNotFoundError
-from .exception.project_init_error import ProjectInitError
+from ..exception.state_error import StateError
+from ..exception.parser_error import ParserError
+from ..exception.container_not_found_error import ContainerNotFoundError
+from ..exception.project_init_error import ProjectInitError
 
 class PlatformProject:
     """

@@ -20,12 +20,12 @@ import os
 import time
 import docker
 from cleo import Command
-from platform_cc.commands import outputJson, outputTable
-from platform_cc.exception.state_error import StateError
-from platform_cc.project import PlatformProject
-from platform_cc.router import PlatformRouter
-from platform_cc.application.base import BasePlatformApplication
-from platform_cc.services.base import BasePlatformService
+from .common import outputJson, outputTable
+from ..exception.state_error import StateError
+from ..core.project import PlatformProject
+from ..core.router import PlatformRouter
+from ..application.base import BasePlatformApplication
+from ..services.base import BasePlatformService
 
 class AllStop(Command):
     """

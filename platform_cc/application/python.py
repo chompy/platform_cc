@@ -19,8 +19,8 @@ import io
 import os
 import json
 from .base import BasePlatformApplication
-from platform_cc.exception.container_command_error import ContainerCommandError
-from platform_cc.version import PCC_VERSION
+from ..exception.container_command_error import ContainerCommandError
+from ..core.version import PCC_VERSION
 
 class PythonApplication(BasePlatformApplication):
     """

@@ -17,9 +17,9 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
 from cleo import Command
-from platform_cc.commands import getProject, outputJson, outputTable
-from platform_cc.config import PlatformConfig
-from platform_cc.exception.project_init_error import ProjectInitError
+from .common import getProject, outputJson, outputTable
+from ..core.config import PlatformConfig
+from ..exception.project_init_error import ProjectInitError
 
 GLOBAL_VAR_CONFIG_PREFIX = "global_project_var:"
 

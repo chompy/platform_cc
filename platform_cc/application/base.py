@@ -28,11 +28,11 @@ from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption
 from nginx.config.api.options import KeyValuesMultiLines
 from nginx.config.api.options import KeyOption
-from platform_cc.container import Container
-from platform_cc.parser.routes import RoutesParser
-from platform_cc.exception.state_error import StateError
-from platform_cc.exception.container_command_error import ContainerCommandError
-from platform_cc.services.base import BasePlatformService
+from ..core.container import Container
+from ..parser.routes import RoutesParser
+from ..exception.state_error import StateError
+from ..exception.container_command_error import ContainerCommandError
+from ..services.base import BasePlatformService
 
 
 class BasePlatformApplication(Container):
@@ -96,6 +96,22 @@ class BasePlatformApplication(Container):
             }
         }
 
+    def getApplicationVariables(self):
+        output = {}
+        varSources = [
+            self.config.get("variables", {}),
+            self.project.get("variables", {})
+        ]
+        for source in varSources:
+            for _, k in enumerate(source):
+                v = source[k]
+                if type(v) is dict or type(v) is list:
+                    for _, sk in enumerate(v):
+                        output["%s:%s" % (k, sk)] = v[sk]
+                    continue
+                output[k] = v
+        return output
+
     def getContainerEnvironmentVariables(self):
         # get platform relationships
         platformRelationships = {}
@@ -129,7 +145,6 @@ class BasePlatformApplication(Container):
             )
         except docker.errors.NotFound:
             pass
-           
         # set env vars
         envVars = {
             "PLATFORM_APP_DIR":           self.APPLICATION_DIRECTORY,
@@ -153,7 +168,7 @@ class BasePlatformApplication(Container):
             "PLATFORM_VARIABLES":         base64.b64encode(
                 bytes(
                     str(
-                        json.dumps(self.project.get("variables", {}))
+                        json.dumps(self.getApplicationVariables())
                     ).encode("utf-8")
                 )
             ).decode("utf-8"),
@@ -164,14 +179,8 @@ class BasePlatformApplication(Container):
             "SOCKET"                    : self.SOCKET_PATH
         }
         # set env vars from app variables
-        for key, value in self.config.get(
-            "variables", {}
-        ).get("env", {}).items():
-            envVars[key.strip().upper()] = str(value)
-        # set env vars from project variables
-        for key, value in self.project.get("variables", {}).items():
-            if not key.startswith("env:"):
-                continue
+        for key, value in self.getApplicationVariables().items():
+            if not key.startswith("env:"): continue
             key = key[4:]
             envVars[key.strip().upper()] = str(value)
         return envVars

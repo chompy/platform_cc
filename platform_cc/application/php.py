@@ -21,8 +21,8 @@ import json
 from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
-from platform_cc.exception.container_command_error import ContainerCommandError
-from platform_cc.version import PCC_VERSION
+from ..exception.container_command_error import ContainerCommandError
+from ..core.version import PCC_VERSION
 
 class PhpApplication(BasePlatformApplication):
     """

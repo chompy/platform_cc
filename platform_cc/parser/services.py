@@ -22,7 +22,7 @@ import collections
 from .base import BasePlatformParser
 from .yaml_archive import ArchiveTag
 from .yaml_include import IncludeTag
-from platform_cc.exception.parser_error import ParserError
+from ..exception.parser_error import ParserError
 
 
 class ServicesParser(BasePlatformParser):

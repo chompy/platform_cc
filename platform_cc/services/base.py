@@ -18,8 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import json
 import docker
-from platform_cc.container import Container
-from platform_cc.parser.services import ServicesParser
+from ..core.container import Container
+from ..parser.services import ServicesParser
 
 
 class BasePlatformService(Container):

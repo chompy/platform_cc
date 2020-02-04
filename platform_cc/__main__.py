@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -19,81 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import absolute_import
-import sys
-import os
-import logging.config
-import json
-import pkg_resources
-from cleo import Application
-from platform_cc.commands.variables import VariableSet, VariableGet, VariableDelete, VariableList
-from platform_cc.commands.services import ServiceRestart, ServiceList, ServiceShell, ServicePull
-from platform_cc.commands.applications import ApplicationRestart, ApplicationList, ApplicationShell, ApplicationBuild, ApplicationDeployHook, ApplicationPull, ApplicationNginxConfig
-from platform_cc.commands.router import RouterStart, RouterStop, RouterRestart, RouterAdd, RouterRemove, RouterNginx
-from platform_cc.commands.project import ProjectStart, ProjectStop, ProjectRestart, ProjectRoutes, ProjectOptionSet, ProjectOptionList, ProjectPurge, ProjectInstall, ProjectPull
-from platform_cc.commands.mysql import MysqlSql, MysqlDump
-from platform_cc.commands.all import AllStop, AllPurge, AllList
-from platform_cc.commands.platformsh import PlatformShLogin, PlatformShLogout, PlatformShClone, PlatformShSetSsh, PlatformShSync
-from platform_cc.version import PCC_VERSION
-
-# init logging
-LOGGING_CONFIG_JSON = os.path.join(
-    os.path.dirname(__file__),
-    "logging.json"
-)
-loggingConfig = {}
-with open(LOGGING_CONFIG_JSON, "rt") as f:
-    loggingConfig = json.load(f)
-logging.config.dictConfig(loggingConfig)
-
-# init cleo
-cleoApp = Application(
-    "Platform.CC -- By Contextual Code",
-    PCC_VERSION
-)
-cleoApp.add(VariableSet())
-cleoApp.add(VariableGet())
-cleoApp.add(VariableDelete())
-cleoApp.add(VariableList())
-cleoApp.add(ServiceRestart())
-cleoApp.add(ServiceList())
-cleoApp.add(ServiceShell())
-cleoApp.add(ServicePull())
-cleoApp.add(ApplicationRestart())
-cleoApp.add(ApplicationList())
-cleoApp.add(ApplicationShell())
-cleoApp.add(ApplicationBuild())
-cleoApp.add(ApplicationDeployHook())
-cleoApp.add(ApplicationPull())
-cleoApp.add(ApplicationNginxConfig())
-cleoApp.add(RouterStart())
-cleoApp.add(RouterStop())
-cleoApp.add(RouterRestart())
-cleoApp.add(RouterAdd())
-cleoApp.add(RouterRemove())
-cleoApp.add(RouterNginx())
-cleoApp.add(ProjectStart())
-cleoApp.add(ProjectStop())
-cleoApp.add(ProjectRestart())
-cleoApp.add(ProjectRoutes())
-cleoApp.add(ProjectOptionSet())
-cleoApp.add(ProjectOptionList())
-cleoApp.add(ProjectPurge())
-cleoApp.add(ProjectInstall())
-cleoApp.add(ProjectPull())
-cleoApp.add(MysqlSql())
-cleoApp.add(MysqlDump())
-cleoApp.add(AllStop())
-cleoApp.add(AllPurge())
-cleoApp.add(AllList())
-cleoApp.add(PlatformShLogin())
-cleoApp.add(PlatformShLogout())
-cleoApp.add(PlatformShClone())
-cleoApp.add(PlatformShSetSsh())
-cleoApp.add(PlatformShSync())
-
-def main():
-    cleoApp.run()
+from platform_cc.commands import main
 
 if __name__ == '__main__':
     main()

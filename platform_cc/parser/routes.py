@@ -22,7 +22,7 @@ import collections
 import yaml
 import yamlordereddictloader
 from .base import BasePlatformParser
-from platform_cc.exception.parser_error import ParserError
+from ..exception.parser_error import ParserError
 
 
 class RoutesParser(BasePlatformParser):

@@ -15,4 +15,9 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-__import__('pkg_resources').declare_namespace("platform_cc")
+import os
+
+LOGGING_CONFIG_JSON = os.path.join(
+    os.path.dirname(__file__),
+    "data", "logging.json"
+)

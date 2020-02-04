@@ -19,9 +19,9 @@ import sys
 import os
 import io
 from cleo import Command
-from platform_cc.commands import getProject, outputJson, outputTable
-from platform_cc.exception.state_error import StateError
-from platform_cc.exception.container_not_found_error import ContainerNotFoundError
+from .common import getProject, outputJson, outputTable
+from ..exception.state_error import StateError
+from ..exception.container_not_found_error import ContainerNotFoundError
 
 def getMysqlService(project, name = None):
     """ Get MySQL service to use. """

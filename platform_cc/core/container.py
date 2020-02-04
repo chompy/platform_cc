@@ -22,10 +22,9 @@ import tarfile
 import docker
 import logging
 import json
-import pkg_resources
 from dockerpty import PseudoTerminal, ExecOperation
-from platform_cc.exception.state_error import StateError
-from platform_cc.exception.container_command_error import ContainerCommandError
+from ..exception.state_error import StateError
+from ..exception.container_command_error import ContainerCommandError
 
 class Container:
     """
@@ -438,7 +437,6 @@ class Container:
         """
         Start Docker container for service.
         """
-
         self.logger.info(
             "Start '%s' container.",
             self.getContainerName()

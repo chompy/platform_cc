@@ -6,7 +6,7 @@ https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
@@ -19,7 +19,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='platform_cc',
-    namespace_packages  = ["platform_cc"],
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -48,7 +47,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_namespace_packages(include=['platform_cc.*']),
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -59,17 +58,17 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "pyaml",
-        "docker>=2.5",
-        "cleo<0.7",
-        "base36",
-        "yamlordereddictloader",
-        "terminaltables",
-        "future",
-        "dockerpty",
-        "boto3",
-        "nginx-config-builder",
-        "cryptography"
+        'pyaml',
+        'docker>=2.5',
+        'cleo<0.7',
+        'base36',
+        'yamlordereddictloader',
+        'terminaltables',
+        'future',
+        'dockerpty',
+        'boto3',
+        'nginx-config-builder',
+        'cryptography'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -83,7 +82,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        "platform_cc": ["logging.json", "data/*"]
+        'platform_cc.core': ['data/*']
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -97,7 +96,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'platform_cc=platform_cc.__main__:main',
+            'platform_cc=platform_cc.commands:main',
         ],
     },
 )

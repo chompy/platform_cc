@@ -18,8 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import docker
 import logging
-from platform_cc.container import Container
-from platform_cc.parser.routes import RoutesParser
+from .container import Container
+from ..parser.routes import RoutesParser
 from nginx.config.api import Location, Block
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 

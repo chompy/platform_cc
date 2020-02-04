@@ -17,7 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import cryptography
 from cryptography.hazmat.primitives import serialization as crypto_serialization
-from platform_cc.config import PlatformConfig
+from ..core.config import PlatformConfig
 
 class PlatformShConfig:
 

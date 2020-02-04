@@ -17,7 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from cleo import Command
-from platform_cc.commands import getProject, outputJson, outputTable
+from .common import getProject, outputJson, outputTable
 
 class ServiceRestart(Command):
     """

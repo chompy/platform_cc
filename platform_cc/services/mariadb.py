@@ -16,7 +16,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .base import BasePlatformService
-from platform_cc.exception.state_error import StateError
+from ..exception.state_error import StateError
 import hashlib
 import base36
 import docker

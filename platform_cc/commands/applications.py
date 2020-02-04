@@ -18,8 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import time
 from cleo import Command, Output
-from platform_cc.commands import getProject, outputJson, outputTable
-from platform_cc.exception.state_error import StateError
+from .common import getProject, outputJson, outputTable
+from ..exception.state_error import StateError
 
 class ApplicationRestart(Command):
     """
