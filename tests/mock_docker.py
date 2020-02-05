@@ -17,6 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 import docker
 import io
+import tempfile
 
 class MockDockerApi:
     def exec_create(self, containerId, cmd, **kwargs):
@@ -136,7 +137,7 @@ class MockDockerContainer:
         return (0, "PASS".encode("utf-8"))
 
     def put_archive(self, path, data):
-        if type(data) is not io.BytesIO:
+        if type(data) is not tempfile._TemporaryFileWrapper:
             raise Exception("TEST")
 
     def commit(self, repo, tag):
