@@ -22,6 +22,7 @@ import tarfile
 import docker
 import logging
 import json
+import tempfile
 from dockerpty import PseudoTerminal, ExecOperation
 from ..exception.state_error import StateError
 from ..exception.container_command_error import ContainerCommandError
@@ -391,24 +392,25 @@ class Container:
             raise StateError(
                 "Container '%s' is not running." % self.getContainerName()
             )
-        tarData = io.BytesIO()
-        with tarfile.open(fileobj=tarData, mode="w") as tar:
-            uploadObj.seek(0, io.SEEK_END)
-            tarFileInfo = tarfile.TarInfo(
-                name=os.path.basename(path)
+        with tempfile.NamedTemporaryFile(delete=True) as tarFile:
+            with tarfile.open(fileobj=tarFile, mode="w") as tar:
+                tarFileInfo = tarfile.TarInfo(
+                    name=os.path.basename(path)
+                )
+                uploadObj.seek(0, io.SEEK_END)
+                tarFileInfo.mtime = time.time()
+                tarFileInfo.size = uploadObj.tell()
+                uploadObj.seek(0)
+                tar.addfile(
+                    tarFileInfo,
+                    uploadObj
+                )
+                
+            tarFile.seek(0)
+            container.put_archive(
+                os.path.dirname(path),
+                data=tarFile
             )
-            tarFileInfo.size = uploadObj.tell()
-            tarFileInfo.mtime = time.time()
-            uploadObj.seek(0)
-            tar.addfile(
-                tarFileInfo,
-                uploadObj
-            )
-        tarData.seek(0)
-        container.put_archive(
-            os.path.dirname(path),
-            data=tarData
-        )
 
     def pullImage(self):
         """
@@ -583,17 +585,13 @@ class Container:
 
         # has stdin
         if stdin and not stdin.isatty():
-            # stdin object can't be seeked
-            # convert to bytes io if so
-            try:
-                stdin.seek(0)
-            except:
-                stdin = io.BytesIO(str.encode(stdin.read(), "utf-8"))
-            # upload stdin object to container
-            self.uploadFile(
-                stdin,
-                "/stdin.txt"
-            )
+            with tempfile.NamedTemporaryFile(delete=True) as stdinFile:
+                stdinFile.write(stdin.buffer.raw.read())
+                # upload stdin object to container
+                self.uploadFile(
+                    stdinFile,
+                    "/stdin.txt"
+                )
             # inject stdin in to original command
             cmd = ["sh", "-c", "cat /stdin.txt | %s && rm /stdin.txt" % cmd]
             (_, output) = container.exec_run(
