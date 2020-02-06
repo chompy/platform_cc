@@ -587,9 +587,15 @@ class Container:
         if stdin and not stdin.isatty():
             with tempfile.NamedTemporaryFile(delete=True) as stdinFile:
                 try:
-                    stdinFile.write(stdin.read())
+                    chunk = stdin.buffer.raw.read(1024)
+                    while chunk:
+                        stdinFile.write(chunk)
+                        chunk = stdin.buffer.raw.read(1024)
                 except:
-                    stdinFile.write(stdin.buffer.raw.read())
+                    chunk = stdin.read(1024)
+                    while chunk:
+                        stdinFile.write(chunk)
+                        chunk = stdin.read(1024)
                 # upload stdin object to container
                 self.uploadFile(
                     stdinFile,
