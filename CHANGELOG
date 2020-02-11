@@ -1,4 +1,4 @@
-DEV
+v0.3.8
 - Fix bug with PLATFORM_VARIABLES environment variable.
 - Change code structure so it is possible to run without installing via Pip/setuptools.
 - Remove support for PHP5.4 and add support for PHP7.4.
