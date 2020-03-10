@@ -42,13 +42,13 @@ class DockerService(BasePlatformService):
 
     def getContainerEnvironmentVariables(self):
         evars = BasePlatformService.getContainerEnvironmentVariables(self)
-        for key, value in self.config.get("environment", {}).iteritems():
+        for key, value in self.config.get("environment", {}).items():
             evars[key] = str(value)
         return evars
 
     def getContainerVolumes(self):
         volumes = {}
-        for key, value in self.config.get("volumes", {}).iteritems():
+        for key, value in self.config.get("volumes", {}).items():
             volumes[self.getVolumeName(str(key))] = {
                 "bind":     str(value),
                 "mode":     "rw"
