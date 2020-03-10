@@ -20,7 +20,8 @@ class SolrService(BasePlatformService):
         "solr:4.10":           "busybox:1",
         "solr:6.3":            "solr:6.3-alpine",
         "solr:6.6":            "solr:6.6-alpine",
-        "solr:7.6":            "busybox:1"        
+        "solr:7.6":            "busybox:1",
+        "solr:7.7":            "busybox:1"
     }
 
     SAVE_PATH = "/mnt/data"
@@ -30,6 +31,8 @@ class SolrService(BasePlatformService):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 
     def getContainerCommand(self):
+        if self.getBaseImage() == "busybox:1":
+            return []
         return ["solr-foreground", "-Dsolr.disable.shardsWhitelist=true"]
 
     def getContainerVolumes(self):
@@ -40,12 +43,16 @@ class SolrService(BasePlatformService):
             }
         }
 
+    def getVersionNo(self):
+        versionNo = self.getType().split(":")[1][0]
+        return versionNo
+
     def getServiceData(self):
         data = BasePlatformService.getServiceData(self)
         endpoints = self.config.get("endpoints", {})
         # for solr version 4 automatically add "collection1" endpoint
         # see https://docs.platform.sh/configuration/services/solr.html#solr-4
-        versionNo = self.getType().split(":")[1][0]
+        versionNo = self.getVersionNo()
         if versionNo == "4":
             endpoints = {
                 "solr": {
@@ -77,6 +84,8 @@ class SolrService(BasePlatformService):
         return tarIO
 
     def getStartCommand(self):
+        if self.getBaseImage() == "busybox:1":
+            return ""
         return """
             bash -c '[ ! -f %s/solr.xml ] && cp -rf /opt/solr/server/solr/* %s/'
             rm -rf /opt/solr/server/solr
@@ -90,6 +99,8 @@ class SolrService(BasePlatformService):
         )
 
     def getCreateCoresCommand(self):
+        if self.getBaseImage() == "busybox:1":
+            return ""
         """ Get shell commands needed to create SOLR cores. """
         output = ""
         for core in self.config.get("cores", {}):
@@ -133,6 +144,8 @@ class SolrService(BasePlatformService):
             )
         )
         # wait for solr to become ready
+        if self.getBaseImage() == "busybox:1":
+            return
         exitCode = 1
         while exitCode != 0:
             (exitCode, _) = self.getContainer().exec_run(

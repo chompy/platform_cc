@@ -37,6 +37,8 @@ class MariaDbService(BasePlatformService):
         "mysql:10.0":              "mariadb:10.0",
         "mysql:5.5":               "mariadb:5.5",
         "mariadb":                 "mariadb:10.2",
+        "mariadb:10.4":            "mariadb:10.4",
+        "mariadb:10.3":            "mariadb:10.3",
         "mariadb:10.2":            "mariadb:10.2",
         "mariadb:10.1":            "mariadb:10.1",
         "mariadb:10.0":            "mariadb:10.0",
