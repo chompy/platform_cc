@@ -31,12 +31,16 @@ class MariaDbService(BasePlatformService):
 
     """ Mapping for service type to Docker image name. """
     DOCKER_IMAGE_MAP = {
-        "mysql":                   "mariadb:10.2",
+        "mysql":                   "mariadb:10.5",
+        "mysql:10.5":              "mariadb:10.5",
+        "mysql:10.4":              "mariadb:10.4",
+        "mysql:10.3":              "mariadb:10.3",
         "mysql:10.2":              "mariadb:10.2",
         "mysql:10.1":              "mariadb:10.1",
         "mysql:10.0":              "mariadb:10.0",
         "mysql:5.5":               "mariadb:5.5",
-        "mariadb":                 "mariadb:10.2",
+        "mariadb":                 "mariadb:10.4",
+        "mariadb:10.5":            "mariadb:10.5",
         "mariadb:10.4":            "mariadb:10.4",
         "mariadb:10.3":            "mariadb:10.3",
         "mariadb:10.2":            "mariadb:10.2",

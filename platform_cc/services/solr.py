@@ -20,8 +20,8 @@ class SolrService(BasePlatformService):
         "solr:4.10":           "busybox:1",
         "solr:6.3":            "solr:6.3-alpine",
         "solr:6.6":            "solr:6.6-alpine",
-        "solr:7.6":            "busybox:1",
-        "solr:7.7":            "busybox:1"
+        "solr:7.6":            "solr:7.6",
+        "solr:7.7":            "solr:7.7",
     }
 
     SAVE_PATH = "/mnt/data"
