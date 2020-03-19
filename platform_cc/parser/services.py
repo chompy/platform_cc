@@ -97,6 +97,19 @@ class ServicesParser(BasePlatformParser):
 
         return self.services[name].get("type", "")
 
+    def getServiceSize(self, name):
+        """
+        Get size for given service.
+
+        :param name: Service name
+        :return: Service size string
+        :rtype: str 
+        """
+        name = str(name)
+        if name not in self.services:
+            raise ParserError("Service '%s' is not defined." % name)
+        return self.services[name].get("size", "S")
+
     def getServiceRelationships(self, name):
         """
         Get relationships for given service.
