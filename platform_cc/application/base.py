@@ -291,16 +291,17 @@ class BasePlatformApplication(Container):
         expires = locationConfig.get("expires", "-1s")
         if type(expires) is not str:
             expires = "%ds" % expires
-        output.append(
-            KeyValueOption("expires", expires)
-        )
-        if expires != "-1s":
+        if locationConfig.get("allow", False):
             output.append(
-                KeyValueOption("gzip", "on")
+                KeyValueOption("expires", expires)
             )
-            output.append(
-                KeyValueOption("brotli", "on")
-            )
+            if expires != "-1s":
+                output.append(
+                    KeyValueOption("gzip", "on")
+                )
+                output.append(
+                    KeyValueOption("brotli", "on")
+                )
         # headers
         headers = locationConfig.get("headers", {})
         if headers:
