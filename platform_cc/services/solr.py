@@ -107,10 +107,18 @@ class SolrService(BasePlatformService):
             savePath = "%s/%s" % (self.SAVE_PATH, core)
             confPath = "%s/%s" % (self.CONF_PATH, core)
             output += """
+                if [ -f %s/solrconfig.xml ]; then
+                    if ! grep "schemaFactory class" %s/solrconfig.xml > /dev/null; then
+                        sed -i 's/<codecFactory class/<schemaFactory class="ClassicIndexSchemaFactory"><\/schemaFactory><codecFactory class/' %s/solrconfig.xml
+                    fi
+                fi
                 if [ ! -d %s ]; then
                     solr create_core -c %s -d %s
                 fi
             """ % (
+                confPath,
+                confPath,
+                confPath,
                 savePath,
                 core,
                 confPath
@@ -138,7 +146,9 @@ class SolrService(BasePlatformService):
             """
             cd %s
             tar xvfz %s/config.tar.gz
+            chown -R solr:solr %s/*
             """ % (
+                self.CONF_PATH,
                 self.CONF_PATH,
                 self.CONF_PATH
             )
