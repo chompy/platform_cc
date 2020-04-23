@@ -152,7 +152,7 @@ class BasePlatformApplication(Container):
             "PLATFORM_APPLICATION_NAME":  self.getName(),
             "PLATFORM_BRANCH":            "",
             "PLATFORM_DOCUMENT_ROOT":     "/",
-            "PLATFORM_ENVIRONMENT":       "",
+            "PLATFORM_ENVIRONMENT":       "platform_cc",
             "PLATFORM_PROJECT":           self.project.get("uid", ""),
             "PLATFORM_RELATIONSHIPS":     base64.b64encode(
                 bytes(str(json.dumps(platformRelationships)).encode("utf-8"))
