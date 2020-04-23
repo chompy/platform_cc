@@ -1,3 +1,7 @@
+v0.3.9
+- Add 'primary' key for primary route(s)
+- Changed empty PLATFORM_ENVIRONMENT variable to "platfom_cc". This means we now play nice with platformsh/symfonyflex-bridge
+
 v0.3.8
 - Fix bug with PLATFORM_VARIABLES environment variable.
 - Change code structure so it is possible to run without installing via Pip/setuptools.
