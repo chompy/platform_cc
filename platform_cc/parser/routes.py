@@ -186,7 +186,7 @@ class RoutesParser(BasePlatformParser):
                     "upstream" : serviceName
                 }
 
-        for route in routes:
+        for index, route in enumerate(routes):
             hostnames = route.pop("hostnames", [])
             route.pop("redirects")
             for hostname in hostnames:
@@ -196,4 +196,5 @@ class RoutesParser(BasePlatformParser):
                     route.get("path", "").lstrip("/")
                 )
                 output[path] = route
+                output[path]["primary"] = (index == 0)
         return output
