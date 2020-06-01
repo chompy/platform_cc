@@ -24,6 +24,7 @@ from .redis import RedisService
 from .docker import DockerService
 from .solr import SolrService
 from .varnish import VarnishService
+from .networkstorage import NetworkStorageService
 
 """ Map service names to their service class. """
 SERVICES_MAP = {
@@ -37,7 +38,8 @@ SERVICES_MAP = {
     "redis-persistent": RedisService,
     "docker"          : DockerService,
     "solr"            : SolrService,
-    "varnish"         : VarnishService
+    "varnish"         : VarnishService,
+    "network-storage" : NetworkStorageService
 }
 
 def getService(project, config):
