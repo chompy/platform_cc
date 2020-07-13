@@ -108,8 +108,10 @@ class SolrService(BasePlatformService):
             confPath = "%s/%s" % (self.CONF_PATH, core)
             output += """
                 if [ -f %s/solrconfig.xml ]; then
-                    if ! grep "schemaFactory class" %s/solrconfig.xml > /dev/null; then
-                        sed -i 's/<codecFactory class/<schemaFactory class="ClassicIndexSchemaFactory"><\/schemaFactory><codecFactory class/' %s/solrconfig.xml
+                    if [ -f %s/schema.xml ]; then
+                        if ! grep "schemaFactory class" %s/solrconfig.xml > /dev/null; then
+                            sed -i 's/<codecFactory class/<schemaFactory class="ClassicIndexSchemaFactory"><\/schemaFactory><codecFactory class/' %s/solrconfig.xml
+                        fi
                     fi
                 fi
                 if [ ! -d %s ]; then
