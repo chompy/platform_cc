@@ -121,6 +121,7 @@ class SolrService(BasePlatformService):
                 confPath,
                 confPath,
                 confPath,
+                confPath,
                 savePath,
                 core,
                 confPath
