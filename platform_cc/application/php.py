@@ -39,6 +39,7 @@ class PhpApplication(BasePlatformApplication):
         "php:7.1"         : "chompy/platform_cc:%s-php71" % PCC_VERSION,
         "php:7.2"         : "chompy/platform_cc:%s-php72" % PCC_VERSION,
         "php:7.3"         : "chompy/platform_cc:%s-php73" % PCC_VERSION,
+        "php:7.4"         : "chompy/platform_cc:%s-php74" % PCC_VERSION
     }
 
     """ Default user id to assign for user 'web' """
