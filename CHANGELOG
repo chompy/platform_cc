@@ -1,3 +1,6 @@
+v0.3.12
+- Fixed PHP 7.4 extensions.
+
 v0.3.11
 - Added PHP 7.4.
 
