@@ -400,8 +400,6 @@ class BasePlatformApplication(Container):
         for mountDest, config in configMounts.items():
             mountSrc = ""
             if type(config) is dict:
-                if not config.get("source") == "local":
-                    continue
                 mountSrc = config.get("source_path", "").strip("/")
             elif type(config) is str:
                 localMountPrefx = "shared:files/"
