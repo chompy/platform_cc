@@ -271,9 +271,12 @@ class PhpApplication(BasePlatformApplication):
             location.options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
         return location
 
-    def _generateNginxLocation(self, path, locationConfig = {}):
+    def _generateNginxLocation(self, path, locationConfig = {}, regex=False):
         # params
-        pathStrip = "/%s/" % path.strip("/")
+        if regex:
+            pathStrip = "~ %s" % path.strip("/")
+        else:
+            pathStrip = "/%s/" % path.strip("/")
         if pathStrip == "//": pathStrip = "/"
         passthru = locationConfig.get("passthru", False)
         if passthru == True: passthru = "/index.php"
@@ -282,7 +285,7 @@ class PhpApplication(BasePlatformApplication):
         index = locationConfig.get("index", [])
         if type(index) is not list: index = [index]
         # get base locations
-        location = BasePlatformApplication._generateNginxLocation(self, path, locationConfig)
+        location = BasePlatformApplication._generateNginxLocation(self, path, locationConfig, regex)
         # update main location
         # php specific passthru
         if passthru:

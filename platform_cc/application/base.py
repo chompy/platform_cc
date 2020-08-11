@@ -325,7 +325,7 @@ class BasePlatformApplication(Container):
         )
         return rootLocation
 
-    def _generateNginxLocation(self, path, locationConfig={}):
+    def _generateNginxLocation(self, path, locationConfig={}, regex=False):
         """
         Generate nginx location configuration for given path.
 
@@ -335,11 +335,17 @@ class BasePlatformApplication(Container):
         :rtype: Location
         """
         # create location
-        pathStrip = "/%s/" % path.strip("/")
+        if regex:
+            pathStrip = path.strip("/")
+        else:
+            pathStrip = "/%s/" % path.strip("/")
         if pathStrip == "//":
             pathStrip = "/"
+        prefix = ""
+        if regex:
+            prefix = "~ "
         location = Location(
-            "\"%s\"" % pathStrip,
+            "%s\"%s\"" % (prefix, pathStrip),
             *self._generateNginxLocationOptions(locationConfig)
         )
         # passthru
@@ -359,7 +365,8 @@ class BasePlatformApplication(Container):
             location.sections.add(
                 self._generateNginxLocation(
                     key,
-                    ruleConfig
+                    ruleConfig,
+                    True
                 )
             )
         # output
