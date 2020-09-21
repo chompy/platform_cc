@@ -444,7 +444,7 @@ class PlatformProject:
                     containerConfig
                 )
                 app.setWorker(
-                    containerLabels.get("%s.worker" % Container.LABEL_PREFIX)
+                    containerLabels.get("%s.worker" % Container.LABEL_PREFIX), True
                 )
                 results.append(app)
             # service

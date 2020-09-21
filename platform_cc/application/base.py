@@ -87,12 +87,14 @@ class BasePlatformApplication(Container):
     def isOSX(self):
         return platform.system() == "Darwin"
 
-    def setWorker(self, name = None):
+    def setWorker(self, name = None, force = False):
         """ Define worker to use, if none use base web application. """
+        if not force and not self.project.get("config", {}).get("option_enable_workers"): return
         self.worker = name
 
     def getWorkers(self):
         """ Get list of worker. """
+        if not force and not self.project.get("config", {}).get("option_enable_workers"): return []
         workerList = self.config.get("workers", {})
         out = []
         for name in workerList:
