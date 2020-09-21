@@ -66,6 +66,7 @@ class BasePlatformApplication(Container):
         :param config: Service configuration
         """
         self.config = collections.OrderedDict(config)
+        self.worker = None
         Container.__init__(
             self,
             project,
@@ -82,6 +83,41 @@ class BasePlatformApplication(Container):
             )
         )
 
+    def setWorker(self, name = None):
+        """ Define worker to use, if none use base web application. """
+        self.worker = name
+
+    def getWorkers(self):
+        """ Get list of worker. """
+        workerList = self.config.get("workers", {})
+        out = []
+        for name in workerList:
+            worker = self.__class__(self.project, self.config)
+            worker.setWorker(name)
+            out.append(worker)
+        return out
+
+    def getContainerCommand(self):
+        # application needs to be built
+        if self.getDockerImage() == self.getBaseImage():
+            return None
+        # use worker
+        if self.worker:
+            workerCmd = self.config.get("workers", {}).get(self.worker, {}).get("commands", {}).get("start")
+            if not workerCmd:
+                # TODO raise exception??
+                return "sleep 5m"
+            return "sh -c \"%s\"" % workerCmd
+        # use web application
+        command = self.config.get("web", {}).get("commands", {}).get("start")
+        if command:
+            return "sh -c \"%s\"" % command
+        return None
+
+    def getContainerName(self):
+        if not self.worker: return Container.getContainerName(self)
+        return "%s_w_%s" % (Container.getContainerName(self), self.worker)
+
     def getContainerVolumes(self):
         return {
             os.path.abspath(
@@ -96,6 +132,18 @@ class BasePlatformApplication(Container):
                 "mode": "rw"
             }
         }
+
+    def getCommitImage(self):
+        worker = self.worker
+        self.worker = None
+        imageName = Container.getCommitImage(self)
+        self.worker = worker
+        return imageName
+
+    def getName(self):
+        if self.worker:
+            return "%s_worker_%s" % (Container.getName(self), self.worker)
+        return Container.getName(self)
 
     def getApplicationVariables(self):
         output = {}
@@ -612,11 +660,16 @@ class BasePlatformApplication(Container):
     def getLabels(self):
         labels = Container.getLabels(self)
         labels["%s.config" % Container.LABEL_PREFIX] = json.dumps(self.config)
-        labels["%s.type" % Container.LABEL_PREFIX] = "application"
+        labels["%s.type" % Container.LABEL_PREFIX] = "worker" if self.worker else "application"
+        labels["%s.name" % Container.LABEL_PREFIX] = self.getName()
+        if self.worker:
+            labels["%s.worker" % Container.LABEL_PREFIX] = self.worker
         return labels
 
     def startServices(self):
         """ Start extra services ran in the app container. """
+        # skip if worker
+        if self.worker: return
         # nginx
         self.logger.info(
             "Start Nginx."
