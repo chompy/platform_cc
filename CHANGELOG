@@ -1,3 +1,6 @@
+DEV
+- Fixed cron support by switching to Jobber daemon.
+
 v0.3.13
 - Ignore mount type, treat all mounts as 'local'.
 - Fix nginx generation for rules config with regexes.
