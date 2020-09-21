@@ -36,14 +36,6 @@ class PythonApplication(BasePlatformApplication):
     """ Default user id to assign for user 'web' """
     DEFAULT_WEB_USER_ID = 1000
 
-    def getContainerCommand(self):
-        if self.getDockerImage() == self.getBaseImage():
-            return None
-        command = self.config.get("web", {}).get("commands", {}).get("start")
-        if command:
-            return "sh -c \"%s\"" % command
-        return None
-
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
 

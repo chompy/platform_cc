@@ -524,7 +524,8 @@ class Container:
                 hostname=self.getContainerName(),
                 privileged=bool(useMountVolumes),  # needed to mount
                 cap_add=capAdd,
-                labels=self.getLabels()
+                labels=self.getLabels(),
+                restart_policy={"Name" : "always"}
             )
         # if container already started do nothing
         if container.status == "running":

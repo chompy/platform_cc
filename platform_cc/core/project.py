@@ -437,6 +437,16 @@ class PlatformProject:
                         containerConfig
                     )
                 )
+            # worker
+            elif containerType == "worker":
+                app = getApplication(
+                    self.getProjectData(),
+                    containerConfig
+                )
+                app.setWorker(
+                    containerLabels.get("%s.worker" % Container.LABEL_PREFIX)
+                )
+                results.append(app)
             # service
             elif containerType == "service":
                 results.append(
@@ -726,6 +736,10 @@ class PlatformProject:
         for applicationName in applicationsParser.getApplicationNames():
             application = self.getApplication(applicationName)
             application.start()
+            # workers
+            workers = application.getWorkers()
+            for worker in workers:
+                worker.start()
         # start post-app services
         startGroups = [BasePlatformService.START_POST_APP_A, BasePlatformService.START_POST_APP_B]
         for startGroup in startGroups:
