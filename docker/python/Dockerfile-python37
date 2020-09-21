@@ -33,3 +33,10 @@ RUN curl -L https://nginx.org/download/nginx-1.17.1.tar.gz -o nginx.tar.gz && \
     rm -rf nginx* 
 COPY docker/python/nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY docker/python/fastcgi_params /usr/local/nginx/conf/fastcgi_params
+
+# install jobber
+RUN mkdir -p /var/jobber/1000 && \
+    chown -R 1000:1000 /var/jobber/1000 && \
+    curl -L -o /tmp/jobber.deb https://github.com/dshearer/jobber/releases/download/v1.4.0/jobber_1.4.0-1_amd64.deb && \
+    dpkg -i /tmp/jobber.deb && \
+    rm /tmp/jobber.deb

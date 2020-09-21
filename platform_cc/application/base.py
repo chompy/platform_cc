@@ -24,6 +24,7 @@ import io
 import random
 import string
 import collections
+import yaml
 from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption
 from nginx.config.api.options import KeyValuesMultiLines
@@ -508,11 +509,16 @@ class BasePlatformApplication(Container):
         self.runCommand(
             "mkdir -p /etc/cron.d"
         )
-        # itterate crons make cron files
+        # generate jobber file
         crons = self.config.get("crons", {})
         self.logger.info(
             "Installing %s cron task(s)." % str(len(crons))
         )
+        out = {
+            "version": "1.4",
+            "jobs": {},
+            "resultSinks" : []
+        }
         for name, cron in crons.items():
             spec = cron.get("spec", "*/5 * * * *")  # default is every 5m
             cmd = cron.get("cmd", "")
@@ -521,21 +527,25 @@ class BasePlatformApplication(Container):
             self.logger.debug(
                 "Installing '%s' cron." % name
             )
-            fileObj = io.BytesIO(
-                bytes(
-                    "%s web %s" % (
-                        spec,
-                        cmd
-                    )
-                )
-            )
-            self.uploadFile(
-                fileObj,
-                "/etc/cron.d/%s" % name
-            )
-        # start cron
-        self.logger.info("Start cron daemon.")
-        self.runCommand("cron")
+            out["jobs"][name] = {
+                "cmd": cmd,
+                "time": "0 " + spec,
+                "onError": "Backoff"
+            }
+        fileObj = io.BytesIO(
+            yaml.dump(out, encoding="utf-8")
+        )        
+        self.uploadFile(
+            fileObj,
+            "/etc/jobber"
+        )
+        # start jobber
+        self.logger.info("Start cron/jobber daemon.")
+        self.runCommand("chown web:web /etc/jobber")
+        self.runCommand(
+            "/usr/libexec/jobberrunner -u /var/jobber/1000/cmd.sock /etc/jobber &",
+            "web"
+        )
 
     def prebuild(self):
         """

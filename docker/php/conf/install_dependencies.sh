@@ -55,3 +55,10 @@ make && \
 make install && \
 cd .. && \
 rm -rf nginx* 
+
+# jobber
+mkdir -p /var/jobber/1000
+chown -R 1000:1000 /var/jobber/1000
+curl -L -o /tmp/jobber.deb https://github.com/dshearer/jobber/releases/download/v1.4.0/jobber_1.4.0-1_amd64.deb
+dpkg -i /tmp/jobber.deb
+rm /tmp/jobber.deb
