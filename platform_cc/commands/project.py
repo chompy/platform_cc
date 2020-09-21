@@ -148,6 +148,11 @@ class ProjectOptionList(Command):
                 "enabled"       : bool(project.config.get("option_enable_cron", False))
             },
             {
+                "name"          : "enable_workers",
+                "description"   : "Enable worker containers.",
+                "enabled"       : bool(project.config.get("option_enable_workers", False))
+            },
+            {
                 "name"          : "enable_service_routes",
                 "description"   : "Enable routing to services (Varnish, etc).",
                 "enabled"       : bool(project.config.get("option_enable_service_routes", False))
