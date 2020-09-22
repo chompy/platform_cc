@@ -94,7 +94,7 @@ class BasePlatformApplication(Container):
 
     def getWorkers(self):
         """ Get list of worker. """
-        if not force and not self.project.get("config", {}).get("option_enable_workers"): return []
+        if not self.project.get("config", {}).get("option_enable_workers"): return []
         workerList = self.config.get("workers", {})
         out = []
         for name in workerList:
