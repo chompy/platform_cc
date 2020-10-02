@@ -260,7 +260,7 @@ class PhpApplication(BasePlatformApplication):
         if passthru != False: passthru = str(passthru)
         if passthru:
             location.options["try_files"] = "$uri @rewrite"
-            location.options["set"] = ("$_rewrite_path \"/%s\"" % passthru.strip("/")) if passthru else "$_rewrite_path \"\""
+            location.options["set"] = ("$_rewrite_path \"/%s/%s\"" % (path.strip("/"), passthru.strip("/"))) if passthru else "$_rewrite_path \"\""
         return location
 
     def _generateNginxLocation(self, path, locationConfig = {}, regex=False):
@@ -294,7 +294,9 @@ class PhpApplication(BasePlatformApplication):
         if index:
             subLocationOptions["index"] = " ".join(index)
         if passthru:
-            subLocationOptions["set"] = "$_rewrite_path \"/%s\"" % passthru.strip("/")
+            rwPath = pathStrip
+            if pathStrip[0] == "~": rwPath = "/"
+            subLocationOptions["set"] = "$_rewrite_path \"/%s/%s\"" % (rwPath.strip("/"), passthru.strip("/"))
             subLocationOptions["try_files"] = "$uri @rewrite"
         location.sections.add(
             Location(
