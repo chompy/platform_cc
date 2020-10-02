@@ -440,6 +440,7 @@ class BasePlatformApplication(Container):
                 "passthru":   True
             }
         output = "charset UTF-8;\n"
+        output += "root /app;\n"
         for path, config in locations.items():
             output += str(self._generateNginxRootLocation(
                 path, config

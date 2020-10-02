@@ -1,3 +1,6 @@
+vDEV
+- Fix sub locations passthrus.
+
 v0.3.14
 - Fixed cron support by switching to Jobber daemon.
 - Implemented workers.
