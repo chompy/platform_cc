@@ -24,6 +24,7 @@ import io
 import random
 import string
 import collections
+import platform
 import yaml
 from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption
@@ -83,6 +84,9 @@ class BasePlatformApplication(Container):
             )
         )
 
+    def isOSX(self):
+        return platform.system() == "Darwin"
+
     def setWorker(self, name = None, force = False):
         """ Define worker to use, if none use base web application. """
         if not force and not self.project.get("config", {}).get("option_enable_workers"): return
@@ -121,6 +125,23 @@ class BasePlatformApplication(Container):
         return "%s_w_%s" % (Container.getContainerName(self), self.worker)
 
     def getContainerVolumes(self):
+        useNFSVolumes = self.project.get("config", {}).get(
+            "option_use_nfs_volumes"
+        )
+        if useNFSVolumes and self.isOSX():
+            return {
+                os.path.abspath(
+                    self.config.get(
+                        "_path", self.project.get("path"))
+                    ).strip('/').replace("/","-"): {
+                    "bind": self.APPLICATION_DIRECTORY,
+                    "mode": "rw"
+                },
+                self.getVolumeName(): {
+                    "bind": self.STORAGE_DIRECTORY,
+                    "mode": "rw"
+                }
+            }
         return {
             os.path.abspath(
                 self.config.get(
@@ -135,17 +156,17 @@ class BasePlatformApplication(Container):
             }
         }
 
+    def getName(self):
+        if self.worker:
+            return "%s_worker_%s" % (Container.getName(self), self.worker)
+        return Container.getName(self)
+
     def getCommitImage(self):
         worker = self.worker
         self.worker = None
         imageName = Container.getCommitImage(self)
         self.worker = worker
         return imageName
-
-    def getName(self):
-        if self.worker:
-            return "%s_worker_%s" % (Container.getName(self), self.worker)
-        return Container.getName(self)
 
     def getApplicationVariables(self):
         output = {}
