@@ -24,6 +24,7 @@ import io
 import random
 import string
 import collections
+import platform
 from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption
 from nginx.config.api.options import KeyValuesMultiLines
@@ -81,20 +82,41 @@ class BasePlatformApplication(Container):
             )
         )
 
+    def isOSX(self):
+        return platform.system() == "Darwin"
+
     def getContainerVolumes(self):
-        return {
-            os.path.abspath(
-                self.config.get(
-                    "_path", self.project.get("path"))
-                ): {
-                "bind": self.APPLICATION_DIRECTORY,
-                "mode": "rw"
-            },
-            self.getVolumeName(): {
-                "bind": self.STORAGE_DIRECTORY,
-                "mode": "rw"
+        useNFSVolumes = self.project.get("config", {}).get(
+            "option_use_nfs_volumes"
+        )
+        if useNFSVolumes and self.isOSX():
+            return {
+                os.path.abspath(
+                    self.config.get(
+                        "_path", self.project.get("path"))
+                    ).strip('/').replace("/","-"): {
+                    "bind": self.APPLICATION_DIRECTORY,
+                    "mode": "rw"
+                },
+                self.getVolumeName(): {
+                    "bind": self.STORAGE_DIRECTORY,
+                    "mode": "rw"
+                }
             }
-        }
+        else:
+            return {
+                os.path.abspath(
+                    self.config.get(
+                        "_path", self.project.get("path"))
+                    ): {
+                    "bind": self.APPLICATION_DIRECTORY,
+                    "mode": "rw"
+                },
+                self.getVolumeName(): {
+                    "bind": self.STORAGE_DIRECTORY,
+                    "mode": "rw"
+                }
+            }
 
     def getApplicationVariables(self):
         output = {}

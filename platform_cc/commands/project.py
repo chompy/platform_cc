@@ -143,6 +143,11 @@ class ProjectOptionList(Command):
                 "enabled"       : bool(project.config.get("option_use_mount_volumes", False))
             },
             {
+                "name"          : "use_nfs_volumes",
+                "description"   : "Use NFS volumes for application mount volumes.",
+                "enabled"       : bool(project.config.get("option_use_nfs_volumes", False))
+            },
+            {
                 "name"          : "enable_cron",
                 "description"   : "Enable Cron jobs inside application containers.",
                 "enabled"       : bool(project.config.get("option_enable_cron", False))

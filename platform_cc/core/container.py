@@ -23,7 +23,9 @@ import docker
 import logging
 import json
 import tempfile
+import platform
 from dockerpty import PseudoTerminal, ExecOperation
+from os.path import expanduser
 from ..exception.state_error import StateError
 from ..exception.container_command_error import ContainerCommandError
 
@@ -41,6 +43,8 @@ class Container:
     """ Prefix to use for all Docker labels. """
     LABEL_PREFIX = "com.contextualcode.platformcc"
 
+    def isOSX(self):
+        return platform.system() == "Darwin"
 
     def __init__(self, project, name, dockerClient=None):
         """
@@ -294,6 +298,24 @@ class Container:
             labels=labels
         )
 
+    def _createNFSVolume(self, volumeId):
+        """
+        Create docker NFSS volume if it does not exist.
+        """
+        nfs_path = "/" + volumeId.replace("-","/")
+        try:
+            self.docker.volumes.get(volumeId)
+        except docker.errors.NotFound:
+            pass
+        labels = Container.getLabels(self)
+        path_string = ":/System/Volumes/Data" + nfs_path
+        self.docker.volumes.create(
+            volumeId,
+            labels=labels,
+            driver='local', 
+            driver_opts={'type':'nfs', 'o':'addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3','device':path_string}
+        )
+
     def isRunning(self):
         """
         Determine if service container is currently running.
@@ -451,6 +473,9 @@ class Container:
             useMountVolumes = self.project.get("config", {}).get(
                 "option_use_mount_volumes"
             )
+            useNFSVolumes = self.project.get("config", {}).get(
+                "option_use_nfs_volumes"
+            )
             capAdd = []
             if useMountVolumes:
                 capAdd.append("SYS_ADMIN")
@@ -474,9 +499,14 @@ class Container:
             # create volumes if they don't exist
             volumes = self.getContainerVolumes()
             for volumeKey in volumes:
-                if os.path.exists(volumeKey): continue
-                self._createVolume(volumeKey)
-
+                if os.path.exists("/" + volumeKey.replace("-","/")):
+                    if self.isOSX() and useNFSVolumes:
+                        self._createNFSVolume(volumeKey)
+                    else:
+                        continue
+                else:
+                    self._createVolume(volumeKey)
+                
             # create a docker container
             container = self.docker.containers.create(
                 dockerImageName,
