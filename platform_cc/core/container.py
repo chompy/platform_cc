@@ -499,14 +499,14 @@ class Container:
             # create volumes if they don't exist
             volumes = self.getContainerVolumes()
             for volumeKey in volumes:
-                if os.path.exists("/" + volumeKey.replace("-","/")):
-                    if self.isOSX() and useNFSVolumes:
-                        self._createNFSVolume(volumeKey)
-                    else:
-                        continue
-                else:
+                if (
+                    useNFSVolumes and self.isOSX() and
+                    # TODO should this be NOT exists???
+                    os.path.exists("/" + volumeKey.replace("-","/"))
+                ):
+                    self._createNFSVolume(volumeKey)
+                elif not os.path.exists(volumeKey):
                     self._createVolume(volumeKey)
-                
             # create a docker container
             container = self.docker.containers.create(
                 dockerImageName,
