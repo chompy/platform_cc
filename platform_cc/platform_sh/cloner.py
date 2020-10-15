@@ -65,7 +65,7 @@ class PlatformShCloner(Container):
         pccProject = PlatformProject.fromPath(self.project.get("_path"))
         return pccProject.config.get(
             "option_use_nfs_volumes"
-        ) == 'enabled' and platform.system() == "Darwin"
+        ) in ['enabled', None] and platform.system() == "Darwin"
 
     def _getPshProject(self):
         if self._pshProject:

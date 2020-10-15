@@ -55,7 +55,7 @@ class PhpApplication(BasePlatformApplication):
     )
 
     def useNFSVolumesAndisOSX(self,config=None):
-        return self.project.get("config", {}).get("option_use_nfs_volumes") == 'enabled' and platform.system() == "Darwin"
+        return self.project.get("config", {}).get("option_use_nfs_volumes") in ['enabled', None] and platform.system() == "Darwin"
 
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())

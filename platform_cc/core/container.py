@@ -65,7 +65,7 @@ class Container:
     def useNFSVolumesAndisOSX(self,config=None):
         return config.get(
                 "option_use_nfs_volumes"
-            ) == 'enabled' and platform.system() == "Darwin"
+            ) in ['enabled', None] and platform.system() == "Darwin"
 
     def getName(self):
         """

@@ -2,7 +2,7 @@
 
 # node.js
 curl https://nodejs.org/dist/v10.16.0/node-v10.16.0-linux-x64.tar.gz -o node.tar.gz
-tar xfz node.tar.gz
+tar xfz node.tar.gz --no-same-owner
 rm node.tar.gz
 mv node-* /opt/nodejs
 ln -s -f /opt/nodejs/bin/* /usr/bin/
@@ -37,7 +37,7 @@ ln -s /usr/local/bin/sass /usr/bin/sass
 # yarn
 cd /tmp
 curl -L -o yarn.tgz https://yarnpkg.com/latest.tar.gz
-tar xfz yarn.tgz
+tar xfz yarn.tgz --no-same-owner
 rm yarn.tgz
 mkdir -p /opt/yarn
 mv yarn-*/* /opt/yarn/
@@ -46,7 +46,7 @@ ln -s /opt/yarn/bin/yarn /usr/bin/yarn
 
 # nginx
 curl -L https://nginx.org/download/nginx-1.17.1.tar.gz -o nginx.tar.gz
-tar xfz nginx.tar.gz
+tar xfz nginx.tar.gz --no-same-owner
 rm nginx.tar.gz
 cd nginx*
 git clone --recursive https://github.com/google/ngx_brotli.git

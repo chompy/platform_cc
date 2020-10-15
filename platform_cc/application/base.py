@@ -87,7 +87,7 @@ class BasePlatformApplication(Container):
     def useNFSVolumesAndisOSX(self,config=None):
         return self.project.get("config", {}).get(
             "option_use_nfs_volumes"
-        ) == 'enabled' and platform.system() == "Darwin"
+        ) in ['enabled', None] and platform.system() == "Darwin"
 
     def setWorker(self, name = None, force = False):
         """ Define worker to use, if none use base web application. """
