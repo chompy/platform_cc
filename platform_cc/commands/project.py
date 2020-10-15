@@ -145,7 +145,7 @@ class ProjectOptionList(Command):
             {
                 "name"          : "use_nfs_volumes",
                 "description"   : "Use NFS volumes for application mount volumes.",
-                "enabled"       : bool(project.config.get("option_use_nfs_volumes", False))
+                "enabled"       : bool(project.config.get("option_use_nfs_volumes", True))
             },
             {
                 "name"          : "enable_cron",

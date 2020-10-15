@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import os
 import json
+import platform
 from nginx.config.api import Location
 from nginx.config.api.options import KeyValueOption, KeyValuesMultiLines, KeyOption
 from .base import BasePlatformApplication
@@ -52,6 +53,9 @@ class PhpApplication(BasePlatformApplication):
         DATA_DIR,
         "php_extensions.json"
     )
+
+    def useNFSVolumesAndisOSX(self,config=None):
+        return self.project.get("config", {}).get("option_use_nfs_volumes") == 'enabled' and platform.system() == "Darwin"
 
     def getBaseImage(self):
         return self.DOCKER_IMAGE_MAP.get(self.getType())
@@ -90,6 +94,7 @@ class PhpApplication(BasePlatformApplication):
         self.prebuild()
         # change web user id
         userId = self.project.get("config", {}).get("web_user_id", self.DEFAULT_WEB_USER_ID)
+
         if userId != self.DEFAULT_WEB_USER_ID:
             self.logger.info(
                 "Update 'web' user id."
@@ -104,9 +109,10 @@ class PhpApplication(BasePlatformApplication):
 
         # install ssh key + known_hosts
         self.installSsh()
-        self.runCommand(
-            "chown -f -R web /app/.ssh"
-        )
+        if not self.useNFSVolumesAndisOSX(): 
+            self.runCommand(
+                "chown -f -R web /app/.ssh"
+            )
         # install extensions
         extInstall = self.config.get("runtime", {}).get("extensions", [])
         self.runCommand(
@@ -192,15 +198,16 @@ class PhpApplication(BasePlatformApplication):
         self.logger.info(
             "Setup/fix user permission."
         )
-        try:
-            self.runCommand(
-                """
-                chown -f -R web %s
-                chown -f -R web %s
-                """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
-            )
-        except ContainerCommandError:
-            pass
+        if not self.useNFSVolumesAndisOSX():
+            try:
+                self.runCommand(
+                    """
+                    chown -f -R web %s
+                    chown -f -R web %s
+                    """ % (self.STORAGE_DIRECTORY, self.APPLICATION_DIRECTORY)
+                )
+            except ContainerCommandError:
+                pass
         # clean up
         self.logger.info(
             "Clean up."

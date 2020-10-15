@@ -84,8 +84,10 @@ class BasePlatformApplication(Container):
             )
         )
 
-    def isOSX(self):
-        return platform.system() == "Darwin"
+    def useNFSVolumesAndisOSX(self,config=None):
+        return self.project.get("config", {}).get(
+            "option_use_nfs_volumes"
+        ) == 'enabled' and platform.system() == "Darwin"
 
     def setWorker(self, name = None, force = False):
         """ Define worker to use, if none use base web application. """
@@ -127,8 +129,8 @@ class BasePlatformApplication(Container):
     def getContainerVolumes(self):
         useNFSVolumes = self.project.get("config", {}).get(
             "option_use_nfs_volumes"
-        )
-        if useNFSVolumes and self.isOSX():
+        ) == 'enabled'
+        if self.useNFSVolumesAndisOSX():
             return {
                 os.path.abspath(
                     self.config.get(
@@ -542,9 +544,14 @@ class BasePlatformApplication(Container):
             ["ssh_known_hosts", "/app/.ssh/known_hosts"]
         ]
         try:
-            self.runCommand(
-                "mkdir -p /app/.ssh && chown -f -R web:web /app/.ssh"
-            )
+            if self.useNFSVolumesAndisOSX():
+                self.runCommand(
+                    "[ ! -d /app/.ssh ] && mkdir -p /app/.ssh || true"
+                )
+            else:
+                self.runCommand(
+                    "[ ! -d /app/.ssh ] && mkdir -p /app/.ssh || true && chown -f -R web:web /app/.ssh"
+                )
         except ContainerCommandError:
             pass
         for sshData in sshDatas:

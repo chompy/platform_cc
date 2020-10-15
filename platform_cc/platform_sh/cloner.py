@@ -21,6 +21,7 @@ import json
 import ast
 import base64
 import logging
+import platform
 from ..core.container import Container
 from ..application.php import PhpApplication
 from .config import PlatformShConfig
@@ -59,6 +60,12 @@ class PlatformShCloner(Container):
         self._pshDeploy = None
         self._pshEnv = None
         self._pccProject = None
+
+    def useNFSVolumesAndisOSX(self,config=None):
+        pccProject = PlatformProject.fromPath(self.project.get("_path"))
+        return pccProject.config.get(
+            "option_use_nfs_volumes"
+        ) == 'enabled' and platform.system() == "Darwin"
 
     def _getPshProject(self):
         if self._pshProject:
@@ -136,12 +143,20 @@ class PlatformShCloner(Container):
         }
 
     def getContainerVolumes(self):
-        return {
-            os.path.abspath(self.project.get("_path")) : {
-                "bind": PhpApplication.APPLICATION_DIRECTORY,
-                "mode": "rw"
+        if self.useNFSVolumesAndisOSX():
+            return {
+                os.path.abspath(self.project.get("_path")).strip('/').replace("/","-") : {
+                    "bind": PhpApplication.APPLICATION_DIRECTORY,
+                    "mode": "rw"
+                }
             }
-        }
+        else:
+            return {
+                os.path.abspath(self.project.get("_path")) : {
+                    "bind": PhpApplication.APPLICATION_DIRECTORY,
+                    "mode": "rw"
+                }
+            }
 
     def start(self):
 
@@ -158,10 +173,9 @@ class PlatformShCloner(Container):
         for sshUrl in sshUrls:
             parsedSshUrl = urllib.parse.urlparse("ssh://%s" % sshUrl)
             sshList += " %s" % parsedSshUrl.hostname
-
         # start container
-        Container.start(self)
-
+        pccProject = PlatformProject.fromPath(self.project.get("_path"))
+        Container.start(self, pccProject.config)
         # get current user id
         try:
             currentUserId = os.getuid()
@@ -218,19 +232,24 @@ class PlatformShCloner(Container):
                     self.project.get("_environment")
                 )
             )
+
+            chownCom = 'chown -R web:web'
+            if self.useNFSVolumesAndisOSX():
+                chownCom = 'echo skipping chown'
             try:
                 self.runCommand(
                     """
                     mkdir -p %s
                     cd %s
                     git clone "%s" --recursive --branch "%s"
-                    chown -R web:web %s
+                    %s %s
                     chmod -R g+rw %s
                     """ % (
                         PhpApplication.APPLICATION_DIRECTORY,
                         PhpApplication.APPLICATION_DIRECTORY,
                         pshGitUrl,
                         self.project.get("_environment"),
+                        chownCom,
                         self.project.get("_project_id"),
                         self.project.get("_project_id")
                     )                    
@@ -392,13 +411,19 @@ class PlatformShCloner(Container):
             mounts = app.getMounts()
             for _, mountDest in mounts.items():
                 self.logger.info("Rsync mount '%s' for application '%s.'" % (mountDest, appName))
+                chownCom = 'chown -R web:web'
+                rsyncCom = '-rlptgoD'
+                if self.useNFSVolumesAndisOSX():
+                    chownCom = 'echo skipping chown'
+                    rsyncCom = '-rlptD'
                 try:
                     app.runCommand(
                         """
                         cd %s
-                        chown -R web:web %s
+                        %s %s
                         """ % (
                             app.APPLICATION_DIRECTORY,
+                            chownCom,
                             mountDest
                         )
                     )
@@ -409,10 +434,11 @@ class PlatformShCloner(Container):
                         chmod 0600 /tmp/id_rsa
                         ssh-add /tmp/id_rsa
                         cd %s
-                        rsync -a  -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --max-size=2M %s:%s/ %s/
+                        rsync %s -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --max-size=2M %s:%s/ %s/
                         """ % (
                             pshApi.getSshKeypair()[1],
                             app.APPLICATION_DIRECTORY,
+                            rsyncCom,
                             sshUrl,
                             mountDest,
                             mountDest
