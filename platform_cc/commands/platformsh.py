@@ -118,6 +118,7 @@ class PlatformShSync(Command):
         {--skip-var-sync : Skip syncing project variables.}
         {--skip-mount-sync : Skip syncing mount directories.}
         {--skip-service-sync : Skip syncing service assets.}
+        {--quick : Skip cache and log mounts, dont rsync paths with /cache/ or /log/, max filesize 1M.}
     """
 
     def handle(self):
@@ -153,7 +154,7 @@ class PlatformShSync(Command):
                 pshCloner.syncVars(project)
             project.start()
             if not self.option("skip-mount-sync"):
-                pshCloner.syncMounts(project)
+                pshCloner.syncMounts(project, self.option("quick"))
             if not self.option("skip-service-sync"):
                 pshCloner.syncServices(project)
         except Exception as e:

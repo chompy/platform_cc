@@ -406,7 +406,7 @@ class PlatformShCloner(Container):
                 pass
             pccProject.variables.set(var.get("name"), str(value))
 
-    def syncMounts(self, pccProject):
+    def syncMounts(self, pccProject, quick = False):
         """ Sync project mounts with Platform.sh. (Rsync) """
         # itterate mount points and perform rsync
         appNames = pccProject.getApplicationsParser().getApplicationNames()
@@ -416,12 +416,19 @@ class PlatformShCloner(Container):
             sshUrl = self._getSshUrl(appName)
             mounts = app.getMounts()
             for _, mountDest in mounts.items():
+                if quick:
+                    if '/log' in mountDest:
+                        continue
+                    if '/cache' in mountDest:
+                        continue
                 self.logger.info("Rsync mount '%s' for application '%s.'" % (mountDest, appName))
                 chownCom = 'chown -R web:web'
                 rsyncCom = '-rlptgoD'
                 if self.useNFSVolumesAndisOSX() and not self.useMountVolumes():
                     chownCom = 'echo skipping chown'
                     rsyncCom = '-rlptD'
+                if quick:
+                    rsyncCom += " --max-size=1M --exclude '**/cache/**' --exclude '**/log/**' --exclude '**/logs/**'"
                 try:
                     app.runCommand(
                         """
