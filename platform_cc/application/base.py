@@ -503,6 +503,11 @@ class BasePlatformApplication(Container):
             "Found %s mount point(s).",
             len(mounts)
         )
+        if self.project.get("config", {}).get("option_use_mount_volumes"):
+                self.runCommand(
+                    "chown -Rf web /mnt",
+                    "root"
+                )
         for mountSrc, mountDest in mounts.items():
             self.logger.debug(
                 "Bind mount point '%s.'.",

@@ -67,6 +67,12 @@ class PlatformShCloner(Container):
             "option_use_nfs_volumes"
         ) in ['enabled', None] and platform.system() == "Darwin"
 
+    def useMountVolumes(self,config=None):
+        pccProject = PlatformProject.fromPath(self.project.get("_path"))
+        return pccProject.config.get(
+            "option_use_mount_volumes"
+        ) in ['enabled', None]
+
     def _getPshProject(self):
         if self._pshProject:
             return self._pshProject
@@ -413,7 +419,7 @@ class PlatformShCloner(Container):
                 self.logger.info("Rsync mount '%s' for application '%s.'" % (mountDest, appName))
                 chownCom = 'chown -R web:web'
                 rsyncCom = '-rlptgoD'
-                if self.useNFSVolumesAndisOSX():
+                if self.useNFSVolumesAndisOSX() and not self.useMountVolumes():
                     chownCom = 'echo skipping chown'
                     rsyncCom = '-rlptD'
                 try:
