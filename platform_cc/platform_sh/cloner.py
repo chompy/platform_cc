@@ -428,7 +428,7 @@ class PlatformShCloner(Container):
                     chownCom = 'echo skipping chown'
                     rsyncCom = '-rlptD'
                 if quick:
-                    rsyncCom += " --max-size=1M --exclude '**/cache/**' --exclude '**/log/**' --exclude '**/logs/**'"
+                    rsyncCom += " --max-size=1M --exclude '**/cache/**' --exclude '**/log/**' --exclude '**/logs/**' --exclude '**/application/**'"
                 try:
                     app.runCommand(
                         """

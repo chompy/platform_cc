@@ -118,7 +118,7 @@ class PlatformShSync(Command):
         {--skip-var-sync : Skip syncing project variables.}
         {--skip-mount-sync : Skip syncing mount directories.}
         {--skip-service-sync : Skip syncing service assets.}
-        {--quick : Skip cache and log mounts, dont rsync paths with /cache/ or /log/, max filesize 1M.}
+        {--quick : Skip cache and log mounts, dont rsync paths with /cache/, /application/ or /log/, max filesize 1M.}
     """
 
     def handle(self):
