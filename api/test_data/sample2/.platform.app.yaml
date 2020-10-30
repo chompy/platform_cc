@@ -1,0 +1,13 @@
+name: test_app2
+type: php:7.4
+build:
+    flavor: none
+variables:
+    env:
+        NAME: 'Test Person'
+web:
+    locations:
+        /:
+            root: web
+            passthru: /index.php
+            expires: 3600

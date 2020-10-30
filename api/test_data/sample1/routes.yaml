@@ -1,0 +1,15 @@
+.backend: &backend
+    type: upstream
+    upstream: app:http
+    cache:
+        enabled: false
+    ssi:
+        enabled: true
+
+https://www.contextualcode.com/: *backend
+https://cdn-backend.contextualcode.ccplatform.net/: *backend
+http://health.contextualcode.ccplatform.net/: *backend
+
+https://contextualcode.com/:
+    type: redirect
+    to: https://www.contextualcode.com/

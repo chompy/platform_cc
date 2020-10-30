@@ -1,0 +1,53 @@
+name: test_app
+type: php:7.4
+build:
+    flavor: none
+variables:
+    env:
+        TEST_ENV: 'yes'
+relationships:
+    database: mysqldb:mysql
+    cache: memcached:memcached
+web:
+    locations:
+        /:
+            root: web
+            passthru: /index.php
+            expires: 3600
+mounts:
+    /test: test
+    /test2:
+        source_path: test2
+        source: service
+        service: files
+runtime:
+    extensions:
+        - imagick
+        - xsl
+        -
+            configuration:
+                server_id: test123
+                server_token: testingabc
+            name: blackfire
+dependencies:
+    php:
+        require:
+            "platformsh/client": "dev-master"
+        repositories:
+            - 
+                type: vcs
+                url: "git@github.com:platformsh/platformsh-client-php.git"
+hooks:
+    build: |
+        echo "BUILD"
+    deploy: |
+        echo "DEPLOY"
+crons:
+    test:
+        spec: "*/5 * * * *"
+        cmd: |
+            echo "TEST"
+    test2:
+        spec: "*/5 1 * * *"
+        cmd: |
+            echo "TEST2"
