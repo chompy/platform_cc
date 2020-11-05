@@ -135,7 +135,7 @@ class BasePlatformApplication(Container):
                 os.path.abspath(
                     self.config.get(
                         "_path", self.project.get("path"))
-                    ).strip('/').replace("/","-"): {
+                    ).strip('/').replace("/","---"): {
                     "bind": self.APPLICATION_DIRECTORY,
                     "mode": "rw"
                 },

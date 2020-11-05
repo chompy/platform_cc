@@ -304,7 +304,7 @@ class Container:
         """
         Create docker NFSS volume if it does not exist.
         """
-        nfs_path = "/" + volumeId.replace("-","/")
+        nfs_path = "/" + volumeId.replace("---","/")
         try:
             self.docker.volumes.get(volumeId)
         except docker.errors.NotFound:
@@ -503,7 +503,7 @@ class Container:
             volumes = self.getContainerVolumes()
             for volumeKey in volumes:
                 if self.useNFSVolumesAndisOSX(config):
-                    if os.path.exists("/" + volumeKey.replace("-","/")):
+                    if os.path.exists("/" + volumeKey.replace("---","/")):
                         self._createNFSVolume(volumeKey)
                     else: 
                         self._createVolume(volumeKey)

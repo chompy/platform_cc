@@ -151,7 +151,7 @@ class PlatformShCloner(Container):
     def getContainerVolumes(self):
         if self.useNFSVolumesAndisOSX():
             return {
-                os.path.abspath(self.project.get("_path")).strip('/').replace("/","-") : {
+                os.path.abspath(self.project.get("_path")).strip('/').replace("/","---") : {
                     "bind": PhpApplication.APPLICATION_DIRECTORY,
                     "mode": "rw"
                 }
