@@ -1,8 +1,13 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"strings"
 	"time"
@@ -48,6 +53,7 @@ func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
 		},
 		&container.HostConfig{
 			AutoRemove: true,
+			Privileged: true,
 			Mounts:     mounts,
 		},
 		&network.NetworkingConfig{},
@@ -111,4 +117,85 @@ func (d *dockerClient) DeleteProjectContainers(pid string) error {
 		}
 	}
 	return nil
+}
+
+// RunContainerCommand - run command in container
+func (d *dockerClient) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+	execConfig := types.ExecConfig{
+		User:         user,
+		Tty:          true,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          cmd,
+	}
+	resp, err := d.cli.ContainerExecCreate(
+		context.Background(),
+		id,
+		execConfig,
+	)
+	if err != nil {
+		return err
+	}
+	hresp, err := d.cli.ContainerExecAttach(
+		context.Background(),
+		resp.ID,
+		execConfig,
+	)
+	if err != nil {
+		return err
+	}
+	if out != nil {
+		_, err = io.Copy(out, hresp.Reader)
+	}
+	return err
+}
+
+// UploadDataToContainer - upload data to container as a file
+func (d *dockerClient) UploadDataToContainer(id string, path string, r io.Reader) error {
+	// TODO this is not the best way to upload a file to the container but it's the only
+	// one that seems to work for now
+	// read data as bytes
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	// gzip data stream
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write(data); err != nil {
+		return err
+	}
+	if err := zw.Close(); err != nil {
+		return err
+	}
+	// convert to base64 string
+	dataB64 := base64.StdEncoding.EncodeToString(buf.Bytes())
+	if err := d.RunContainerCommand(
+		id,
+		"root",
+		[]string{"sh", "-c", "echo '" + dataB64 + "' | base64 -d | gunzip -c > " + path},
+		nil,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetContainerIP - get ip address for given container
+func (d *dockerClient) GetContainerIP(id string) (string, error) {
+	data, err := d.cli.ContainerInspect(
+		context.Background(),
+		id,
+	)
+	if err != nil {
+		return "", err
+	}
+	for name, network := range data.NetworkSettings.Networks {
+		if strings.HasPrefix(name, "pcc-") {
+			return network.IPAddress, nil
+		}
+	}
+	return "", fmt.Errorf("network not found for container '%s'", id)
+
 }

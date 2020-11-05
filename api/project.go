@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -137,30 +136,16 @@ func (p *Project) Start() error {
 	}
 	// services
 	for _, service := range p.Services {
-		// TODO
-		if err := p.docker.StartContainer(dockerContainerConfig{
-			projectID:  p.ID,
-			objectName: service.Name,
-			objectType: objectContainerService,
-			Image:      service.GetContainerImage(),
-		}); err != nil {
+		if err := p.startService(service); err != nil {
 			return err
 		}
 	}
 	// app
 	for _, app := range p.Apps {
-		if err := p.docker.StartContainer(dockerContainerConfig{
-			projectID:  p.ID,
-			objectName: app.Name,
-			objectType: objectContainerApp,
-			Image:      app.GetContainerImage(),
-			Binds: map[string]string{
-				app.Path: "/app",
-			},
-			Volumes: map[string]string{
-				fmt.Sprintf(containerVolumeNameFormat, p.ID, app.Name): "/mnt/storage",
-			},
-		}); err != nil {
+		if err := p.startApp(app); err != nil {
+			return err
+		}
+		if err := p.openApp(app); err != nil {
 			return err
 		}
 	}

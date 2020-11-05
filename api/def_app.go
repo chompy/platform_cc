@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const appDir = "/app"
@@ -98,18 +99,34 @@ func (d AppDef) GetContainerImage() string {
 
 // MarshalJSON - implement json marshaler interface
 func (d *AppDef) MarshalJSON() ([]byte, error) {
+	envVars := map[string]string{
+		"PLATFORM_DOCUMENT_ROOT":    "/app/web",
+		"PLATFORM_APPLICATION":      d.BuildPlatformApplicationVar(),
+		"PLATFORM_PROJECT":          "-",
+		"PLATFORM_PROJECT_ENTROPY":  "1234abc",
+		"PLATFORM_APPLICATION_NAME": d.Name,
+		"PLATFORM_BRANCH":           "pcc",
+		"PLATFORM_DIR":              appDir,
+		"PLATFORM_TREE_ID":          "-",
+		"PLATFORM_ENVIRONMENT":      "pcc",
+		"PLATFORM_VARIABLES":        d.BuildPlatformVariablesVar(),
+		"PLATFORM_ROUTES":           "e30=",
+	}
+	for k, v := range d.Variables["env"] {
+		envVars[k] = v.(string)
+	}
 	return json.Marshal(map[string]interface{}{
 		"crons":                 d.Crons,
-		"enable_smtp":           false,
+		"enable_smtp":           "false",
 		"mounts":                d.Mounts,
 		"cron_minimum_interval": "1",
 		"configuration": map[string]interface{}{
 			"app_dir":       appDir,
 			"hooks":         d.Hooks,
-			"variables":     map[string]string{},
+			"variables":     envVars,
 			"timezone":      nil,
 			"disk":          d.Disk,
-			"slug_id":       "--",
+			"slug_id":       "-",
 			"size":          "AUTO",
 			"relationships": d.Relationships,
 			"web":           d.Web,
@@ -131,9 +148,61 @@ func (d *AppDef) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// BuildPlatformApplicationVar - build PLATFORM_APPLICATION env var
+func (d *AppDef) BuildPlatformApplicationVar() string {
+	jsonData, _ := json.Marshal(map[string]interface{}{
+		"resources":     nil,
+		"size":          "AUTO",
+		"disk":          d.Disk,
+		"access":        map[string]string{},
+		"relationships": d.Relationships,
+		"mounts":        d.Mounts,
+		"timezone":      nil,
+		"variables":     d.Variables,
+		"firewall":      nil,
+		"name":          d.Name,
+		"type":          d.Type,
+		"runtime":       d.Runtime,
+		"preflight": map[string]interface{}{
+			"enabled":       true,
+			"ignored_rules": []string{},
+		},
+		"tree_id": "-",
+		"slug_id": "-",
+		"app_dir": appDir,
+		"web":     d.Web,
+		"hook":    d.Hooks,
+		"crons":   d.Crons,
+	})
+	return base64.StdEncoding.EncodeToString(jsonData)
+}
+
+// BuildPlatformVariablesVar - build PLATFORM_VARIABLES env var
+func (d *AppDef) BuildPlatformVariablesVar() string {
+	data := make(map[string]string)
+	for varType, varVal := range d.Variables {
+		for k, v := range varVal {
+			switch v.(type) {
+			case string:
+				{
+					data[fmt.Sprintf("%s:%s", strings.ToLower(varType), k)] = v.(string)
+					break
+				}
+			}
+		}
+	}
+	jsonData, _ := json.Marshal(data)
+	return base64.StdEncoding.EncodeToString(jsonData)
+}
+
 // ParseAppYaml - parse app yaml
 func ParseAppYaml(d []byte) (*AppDef, error) {
-	o := &AppDef{}
+	o := &AppDef{
+		Crons:         make(map[string]*AppCronDef),
+		Mounts:        make(map[string]*AppMountDef),
+		Relationships: make(map[string]string),
+		Variables:     make(map[string]map[string]interface{}),
+	}
 	e := yaml.Unmarshal(d, &o)
 	o.SetDefaults()
 	return o, e

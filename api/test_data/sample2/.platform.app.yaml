@@ -11,3 +11,5 @@ web:
             root: web
             passthru: /index.php
             expires: 3600
+relationships:
+    mysqldb: "mysqldb:mysql"

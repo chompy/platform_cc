@@ -2,7 +2,7 @@ package api
 
 // AppWebCommandsDef - defines command to launch the app
 type AppWebCommandsDef struct {
-	Start string `yaml:"start" json:"start"`
+	Start string `yaml:"start" json:"start,omitempty"`
 }
 
 // SetDefaults - set default values

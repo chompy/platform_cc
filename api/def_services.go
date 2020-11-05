@@ -1,20 +1,23 @@
 package api
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
+
+// serviceList - list of service resolvers
+var serviceResolvers = []ServiceResolver{
+	MariadbService{},
+}
 
 // ServiceDef - defines a service
 type ServiceDef struct {
 	Name          string
-	Type          string      `yaml:"type"`
-	Disk          int         `yaml:"disk"`
-	Configuration interface{} `yaml:"configuration"`
+	Type          string    `yaml:"type" json:"type"`
+	Disk          int       `yaml:"disk" json:"disk"`
+	Configuration yaml.Node `yaml:"configuration"`
 }
 
 // SetDefaults - set default values
@@ -22,19 +25,39 @@ func (d *ServiceDef) SetDefaults() {
 	return
 }
 
-// Validate - validate ServiceDef
+// Validate - validate service def
 func (d ServiceDef) Validate() []error {
 	o := make([]error, 0)
-	if e := d.Configuration.(DefInterface).Validate(); len(e) > 0 {
-		o = append(o, e...)
+	if d.Type == "" {
+		o = append(o, NewDefValidateError(
+			"services[].type",
+			"must be defined",
+		))
+	}
+	resolver := d.getServiceResolver()
+	if resolver != nil {
+		o = append(o, resolver.Validate(&d)...)
 	}
 	return o
 }
 
-// GetContainerImage - get container image for service
-func (d ServiceDef) GetContainerImage() string {
-	typeName := strings.Split(d.Type, ":")
-	return fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1])
+// getServiceResolver - get service resolve for this service
+func (d ServiceDef) getServiceResolver() ServiceResolver {
+	for _, r := range serviceResolvers {
+		if r.CheckType(d.Type) {
+			return r
+		}
+	}
+	return nil
+}
+
+// GetContainerConfig - get container configuration
+func (d ServiceDef) GetContainerConfig() ServiceContainerDef {
+	resolver := d.getServiceResolver()
+	if resolver == nil {
+		return nil
+	}
+	return resolver.GetContainerConfig(&d)
 }
 
 // ParseServicesYaml - parse routes yaml
@@ -45,14 +68,6 @@ func ParseServicesYaml(d []byte) ([]*ServiceDef, error) {
 	for k := range o {
 		o[k].SetDefaults()
 		o[k].Name = k
-		typeName := strings.Split(o[k].Type, ":")[0]
-		switch typeName {
-		case "mariadb", "mysql":
-			{
-				o[k].Configuration = mariadbConfigurationFromInterface(o[k].Configuration)
-				break
-			}
-		}
 		oo = append(oo, o[k])
 	}
 	return oo, e

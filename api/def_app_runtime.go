@@ -12,6 +12,9 @@ func (d *AppRuntimeDef) SetDefaults() {
 	if d.RequestTerminateTimeout <= 0 {
 		d.RequestTerminateTimeout = 300
 	}
+	if d.Extensions == nil || len(d.Extensions) == 0 {
+		d.Extensions = make([]*AppRuntimeExtensionDef, 0)
+	}
 	for i := range d.Extensions {
 		d.Extensions[i].SetDefaults()
 	}

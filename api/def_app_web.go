@@ -2,9 +2,10 @@ package api
 
 // AppWebDef - defines how app is exposed to the web
 type AppWebDef struct {
-	Commands  AppWebCommandsDef             `yaml:"commands" json:"commands"`
-	Upstream  AppWebUpstreamDef             `yaml:"upstream" json:"-"`
-	Locations map[string]*AppWebLocationDef `yaml:"locations" json:"locations"`
+	Commands   AppWebCommandsDef             `yaml:"commands" json:"commands"`
+	Upstream   AppWebUpstreamDef             `yaml:"upstream" json:"-"`
+	Locations  map[string]*AppWebLocationDef `yaml:"locations" json:"locations"`
+	MoveToRoot bool                          `json:"move_to_root"`
 }
 
 // SetDefaults - set default values
@@ -14,6 +15,7 @@ func (d *AppWebDef) SetDefaults() {
 	for i := range d.Locations {
 		d.Locations[i].SetDefaults()
 	}
+	d.MoveToRoot = false
 }
 
 // Validate - validate AppWebDef

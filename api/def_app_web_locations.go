@@ -8,14 +8,17 @@ type AppWebLocationDef struct {
 	Expires          string                            `yaml:"expires" json:"expires"`
 	Scripts          BoolDef                           `yaml:"scripts" json:"scripts"`
 	Allow            BoolDef                           `yaml:"allow" json:"allow"`
-	Headers          map[string]string                 `yaml:"headers" json:"headers"`
-	Rules            map[string]*AppWebLocationDef     `yaml:"rules" json:"rules"`
+	Headers          map[string]string                 `yaml:"headers" json:"headers,omitempty"`
+	Rules            map[string]*AppWebLocationDef     `yaml:"rules" json:"rules,omitempty"`
 	RequestBuffering AppWebLocationRequestBufferingDef `yaml:"request_buffering" json:"request_buffering"`
 }
 
 // SetDefaults - set default values
 func (d *AppWebLocationDef) SetDefaults() {
 	d.Scripts.DefaultValue = false
+	if d.Passthru != "" && d.Passthru != "false" {
+		d.Scripts.DefaultValue = true
+	}
 	d.Scripts.SetDefaults()
 	d.Allow.DefaultValue = true
 	d.Allow.SetDefaults()
