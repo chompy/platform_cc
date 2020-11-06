@@ -97,57 +97,6 @@ func (d AppDef) GetContainerImage() string {
 	return fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1])
 }
 
-// MarshalJSON - implement json marshaler interface
-func (d *AppDef) MarshalJSON() ([]byte, error) {
-	envVars := map[string]string{
-		"PLATFORM_DOCUMENT_ROOT":    "/app/web",
-		"PLATFORM_APPLICATION":      d.BuildPlatformApplicationVar(),
-		"PLATFORM_PROJECT":          "-",
-		"PLATFORM_PROJECT_ENTROPY":  "1234abc",
-		"PLATFORM_APPLICATION_NAME": d.Name,
-		"PLATFORM_BRANCH":           "pcc",
-		"PLATFORM_DIR":              appDir,
-		"PLATFORM_TREE_ID":          "-",
-		"PLATFORM_ENVIRONMENT":      "pcc",
-		"PLATFORM_VARIABLES":        d.BuildPlatformVariablesVar(),
-		"PLATFORM_ROUTES":           "e30=",
-	}
-	for k, v := range d.Variables["env"] {
-		envVars[k] = v.(string)
-	}
-	return json.Marshal(map[string]interface{}{
-		"crons":                 d.Crons,
-		"enable_smtp":           "false",
-		"mounts":                d.Mounts,
-		"cron_minimum_interval": "1",
-		"configuration": map[string]interface{}{
-			"app_dir":       appDir,
-			"hooks":         d.Hooks,
-			"variables":     envVars,
-			"timezone":      nil,
-			"disk":          d.Disk,
-			"slug_id":       "-",
-			"size":          "AUTO",
-			"relationships": d.Relationships,
-			"web":           d.Web,
-			"is_production": false,
-			"name":          d.Name,
-			"access":        map[string]string{},
-			"preflight": map[string]interface{}{
-				"enabled":       true,
-				"ignored_rules": []string{},
-			},
-			"tree_id":   "-",
-			"mounts":    d.Mounts,
-			"runtime":   d.Runtime,
-			"type":      d.Type,
-			"crons":     d.Crons,
-			"slug":      "-",
-			"resources": nil,
-		},
-	})
-}
-
 // BuildPlatformApplicationVar - build PLATFORM_APPLICATION env var
 func (d *AppDef) BuildPlatformApplicationVar() string {
 	jsonData, _ := json.Marshal(map[string]interface{}{

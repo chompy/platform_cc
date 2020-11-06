@@ -41,7 +41,11 @@ func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
 			Target: v,
 		})
 	}
-	// create app container
+	// pull image
+	if err := d.pullImage(c); err != nil {
+		return err
+	}
+	// create container
 	resp, err := d.cli.ContainerCreate(
 		context.Background(),
 		&container.Config{
@@ -50,6 +54,7 @@ func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
 			AttachStdout: true,
 			AttachStderr: true,
 			Cmd:          c.GetCommand(),
+			Env:          c.GetEnv(),
 		},
 		&container.HostConfig{
 			AutoRemove: true,
@@ -106,13 +111,23 @@ func (d *dockerClient) DeleteProjectContainers(pid string) error {
 	if err != nil {
 		return err
 	}
+	ch := make(chan error)
 	for _, c := range container {
 		log.Printf("Delete Docker container '%s.'", c.Names[0])
-		if err := d.cli.ContainerStop(
-			context.Background(),
-			c.ID,
-			&timeout,
-		); err != nil {
+		go func(cid string) {
+			if err := d.cli.ContainerStop(
+				context.Background(),
+				cid,
+				&timeout,
+			); err != nil {
+				ch <- err
+			}
+			ch <- nil
+		}(c.ID)
+	}
+	for range container {
+		err = <-ch
+		if err != nil {
 			return err
 		}
 	}
@@ -198,4 +213,27 @@ func (d *dockerClient) GetContainerIP(id string) (string, error) {
 	}
 	return "", fmt.Errorf("network not found for container '%s'", id)
 
+}
+
+// pullImage - pull latest image for given container
+func (d *dockerClient) pullImage(c dockerContainerConfig) error {
+	log.Printf("Pull Docker container image for '%s.'", c.GetContainerName())
+	r, err := d.cli.ImagePull(
+		context.Background(),
+		c.Image+":latest",
+		types.ImagePullOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	defer r.Close()
+	b := make([]byte, 1024)
+	for {
+		n, _ := r.Read(b)
+		if n == 0 {
+			break
+		}
+	}
+	return nil
 }

@@ -40,3 +40,16 @@ func (d *dockerClient) DeleteProjectNetwork(pid string) error {
 	}
 	return nil
 }
+
+// GetNetworkHostIP - get host ip address for network
+func (d *dockerClient) GetNetworkHostIP(pid string) (string, error) {
+	c := dockerContainerConfig{projectID: pid}
+	net, err := d.cli.NetworkInspect(
+		context.Background(),
+		c.GetNetworkName(),
+	)
+	if err != nil {
+		return "", err
+	}
+	return net.IPAM.Config[0].Gateway, nil
+}

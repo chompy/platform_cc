@@ -40,17 +40,17 @@ func (d *AppDependenciesPhpDef) UnmarshalYAML(unmarshal func(interface{}) error)
 		return nil
 	}
 	// includes repositories
-	require := data["require"].(map[interface{}]interface{})
+	require := data["require"].(map[string]interface{})
 	for k, v := range require {
-		d.Require[k.(string)] = v.(string)
+		d.Require[k] = v.(string)
 	}
 	repos := data["repositories"].([]interface{})
 	for _, v := range repos {
 		d.Repositories = append(
 			d.Repositories,
 			&AppDependenciesPhpRepositoryDef{
-				Type: v.(map[interface{}]interface{})["type"].(string),
-				URL:  v.(map[interface{}]interface{})["url"].(string),
+				Type: v.(map[string]interface{})["type"].(string),
+				URL:  v.(map[string]interface{})["url"].(string),
 			},
 		)
 	}

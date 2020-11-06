@@ -34,29 +34,18 @@ func TestServices(t *testing.T) {
 					"unexpected services[].disk",
 					t,
 				)
-				assertEqual(
-					service.GetContainerConfig().GetImage(),
-					platformShDockerImagePrefix+"mariadb-10.0",
-					"unexpected services[].GetContainerConfig.GetImage",
-					t,
-				)
-				assertEqual(
-					service.GetContainerConfig().GetVolumes()[0],
-					"/var/lib/mysql",
-					"unexpected service container config GetVolumes",
-					t,
-				)
-				relationships := service.GetContainerConfig().GetRelationship()
+				relationships, _ := service.GetServiceConfig().GetRelationship(service)
 				assertEqual(
 					relationships[0]["username"],
 					"mysql",
 					"unexpected service container config GetRelationship[].username",
 					t,
 				)
+				setupCmd, _ := service.GetServiceConfig().GetSetupCommand(service)
 				assertEqual(
 					strings.Contains(
-						strings.Join(service.GetContainerConfig().GetStartCommand(), " "),
-						"mysqld",
+						strings.Join(setupCmd, " "),
+						"mysql-standalone",
 					),
 					true,
 					"expected service container config GetStartCommand to contain string 'mysqld'",
@@ -64,7 +53,7 @@ func TestServices(t *testing.T) {
 				)
 				assertEqual(
 					strings.Contains(
-						strings.Join(service.GetContainerConfig().GetPostStartCommand(), " "),
+						strings.Join(setupCmd, " "),
 						"CREATE SCHEMA IF NOT EXISTS main CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin",
 					),
 					true,

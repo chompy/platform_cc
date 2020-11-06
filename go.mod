@@ -7,6 +7,7 @@ replace gitlab.com/contextualcode/platform_cc/api => ./api
 replace gitlab.com/contextualcode/platform_cc/cmd => ./cmd
 
 require (
+	github.com/goccy/go-yaml v1.8.3 // indirect
 	github.com/gopherjs/vecty v0.5.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1

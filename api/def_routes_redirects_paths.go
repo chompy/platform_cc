@@ -2,12 +2,12 @@ package api
 
 // RouteRedirectsPathDef - defines a route redirect path
 type RouteRedirectsPathDef struct {
-	To           string  `yaml:"to"`
-	Regexp       BoolDef `yaml:"regexp"`
-	Prefix       BoolDef `yaml:"prefix"`
-	AppendSuffix BoolDef `yaml:"append_suffix"`
-	Code         int     `yaml:"code"`
-	Expires      string  `yaml:"expires"`
+	To           string  `yaml:"to" json:"to"`
+	Regexp       BoolDef `yaml:"regexp" json:"regexp"`
+	Prefix       BoolDef `yaml:"prefix" json:"prefix"`
+	AppendSuffix BoolDef `yaml:"append_suffix" json:"append_suffix"`
+	Code         int     `yaml:"code" json:"code"`
+	Expires      string  `yaml:"expires" json:"expires"`
 }
 
 // SetDefaults - set default values

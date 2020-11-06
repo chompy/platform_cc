@@ -102,3 +102,17 @@ http://example.com:
 		t,
 	)
 }
+
+func TestLargeRoutes(t *testing.T) {
+	p := path.Join("test_data", "sample3", "routes.yaml")
+	routes, e := ParseRoutesYamlFile(p)
+	if e != nil {
+		t.Errorf("failed to parse routes yaml, %s", e)
+	}
+	assertEqual(
+		len(routes[0].Validate()),
+		0,
+		"expected route to validate",
+		t,
+	)
+}

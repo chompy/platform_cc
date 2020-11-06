@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -176,4 +178,22 @@ func (p *Project) Purge() error {
 	)
 	log.Println("Project purged.")
 	return nil
+}
+
+// getUID - get os user's uid and gid
+func (p *Project) getUID() (int, int) {
+	uid := 0
+	gid := 0
+	currentUser, _ := user.Current()
+	if currentUser != nil {
+		uid, _ = strconv.Atoi(currentUser.Uid)
+		gid, _ = strconv.Atoi(currentUser.Gid)
+	}
+	if uid == 0 {
+		uid = 1000
+	}
+	if gid == 0 {
+		gid = 1000
+	}
+	return uid, gid
 }

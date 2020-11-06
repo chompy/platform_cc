@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -60,9 +61,31 @@ var projectPurgeCmd = &cobra.Command{
 	},
 }
 
+var projectConfigJSONCmd = &cobra.Command{
+	Use:   "configjson",
+	Short: "Dump config.json.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		proj, err := api.LoadProjectFromPath(cwd, true)
+		if err != nil {
+			return err
+		}
+		configJSON, err := proj.BuildConfigJSON(&proj.Apps[0])
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(configJSON))
+		return nil
+	},
+}
+
 func init() {
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
+	projectCmd.AddCommand(projectConfigJSONCmd)
 	rootCmd.AddCommand(projectCmd)
 }

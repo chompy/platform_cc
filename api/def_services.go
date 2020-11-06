@@ -7,9 +7,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// serviceList - list of service resolvers
-var serviceResolvers = []ServiceResolver{
+// serviceConfigs - list of service config type
+var serviceConfigs = []ServiceConfig{
 	MariadbService{},
+	RedisService{},
 }
 
 // ServiceDef - defines a service
@@ -34,30 +35,21 @@ func (d ServiceDef) Validate() []error {
 			"must be defined",
 		))
 	}
-	resolver := d.getServiceResolver()
-	if resolver != nil {
-		o = append(o, resolver.Validate(&d)...)
+	serviceConfig := d.GetServiceConfig()
+	if serviceConfig != nil {
+		o = append(o, serviceConfig.Validate(&d)...)
 	}
 	return o
 }
 
-// getServiceResolver - get service resolve for this service
-func (d ServiceDef) getServiceResolver() ServiceResolver {
-	for _, r := range serviceResolvers {
-		if r.CheckType(d.Type) {
+// GetServiceConfig - get configuration data for service
+func (d ServiceDef) GetServiceConfig() ServiceConfig {
+	for _, r := range serviceConfigs {
+		if r.Check(&d) {
 			return r
 		}
 	}
 	return nil
-}
-
-// GetContainerConfig - get container configuration
-func (d ServiceDef) GetContainerConfig() ServiceContainerDef {
-	resolver := d.getServiceResolver()
-	if resolver == nil {
-		return nil
-	}
-	return resolver.GetContainerConfig(&d)
 }
 
 // ParseServicesYaml - parse routes yaml

@@ -19,6 +19,9 @@ func (d *AppWebLocationDef) SetDefaults() {
 	if d.Passthru != "" && d.Passthru != "false" {
 		d.Scripts.DefaultValue = true
 	}
+	if d.Expires == "" {
+		d.Expires = "0"
+	}
 	d.Scripts.SetDefaults()
 	d.Allow.DefaultValue = true
 	d.Allow.SetDefaults()

@@ -42,6 +42,7 @@ type dockerContainerConfig struct {
 	Image      string
 	Volumes    map[string]string
 	Binds      map[string]string
+	Env        map[string]string
 }
 
 // GetContainerName - get name of docker container
@@ -60,4 +61,13 @@ func (d dockerContainerConfig) GetCommand() []string {
 		return d.command
 	}
 	return []string{"tail", "-f", "/dev/null"}
+}
+
+// GetEnv - convert environment vars to format needed to start docker container
+func (d dockerContainerConfig) GetEnv() []string {
+	out := make([]string, 0)
+	for k, v := range d.Env {
+		out = append(out, fmt.Sprintf("%s=%v", k, v))
+	}
+	return out
 }

@@ -24,9 +24,9 @@ func (d *AppRuntimeExtensionDef) UnmarshalYAML(unmarshal func(interface{}) error
 	if e == nil {
 		d.Name = data["name"].(string)
 		d.Configuration = make(map[string]string)
-		conf := data["configuration"].(map[interface{}]interface{})
+		conf := data["configuration"].(map[string]interface{})
 		for k, v := range conf {
-			d.Configuration[k.(string)] = v.(string)
+			d.Configuration[k] = v.(string)
 		}
 		return nil
 	}

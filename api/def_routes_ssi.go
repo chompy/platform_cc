@@ -2,7 +2,7 @@ package api
 
 // RoutesSsiDef - define route server side include
 type RoutesSsiDef struct {
-	Enabled BoolDef `yaml:"enabled"`
+	Enabled BoolDef `yaml:"enabled" json:"enabled"`
 }
 
 // SetDefaults - set default values

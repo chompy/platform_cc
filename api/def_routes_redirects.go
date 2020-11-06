@@ -2,8 +2,8 @@ package api
 
 // RouteRedirectsDef - define route redirects
 type RouteRedirectsDef struct {
-	Expires string                            `yaml:"expires"`
-	Paths   map[string]*RouteRedirectsPathDef `yaml:"paths"`
+	Expires string                            `yaml:"expires" json:"expires"`
+	Paths   map[string]*RouteRedirectsPathDef `yaml:"paths" json:"paths"`
 }
 
 // SetDefaults - set default values

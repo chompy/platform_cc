@@ -4,20 +4,22 @@ import (
 	"io/ioutil"
 	"log"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // RouteDef - define a route
 type RouteDef struct {
-	Path       string
-	Type       string            `yaml:"type"`
-	Upstream   string            `yaml:"upstream"`
-	To         string            `yaml:"to"`
-	ID         string            `yaml:"id"`
-	Attributes map[string]string `yaml:"attributes"`
-	Cache      RouteCacheDef     `yaml:"cache"`
-	Redirects  RouteRedirectsDef `yaml:"redirects"`
-	SSI        RoutesSsiDef      `yaml:"ssi"`
+	Path        string            `json:"-"`
+	Type        string            `yaml:"type" json:"type"`
+	Upstream    string            `yaml:"upstream" json:"upstream"`
+	To          string            `yaml:"to" json:"to"`
+	ID          string            `yaml:"id" json:"id"`
+	Attributes  map[string]string `yaml:"attributes" json:"attributes"`
+	Cache       RouteCacheDef     `yaml:"cache" json:"-"`
+	Redirects   RouteRedirectsDef `yaml:"redirects" json:"-"`
+	SSI         RoutesSsiDef      `yaml:"ssi" json:"-"`
+	Primary     BoolDef           `json:"primary"`
+	OriginalURL string            `json:"original_url"`
 }
 
 // SetDefaults - set default values
@@ -28,6 +30,8 @@ func (d *RouteDef) SetDefaults() {
 	d.Cache.SetDefaults()
 	d.Redirects.SetDefaults()
 	d.SSI.SetDefaults()
+	d.Primary.DefaultValue = false
+	d.Primary.SetDefaults()
 }
 
 // Validate - validate RouteDef

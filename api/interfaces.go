@@ -5,18 +5,10 @@ type Def interface {
 	Validate() []error
 }
 
-// ServiceResolver - resolve service configuration
-type ServiceResolver interface {
-	CheckType(string) bool
+// ServiceConfig - service configuration
+type ServiceConfig interface {
+	Check(*ServiceDef) bool
 	Validate(*ServiceDef) []error
-	GetContainerConfig(*ServiceDef) ServiceContainerDef
-}
-
-// ServiceContainerDef - define service container
-type ServiceContainerDef interface {
-	GetImage() string
-	GetVolumes() []string
-	GetStartCommand() []string
-	GetPostStartCommand() []string
-	GetRelationship() []map[string]interface{}
+	GetSetupCommand(*ServiceDef) ([]string, error)
+	GetRelationship(*ServiceDef) ([]map[string]interface{}, error)
 }

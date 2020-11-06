@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,10 @@ import (
 )
 
 const appContainerCmd = `
+usermod -u %d app
+groupmod -g %d app
+usermod -u %d web
+groupmod -g %d web
 umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
@@ -25,22 +30,31 @@ RpcServer(
 	root=None,
 	root_factory=lambda c,a: c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]})))._accepter_greenlet.get();
 EOF
-chown -R web:web /run
 python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
-until [ -f /run/config.json ]; do sleep 1; done
+sleep 1
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
+sleep 1
+chown -R web:web /run
+until [ -f /run/config.json ]; do sleep 1; done
 /etc/platform/boot
 exec init
-/etc/platform/start
 `
 
 // getAppContainerConfig - get container configuration for app
 func (p *Project) getAppContainerConfig(app *AppDef) dockerContainerConfig {
+	uid, gid := p.getUID()
+	cmd := fmt.Sprintf(
+		appContainerCmd,
+		uid+1,
+		gid+1,
+		uid,
+		gid,
+	)
 	return dockerContainerConfig{
 		projectID:  p.ID,
 		objectName: app.Name,
 		objectType: objectContainerApp,
-		command:    []string{"sh", "-c", appContainerCmd},
+		command:    []string{"sh", "-c", cmd},
 		Image:      app.GetContainerImage(),
 		Binds: map[string]string{
 			app.Path: "/app",
@@ -48,6 +62,7 @@ func (p *Project) getAppContainerConfig(app *AppDef) dockerContainerConfig {
 		Volumes: map[string]string{
 			fmt.Sprintf(containerVolumeNameFormat, p.ID, app.Name): "/mnt/storage",
 		},
+		Env: p.getAppEnvironmentVariables(app),
 	}
 }
 
@@ -61,7 +76,7 @@ func (p *Project) startApp(app *AppDef) error {
 		return err
 	}
 	// build config.json
-	configJSON, err := p.BuildConfigJSON()
+	configJSON, err := p.BuildConfigJSON(app)
 	if err != nil {
 		return err
 	}
@@ -98,6 +113,8 @@ func (p *Project) openApp(app *AppDef) error {
 	relationshipsB64 := base64.StdEncoding.EncodeToString(relationshipsJSON)
 	cmd := fmt.Sprintf(`
 sleep 3
+/etc/platform/start &
+sleep 1
 echo '%s' | base64 -d | /etc/platform/commands/open
 	`, relationshipsB64)
 	// run open command
@@ -151,4 +168,40 @@ func (p *Project) getAppVariables(app *AppDef) map[string]string {
 		}
 	}
 	return out
+}
+
+// getAppEnvironmentVariables - get application environment variables
+func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
+	// build PLATFORM_ROUTES
+	routesJSON, _ := json.Marshal(p.Routes)
+	routesJSONB64 := base64.StdEncoding.EncodeToString(routesJSON)
+	// build PLATFORM_PROJECT_ENTROPY
+	entH := md5.New()
+	entH.Write([]byte(entropySalt))
+	entH.Write([]byte(p.ID))
+	entH.Write([]byte(entropySalt))
+	// build PLATFORM_RELATIONSHIPS
+	relationships, _ := p.getAppRelationships(app)
+	relationshipsJSON, _ := json.Marshal(relationships)
+	relationshipsB64 := base64.StdEncoding.EncodeToString(relationshipsJSON)
+	// build environment vars
+	envVars := map[string]string{
+		"PLATFORM_DOCUMENT_ROOT":    "/app/web",
+		"PLATFORM_APPLICATION":      app.BuildPlatformApplicationVar(),
+		"PLATFORM_PROJECT":          p.ID,
+		"PLATFORM_PROJECT_ENTROPY":  fmt.Sprintf("%x", entH.Sum(nil)),
+		"PLATFORM_APPLICATION_NAME": app.Name,
+		"PLATFORM_BRANCH":           "pcc",
+		"PLATFORM_DIR":              appDir,
+		"PLATFORM_TREE_ID":          "-",
+		"PLATFORM_ENVIRONMENT":      "pcc",
+		"PLATFORM_VARIABLES":        app.BuildPlatformVariablesVar(),
+		"PLATFORM_ROUTES":           routesJSONB64,
+		"PLATFORM_RELATIONSHIPS":    relationshipsB64,
+	}
+	// append user environment vars
+	for k, v := range app.Variables["env"] {
+		envVars[k] = v.(string)
+	}
+	return envVars
 }

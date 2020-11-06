@@ -22,7 +22,7 @@ func TestProjectConfigJSON(t *testing.T) {
 	if e != nil {
 		t.Errorf("failed to load project, %s", e)
 	}
-	d, e := p.BuildConfigJSON()
+	d, e := p.BuildConfigJSON(p.Apps[0])
 	if e != nil {
 		t.Errorf("failed to build config.json, %s", e)
 	}

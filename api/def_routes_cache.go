@@ -2,10 +2,10 @@ package api
 
 // RouteCacheDef - defines caching for a route
 type RouteCacheDef struct {
-	Enabled    BoolDef  `yaml:"enabled"`
-	Headers    []string `yaml:"headers"`
-	Cookies    []string `yaml:"cookies"`
-	DefaultTTL int      `yaml:"default_ttl"`
+	Enabled    BoolDef  `yaml:"enabled" json:"enabled"`
+	Headers    []string `yaml:"headers" json:"headers"`
+	Cookies    []string `yaml:"cookies" json:"cookies"`
+	DefaultTTL int      `yaml:"default_ttl" json:"default_ttl"`
 }
 
 // SetDefaults - set default values
