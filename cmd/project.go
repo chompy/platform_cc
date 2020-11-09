@@ -9,8 +9,9 @@ import (
 )
 
 var projectCmd = &cobra.Command{
-	Use:   "project",
-	Short: "Subcommand for managing projects.",
+	Use:     "project",
+	Aliases: []string{"proj", "p"},
+	Short:   "Subcommand for managing projects.",
 }
 
 var projectStartCmd = &cobra.Command{
@@ -42,6 +43,41 @@ var projectStopCmd = &cobra.Command{
 			return err
 		}
 		return proj.Stop()
+	},
+}
+
+var projectRestartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Restart a project.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		proj, err := api.LoadProjectFromPath(cwd, true)
+		if err != nil {
+			return err
+		}
+		if err := proj.Stop(); err != nil {
+			return err
+		}
+		return proj.Start()
+	},
+}
+
+var projectBuildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "Build a project.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		proj, err := api.LoadProjectFromPath(cwd, true)
+		if err != nil {
+			return err
+		}
+		return proj.Build()
 	},
 }
 
@@ -85,6 +121,8 @@ var projectConfigJSONCmd = &cobra.Command{
 func init() {
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
+	projectCmd.AddCommand(projectRestartCmd)
+	projectCmd.AddCommand(projectBuildCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
 	rootCmd.AddCommand(projectCmd)

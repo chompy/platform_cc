@@ -140,6 +140,10 @@ func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
 	entH.Write([]byte(entropySalt))
 	entH.Write([]byte(p.ID))
 	entH.Write([]byte(entropySalt))
+	// build PLATFORM_VARIABLES
+	appVars := p.getAppVariables(app)
+	appVarsJSON, _ := json.Marshal(appVars)
+	appVarsB64 := base64.StdEncoding.EncodeToString(appVarsJSON)
 	// build environment vars
 	envVars := map[string]string{
 		"PLATFORM_DOCUMENT_ROOT":    "/app/web",
@@ -151,17 +155,33 @@ func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
 		"PLATFORM_DIR":              appDir,
 		"PLATFORM_TREE_ID":          "-",
 		"PLATFORM_ENVIRONMENT":      "pcc",
-		"PLATFORM_VARIABLES":        app.BuildPlatformVariablesVar(),
+		"PLATFORM_VARIABLES":        appVarsB64,
 		"PLATFORM_ROUTES":           routesJSONB64,
 	}
 	for k, v := range app.Variables["env"] {
-		envVars[k] = v.(string)
+		switch v.(type) {
+		case int:
+			{
+				envVars[k] = fmt.Sprintf("%d", v.(int))
+				break
+			}
+		case string:
+			{
+				envVars[k] = v.(string)
+				break
+			}
+		}
+	}
+	for k, v := range p.Variables["env"] {
+		envVars[k] = v
 	}
 	return map[string]interface{}{
+		"name":                  app.Name,
 		"crons":                 app.Crons,
 		"enable_smtp":           "false",
 		"mounts":                app.Mounts,
 		"cron_minimum_interval": "1",
+		"dependencies":          app.Dependencies,
 		"configuration": map[string]interface{}{
 			"app_dir":       appDir,
 			"hooks":         app.Hooks,

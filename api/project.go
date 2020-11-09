@@ -21,12 +21,13 @@ const projectJSONFilename = ".platform_cc.json"
 
 // Project - platform.sh/cc project
 type Project struct {
-	ID       string        `json:"id"`
-	Path     string        `json:"-"`
-	Apps     []*AppDef     `json:"-"`
-	Routes   []*RouteDef   `json:"-"`
-	Services []*ServiceDef `json:"-"`
-	docker   dockerClient
+	ID        string                       `json:"id"`
+	Path      string                       `json:"-"`
+	Apps      []*AppDef                    `json:"-"`
+	Routes    []*RouteDef                  `json:"-"`
+	Services  []*ServiceDef                `json:"-"`
+	Variables map[string]map[string]string `json:"vars"`
+	docker    dockerClient
 }
 
 // LoadProjectFromPath - load a project from its path
@@ -72,12 +73,13 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 		return nil, err
 	}
 	o := &Project{
-		ID:       "",
-		Path:     path,
-		Apps:     apps,
-		Services: services,
-		Routes:   routes,
-		docker:   dockerClient,
+		ID:        "",
+		Path:      path,
+		Apps:      apps,
+		Services:  services,
+		Routes:    routes,
+		Variables: make(map[string]map[string]string),
+		docker:    dockerClient,
 	}
 	o.Load()
 	if o.ID == "" {
@@ -161,6 +163,19 @@ func (p *Project) Stop() error {
 	p.docker.DeleteProjectContainers(p.ID)
 	p.docker.DeleteProjectNetwork(p.ID)
 	log.Println("Project stopped.")
+	return nil
+}
+
+// Build - build applications in project
+func (p *Project) Build() error {
+	log.Printf("Build project '%s.'", p.ID)
+	// app
+	log.Println(len(p.Apps))
+	for _, app := range p.Apps {
+		if err := p.BuildApp(app); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

@@ -116,31 +116,14 @@ func (d *AppDef) BuildPlatformApplicationVar() string {
 			"enabled":       true,
 			"ignored_rules": []string{},
 		},
-		"tree_id": "-",
-		"slug_id": "-",
-		"app_dir": appDir,
-		"web":     d.Web,
-		"hook":    d.Hooks,
-		"crons":   d.Crons,
+		"tree_id":      "-",
+		"slug_id":      "-",
+		"app_dir":      appDir,
+		"web":          d.Web,
+		"hook":         d.Hooks,
+		"crons":        d.Crons,
+		"dependencies": d.Dependencies,
 	})
-	return base64.StdEncoding.EncodeToString(jsonData)
-}
-
-// BuildPlatformVariablesVar - build PLATFORM_VARIABLES env var
-func (d *AppDef) BuildPlatformVariablesVar() string {
-	data := make(map[string]string)
-	for varType, varVal := range d.Variables {
-		for k, v := range varVal {
-			switch v.(type) {
-			case string:
-				{
-					data[fmt.Sprintf("%s:%s", strings.ToLower(varType), k)] = v.(string)
-					break
-				}
-			}
-		}
-	}
-	jsonData, _ := json.Marshal(data)
 	return base64.StdEncoding.EncodeToString(jsonData)
 }
 

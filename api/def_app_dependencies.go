@@ -2,7 +2,10 @@ package api
 
 // AppDependenciesDef - define dependencies of the application
 type AppDependenciesDef struct {
-	PHP AppDependenciesPhpDef `yaml:"php"`
+	PHP     AppDependenciesPhpDef `yaml:"php" json:"php"`
+	NodeJS  map[string]string     `yaml:"nodejs" json:"nodejs"`
+	Python2 map[string]string     `yaml:"python2" json:"python2"`
+	Python3 map[string]string     `yaml:"python3" json:"python3"`
 }
 
 // SetDefaults - set default values

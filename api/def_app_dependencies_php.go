@@ -2,8 +2,8 @@ package api
 
 // AppDependenciesPhpDef - define php app dependencies
 type AppDependenciesPhpDef struct {
-	Require      map[string]string                  `yaml:"request"`
-	Repositories []*AppDependenciesPhpRepositoryDef `yaml:"repositories"`
+	Require      map[string]string                  `yaml:"require" json:"require,omitempty"`
+	Repositories []*AppDependenciesPhpRepositoryDef `yaml:"repositories" json:"repositories,omitempty"`
 }
 
 // SetDefaults - set default values
