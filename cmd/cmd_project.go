@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/api"
 )
 
 var projectCmd = &cobra.Command{
@@ -18,11 +16,7 @@ var projectStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, true)
+		proj, err := getProject(true)
 		if err != nil {
 			return err
 		}
@@ -34,11 +28,7 @@ var projectStopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop a project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
@@ -50,11 +40,7 @@ var projectRestartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart a project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, true)
+		proj, err := getProject(true)
 		if err != nil {
 			return err
 		}
@@ -69,11 +55,7 @@ var projectBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build a project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, true)
+		proj, err := getProject(true)
 		if err != nil {
 			return err
 		}
@@ -85,11 +67,7 @@ var projectPurgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge a project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
@@ -101,11 +79,7 @@ var projectConfigJSONCmd = &cobra.Command{
 	Use:   "configjson",
 	Short: "Dump config.json.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, true)
+		proj, err := getProject(true)
 		if err != nil {
 			return err
 		}

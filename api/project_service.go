@@ -132,3 +132,15 @@ func (p *Project) getServiceRelationships(def *ServiceDef) ([]map[string]interfa
 	}
 	return out, nil
 }
+
+// ShellService - shell in to service
+func (p *Project) ShellService(def *ServiceDef, command []string) error {
+	log.Printf("Shell in to service '%s.'", def.Name)
+	// get container config
+	containerConfig := p.getServiceContainerConfig(def)
+	return p.docker.ShellContainer(
+		containerConfig.GetContainerName(),
+		"root",
+		command,
+	)
+}

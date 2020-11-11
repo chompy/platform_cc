@@ -248,5 +248,7 @@ func (p *Project) ShellApp(app *AppDef) error {
 	containerConfig := p.getAppContainerConfig(app)
 	return p.docker.ShellContainer(
 		containerConfig.GetContainerName(),
+		"web",
+		[]string{"sh", "-c", "cd /app && bash"},
 	)
 }

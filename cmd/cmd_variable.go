@@ -3,10 +3,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/api"
 )
 
 var varCmd = &cobra.Command{
@@ -20,11 +18,7 @@ var varSetCmd = &cobra.Command{
 	Aliases: []string{"s"},
 	Short:   "Set a variable.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
@@ -40,11 +34,7 @@ var varGetCmd = &cobra.Command{
 	Aliases: []string{"g"},
 	Short:   "Get a variable.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
@@ -62,11 +52,7 @@ var varDelCmd = &cobra.Command{
 	Aliases: []string{"del", "d"},
 	Short:   "Delete a variable.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
@@ -82,11 +68,7 @@ var varListCmd = &cobra.Command{
 	Aliases: []string{"l"},
 	Short:   "List project variables.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		proj, err := api.LoadProjectFromPath(cwd, false)
+		proj, err := getProject(false)
 		if err != nil {
 			return err
 		}
