@@ -13,7 +13,8 @@ type ServiceDef struct {
 	Name          string
 	Type          string                  `yaml:"type" json:"type"`
 	Disk          int                     `yaml:"disk" json:"disk"`
-	Configuration ServiceConfigurationDef `yaml:"configuration"`
+	Configuration ServiceConfigurationDef `yaml:"configuration" json:"configuration,omitempty"`
+	Relationships map[string]string       `yaml:"relationships" json:"relationships,omitempty"`
 }
 
 // SetDefaults - set default values

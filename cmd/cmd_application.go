@@ -12,7 +12,7 @@ var appCmd = &cobra.Command{
 
 var appBuildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Build an application.",
+	Short: "Run application build commands.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		proj, err := getProject(true)
 		if err != nil {
@@ -23,6 +23,22 @@ var appBuildCmd = &cobra.Command{
 			return err
 		}
 		return proj.BuildApp(app)
+	},
+}
+
+var appDeployCmd = &cobra.Command{
+	Use:   "deploy",
+	Short: "Run application deploy hook.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		proj, err := getProject(true)
+		if err != nil {
+			return err
+		}
+		app, err := getApp(appCmd, proj)
+		if err != nil {
+			return err
+		}
+		return proj.DeployApp(app)
 	},
 }
 
@@ -46,6 +62,7 @@ var appShellCmd = &cobra.Command{
 func init() {
 	appCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	appCmd.AddCommand(appBuildCmd)
+	appCmd.AddCommand(appDeployCmd)
 	appCmd.AddCommand(appShellCmd)
 	rootCmd.AddCommand(appCmd)
 }

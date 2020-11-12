@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,11 +15,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var dirToTarGzBasePath = ".platform"
+const projectPlatformDir = ".platform"
 
 // dirToTarGz - convert contents of directory to tar.gz
 func dirToTarGz(path string) ([]byte, error) {
-	path = filepath.Join(dirToTarGzBasePath, path)
+	path = filepath.Join(projectPlatformDir, path)
 	out := bytes.Buffer{}
 	gw := gzip.NewWriter(&out)
 	defer gw.Close()
@@ -35,9 +36,8 @@ func dirToTarGz(path string) ([]byte, error) {
 			if err != nil {
 				return err
 			}
-			header.Name = strings.TrimLeft(strings.Replace(path, dirToTarGzBasePath, "", 1), "/")
+			header.Name = strings.TrimLeft(strings.Replace(path, projectPlatformDir, "", 1), "/")
 			header.Name = strings.ReplaceAll(header.Name, "\\", "/")
-			log.Println(header.Name)
 			err = tw.WriteHeader(header)
 			if err != nil {
 				return err
@@ -78,6 +78,32 @@ func unmarshalYamlValue(value *yaml.Node) interface{} {
 				log.Println(err)
 			}
 			return out
+		}
+	case "!include":
+		{
+			path := ""
+			if value.Value == "" {
+				for i := range value.Content {
+					// don't know what to do if type isn't string
+					if value.Content[i].Value == "type" && value.Content[i+1].Value != "string" {
+						return ""
+					}
+					if value.Content[i].Value == "path" {
+						path = value.Content[i+1].Value
+						break
+					}
+				}
+			}
+			if path == "" {
+				return ""
+			}
+			path = filepath.Join(projectPlatformDir, path)
+			data, err := ioutil.ReadFile(path)
+			if err != nil {
+				log.Println(err)
+				return ""
+			}
+			return string(data)
 		}
 	default:
 		{

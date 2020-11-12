@@ -63,6 +63,18 @@ var projectBuildCmd = &cobra.Command{
 	},
 }
 
+var projectDeployCmd = &cobra.Command{
+	Use:   "deploy",
+	Short: "Run deploy hooks for project.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		proj, err := getProject(true)
+		if err != nil {
+			return err
+		}
+		return proj.Deploy()
+	},
+}
+
 var projectPurgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge a project.",
@@ -97,6 +109,7 @@ func init() {
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)
 	projectCmd.AddCommand(projectBuildCmd)
+	projectCmd.AddCommand(projectDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
 	rootCmd.AddCommand(projectCmd)

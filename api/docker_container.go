@@ -55,6 +55,7 @@ func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
 			AttachStderr: true,
 			Cmd:          c.GetCommand(),
 			Env:          c.GetEnv(),
+			WorkingDir:   c.WorkingDir,
 		},
 		&container.HostConfig{
 			AutoRemove: true,

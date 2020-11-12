@@ -59,7 +59,7 @@ builder._generate_configuration()
 builder._drop_privileges()
 os.chdir(builder.source_dir)
 builder.install_global_dependencies()
-builder.execute_composer()
+if %s: builder.execute_composer()
 builder._execute_build_hook()
 `
 
@@ -69,6 +69,19 @@ chmod +x /opt/build.py
 mkdir /tmp/cache
 chown -R web:web /tmp/cache
 echo '%s' | base64 -d | /opt/build.py
+`
+
+// appDeployCmd - deploy command for applications
+const appDeployCmd = `
+cat >/tmp/deploy.py <<EOF
+#!/usr/bin/python2.7
+from platformsh_gevent import patch ; patch()
+import platformsh.agent
+with platformsh.agent.log_and_load() as service:
+	service._post_deploy()
+EOF
+chmod +x /tmp/deploy.py
+/tmp/deploy.py
 `
 
 // serviceContainerCmd - service container start command

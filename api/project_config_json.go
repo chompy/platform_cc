@@ -189,6 +189,7 @@ func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
 		"crons":                 app.Crons,
 		"enable_smtp":           "false",
 		"mounts":                app.Mounts,
+		"hooks":                 app.Hooks,
 		"cron_minimum_interval": "1",
 		"dependencies":          app.Dependencies,
 		"configuration": map[string]interface{}{

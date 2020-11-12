@@ -142,6 +142,9 @@ func (p *Project) Start() error {
 	}
 	// services
 	for _, service := range p.Services {
+		if len(service.Relationships) > 0 {
+			continue
+		}
 		if err := p.startService(service); err != nil {
 			return err
 		}
@@ -155,6 +158,18 @@ func (p *Project) Start() error {
 			return err
 		}
 		if err := p.openApp(app); err != nil {
+			return err
+		}
+	}
+	// services with relationships (varnish, etc)
+	for _, service := range p.Services {
+		if len(service.Relationships) == 0 {
+			continue
+		}
+		if err := p.startService(service); err != nil {
+			return err
+		}
+		if err := p.openService(service); err != nil {
 			return err
 		}
 	}
@@ -177,6 +192,18 @@ func (p *Project) Build() error {
 	// app
 	for _, app := range p.Apps {
 		if err := p.BuildApp(app); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Deploy - run application deploy hooks in project
+func (p *Project) Deploy() error {
+	log.Printf("Run deploy hooks for project '%s.'", p.ID)
+	// app
+	for _, app := range p.Apps {
+		if err := p.DeployApp(app); err != nil {
 			return err
 		}
 	}

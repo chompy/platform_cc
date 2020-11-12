@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/docker/docker/api/types"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // ShellContainer - access shell inside given container
@@ -51,13 +53,25 @@ func (d *dockerClient) ShellContainer(id string, user string, command []string) 
 		_, err = io.Copy(hresp.Conn, os.Stdin)
 		return err
 	}
+	// use docker cli to shell for best experience
+	// TODO figure out how to improve direct terminal access
+	cmd := exec.Command(
+		"sh", "-c",
+		fmt.Sprintf("docker exec --user %s -i -t %s sh -c '%s'", user, id, strings.Join(command, " ")),
+	)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return nil
+	}
 	// create interactive shell
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	/*oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		panic(err)
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
 	go func() { io.Copy(hresp.Conn, os.Stdin) }()
-	io.Copy(os.Stdout, hresp.Reader)
+	io.Copy(os.Stdout, hresp.Reader)*/
 	return nil
 }

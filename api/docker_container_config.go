@@ -43,6 +43,7 @@ type dockerContainerConfig struct {
 	Volumes    map[string]string
 	Binds      map[string]string
 	Env        map[string]string
+	WorkingDir string
 }
 
 // GetContainerName - get name of docker container

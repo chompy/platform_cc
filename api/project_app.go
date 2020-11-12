@@ -1,94 +1,29 @@
 package api
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
 // getAppContainerConfig - get container configuration for app
 func (p *Project) getAppContainerConfig(app *AppDef) dockerContainerConfig {
-	uid, gid := p.getUID()
-	cmd := fmt.Sprintf(
-		appContainerCmd,
-		uid+1,
-		gid+1,
-		uid,
-		gid,
-	)
-	return dockerContainerConfig{
-		projectID:  p.ID,
-		objectName: app.Name,
-		objectType: objectContainerApp,
-		command:    []string{"sh", "-c", cmd},
-		Image:      app.GetContainerImage(),
-		Binds: map[string]string{
-			app.Path: "/app",
-		},
-		Volumes: map[string]string{
-			fmt.Sprintf(containerVolumeNameFormat, p.ID, app.Name): "/mnt/storage",
-		},
-		Env: p.getAppEnvironmentVariables(app),
-	}
+	return p.getServiceContainerConfig(app)
 }
 
 // startApp - start an app
 func (p *Project) startApp(app *AppDef) error {
-	log.Printf("Start app '%s.'", app.Name)
-	// get container config
-	containerConfig := p.getAppContainerConfig(app)
-	// start container
-	if err := p.docker.StartContainer(containerConfig); err != nil {
-		return err
-	}
-	// build config.json
-	configJSON, err := p.BuildConfigJSON(app)
-	if err != nil {
-		return err
-	}
-	configJSONReader := bytes.NewReader(configJSON)
-	// upload config.json
-	if err := p.docker.UploadDataToContainer(
-		containerConfig.GetContainerName(),
-		"/run/config.json",
-		configJSONReader,
-	); err != nil {
-		return err
-	}
-	return nil
+	return p.startService(app)
 }
 
 // openApp - make the application available
 func (p *Project) openApp(app *AppDef) error {
-	log.Printf("Opening app '%s.'", app.Name)
-	// get container config
-	containerConfig := p.getAppContainerConfig(app)
-	// create relationships payload
-	relationshipsVar, err := p.getAppRelationships(app)
-	if err != nil {
-		return err
-	}
-	relationships := map[string]interface{}{
-		"relationships": relationshipsVar,
-	}
-	relationshipsJSON, err := json.Marshal(relationships)
-	if err != nil {
-		return err
-	}
-	relationshipsB64 := base64.StdEncoding.EncodeToString(relationshipsJSON)
-	cmd := fmt.Sprintf(appOpenCmd, relationshipsB64)
-	// run open command
-	return p.docker.RunContainerCommand(
-		containerConfig.GetContainerName(),
-		"root",
-		[]string{"sh", "-c", cmd},
-		os.Stdout,
-	)
+	return p.openService(app)
 }
 
 // BuildApp - build the application
@@ -96,8 +31,12 @@ func (p *Project) BuildApp(app *AppDef) error {
 	log.Printf("Building app '%s.'", app.Name)
 	// get container config
 	containerConfig := p.getAppContainerConfig(app)
+	// build flavor
+	buildFlavorComposer := strings.ToLower(app.Build.Flavor) == "composer"
 	// upload build script
-	buildScriptReader := strings.NewReader(appBuildScript)
+	buildScriptReader := strings.NewReader(
+		fmt.Sprintf(appBuildScript, strings.Title(strconv.FormatBool(buildFlavorComposer))),
+	)
 	if err := p.docker.UploadDataToContainer(
 		containerConfig.GetContainerName(),
 		"/opt/build.py",
@@ -134,19 +73,26 @@ func (p *Project) BuildApp(app *AppDef) error {
 	return nil
 }
 
-// getAppRelationships - generate relationships variable for app
-func (p *Project) getAppRelationships(app *AppDef) (map[string][]map[string]interface{}, error) {
-	out := make(map[string][]map[string]interface{})
-	for name, rel := range app.Relationships {
-		out[name] = make([]map[string]interface{}, 0)
-		relSplit := strings.Split(rel, ":")
-		for _, v := range p.relationships {
-			if v["service"].(string) == relSplit[0] && v["rel"] == relSplit[1] {
-				out[name] = append(out[name], v)
-			}
-		}
+// DeployApp - deploy the application (run deploy hooks)
+func (p *Project) DeployApp(app *AppDef) error {
+	log.Printf("Deploying app '%s.'", app.Name)
+	// get container config
+	containerConfig := p.getAppContainerConfig(app)
+	// run command
+	if err := p.docker.RunContainerCommand(
+		containerConfig.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", appDeployCmd},
+		os.Stdout,
+	); err != nil {
+		return err
 	}
-	return out, nil
+	return nil
+}
+
+// getAppRelationships - generate relationships variable for app
+func (p *Project) getAppRelationships(def interface{}) (map[string][]map[string]interface{}, error) {
+	return p.getServiceRelationships(def)
 }
 
 // getAppVariables - get variables to inject in to container
@@ -203,11 +149,13 @@ func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
 		"PLATFORM_APPLICATION_NAME": app.Name,
 		"PLATFORM_BRANCH":           "pcc",
 		"PLATFORM_DIR":              appDir,
+		"PLATFORM_APP_DIR":          appDir,
 		"PLATFORM_TREE_ID":          "-",
 		"PLATFORM_ENVIRONMENT":      "pcc",
 		"PLATFORM_VARIABLES":        appVarsB64,
 		"PLATFORM_ROUTES":           routesJSONB64,
 		"PLATFORM_RELATIONSHIPS":    relationshipsB64,
+		"PLATFORM_CACHE_DIR":        "/tmp/cache",
 	}
 	// append user environment vars
 	for k, v := range app.Variables["env"] {
@@ -232,12 +180,5 @@ func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
 
 // ShellApp - shell in to application
 func (p *Project) ShellApp(app *AppDef) error {
-	log.Printf("Shell in to app '%s.'", app.Name)
-	// get container config
-	containerConfig := p.getAppContainerConfig(app)
-	return p.docker.ShellContainer(
-		containerConfig.GetContainerName(),
-		"web",
-		[]string{"sh", "-c", "cd /app && bash"},
-	)
+	return p.ShellService(app, []string{"bash"})
 }

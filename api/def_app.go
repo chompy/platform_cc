@@ -3,11 +3,9 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -26,7 +24,7 @@ type AppDef struct {
 	Relationships map[string]string                 `yaml:"relationships"`
 	Web           AppWebDef                         `yaml:"web"`
 	Mounts        map[string]*AppMountDef           `yaml:"mounts" json:"mounts"`
-	Hooks         AppHooksDef                       `yaml:"hooks"`
+	Hooks         AppHooksDef                       `yaml:"hooks" json:"hooks"`
 	Crons         map[string]*AppCronDef            `yaml:"crons" json:"crons"`
 	Dependencies  AppDependenciesDef                `yaml:"dependencies"`
 	Runtime       AppRuntimeDef                     `yaml:"runtime"`
@@ -51,7 +49,6 @@ func (d *AppDef) SetDefaults() {
 	for i := range d.Mounts {
 		d.Mounts[i].SetDefaults()
 	}
-	d.Hooks = AppHooksDef{}
 	d.Hooks.SetDefaults()
 	for i := range d.Crons {
 		d.Crons[i].SetDefaults()
@@ -91,12 +88,6 @@ func (d AppDef) Validate() []error {
 	return o
 }
 
-// GetContainerImage - get container image for app
-func (d AppDef) GetContainerImage() string {
-	typeName := strings.Split(d.Type, ":")
-	return fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1])
-}
-
 // BuildPlatformApplicationVar - build PLATFORM_APPLICATION env var
 func (d *AppDef) BuildPlatformApplicationVar() string {
 	jsonData, _ := json.Marshal(map[string]interface{}{
@@ -125,6 +116,24 @@ func (d *AppDef) BuildPlatformApplicationVar() string {
 		"dependencies": d.Dependencies,
 	})
 	return base64.StdEncoding.EncodeToString(jsonData)
+}
+
+// GetEmptyRelationship - get empty relationship
+func (d AppDef) GetEmptyRelationship() map[string]interface{} {
+	return map[string]interface{}{
+		"host":        "",
+		"hostname":    "",
+		"ip":          "",
+		"port":        80,
+		"path":        "",
+		"scheme":      d.Web.Upstream.Protocol,
+		"fragment":    nil,
+		"rel":         d.Web.Upstream.Protocol,
+		"host_mapped": false,
+		"public":      false,
+		"type":        d.Type,
+		"service":     d.Name,
+	}
 }
 
 // ParseAppYaml - parse app yaml
