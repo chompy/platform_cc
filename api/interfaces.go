@@ -11,4 +11,5 @@ type ServiceConfig interface {
 	Validate(*ServiceDef) []error
 	GetSetupCommand(*ServiceDef) ([]string, error)
 	GetRelationship(*ServiceDef) ([]map[string]interface{}, error)
+	DumpConfiguration(*ServiceDef) (interface{}, error)
 }

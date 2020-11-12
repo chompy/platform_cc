@@ -2,7 +2,6 @@ package api
 
 import (
 	"path"
-	"strings"
 	"testing"
 )
 
@@ -32,32 +31,6 @@ func TestServices(t *testing.T) {
 					service.Disk,
 					512,
 					"unexpected services[].disk",
-					t,
-				)
-				relationships, _ := service.GetServiceConfig().GetRelationship(service)
-				assertEqual(
-					relationships[0]["username"],
-					"mysql",
-					"unexpected service container config GetRelationship[].username",
-					t,
-				)
-				setupCmd, _ := service.GetServiceConfig().GetSetupCommand(service)
-				assertEqual(
-					strings.Contains(
-						strings.Join(setupCmd, " "),
-						"mysql-standalone",
-					),
-					true,
-					"expected service container config GetStartCommand to contain string 'mysqld'",
-					t,
-				)
-				assertEqual(
-					strings.Contains(
-						strings.Join(setupCmd, " "),
-						"CREATE SCHEMA IF NOT EXISTS main CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin",
-					),
-					true,
-					"expected service container config GetPostStartCommand to contain schema create query",
 					t,
 				)
 				break

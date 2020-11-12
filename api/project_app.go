@@ -135,25 +135,14 @@ func (p *Project) BuildApp(app *AppDef) error {
 }
 
 // getAppRelationships - generate relationships variable for app
-func (p *Project) getAppRelationships(app *AppDef) (map[string]interface{}, error) {
-	out := make(map[string]interface{})
+func (p *Project) getAppRelationships(app *AppDef) (map[string][]map[string]interface{}, error) {
+	out := make(map[string][]map[string]interface{})
 	for name, rel := range app.Relationships {
-		out[name] = nil
+		out[name] = make([]map[string]interface{}, 0)
 		relSplit := strings.Split(rel, ":")
-		for _, service := range p.Services {
-			if service.Name == relSplit[0] {
-				relationships, err := p.getServiceRelationships(service)
-				if err != nil {
-					return nil, err
-				}
-				for _, relationship := range relationships {
-					if relationship["rel"] == relSplit[1] {
-						out[name] = []map[string]interface{}{
-							relationship,
-						}
-					}
-				}
-
+		for _, v := range p.relationships {
+			if v["service"].(string) == relSplit[0] && v["rel"] == relSplit[1] {
+				out[name] = append(out[name], v)
 			}
 		}
 	}

@@ -1,8 +1,6 @@
-- Validator...
-    - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml
-
-- Container...
-    - Make PLATFORM_RELATIONSHIPS available globally in app container
-
-- Variables...
-    - var:set command
+- Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml
+- Add support for !include YAML tag
+- Add support for service relationships (Varnish)
+- Fix app:sh command
+- Implement old PCC style command with semicolon (:) command seperator
+- Create main router

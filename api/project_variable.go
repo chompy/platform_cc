@@ -29,7 +29,6 @@ func (p *Project) VarGet(key string) (string, error) {
 	if p.Variables[keySplit[0]] == nil {
 		return "", nil
 	}
-	log.Println(p.Variables)
 	return p.Variables[keySplit[0]][keySplit[1]], nil
 }
 

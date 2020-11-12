@@ -57,7 +57,7 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 	for _, app := range p.Apps {
 		appJsons = append(appJsons, p.buildConfigAppJSON(app))
 	}
-	return json.Marshal(map[string]interface{}{
+	out := map[string]interface{}{
 		"primary_ip":   "127.0.0.1",
 		"features":     []string{},
 		"domainname":   fmt.Sprintf("%s.pcc.local", p.ID),
@@ -119,7 +119,16 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 			"error_codes":            map[string]interface{}{},
 		},
 		"workers": 2,
-	})
+	}
+	switch def.(type) {
+	case *ServiceDef:
+		{
+			out["hosts"] = map[string]interface{}{}
+			out["configuration"] = def.(*ServiceDef).Configuration
+			break
+		}
+	}
+	return json.Marshal(out)
 
 }
 

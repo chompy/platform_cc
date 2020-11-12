@@ -21,13 +21,14 @@ const projectJSONFilename = ".platform_cc.json"
 
 // Project - platform.sh/cc project
 type Project struct {
-	ID        string                       `json:"id"`
-	Path      string                       `json:"-"`
-	Apps      []*AppDef                    `json:"-"`
-	Routes    []*RouteDef                  `json:"-"`
-	Services  []*ServiceDef                `json:"-"`
-	Variables map[string]map[string]string `json:"vars"`
-	docker    dockerClient
+	ID            string                       `json:"id"`
+	Path          string                       `json:"-"`
+	Apps          []*AppDef                    `json:"-"`
+	Routes        []*RouteDef                  `json:"-"`
+	Services      []*ServiceDef                `json:"-"`
+	Variables     map[string]map[string]string `json:"vars"`
+	relationships []map[string]interface{}
+	docker        dockerClient
 }
 
 // LoadProjectFromPath - load a project from its path
@@ -73,13 +74,14 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 		return nil, err
 	}
 	o := &Project{
-		ID:        "",
-		Path:      path,
-		Apps:      apps,
-		Services:  services,
-		Routes:    routes,
-		Variables: make(map[string]map[string]string),
-		docker:    dockerClient,
+		ID:            "",
+		Path:          path,
+		Apps:          apps,
+		Services:      services,
+		Routes:        routes,
+		Variables:     make(map[string]map[string]string),
+		docker:        dockerClient,
+		relationships: make([]map[string]interface{}, 0),
 	}
 	o.Load()
 	if o.ID == "" {
@@ -143,6 +145,9 @@ func (p *Project) Start() error {
 		if err := p.startService(service); err != nil {
 			return err
 		}
+		if err := p.openService(service); err != nil {
+			return err
+		}
 	}
 	// app
 	for _, app := range p.Apps {
@@ -170,7 +175,6 @@ func (p *Project) Stop() error {
 func (p *Project) Build() error {
 	log.Printf("Build project '%s.'", p.ID)
 	// app
-	log.Println(len(p.Apps))
 	for _, app := range p.Apps {
 		if err := p.BuildApp(app); err != nil {
 			return err

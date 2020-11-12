@@ -3,26 +3,27 @@ package api
 import (
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-// serviceConfigs - list of service config type
-var serviceConfigs = []ServiceConfig{
-	MariadbService{},
-	RedisService{},
-}
-
 // ServiceDef - defines a service
 type ServiceDef struct {
 	Name          string
-	Type          string    `yaml:"type" json:"type"`
-	Disk          int       `yaml:"disk" json:"disk"`
-	Configuration yaml.Node `yaml:"configuration"`
+	Type          string                  `yaml:"type" json:"type"`
+	Disk          int                     `yaml:"disk" json:"disk"`
+	Configuration ServiceConfigurationDef `yaml:"configuration"`
 }
 
 // SetDefaults - set default values
 func (d *ServiceDef) SetDefaults() {
+	if d.Configuration == nil {
+		d.Configuration = make(map[string]interface{})
+	}
+	if d.Configuration["application_size"] == nil {
+		d.Configuration["application_size"] = 0
+	}
 	return
 }
 
@@ -35,24 +36,33 @@ func (d ServiceDef) Validate() []error {
 			"must be defined",
 		))
 	}
-	serviceConfig := d.GetServiceConfig()
-	if serviceConfig != nil {
-		o = append(o, serviceConfig.Validate(&d)...)
-	}
 	return o
 }
 
-// GetServiceConfig - get configuration data for service
-func (d ServiceDef) GetServiceConfig() ServiceConfig {
-	for _, r := range serviceConfigs {
-		if r.Check(&d) {
-			return r
-		}
-	}
-	return nil
+// GetTypeName - get type name
+func (d ServiceDef) GetTypeName() string {
+	return strings.Split(d.Type, ":")[0]
 }
 
-// ParseServicesYaml - parse routes yaml
+// GetEmptyRelationship - get empty relationship
+func (d ServiceDef) GetEmptyRelationship() map[string]interface{} {
+	return map[string]interface{}{
+		"host":        "",
+		"hostname":    "",
+		"ip":          "",
+		"port":        80,
+		"path":        "",
+		"scheme":      d.GetTypeName(),
+		"fragment":    nil,
+		"rel":         "",
+		"host_mapped": false,
+		"public":      false,
+		"type":        d.Type,
+		"service":     d.Name,
+	}
+}
+
+// ParseServicesYaml - parse services yaml
 func ParseServicesYaml(d []byte) ([]*ServiceDef, error) {
 	o := make(map[string]*ServiceDef)
 	e := yaml.Unmarshal(d, &o)

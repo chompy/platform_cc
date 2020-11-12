@@ -14,11 +14,15 @@ from gevent.monkey import patch_all;
 patch_all();
 from gevent_jsonrpc import RpcServer;
 import json;
+def rootFactory(c, a):
+	with open("/tmp/.ready", "w") as f: f.write("true")
+	c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]}))
 RpcServer(
 	"/run/shared/agent.sock",
 	"foo",
 	root=None,
-	root_factory=lambda c,a: c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]})))._accepter_greenlet.get();
+	root_factory=rootFactory
+)._accepter_greenlet.get();
 EOF
 python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
@@ -30,8 +34,9 @@ exec init
 
 // appOpenCmd - command to open application
 const appOpenCmd = `
+until [ -f /run/config.json ]; do sleep 1; done
 /etc/platform/start &
-sleep 1
+until [ -f /tmp/.ready ]; do sleep 1; done
 echo '%s' | base64 -d | /etc/platform/commands/open
 `
 
@@ -64,4 +69,46 @@ chmod +x /opt/build.py
 mkdir /tmp/cache
 chown -R web:web /tmp/cache
 echo '%s' | base64 -d | /opt/build.py
+`
+
+// serviceContainerCmd - service container start command
+const serviceContainerCmd = `
+umount /etc/hosts
+umount /etc/resolv.conf
+mkdir -p /run/shared /run/rpc_pipefs/nfs
+cat >/tmp/fake-rpc.py <<EOF
+from gevent.monkey import patch_all;
+patch_all();
+from gevent_jsonrpc import RpcServer;
+import json;
+def rootFactory(c, a):
+	with open("/tmp/.ready", "w") as f: f.write("true")
+	c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]}))
+RpcServer(
+	"/run/shared/agent.sock",
+	"foo",
+	root=None,
+	root_factory=rootFactory
+)._accepter_greenlet.get();
+EOF
+python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+sleep 1
+runsvdir -P /etc/service &> /tmp/runsvdir.log &
+sleep 1
+until [ -f /run/config.json ]; do sleep 1; done
+/etc/platform/boot
+exec init
+`
+
+// serviceStartCmd - command to start service
+const serviceStartCmd = `
+until [ -f /run/config.json ]; do sleep 1; done
+/etc/platform/start &
+until [ -f /run/config.json ]; do sleep 1; done
+`
+
+// serviceOpenCmd - command to open service
+const serviceOpenCmd = `
+until [ -f /tmp/.ready ]; do sleep 1; done
+echo '%s' | base64 -d | /etc/platform/commands/open
 `

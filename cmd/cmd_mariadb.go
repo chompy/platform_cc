@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/api"
 )
+
+var mariadbTypeNames = []string{"mysql", "mariadb"}
 
 var mariadbCmd = &cobra.Command{
 	Use:     "mariadb [-n name]",
@@ -24,7 +25,7 @@ var mariadbDumpCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		service, err := getService(mariadbCmd, proj, api.MariadbService{})
+		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		if err != nil {
 			return err
 		}
@@ -46,7 +47,7 @@ var mariadbShellCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		service, err := getService(mariadbCmd, proj, api.MariadbService{})
+		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		if err != nil {
 			return err
 		}

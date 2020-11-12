@@ -32,11 +32,13 @@ func getApp(cmd *cobra.Command, proj *api.Project) (*api.AppDef, error) {
 }
 
 // getService - fetch service def
-func getService(cmd *cobra.Command, proj *api.Project, serviceConfig api.ServiceConfig) (*api.ServiceDef, error) {
+func getService(cmd *cobra.Command, proj *api.Project, filterType []string) (*api.ServiceDef, error) {
 	name := cmd.PersistentFlags().Lookup("service").Value.String()
 	for _, serv := range proj.Services {
-		if (serv.Name == name || name == "") && serviceConfig.Check(serv) {
-			return serv, nil
+		for _, t := range filterType {
+			if (serv.Name == name || name == "") && t == serv.GetTypeName() {
+				return serv, nil
+			}
 		}
 	}
 	return nil, fmt.Errorf("service '%s' not found", name)
