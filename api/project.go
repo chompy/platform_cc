@@ -28,7 +28,7 @@ type Project struct {
 	Services      []*ServiceDef                `json:"-"`
 	Variables     map[string]map[string]string `json:"vars"`
 	relationships []map[string]interface{}
-	docker        dockerClient
+	docker        DockerClient
 }
 
 // LoadProjectFromPath - load a project from its path
@@ -69,7 +69,7 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 		}
 	}
 	path, _ = filepath.Abs(path)
-	dockerClient, err := newDockerClient()
+	DockerClient, err := NewDockerClient()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 		Services:      services,
 		Routes:        routes,
 		Variables:     make(map[string]map[string]string),
-		docker:        dockerClient,
+		docker:        DockerClient,
 		relationships: make([]map[string]interface{}, 0),
 	}
 	o.Load()

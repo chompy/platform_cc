@@ -13,7 +13,7 @@ import (
 const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 
 // GetProjectVolumes - get list of all volumes for given project
-func (d *dockerClient) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
+func (d *DockerClient) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(dockerNamingPrefix+"*", pid))
 	return d.cli.VolumeList(
@@ -22,12 +22,35 @@ func (d *dockerClient) GetProjectVolumes(pid string) (volume.VolumesListOKBody, 
 	)
 }
 
+// GetAllVolumes - get list of all volumes used by PCC
+func (d *DockerClient) GetAllVolumes() (volume.VolumesListOKBody, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("name", "pcc-*")
+	return d.cli.VolumeList(
+		context.Background(),
+		filterArgs,
+	)
+}
+
 // DeleteProjectVolumes - delete all volumes for given project
-func (d *dockerClient) DeleteProjectVolumes(pid string) error {
+func (d *DockerClient) DeleteProjectVolumes(pid string) error {
 	volList, err := d.GetProjectVolumes(pid)
 	if err != nil {
 		return err
 	}
+	return d.deleteVolumes(volList)
+}
+
+// DeleteAllVolumes - delete all volumes related to PCC
+func (d *DockerClient) DeleteAllVolumes() error {
+	volList, err := d.GetAllVolumes()
+	if err != nil {
+		return err
+	}
+	return d.deleteVolumes(volList)
+}
+
+func (d *DockerClient) deleteVolumes(volList volume.VolumesListOKBody) error {
 	ch := make(chan error)
 	for _, vol := range volList.Volumes {
 		log.Printf("Delete Docker volume '%s.'", vol.Name)
@@ -43,7 +66,7 @@ func (d *dockerClient) DeleteProjectVolumes(pid string) error {
 		}(vol.Name)
 	}
 	for range volList.Volumes {
-		err = <-ch
+		err := <-ch
 		if err != nil {
 			return err
 		}

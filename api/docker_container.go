@@ -23,7 +23,7 @@ import (
 const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // StartContainer - create and start docker container
-func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
+func (d *DockerClient) StartContainer(c dockerContainerConfig) error {
 	log.Printf("Start Docker container for %s '%s'", c.objectType.TypeName(), c.objectName)
 	// get mounts
 	mounts := make([]mount.Mount, 0)
@@ -94,7 +94,7 @@ func (d *dockerClient) StartContainer(c dockerContainerConfig) error {
 }
 
 // GetProjectContainers - get list of active containers for given project
-func (d *dockerClient) GetProjectContainers(pid string) ([]types.Container, error) {
+func (d *DockerClient) GetProjectContainers(pid string) ([]types.Container, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(dockerNamingPrefix+"*", pid))
 	return d.cli.ContainerList(
@@ -105,15 +105,40 @@ func (d *dockerClient) GetProjectContainers(pid string) ([]types.Container, erro
 	)
 }
 
+// GetAllContainers - get list of all active PCC containers
+func (d *DockerClient) GetAllContainers() ([]types.Container, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("name", "pcc-*")
+	return d.cli.ContainerList(
+		context.Background(),
+		types.ContainerListOptions{
+			Filters: filterArgs,
+		},
+	)
+}
+
 // DeleteProjectContainers - delete all containers related to a project
-func (d *dockerClient) DeleteProjectContainers(pid string) error {
-	timeout := 30 * time.Second
-	container, err := d.GetProjectContainers(pid)
+func (d *DockerClient) DeleteProjectContainers(pid string) error {
+	containers, err := d.GetProjectContainers(pid)
 	if err != nil {
 		return err
 	}
+	return d.deleteContainers(containers)
+}
+
+// DeleteAllContainers - delete all PCC containers
+func (d *DockerClient) DeleteAllContainers() error {
+	containers, err := d.GetAllContainers()
+	if err != nil {
+		return err
+	}
+	return d.deleteContainers(containers)
+}
+
+func (d *DockerClient) deleteContainers(containers []types.Container) error {
+	timeout := 30 * time.Second
 	ch := make(chan error)
-	for _, c := range container {
+	for _, c := range containers {
 		log.Printf("Delete Docker container '%s.'", c.Names[0])
 		go func(cid string) {
 			if err := d.cli.ContainerStop(
@@ -126,17 +151,18 @@ func (d *dockerClient) DeleteProjectContainers(pid string) error {
 			ch <- nil
 		}(c.ID)
 	}
-	for range container {
-		err = <-ch
+	for range containers {
+		err := <-ch
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+
 }
 
 // RunContainerCommand - run command in container
-func (d *dockerClient) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+func (d *DockerClient) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
 	execConfig := types.ExecConfig{
 		User:         user,
 		Tty:          true,
@@ -168,7 +194,7 @@ func (d *dockerClient) RunContainerCommand(id string, user string, cmd []string,
 }
 
 // UploadDataToContainer - upload data to container as a file
-func (d *dockerClient) UploadDataToContainer(id string, path string, r io.Reader) error {
+func (d *DockerClient) UploadDataToContainer(id string, path string, r io.Reader) error {
 	// TODO this is not the best way to upload a file to the container but it's the only
 	// one that seems to work for now
 	// read data as bytes
@@ -199,7 +225,7 @@ func (d *dockerClient) UploadDataToContainer(id string, path string, r io.Reader
 }
 
 // GetContainerIP - get ip address for given container
-func (d *dockerClient) GetContainerIP(id string) (string, error) {
+func (d *DockerClient) GetContainerIP(id string) (string, error) {
 	data, err := d.cli.ContainerInspect(
 		context.Background(),
 		id,
@@ -217,7 +243,7 @@ func (d *dockerClient) GetContainerIP(id string) (string, error) {
 }
 
 // pullImage - pull latest image for given container
-func (d *dockerClient) pullImage(c dockerContainerConfig) error {
+func (d *DockerClient) pullImage(c dockerContainerConfig) error {
 	log.Printf("Pull Docker container image for '%s.'", c.GetContainerName())
 	r, err := d.cli.ImagePull(
 		context.Background(),

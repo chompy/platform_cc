@@ -4,18 +4,18 @@ import (
 	"github.com/docker/docker/client"
 )
 
-// dockerClient - docker client for platform_cc
-type dockerClient struct {
+// DockerClient - docker client for platform_cc
+type DockerClient struct {
 	cli *client.Client
 }
 
-// newDockerClient - create docker client
-func newDockerClient() (dockerClient, error) {
+// NewDockerClient - create docker client
+func NewDockerClient() (DockerClient, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		return dockerClient{}, err
+		return DockerClient{}, err
 	}
-	return dockerClient{
+	return DockerClient{
 		cli: cli,
 	}, nil
 }

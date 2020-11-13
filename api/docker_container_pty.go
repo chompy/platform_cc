@@ -12,7 +12,7 @@ import (
 )
 
 // ShellContainer - access shell inside given container
-func (d *dockerClient) ShellContainer(id string, user string, command []string) error {
+func (d *DockerClient) ShellContainer(id string, user string, command []string) error {
 	// check stdin
 	fi, _ := os.Stdin.Stat()
 	hasStdin := false
