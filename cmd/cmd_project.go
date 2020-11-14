@@ -9,7 +9,7 @@ import (
 var projectCmd = &cobra.Command{
 	Use:     "project",
 	Aliases: []string{"proj", "p"},
-	Short:   "Subcommand for managing projects.",
+	Short:   "Manage projects.",
 }
 
 var projectStartCmd = &cobra.Command{

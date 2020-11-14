@@ -32,14 +32,6 @@ until [ -f /run/config.json ]; do sleep 1; done
 exec init
 `
 
-// appOpenCmd - command to open application
-const appOpenCmd = `
-until [ -f /run/config.json ]; do sleep 1; done
-/etc/platform/start &
-until [ -f /tmp/.ready ]; do sleep 1; done
-echo '%s' | base64 -d | /etc/platform/commands/open
-`
-
 // appBuildScript - build script for applications
 const appBuildScript = `#!/usr/bin/python2.7 -u
 from platformsh_gevent import patch ; patch()

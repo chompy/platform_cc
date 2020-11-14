@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/martinlindhe/base36"
+	"gitlab.com/contextualcode/platform_cc/def"
 )
 
 const appYamlFilename = ".platform.app.yaml"
@@ -23,9 +24,9 @@ const projectJSONFilename = ".platform_cc.json"
 type Project struct {
 	ID            string                       `json:"id"`
 	Path          string                       `json:"-"`
-	Apps          []*AppDef                    `json:"-"`
-	Routes        []*RouteDef                  `json:"-"`
-	Services      []*ServiceDef                `json:"-"`
+	Apps          []*def.App                   `json:"-"`
+	Routes        []*def.Route                 `json:"-"`
+	Services      []*def.Service               `json:"-"`
 	Variables     map[string]map[string]string `json:"vars"`
 	relationships []map[string]interface{}
 	docker        DockerClient
@@ -36,14 +37,14 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 	log.Printf("Load project at '%s.'", path)
 	var err error
 	// read app yaml
-	apps := make([]*AppDef, 0)
+	apps := make([]*def.App, 0)
 	if parseYaml {
 		appYamlFiles := scanPlatformAppYaml(path)
 		if len(appYamlFiles) == 0 {
 			return nil, missingAppYamlError{path: path}
 		}
 		for i := range appYamlFiles {
-			app, err := ParseAppYamlFile(appYamlFiles[i])
+			app, err := def.ParseAppYamlFile(appYamlFiles[i])
 			if err != nil {
 				return nil, err
 			}
@@ -51,20 +52,24 @@ func LoadProjectFromPath(path string, parseYaml bool) (*Project, error) {
 		}
 	}
 	// read services yaml
-	services := []*ServiceDef{}
+	services := []*def.Service{}
 	if parseYaml {
 		fullServiceYamlPath := filepath.Join(path, servicesYamlPath)
-		services, err = ParseServicesYamlFile(fullServiceYamlPath)
+		services, err = def.ParseServicesYamlFile(fullServiceYamlPath)
 		if err != nil && !os.IsNotExist(err) {
 			return nil, err
 		}
 	}
 	// read routes yaml
-	routes := make([]*RouteDef, 0)
+	routes := make([]*def.Route, 0)
 	if parseYaml {
 		fullRouteYamlPath := filepath.Join(path, routesYamlPath)
-		routes, err = ParseRoutesYamlFile(fullRouteYamlPath)
+		routes, err = def.ParseRoutesYamlFile(fullRouteYamlPath)
 		if err != nil && !os.IsNotExist(err) {
+			return nil, err
+		}
+		routes, err = def.ExpandRoutes(routes)
+		if err != nil {
 			return nil, err
 		}
 	}

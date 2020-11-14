@@ -13,7 +13,7 @@ import (
 // CreateProjectNetwork - create docker network for given project
 func (d *DockerClient) CreateProjectNetwork(pid string) error {
 	log.Printf("Create Docker network for project '%s.'", pid)
-	c := dockerContainerConfig{projectID: pid}
+	c := DockerContainerConfig{projectID: pid}
 	if _, err := d.cli.NetworkCreate(
 		context.Background(),
 		c.GetNetworkName(),
@@ -31,7 +31,7 @@ func (d *DockerClient) CreateProjectNetwork(pid string) error {
 // DeleteProjectNetwork - delete docker network for given project
 func (d *DockerClient) DeleteProjectNetwork(pid string) error {
 	log.Printf("Delete Docker network for project '%s.'", pid)
-	c := dockerContainerConfig{projectID: pid}
+	c := DockerContainerConfig{projectID: pid}
 	err := d.cli.NetworkRemove(
 		context.Background(),
 		c.GetNetworkName(),
@@ -70,7 +70,7 @@ func (d *DockerClient) DeleteAllNetworks() error {
 
 // GetNetworkHostIP - get host ip address for network
 func (d *DockerClient) GetNetworkHostIP(pid string) (string, error) {
-	c := dockerContainerConfig{projectID: pid}
+	c := DockerContainerConfig{projectID: pid}
 	net, err := d.cli.NetworkInspect(
 		context.Background(),
 		c.GetNetworkName(),

@@ -10,7 +10,7 @@ import (
 
 var allCmd = &cobra.Command{
 	Use:   "all",
-	Short: "Subcommand for managing all projects.",
+	Short: "Manage all projects.",
 }
 
 var allStopCmd = &cobra.Command{

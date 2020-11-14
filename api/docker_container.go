@@ -23,7 +23,7 @@ import (
 const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // StartContainer - create and start docker container
-func (d *DockerClient) StartContainer(c dockerContainerConfig) error {
+func (d *DockerClient) StartContainer(c DockerContainerConfig) error {
 	log.Printf("Start Docker container for %s '%s'", c.objectType.TypeName(), c.objectName)
 	// get mounts
 	mounts := make([]mount.Mount, 0)
@@ -243,7 +243,7 @@ func (d *DockerClient) GetContainerIP(id string) (string, error) {
 }
 
 // pullImage - pull latest image for given container
-func (d *DockerClient) pullImage(c dockerContainerConfig) error {
+func (d *DockerClient) pullImage(c DockerContainerConfig) error {
 	log.Printf("Pull Docker container image for '%s.'", c.GetContainerName())
 	r, err := d.cli.ImagePull(
 		context.Background(),

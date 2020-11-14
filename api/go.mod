@@ -2,6 +2,8 @@ module gitlab.com/contextualcode/platform_cc/api
 
 go 1.15
 
+replace gitlab.com/contextualcode/platform_cc/def => ../def
+
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/creack/pty v1.1.11
@@ -17,6 +19,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	gitlab.com/contextualcode/platform_cc/def v0.0.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20201027133719-8eef5233e2a1 // indirect
 	gopkg.in/yaml.v2 v2.3.0

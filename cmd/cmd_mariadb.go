@@ -11,7 +11,7 @@ var mariadbTypeNames = []string{"mysql", "mariadb"}
 var mariadbCmd = &cobra.Command{
 	Use:     "mariadb [-n name]",
 	Aliases: []string{"mysql", "db"},
-	Short:   "Subcommand for managing MariaDB/MySQL.",
+	Short:   "Manage MariaDB/MySQL.",
 }
 
 var mariadbDumpCmd = &cobra.Command{

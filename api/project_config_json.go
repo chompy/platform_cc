@@ -8,12 +8,14 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/def"
 )
 
 const entropySalt = "Dyt+&&*^dKfD9,$rZRA$|I^DLKr%<By"
 
 // BuildConfigJSON - make config.json for container runtime
-func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
+func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	// determine uid/gid to set
 	uid := 0
 	gid := 0
@@ -36,19 +38,19 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 	// grab values from app or service def
 	serviceName := "-"
 	hostname := "-"
-	switch def.(type) {
-	case *ServiceDef:
+	switch d.(type) {
+	case *def.Service:
 		{
-			c := p.getServiceContainerConfig(def.(*ServiceDef))
+			c := p.GetServiceContainerConfig(d.(*def.Service))
 			hostname = c.GetContainerName()
-			serviceName = def.(*ServiceDef).Name
+			serviceName = d.(*def.Service).Name
 			break
 		}
-	case *AppDef:
+	case *def.App:
 		{
-			c := p.getAppContainerConfig(def.(*AppDef))
+			c := p.GetAppContainerConfig(d.(*def.App))
 			hostname = c.GetContainerName()
-			serviceName = def.(*AppDef).Name
+			serviceName = d.(*def.App).Name
 			break
 		}
 	}
@@ -106,7 +108,7 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 		"region":     "pcc.local",
 		"hostname":   hostname,
 		"instance":   p.ID,
-		"nameserver": "1.1.1.1",
+		"nameserver": "127.0.0.11",
 		"web_uid":    uid,
 		"web_gid":    gid,
 		"log_file":   "/dev/stdout",
@@ -120,11 +122,11 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 		},
 		"workers": 2,
 	}
-	switch def.(type) {
-	case *ServiceDef:
+	switch d.(type) {
+	case *def.Service:
 		{
 			out["hosts"] = map[string]interface{}{}
-			out["configuration"] = def.(*ServiceDef).Configuration
+			out["configuration"] = d.(*def.Service).Configuration
 			break
 		}
 	}
@@ -133,9 +135,9 @@ func (p *Project) BuildConfigJSON(def interface{}) ([]byte, error) {
 }
 
 // buildConfigAppJSON - build application section of config.json
-func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
+func (p *Project) buildConfigAppJSON(app *def.App) map[string]interface{} {
 	// build PLATFORM_ROUTES
-	routes := make(map[string]*RouteDef)
+	routes := make(map[string]*def.Route)
 	for _, route := range p.Routes {
 		if strings.HasPrefix(route.Path, ".") {
 			continue
@@ -161,7 +163,7 @@ func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
 		"PLATFORM_PROJECT_ENTROPY":  fmt.Sprintf("%x", entH.Sum(nil)),
 		"PLATFORM_APPLICATION_NAME": app.Name,
 		"PLATFORM_BRANCH":           "pcc",
-		"PLATFORM_DIR":              appDir,
+		"PLATFORM_DIR":              def.AppDir,
 		"PLATFORM_TREE_ID":          "-",
 		"PLATFORM_ENVIRONMENT":      "pcc",
 		"PLATFORM_VARIABLES":        appVarsB64,
@@ -193,7 +195,7 @@ func (p *Project) buildConfigAppJSON(app *AppDef) map[string]interface{} {
 		"cron_minimum_interval": "1",
 		"dependencies":          app.Dependencies,
 		"configuration": map[string]interface{}{
-			"app_dir":       appDir,
+			"app_dir":       def.AppDir,
 			"hooks":         app.Hooks,
 			"variables":     envVars,
 			"timezone":      nil,

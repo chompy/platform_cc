@@ -8,10 +8,12 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/def"
 )
 
-// getServiceContainerConfig - get container configuration for service
-func (p *Project) getServiceContainerConfig(def interface{}) dockerContainerConfig {
+// GetServiceContainerConfig gets container configuration for a service.
+func (p *Project) GetServiceContainerConfig(d interface{}) DockerContainerConfig {
 	var name string
 	var typeName []string
 	var objectType objectContainerType
@@ -19,11 +21,11 @@ func (p *Project) getServiceContainerConfig(def interface{}) dockerContainerConf
 	var env map[string]string
 	var binds map[string]string
 	var workingDir string
-	switch def.(type) {
-	case *AppDef:
+	switch d.(type) {
+	case *def.App:
 		{
-			name = def.(*AppDef).Name
-			typeName = strings.Split(def.(*AppDef).Type, ":")
+			name = d.(*def.App).Name
+			typeName = strings.Split(d.(*def.App).Type, ":")
 			objectType = objectContainerApp
 			uid, gid := p.getUID()
 			command = fmt.Sprintf(
@@ -33,17 +35,17 @@ func (p *Project) getServiceContainerConfig(def interface{}) dockerContainerConf
 				uid,
 				gid,
 			)
-			env = p.getAppEnvironmentVariables(def.(*AppDef))
+			env = p.getAppEnvironmentVariables(d.(*def.App))
 			binds = map[string]string{
-				def.(*AppDef).Path: "/app",
+				d.(*def.App).Path: "/app",
 			}
 			workingDir = "/app"
 			break
 		}
-	case *ServiceDef:
+	case *def.Service:
 		{
-			name = def.(*ServiceDef).Name
-			typeName = strings.Split(def.(*ServiceDef).Type, ":")
+			name = d.(*def.Service).Name
+			typeName = strings.Split(d.(*def.Service).Type, ":")
 			objectType = objectContainerService
 			command = serviceContainerCmd
 			env = map[string]string{}
@@ -53,10 +55,10 @@ func (p *Project) getServiceContainerConfig(def interface{}) dockerContainerConf
 		}
 	default:
 		{
-			return dockerContainerConfig{}
+			return DockerContainerConfig{}
 		}
 	}
-	return dockerContainerConfig{
+	return DockerContainerConfig{
 		projectID:  p.ID,
 		objectName: name,
 		objectType: objectType,
@@ -72,30 +74,30 @@ func (p *Project) getServiceContainerConfig(def interface{}) dockerContainerConf
 }
 
 // startService - start an service
-func (p *Project) startService(def interface{}) error {
+func (p *Project) startService(d interface{}) error {
 	var name string
-	switch def.(type) {
-	case *AppDef:
+	switch d.(type) {
+	case *def.App:
 		{
-			name = def.(*AppDef).Name
+			name = d.(*def.App).Name
 			log.Printf("Start application '%s.'", name)
 			break
 		}
-	case *ServiceDef:
+	case *def.Service:
 		{
-			name = def.(*ServiceDef).Name
+			name = d.(*def.Service).Name
 			log.Printf("Start service '%s.'", name)
 			break
 		}
 	default:
 		{
-			return fmt.Errorf("passed definition is not an application or service")
+			return fmt.Errorf("passed dinition is not an application or service")
 		}
 	}
 	// get container config
-	containerConfig := p.getServiceContainerConfig(def)
+	containerConfig := p.GetServiceContainerConfig(d)
 	// build config.json
-	configJSON, err := p.BuildConfigJSON(def)
+	configJSON, err := p.BuildConfigJSON(d)
 	if err != nil {
 		return err
 	}
@@ -116,28 +118,28 @@ func (p *Project) startService(def interface{}) error {
 }
 
 // openService - open service and get relationships
-func (p *Project) openService(def interface{}) error {
+func (p *Project) openService(d interface{}) error {
 	var name string
-	switch def.(type) {
-	case *AppDef:
+	switch d.(type) {
+	case *def.App:
 		{
-			name = def.(*AppDef).Name
+			name = d.(*def.App).Name
 			log.Printf("Open application '%s.'", name)
 			break
 		}
-	case *ServiceDef:
+	case *def.Service:
 		{
-			name = def.(*ServiceDef).Name
+			name = d.(*def.Service).Name
 			log.Printf("Open service '%s.'", name)
 			break
 		}
 	default:
 		{
-			return fmt.Errorf("passed definition is not an application or service")
+			return fmt.Errorf("passed dinition is not an application or service")
 		}
 	}
 	// get container config
-	containerConfig := p.getServiceContainerConfig(def)
+	containerConfig := p.GetServiceContainerConfig(d)
 	// start service
 	if err := p.docker.RunContainerCommand(
 		containerConfig.GetContainerName(),
@@ -148,7 +150,7 @@ func (p *Project) openService(def interface{}) error {
 		return err
 	}
 	// prepare input relationships
-	relationshipsVar, err := p.getServiceRelationships(def)
+	relationshipsVar, err := p.getServiceRelationships(d)
 	if err != nil {
 		return err
 	}
@@ -178,21 +180,21 @@ func (p *Project) openService(def interface{}) error {
 	if err := json.Unmarshal(rlRaw, &data); err != nil {
 		return err
 	}
-	ipAddress, err := p.docker.GetContainerIP(p.getServiceContainerConfig(def).GetContainerName())
+	ipAddress, err := p.docker.GetContainerIP(p.GetServiceContainerConfig(d).GetContainerName())
 	if err != nil {
 		return err
 	}
 	for k, v := range data {
 		var rel map[string]interface{}
-		switch def.(type) {
-		case *AppDef:
+		switch d.(type) {
+		case *def.App:
 			{
-				rel = def.(*AppDef).GetEmptyRelationship()
+				rel = d.(*def.App).GetEmptyRelationship()
 				break
 			}
-		case *ServiceDef:
+		case *def.Service:
 			{
-				rel = def.(*ServiceDef).GetEmptyRelationship()
+				rel = d.(*def.Service).GetEmptyRelationship()
 				break
 			}
 		}
@@ -200,8 +202,8 @@ func (p *Project) openService(def interface{}) error {
 			rel[kk] = vv
 		}
 		rel["rel"] = k
-		rel["host"] = ipAddress
-		rel["hostname"] = ipAddress
+		rel["host"] = containerConfig.GetContainerName()
+		rel["hostname"] = containerConfig.GetContainerName()
 		rel["ip"] = ipAddress
 		p.relationships = append(p.relationships, rel)
 	}
@@ -209,22 +211,22 @@ func (p *Project) openService(def interface{}) error {
 }
 
 // getServiceRelationships - generate relationships variable for service
-func (p *Project) getServiceRelationships(def interface{}) (map[string][]map[string]interface{}, error) {
+func (p *Project) getServiceRelationships(d interface{}) (map[string][]map[string]interface{}, error) {
 	var relmap map[string]string
-	switch def.(type) {
-	case *AppDef:
+	switch d.(type) {
+	case *def.App:
 		{
-			relmap = def.(*AppDef).Relationships
+			relmap = d.(*def.App).Relationships
 			break
 		}
-	case *ServiceDef:
+	case *def.Service:
 		{
-			relmap = def.(*ServiceDef).Relationships
+			relmap = d.(*def.Service).Relationships
 			break
 		}
 	default:
 		{
-			return nil, fmt.Errorf("passed definition is not an application or service")
+			return nil, fmt.Errorf("passed dinition is not an application or service")
 		}
 	}
 	out := make(map[string][]map[string]interface{})
@@ -241,31 +243,31 @@ func (p *Project) getServiceRelationships(def interface{}) (map[string][]map[str
 }
 
 // ShellService - shell in to service
-func (p *Project) ShellService(def interface{}, command []string) error {
+func (p *Project) ShellService(d interface{}, command []string) error {
 	var name string
 	var user string
-	switch def.(type) {
-	case *AppDef:
+	switch d.(type) {
+	case *def.App:
 		{
-			name = def.(*AppDef).Name
+			name = d.(*def.App).Name
 			user = "web"
 			log.Printf("Shell in to application '%s.'", name)
 			break
 		}
-	case *ServiceDef:
+	case *def.Service:
 		{
-			name = def.(*ServiceDef).Name
+			name = d.(*def.Service).Name
 			user = "root"
 			log.Printf("Shell in to service '%s.'", name)
 			break
 		}
 	default:
 		{
-			return fmt.Errorf("passed definition is not for an application or service")
+			return fmt.Errorf("passed dinition is not for an application or service")
 		}
 	}
 	// get container config
-	containerConfig := p.getServiceContainerConfig(def)
+	containerConfig := p.GetServiceContainerConfig(d)
 	return p.docker.ShellContainer(
 		containerConfig.GetContainerName(),
 		user,

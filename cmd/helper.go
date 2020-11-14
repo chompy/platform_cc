@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api"
+	"gitlab.com/contextualcode/platform_cc/def"
 )
 
 // getProject - fetch project for commands
@@ -18,7 +19,7 @@ func getProject(parseYaml bool) (*api.Project, error) {
 }
 
 // getApp - fetch app def
-func getApp(cmd *cobra.Command, proj *api.Project) (*api.AppDef, error) {
+func getApp(cmd *cobra.Command, proj *api.Project) (*def.App, error) {
 	name := cmd.PersistentFlags().Lookup("name").Value.String()
 	if name == "" {
 		name = proj.Apps[0].Name
@@ -32,7 +33,7 @@ func getApp(cmd *cobra.Command, proj *api.Project) (*api.AppDef, error) {
 }
 
 // getService - fetch service def
-func getService(cmd *cobra.Command, proj *api.Project, filterType []string) (*api.ServiceDef, error) {
+func getService(cmd *cobra.Command, proj *api.Project, filterType []string) (*def.Service, error) {
 	name := cmd.PersistentFlags().Lookup("service").Value.String()
 	for _, serv := range proj.Services {
 		for _, t := range filterType {

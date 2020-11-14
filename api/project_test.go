@@ -8,7 +8,7 @@ import (
 )
 
 func TestProjectFromPath(t *testing.T) {
-	projectPath := path.Join("test_data", "sample2")
+	projectPath := path.Join("..", "def", "test_data", "sample2")
 	p, e := LoadProjectFromPath(projectPath, true)
 	if e != nil {
 		t.Errorf("failed to load project, %s", e)
@@ -17,7 +17,7 @@ func TestProjectFromPath(t *testing.T) {
 }
 
 func TestProjectConfigJSON(t *testing.T) {
-	projectPath := path.Join("test_data", "sample2")
+	projectPath := path.Join("..", "def", "test_data", "sample2")
 	p, e := LoadProjectFromPath(projectPath, true)
 	if e != nil {
 		t.Errorf("failed to load project, %s", e)

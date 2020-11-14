@@ -10,7 +10,7 @@ import (
 var varCmd = &cobra.Command{
 	Use:     "variable",
 	Aliases: []string{"var"},
-	Short:   "Subcommand for managing project variables.",
+	Short:   "Manage project variables.",
 }
 
 var varSetCmd = &cobra.Command{

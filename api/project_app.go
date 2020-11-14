@@ -9,28 +9,30 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/def"
 )
 
-// getAppContainerConfig - get container configuration for app
-func (p *Project) getAppContainerConfig(app *AppDef) dockerContainerConfig {
-	return p.getServiceContainerConfig(app)
+// GetAppContainerConfig gets container configuration for an app.
+func (p *Project) GetAppContainerConfig(app *def.App) DockerContainerConfig {
+	return p.GetServiceContainerConfig(app)
 }
 
 // startApp - start an app
-func (p *Project) startApp(app *AppDef) error {
+func (p *Project) startApp(app *def.App) error {
 	return p.startService(app)
 }
 
 // openApp - make the application available
-func (p *Project) openApp(app *AppDef) error {
+func (p *Project) openApp(app *def.App) error {
 	return p.openService(app)
 }
 
-// BuildApp - build the application
-func (p *Project) BuildApp(app *AppDef) error {
+// BuildApp builds the app.
+func (p *Project) BuildApp(app *def.App) error {
 	log.Printf("Building app '%s.'", app.Name)
 	// get container config
-	containerConfig := p.getAppContainerConfig(app)
+	containerConfig := p.GetAppContainerConfig(app)
 	// build flavor
 	buildFlavorComposer := strings.ToLower(app.Build.Flavor) == "composer"
 	// upload build script
@@ -48,8 +50,8 @@ func (p *Project) BuildApp(app *AppDef) error {
 	uid, gid := p.getUID()
 	buildData := map[string]interface{}{
 		"application": p.buildConfigAppJSON(app),
-		"source_dir":  appDir,
-		"output_dir":  appDir,
+		"source_dir":  def.AppDir,
+		"output_dir":  def.AppDir,
 		"cache_dir":   "/tmp/cache",
 		"uid":         uid,
 		"gid":         gid,
@@ -74,10 +76,10 @@ func (p *Project) BuildApp(app *AppDef) error {
 }
 
 // DeployApp - deploy the application (run deploy hooks)
-func (p *Project) DeployApp(app *AppDef) error {
+func (p *Project) DeployApp(app *def.App) error {
 	log.Printf("Deploying app '%s.'", app.Name)
 	// get container config
-	containerConfig := p.getAppContainerConfig(app)
+	containerConfig := p.GetAppContainerConfig(app)
 	// run command
 	if err := p.docker.RunContainerCommand(
 		containerConfig.GetContainerName(),
@@ -96,7 +98,7 @@ func (p *Project) getAppRelationships(def interface{}) (map[string][]map[string]
 }
 
 // getAppVariables - get variables to inject in to container
-func (p *Project) getAppVariables(app *AppDef) map[string]string {
+func (p *Project) getAppVariables(app *def.App) map[string]string {
 	out := make(map[string]string)
 	for varType, varVal := range app.Variables {
 		for k, v := range varVal {
@@ -123,7 +125,7 @@ func (p *Project) getAppVariables(app *AppDef) map[string]string {
 }
 
 // getAppEnvironmentVariables - get application environment variables
-func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
+func (p *Project) getAppEnvironmentVariables(app *def.App) map[string]string {
 	// build PLATFORM_ROUTES
 	routesJSON, _ := json.Marshal(p.Routes)
 	routesJSONB64 := base64.StdEncoding.EncodeToString(routesJSON)
@@ -148,8 +150,8 @@ func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
 		"PLATFORM_PROJECT_ENTROPY":  fmt.Sprintf("%x", entH.Sum(nil)),
 		"PLATFORM_APPLICATION_NAME": app.Name,
 		"PLATFORM_BRANCH":           "pcc",
-		"PLATFORM_DIR":              appDir,
-		"PLATFORM_APP_DIR":          appDir,
+		"PLATFORM_DIR":              def.AppDir,
+		"PLATFORM_APP_DIR":          def.AppDir,
 		"PLATFORM_TREE_ID":          "-",
 		"PLATFORM_ENVIRONMENT":      "pcc",
 		"PLATFORM_VARIABLES":        appVarsB64,
@@ -179,6 +181,6 @@ func (p *Project) getAppEnvironmentVariables(app *AppDef) map[string]string {
 }
 
 // ShellApp - shell in to application
-func (p *Project) ShellApp(app *AppDef) error {
+func (p *Project) ShellApp(app *def.App) error {
 	return p.ShellService(app, []string{"bash"})
 }
