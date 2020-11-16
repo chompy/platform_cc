@@ -51,6 +51,9 @@ class BasePlatformParser:
         :param dest: destination dict
         """
         for key, value in source.items():
+            if key.endswith("_override"):
+                key = key.replace("_override", "")
+                if key in dest: del dest[key]
             if isinstance(value, dict):
                 node = dest.setdefault(key, {})
                 self._mergeDict(value, node)
