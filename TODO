@@ -1,10 +1,5 @@
 - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml
-- Add support for !include YAML tag
-- Add support for service relationships (Varnish)
 - Fix shell to not use docker shell command
-- Implement old PCC style command with semicolon (:) command seperator
-- Create main router
-- Options to enable/disable functionality...
-    - Cron
-    - Workers
-    - Routes to services like Varnish vs just direct route to application
+- Setup application mounts in Docker volume
+- Implement MacOS NFS fixes
+- Implement .platform.app.pcc.yaml override

@@ -5,21 +5,22 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/api"
-	"gitlab.com/contextualcode/platform_cc/def"
+	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/def"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
-// getProject - fetch project for commands
-func getProject(parseYaml bool) (*api.Project, error) {
+// getProject fetches the project at the current working directory.
+func getProject(parseYaml bool) (*project.Project, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	return api.LoadProjectFromPath(cwd, parseYaml)
+	return project.LoadFromPath(cwd, parseYaml)
 }
 
-// getApp - fetch app def
-func getApp(cmd *cobra.Command, proj *api.Project) (*def.App, error) {
+// getApp fetches an app definition.
+func getApp(cmd *cobra.Command, proj *project.Project) (*def.App, error) {
 	name := cmd.PersistentFlags().Lookup("name").Value.String()
 	if name == "" {
 		name = proj.Apps[0].Name
@@ -32,8 +33,8 @@ func getApp(cmd *cobra.Command, proj *api.Project) (*def.App, error) {
 	return nil, fmt.Errorf("app '%s' not found", name)
 }
 
-// getService - fetch service def
-func getService(cmd *cobra.Command, proj *api.Project, filterType []string) (*def.Service, error) {
+// getService fetches a service definition.
+func getService(cmd *cobra.Command, proj *project.Project, filterType []string) (*def.Service, error) {
 	name := cmd.PersistentFlags().Lookup("service").Value.String()
 	for _, serv := range proj.Services {
 		for _, t := range filterType {
@@ -43,4 +44,14 @@ func getService(cmd *cobra.Command, proj *api.Project, filterType []string) (*de
 		}
 	}
 	return nil, fmt.Errorf("service '%s' not found", name)
+}
+
+// handleError handles an error.
+func handleError(err error) {
+	if err == nil {
+		return
+	}
+	fmt.Println("= ERROR =======================================")
+	tracerr.PrintSourceColor(err)
+	os.Exit(1)
 }
