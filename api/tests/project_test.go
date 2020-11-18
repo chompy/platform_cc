@@ -1,4 +1,4 @@
-package project
+package tests
 
 import (
 	"log"
@@ -7,11 +7,12 @@ import (
 	"testing"
 
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
 func TestFromPath(t *testing.T) {
-	projectPath := path.Join("..", "def", "test_data", "sample2")
-	p, e := LoadFromPath(projectPath, true)
+	projectPath := path.Join("data", "sample2")
+	p, e := project.LoadFromPath(projectPath, true)
 	if e != nil {
 		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
@@ -20,8 +21,8 @@ func TestFromPath(t *testing.T) {
 }
 
 func TestConfigJSON(t *testing.T) {
-	projectPath := path.Join("..", "def", "test_data", "sample2")
-	p, e := LoadFromPath(projectPath, true)
+	projectPath := path.Join("data", "sample2")
+	p, e := project.LoadFromPath(projectPath, true)
 	if e != nil {
 		t.Errorf("failed to load project, %s", e)
 	}
@@ -39,7 +40,7 @@ func TestConfigJSON(t *testing.T) {
 }
 
 func TestVariables(t *testing.T) {
-	p := Project{
+	p := project.Project{
 		Variables: make(map[string]map[string]string),
 	}
 	env := "dev"

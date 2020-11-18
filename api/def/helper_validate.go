@@ -16,9 +16,9 @@ func sliceContainsString(slice []string, s string) bool {
 
 func validateMustContainOne(slice []string, s string, key string) error {
 	if !sliceContainsString(slice, s) {
-		return NewDefValidateError(
+		return NewValidateError(
 			key,
-			fmt.Sprintf("must be one of: %s", strings.Join(slice, ", ")),
+			fmt.Sprintf("must be one of: %s got: %s", strings.Join(slice, ", "), s),
 		)
 	}
 	return nil
@@ -39,9 +39,9 @@ func validateMustContainOneInt(slice []int, n int, key string) error {
 		for _, val := range slice {
 			outList += fmt.Sprintf("%d, ", val)
 		}
-		return NewDefValidateError(
+		return NewValidateError(
 			key,
-			fmt.Sprintf("must be one of: %s", outList),
+			fmt.Sprintf("must be one of: %s got: %d", strings.TrimRight(outList, ","), n),
 		)
 	}
 	return nil

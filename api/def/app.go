@@ -70,7 +70,7 @@ func (d App) Validate() []error {
 		o = append(o, err)
 	}
 	if d.Disk < 256 {
-		o = append(o, NewDefValidateError(
+		o = append(o, NewValidateError(
 			"should be 256 or higher",
 			"app.disk",
 		))

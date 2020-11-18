@@ -21,7 +21,7 @@ func (d *AppCron) SetDefaults() {
 func (d AppCron) Validate(root *App) []error {
 	o := make([]error, 0)
 	if _, e := cronexpr.Parse(d.Spec); e != nil {
-		o = append(o, NewDefValidateError(
+		o = append(o, NewValidateError(
 			"app.cron[].spec",
 			e.Error(),
 		))

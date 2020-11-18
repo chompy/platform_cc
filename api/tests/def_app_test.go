@@ -1,14 +1,16 @@
-package def
+package tests
 
 import (
 	"log"
 	"path"
 	"testing"
+
+	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
 func TestParseFile(t *testing.T) {
-	p := path.Join("test_data", "sample1", "app.yaml")
-	d, e := ParseAppYamlFile(p)
+	p := path.Join("data", "sample1", ".platform.app.yaml")
+	d, e := def.ParseAppYamlFile(p)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -30,7 +32,7 @@ func TestParseFile(t *testing.T) {
 }
 
 func TestInvalidCron(t *testing.T) {
-	d, e := ParseAppYaml([]byte(`
+	d, e := def.ParseAppYaml([]byte(`
 name: test_app_cron
 type: php:7.4
 crons:
@@ -47,7 +49,7 @@ crons:
 }
 
 func TestInvalidMount(t *testing.T) {
-	d, e := ParseAppYaml([]byte(`
+	d, e := def.ParseAppYaml([]byte(`
 name: test_app_cron
 type: php:7.4
 mounts:
@@ -64,13 +66,13 @@ mounts:
 		t.Error("expected mount parse error")
 	}
 	switch ve[0].(type) {
-	case *defValidateError:
+	case *def.ValidateError:
 		{
 			break
 		}
 	default:
 		{
-			t.Errorf("expected defValidateError")
+			t.Errorf("expected def.ValidateError")
 			break
 		}
 	}
@@ -78,7 +80,7 @@ mounts:
 
 func TestPHPDependencies(t *testing.T) {
 
-	d, e := ParseAppYaml([]byte(`
+	d, e := def.ParseAppYaml([]byte(`
 name: test_app_cron
 type: php:7.4
 dependencies:
@@ -106,7 +108,7 @@ dependencies:
 }
 
 func TestPHPDependenciesExpanded(t *testing.T) {
-	d, e := ParseAppYaml([]byte(`
+	d, e := def.ParseAppYaml([]byte(`
 name: test_app_cron
 type: php:7.4
 dependencies:

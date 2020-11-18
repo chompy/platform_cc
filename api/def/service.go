@@ -33,7 +33,7 @@ func (d *Service) SetDefaults() {
 func (d Service) Validate() []error {
 	o := make([]error, 0)
 	if d.Type == "" {
-		o = append(o, NewDefValidateError(
+		o = append(o, NewValidateError(
 			"services[].type",
 			"must be defined",
 		))

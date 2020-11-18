@@ -1,31 +1,34 @@
-package def
+package tests
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"testing"
+
+	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
 func TestRoutes(t *testing.T) {
-	p := path.Join("test_data", "sample1", ".platform", "routes.yaml")
-	routes, err := ParseRoutesYamlFile(p)
+	p := path.Join("data", "sample1", ".platform", "routes.yaml")
+	routes, err := def.ParseRoutesYamlFile(p)
 	if err != nil {
 		t.Errorf("failed to parse routes yaml, %s", err)
 	}
-	routes, err = ExpandRoutes(routes)
+	routes, err = def.ExpandRoutes(routes)
 	if err != nil {
 		t.Errorf("failed to expand routes, %s", err)
 	}
 
 	containsRoutes := []string{
 		"http://www.contextualcode.com/",
-		"http://www-contextualcode-com" + routerRootDomain,
+		"http://www-contextualcode-com" + def.RouterRootDomain,
 		"http://cdn-backend.contextualcode.ccplatform.net/",
-		"http://cdn-backend-contextualcode-ccplatform-net" + routerRootDomain,
+		"http://cdn-backend-contextualcode-ccplatform-net" + def.RouterRootDomain,
 		"http://health.contextualcode.ccplatform.net/",
-		"http://health-contextualcode-ccplatform-net" + routerRootDomain,
+		"http://health-contextualcode-ccplatform-net" + def.RouterRootDomain,
 		"http://contextualcode.com/",
-		"http://contextualcode-com" + routerRootDomain,
+		"http://contextualcode-com" + def.RouterRootDomain,
 	}
 	for _, path := range containsRoutes {
 		hasRoute := false
@@ -39,10 +42,10 @@ func TestRoutes(t *testing.T) {
 						"unexpected redirect",
 						t,
 					)
-				} else if path == "http://contextualcode-com"+routerRootDomain {
+				} else if path == "http://contextualcode-com"+def.RouterRootDomain {
 					assertEqual(
 						route.To,
-						"http://www-contextualcode-com"+routerRootDomain,
+						"http://www-contextualcode-com"+def.RouterRootDomain,
 						"unexpected redirect",
 						t,
 					)
@@ -60,7 +63,7 @@ func TestRoutes(t *testing.T) {
 }
 
 func TestRoutesRedirect(t *testing.T) {
-	d, e := ParseRoutesYaml([]byte(`
+	d, e := def.ParseRoutesYaml([]byte(`
 http://example.com:
     redirects:
         expires: 1d
@@ -74,7 +77,6 @@ http://example.com:
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
-
 	assertEqual(
 		d[0].Redirects.Paths["/from"].Prefix.Get(),
 		true,
@@ -108,11 +110,12 @@ http://example.com:
 }
 
 func TestLargeRoutes(t *testing.T) {
-	p := path.Join("test_data", "sample3", "routes.yaml")
-	routes, e := ParseRoutesYamlFile(p)
+	p := path.Join("data", "sample3", "routes.yaml")
+	routes, e := def.ParseRoutesYamlFile(p)
 	if e != nil {
 		t.Errorf("failed to parse routes yaml, %s", e)
 	}
+	log.Println(routes[0].Validate())
 	assertEqual(
 		len(routes[0].Validate()),
 		0,

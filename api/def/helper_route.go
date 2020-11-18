@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// routerRootDomain defines domain suffix for internal routes.
-const routerRootDomain = ".pcc.localtest.me/"
+// RouterRootDomain defines domain suffix for internal routes.
+const RouterRootDomain = ".pcc.localtest.me/"
 
 // replaceHTTPS replaces https:// with http:// in given string.
 func replaceHTTPS(path string) string {
@@ -26,7 +26,7 @@ func convertRoutePathToInternal(path string) (string, error) {
 		strings.ReplaceAll(
 			parsedURL.Hostname(), ".", "-",
 		),
-		routerRootDomain,
+		RouterRootDomain,
 		strings.TrimLeft(parsedURL.Path, "/"),
 	), nil
 }

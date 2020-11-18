@@ -62,6 +62,7 @@ func ParseRoutesYaml(d []byte) ([]*Route, error) {
 	}
 	for path, route := range routes {
 		route.Path = strings.ReplaceAll(path, "{default}", defaultPath)
+		route.SetDefaults()
 		out = append(out, route)
 	}
 	return out, nil
