@@ -11,7 +11,6 @@ import (
 
 // TestGenerateNginx tests the generation of nginx config.
 func TestGenerateNginx(t *testing.T) {
-
 	proj, err := project.LoadFromPath(
 		filepath.Join("data", "sample1"),
 		true,
@@ -19,7 +18,6 @@ func TestGenerateNginx(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
 	out, err := router.GenerateNginxConfig(proj)
 	if err != nil {
 		t.Error(err)

@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -21,7 +25,7 @@ var routerStartCmd = &cobra.Command{
 
 var routerStopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop router",
+	Short: "Stop router.",
 	Run: func(cmd *cobra.Command, args []string) {
 		handleError(router.Stop())
 	},
@@ -29,7 +33,7 @@ var routerStopCmd = &cobra.Command{
 
 var routerAddCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Add project to router,",
+	Short: "Add project to router.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
@@ -40,11 +44,23 @@ var routerAddCmd = &cobra.Command{
 var routerDelCmd = &cobra.Command{
 	Use:     "delete",
 	Aliases: []string{"del", "remove"},
-	Short:   "Delete project from router,",
+	Short:   "Delete project from router.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
 		handleError(router.DeleteProjectRoutes(proj))
+	},
+}
+
+var routerListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List routes for project.",
+	Run: func(cmd *cobra.Command, args []string) {
+		proj, err := getProject(true)
+		handleError(err)
+		routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
+		handleError(err)
+		fmt.Println(string(routesJSON))
 	},
 }
 
@@ -53,5 +69,6 @@ func init() {
 	routerCmd.AddCommand(routerStopCmd)
 	routerCmd.AddCommand(routerAddCmd)
 	routerCmd.AddCommand(routerDelCmd)
+	routerCmd.AddCommand(routerListCmd)
 	rootCmd.AddCommand(routerCmd)
 }

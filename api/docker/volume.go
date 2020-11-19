@@ -13,6 +13,24 @@ import (
 // containerVolumeNameFormat is the format for mount volume names.
 const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 
+// CreateNFSVolume creates a NFS Docker volume.
+func (d *Client) CreateNFSVolume(pid string, name string) error {
+	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name))
+	_, err := d.cli.VolumeCreate(
+		context.Background(),
+		volume.VolumesCreateBody{
+			Name:   GetVolumeName(pid, name),
+			Driver: "local",
+			DriverOpts: map[string]string{
+				"type":   "nfs",
+				"o":      "addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3",
+				"device": pathString,
+			},
+		},
+	)
+	return tracerr.Wrap(err)
+}
+
 // GetProjectVolumes gets a list of all volumes for given project.
 func (d *Client) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
 	filterArgs := filters.NewArgs()

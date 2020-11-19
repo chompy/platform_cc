@@ -79,7 +79,7 @@ func ParseRoutesYamlFile(f string) ([]*Route, error) {
 }
 
 // ExpandRoutes expands routes to include internal verisons and makes modifications for use with PCC.
-func ExpandRoutes(inRoutes []*Route) ([]*Route, error) {
+func ExpandRoutes(inRoutes []*Route, internalDomainSuffix string) ([]*Route, error) {
 	out := make([]*Route, 0)
 	// make copy of routes
 	copyRoutes := make([]Route, 0)
@@ -145,14 +145,14 @@ func ExpandRoutes(inRoutes []*Route) ([]*Route, error) {
 		route.Primary.DefaultValue = false
 		route.Primary.SetDefaults()
 		var err error
-		route.Path, err = convertRoutePathToInternal(route.Path)
+		route.Path, err = convertRoutePathToInternal(route.Path, internalDomainSuffix)
 		if err != nil {
 			return nil, err
 		}
 		// - if redirect routes to internal then fix it up
 		if route.To != "" &&
 			redirectMatchesRoute(copyRoutes, route.To) {
-			route.To, err = convertRoutePathToInternal(replaceHTTPS(route.To))
+			route.To, err = convertRoutePathToInternal(replaceHTTPS(route.To), internalDomainSuffix)
 			if err != nil {
 				return nil, err
 			}
@@ -161,4 +161,13 @@ func ExpandRoutes(inRoutes []*Route) ([]*Route, error) {
 		out = append(out, &ri)
 	}
 	return out, nil
+}
+
+// RoutesToMap converts route array in to map.
+func RoutesToMap(routes []*Route) map[string]*Route {
+	data := make(map[string]*Route)
+	for _, route := range routes {
+		data[route.Path] = route
+	}
+	return data
 }

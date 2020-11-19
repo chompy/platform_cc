@@ -42,6 +42,25 @@ type Project struct {
 func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	log.Printf("Load project at '%s.'", path)
 	var err error
+	// build project
+	path, _ = filepath.Abs(path)
+	DockerClient, err := docker.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	o := &Project{
+		ID:            "",
+		Path:          path,
+		Variables:     make(map[string]map[string]string),
+		Options:       make(map[Option]string),
+		docker:        DockerClient,
+		relationships: make([]map[string]interface{}, 0),
+	}
+	o.Load()
+	if o.ID == "" {
+		o.ID = generateProjectID()
+		o.Save()
+	}
 	// read app yaml
 	apps := make([]*def.App, 0)
 	if parseYaml {
@@ -56,6 +75,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 			}
 			apps = append(apps, app)
 		}
+		o.Apps = apps
 	}
 	// read services yaml
 	services := []*def.Service{}
@@ -65,6 +85,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		if err != nil && !os.IsNotExist(err) {
 			return nil, tracerr.Wrap(err)
 		}
+		o.Services = services
 	}
 	// read routes yaml
 	routes := make([]*def.Route, 0)
@@ -74,31 +95,14 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		if err != nil && !os.IsNotExist(err) {
 			return nil, tracerr.Wrap(err)
 		}
-		routes, err = def.ExpandRoutes(routes)
+		routes, err = def.ExpandRoutes(
+			routes,
+			OptionDomainSuffix.Value(o.Options),
+		)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-	}
-	path, _ = filepath.Abs(path)
-	DockerClient, err := docker.NewClient()
-	if err != nil {
-		return nil, err
-	}
-	o := &Project{
-		ID:            "",
-		Path:          path,
-		Apps:          apps,
-		Services:      services,
-		Routes:        routes,
-		Variables:     make(map[string]map[string]string),
-		Options:       make(map[Option]string),
-		docker:        DockerClient,
-		relationships: make([]map[string]interface{}, 0),
-	}
-	o.Load()
-	if o.ID == "" {
-		o.ID = generateProjectID()
-		o.Save()
+		o.Routes = routes
 	}
 	log.Printf("Project '%s' loaded.", o.ID)
 	return o, nil

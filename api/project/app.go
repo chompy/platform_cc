@@ -40,17 +40,6 @@ func (p *Project) BuildApp(app *def.App) error {
 	containerConfig := p.GetAppContainerConfig(app)
 	// build flavor
 	buildFlavorComposer := strings.ToLower(app.Build.Flavor) == "composer"
-	// upload build script
-	buildScriptReader := strings.NewReader(
-		fmt.Sprintf(appBuildScript, strings.Title(strconv.FormatBool(buildFlavorComposer))),
-	)
-	if err := p.docker.UploadDataToContainer(
-		containerConfig.GetContainerName(),
-		"/opt/build.py",
-		buildScriptReader,
-	); err != nil {
-		return tracerr.Wrap(err)
-	}
 	// build data
 	uid, gid := p.getUID()
 	buildData := map[string]interface{}{
@@ -71,7 +60,11 @@ func (p *Project) BuildApp(app *def.App) error {
 		containerConfig.GetContainerName(),
 		"root",
 		[]string{"sh", "-c",
-			fmt.Sprintf(appBuildCmd, buildB64),
+			fmt.Sprintf(
+				appBuildCmd,
+				strings.Title(strconv.FormatBool(buildFlavorComposer)),
+				buildB64,
+			),
 		},
 		os.Stdout,
 	); err != nil {
@@ -132,7 +125,7 @@ func (p *Project) getAppVariables(app *def.App) map[string]string {
 // getAppEnvironmentVariables gets application environment variables.
 func (p *Project) getAppEnvironmentVariables(app *def.App) map[string]string {
 	// build PLATFORM_ROUTES
-	routesJSON, _ := json.Marshal(p.Routes)
+	routesJSON, _ := json.Marshal(def.RoutesToMap(p.Routes))
 	routesJSONB64 := base64.StdEncoding.EncodeToString(routesJSON)
 	// build PLATFORM_PROJECT_ENTROPY
 	entH := md5.New()
@@ -189,7 +182,7 @@ func (p *Project) getAppEnvironmentVariables(app *def.App) map[string]string {
 func (p *Project) SetupAppMounts(app *def.App) error {
 	containerConfig := p.GetAppContainerConfig(app)
 	for name, mount := range app.Mounts {
-		log.Printf("Setup mount '%s' for app '%s.'", name, app.Name)
+		log.Printf("Setup mount '%s' for '%s.'", name, app.Name)
 		// TODO support service mounts (NFS?)
 		if mount.Source != "local" {
 			continue
@@ -212,9 +205,7 @@ func (p *Project) SetupAppMounts(app *def.App) error {
 		)
 
 	}
-
 	return nil
-
 }
 
 // ShellApp shells in to the given application.

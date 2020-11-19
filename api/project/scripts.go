@@ -32,8 +32,9 @@ until [ -f /run/config.json ]; do sleep 1; done
 exec init
 `
 
-// appBuildScript is the build script for applications.
-const appBuildScript = `#!/usr/bin/python2.7 -u
+// appBuildCmd is the build command for applications.
+const appBuildCmd = `
+cat >/tmp/build.py <<EOF
 from platformsh_gevent import patch ; patch()
 import os
 import sys
@@ -53,14 +54,10 @@ os.chdir(builder.source_dir)
 builder.install_global_dependencies()
 if %s: builder.execute_composer()
 builder._execute_build_hook()
-`
-
-// appBuildCmd is the build command for applications.
-const appBuildCmd = `
-chmod +x /opt/build.py
+EOF
 mkdir /tmp/cache
 chown -R web:web /tmp/cache
-echo '%s' | base64 -d | /opt/build.py
+echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
 `
 
 // appDeployCmd is the deploy command for applications.

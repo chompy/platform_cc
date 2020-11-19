@@ -4,16 +4,16 @@ package project
 type Option string
 
 const (
-	// OptionDNSIP set ip address that the internal pcc domain should point to.
-	OptionDNSIP Option = "dns_ip"
+	// OptionDomainSuffix sets the internal route domain suffix.
+	OptionDomainSuffix Option = "domain_suffix"
 )
 
 // DefaultValue returns the default value of the option.
 func (o Option) DefaultValue() string {
 	switch o {
-	case OptionDNSIP:
+	case OptionDomainSuffix:
 		{
-			return "127.0.0.1"
+			return "pcc.localtest.me"
 		}
 	}
 	return ""
@@ -30,13 +30,13 @@ func (o Option) Value(opts map[Option]string) string {
 // ListOptions list all available project options.
 func ListOptions() []Option {
 	return []Option{
-		OptionDNSIP,
+		OptionDomainSuffix,
 	}
 }
 
 // ListOptionDescription returns a mapping of option name to its description.
 func ListOptionDescription() map[Option]string {
 	return map[Option]string{
-		OptionDNSIP: "IP address to use in PCC DNS server.",
+		OptionDomainSuffix: "Domain name suffix for internal routes.",
 	}
 }

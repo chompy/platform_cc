@@ -23,6 +23,9 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 	var env map[string]string
 	var binds map[string]string
 	var workingDir string
+	volumes := map[string]string{
+		docker.GetVolumeName(p.ID, name): "/mnt/data",
+	}
 	switch d.(type) {
 	case *def.App:
 		{
@@ -38,10 +41,17 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 				gid,
 			)
 			env = p.getAppEnvironmentVariables(d.(*def.App))
-			binds = map[string]string{
-				d.(*def.App).Path: "/app",
-			}
 			workingDir = "/app"
+			if isMacOS() {
+				binds = map[string]string{}
+				volName := docker.GetVolumeName(p.ID, name+"-nfs")
+				volumes[volName] = def.AppDir
+				break
+			}
+			binds = map[string]string{
+				d.(*def.App).Path: def.AppDir,
+			}
+
 			break
 		}
 	case *def.Service:
@@ -66,9 +76,7 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 		ObjectType: objectType,
 		Command:    []string{"sh", "-c", command},
 		Image:      fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1]),
-		Volumes: map[string]string{
-			docker.GetVolumeName(p.ID, name): "/mnt/data",
-		},
+		Volumes:    volumes,
 		Binds:      binds,
 		Env:        env,
 		WorkingDir: workingDir,
@@ -83,6 +91,12 @@ func (p *Project) startService(d interface{}) error {
 		{
 			name = d.(*def.App).Name
 			log.Printf("Start application '%s.'", name)
+			// create macos /app binding using NFS
+			if isMacOS() {
+				if err := p.docker.CreateNFSVolume(p.ID, name+"-nfs"); err != nil {
+					return tracerr.Wrap(err)
+				}
+			}
 			break
 		}
 	case *def.Service:
