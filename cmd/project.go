@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
 var projectCmd = &cobra.Command{
@@ -13,16 +14,22 @@ var projectCmd = &cobra.Command{
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--no-build]",
+	Use:   "start [--no-build] [--no-router]",
 	Short: "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
 		handleError(proj.Start())
-		flag := cmd.Flags().Lookup("no-build")
-		if flag == nil || flag.Value.String() == "false" {
+		noBuildFlag := cmd.Flags().Lookup("no-build")
+		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
 			handleError(proj.Build())
 		}
+		noRouterFlag := cmd.Flags().Lookup("no-router")
+		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
+			handleError(router.Start())
+			handleError(router.AddProjectRoutes(proj))
+		}
+
 	},
 }
 
@@ -33,6 +40,7 @@ var projectStopCmd = &cobra.Command{
 		proj, err := getProject(false)
 		handleError(err)
 		handleError(proj.Stop())
+		handleError(router.DeleteProjectRoutes(proj))
 	},
 }
 
@@ -91,6 +99,7 @@ var projectConfigJSONCmd = &cobra.Command{
 
 func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
+	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)

@@ -23,9 +23,7 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 	var env map[string]string
 	var binds map[string]string
 	var workingDir string
-	volumes := map[string]string{
-		docker.GetVolumeName(p.ID, name): "/mnt/data",
-	}
+	volumes := make(map[string]string)
 	switch d.(type) {
 	case *def.App:
 		{
@@ -48,10 +46,10 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 				volumes[volName] = def.AppDir
 				break
 			}
+			volumes[docker.GetVolumeName(p.ID, name)] = "/mnt/data"
 			binds = map[string]string{
 				d.(*def.App).Path: def.AppDir,
 			}
-
 			break
 		}
 	case *def.Service:
@@ -62,6 +60,7 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 			command = serviceContainerCmd
 			env = map[string]string{}
 			binds = map[string]string{}
+			volumes[docker.GetVolumeName(p.ID, name)] = "/mnt/data"
 			workingDir = "/"
 			break
 		}
@@ -70,6 +69,7 @@ func (p *Project) GetServiceContainerConfig(d interface{}) docker.ContainerConfi
 			return docker.ContainerConfig{}
 		}
 	}
+
 	return docker.ContainerConfig{
 		ProjectID:  p.ID,
 		ObjectName: name,

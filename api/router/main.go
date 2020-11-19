@@ -3,6 +3,8 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/docker"
@@ -26,6 +28,7 @@ func GetContainerConfig() docker.ContainerConfig {
 
 // Start starts the router.
 func Start() error {
+	log.Println("Start main router.")
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -53,6 +56,7 @@ func Start() error {
 
 // Stop stops the router.
 func Stop() error {
+	log.Println("Stop main router.")
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -77,6 +81,7 @@ func Reload() error {
 
 // AddProjectRoutes adds given project's routes to router.
 func AddProjectRoutes(p *project.Project) error {
+	log.Printf("Add routes for project '%s.'", p.ID)
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -101,6 +106,7 @@ func AddProjectRoutes(p *project.Project) error {
 
 // DeleteProjectRoutes deletes routes for given project.
 func DeleteProjectRoutes(p *project.Project) error {
+	log.Printf("Delete routes for project '%s.'", p.ID)
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -113,7 +119,10 @@ func DeleteProjectRoutes(p *project.Project) error {
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
 		nil,
 	); err != nil {
-		return tracerr.Wrap(err)
+		if !strings.Contains(err.Error(), "No such container") {
+			return tracerr.Wrap(err)
+		}
+		return nil
 	}
 	return tracerr.Wrap(Reload())
 }
