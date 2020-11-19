@@ -20,6 +20,27 @@ func TestFromPath(t *testing.T) {
 	log.Println(p.ID)
 }
 
+func TestFromPathWithPCCAppYaml(t *testing.T) {
+	projectPath := path.Join("data", "sample4")
+	p, e := project.LoadFromPath(projectPath, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	assertEqual(
+		p.Apps[0].Variables["env"]["TEST_ENV"],
+		"no",
+		"unexpected variables.env.TEST_ENV",
+		t,
+	)
+	assertEqual(
+		p.Apps[0].Variables["env"]["TEST_ENV_TWO"],
+		"hello world",
+		"unexpected variables.env.TEST_ENV_TWO",
+		t,
+	)
+}
+
 func TestConfigJSON(t *testing.T) {
 	projectPath := path.Join("data", "sample2")
 	p, e := project.LoadFromPath(projectPath, true)

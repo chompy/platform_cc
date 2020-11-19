@@ -157,26 +157,29 @@ func (d App) GetEmptyRelationship() map[string]interface{} {
 }
 
 // ParseAppYaml parses the contents of a .platform.app.yaml file.
-func ParseAppYaml(d []byte) (*App, error) {
+func ParseAppYaml(d []byte, append *App) (*App, error) {
 	o := &App{
 		Crons:         make(map[string]*AppCron),
 		Mounts:        make(map[string]*AppMount),
 		Relationships: make(map[string]string),
 		Variables:     make(map[string]map[string]interface{}),
 	}
-	e := yaml.Unmarshal(d, &o)
+	if append != nil {
+		o = append
+	}
+	e := yaml.Unmarshal(d, o)
 	o.SetDefaults()
 	return o, e
 }
 
 // ParseAppYamlFile opens the .platform.app.yaml file and parses it.
-func ParseAppYamlFile(f string) (*App, error) {
+func ParseAppYamlFile(f string, append *App) (*App, error) {
 	log.Printf("Parse app at '%s.'", f)
 	d, e := ioutil.ReadFile(f)
 	if e != nil {
 		return nil, e
 	}
-	out, e := ParseAppYaml(d)
+	out, e := ParseAppYaml(d, append)
 	out.Path, _ = filepath.Abs(filepath.Dir(f))
 	return out, e
 }

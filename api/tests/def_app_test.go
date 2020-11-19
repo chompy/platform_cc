@@ -10,7 +10,7 @@ import (
 
 func TestParseFile(t *testing.T) {
 	p := path.Join("data", "sample1", ".platform.app.yaml")
-	d, e := def.ParseAppYamlFile(p)
+	d, e := def.ParseAppYamlFile(p, nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -39,7 +39,7 @@ crons:
     test:
         spec: "*/5 * * *"
         cmd: "sleep 5"
-`))
+`), nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -57,7 +57,7 @@ mounts:
         source_path: test2
         source: this_does_not_exist
         service: files
-`))
+`), nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -87,7 +87,7 @@ dependencies:
     php:
         "platformsh/client": "dev-master"
         "something/something": "~1.4"
-`))
+`), nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -119,7 +119,7 @@ dependencies:
         repositories:
             - type: vcs
               url: "git@github.com:platformsh/platformsh-client-php.git"
-`))
+`), nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}

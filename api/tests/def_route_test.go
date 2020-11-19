@@ -9,26 +9,27 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
+const internalDomainSuffix = "pcc.test"
+
 func TestRoutes(t *testing.T) {
 	p := path.Join("data", "sample1", ".platform", "routes.yaml")
 	routes, err := def.ParseRoutesYamlFile(p)
 	if err != nil {
 		t.Errorf("failed to parse routes yaml, %s", err)
 	}
-	routes, err = def.ExpandRoutes(routes)
+	routes, err = def.ExpandRoutes(routes, internalDomainSuffix)
 	if err != nil {
 		t.Errorf("failed to expand routes, %s", err)
 	}
-
 	containsRoutes := []string{
 		"http://www.contextualcode.com/",
-		"http://www-contextualcode-com" + def.RouterRootDomain,
+		"http://www-contextualcode-com." + internalDomainSuffix + "/",
 		"http://cdn-backend.contextualcode.ccplatform.net/",
-		"http://cdn-backend-contextualcode-ccplatform-net" + def.RouterRootDomain,
+		"http://cdn-backend-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
 		"http://health.contextualcode.ccplatform.net/",
-		"http://health-contextualcode-ccplatform-net" + def.RouterRootDomain,
+		"http://health-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
 		"http://contextualcode.com/",
-		"http://contextualcode-com" + def.RouterRootDomain,
+		"http://contextualcode-com." + internalDomainSuffix + "/",
 	}
 	for _, path := range containsRoutes {
 		hasRoute := false
@@ -42,10 +43,10 @@ func TestRoutes(t *testing.T) {
 						"unexpected redirect",
 						t,
 					)
-				} else if path == "http://contextualcode-com"+def.RouterRootDomain {
+				} else if path == "http://contextualcode-com."+internalDomainSuffix+"/" {
 					assertEqual(
 						route.To,
-						"http://www-contextualcode-com"+def.RouterRootDomain,
+						"http://www-contextualcode-com."+internalDomainSuffix+"/",
 						"unexpected redirect",
 						t,
 					)

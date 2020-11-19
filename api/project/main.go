@@ -18,7 +18,8 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/docker"
 )
 
-const appYamlFilename = ".platform.app.yaml"
+var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
+
 const routesYamlPath = ".platform/routes.yaml"
 const servicesYamlPath = ".platform/services.yaml"
 const projectJSONFilename = ".platform_cc.json"
@@ -68,12 +69,17 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		if len(appYamlFiles) == 0 {
 			return nil, tracerr.Wrap(fmt.Errorf("could not location app yaml file"))
 		}
-		for i := range appYamlFiles {
-			app, err := def.ParseAppYamlFile(appYamlFiles[i])
-			if err != nil {
-				return nil, err
+		var app *def.App = nil
+		for _, appYamlFileList := range appYamlFiles {
+			for _, appYamlFile := range appYamlFileList {
+				app, err = def.ParseAppYamlFile(appYamlFile, app)
+				if err != nil {
+					return nil, err
+				}
 			}
-			apps = append(apps, app)
+			if app != nil {
+				apps = append(apps, app)
+			}
 		}
 		o.Apps = apps
 	}
@@ -108,14 +114,35 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	return o, nil
 }
 
-func scanPlatformAppYaml(path string) []string {
-	o := make([]string, 0)
+func scanPlatformAppYaml(path string) [][]string {
+	o := make([][]string, 0)
+	appYamlPaths := make([]string, 0)
 	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-		if f.Name() == appYamlFilename {
-			o = append(o, path)
+		for _, appYamlFilename := range appYamlFilenames {
+			if f.Name() == appYamlFilename {
+				appYamlPaths = append(appYamlPaths, path)
+			}
 		}
 		return nil
 	})
+	for _, appYamlFilename := range appYamlFilenames {
+		for _, appYamlPath := range appYamlPaths {
+			if strings.HasSuffix(appYamlPath, appYamlFilename) {
+				hasOut := false
+				for i := range o {
+					if filepath.Dir(o[i][0]) == filepath.Dir(appYamlPath) {
+						o[i] = append(o[i], appYamlPath)
+						hasOut = true
+					}
+				}
+				if !hasOut {
+					oo := make([]string, 1)
+					oo[0] = appYamlPath
+					o = append(o, oo)
+				}
+			}
+		}
+	}
 	return o
 }
 

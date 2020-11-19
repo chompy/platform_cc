@@ -1,5 +1,4 @@
 - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml
 - Fix shell to not use docker shell command
-- Setup application mounts in Docker volume
-- Implement MacOS NFS fixes
+- Implement MacOS NFS fixes...need testing
 - Implement .platform.app.pcc.yaml override
