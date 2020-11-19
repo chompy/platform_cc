@@ -2,4 +2,5 @@ name: test_app
 type: php:7.4
 variables:
     env:
-        TEST_ENV: 'yes'
+        TEST_ENV: "yes"
+        TEST_THREE: "test123"

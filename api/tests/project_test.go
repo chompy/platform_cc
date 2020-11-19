@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"log"
 	"path"
 	"strings"
 	"testing"
@@ -17,7 +16,12 @@ func TestFromPath(t *testing.T) {
 		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
-	log.Println(p.ID)
+	assertEqual(
+		p.Apps[0].Name,
+		"test_app2",
+		"unspected app.type",
+		t,
+	)
 }
 
 func TestFromPathWithPCCAppYaml(t *testing.T) {
@@ -37,6 +41,18 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 		p.Apps[0].Variables["env"]["TEST_ENV_TWO"],
 		"hello world",
 		"unexpected variables.env.TEST_ENV_TWO",
+		t,
+	)
+	/*assertEqual(
+		p.Apps[0].Variables["env"]["TEST_THREE"],
+		"test123",
+		"unexpected variables.env.TEST_THREE",
+		t,
+	)*/
+	assertEqual(
+		p.Apps[0].Type,
+		"php:7.4",
+		"unexpected app.type",
 		t,
 	)
 }
