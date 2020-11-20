@@ -1,3 +1,20 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package router
 
 const nginxBaseConf = `
@@ -55,9 +72,9 @@ server {
     client_max_body_size 200M;
     {{ range .routes }}
 	{{ if eq .type "upstream" }}
-	location {{ .path }} {
+	location "{{ .path }}" {
 		{{ range $k, $v := .route.Redirects.Paths }}
-		location ~ {{ $k }} {
+		location ~ "{{ $k }}" {
 			return {{ $v.Code }} {{ $v.To }};
 		}
 		{{ end }}
@@ -73,7 +90,7 @@ server {
 		}
 	}
     {{ else if eq .type "redirect" }}
-    location {{ .path }} {
+    location "{{ .path }}" {
         return 301 {{ .to }};
     }
     {{ end }}

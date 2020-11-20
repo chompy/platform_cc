@@ -1,3 +1,4 @@
 *.json
 *.code-workspace
 platform_cc
+/build

@@ -1,3 +1,20 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package project
 
 import (
@@ -186,9 +203,14 @@ func (p *Project) buildConfigAppJSON(app *def.App) map[string]interface{} {
 	for k, v := range p.Variables["env"] {
 		envVars[k] = v
 	}
+	// provide crons if flag is set
+	crons := map[string]*def.AppCron{}
+	if p.Flags.Has(EnableCron) {
+		crons = app.Crons
+	}
 	return map[string]interface{}{
 		"name":                  app.Name,
-		"crons":                 app.Crons,
+		"crons":                 crons,
 		"enable_smtp":           "false",
 		"mounts":                app.Mounts,
 		"hooks":                 app.Hooks,
@@ -215,7 +237,7 @@ func (p *Project) buildConfigAppJSON(app *def.App) map[string]interface{} {
 			"mounts":    app.Mounts,
 			"runtime":   app.Runtime,
 			"type":      app.Type,
-			"crons":     app.Crons,
+			"crons":     crons,
 			"slug":      "-",
 			"resources": nil,
 			"project_info": map[string]interface{}{

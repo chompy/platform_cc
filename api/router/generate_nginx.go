@@ -1,7 +1,25 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package router
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net/url"
 	"strings"
@@ -12,7 +30,7 @@ import (
 )
 
 // GetUpstreamHost retrieves upstream hostname from upstream value in route.
-func GetUpstreamHost(proj *project.Project, upstream string) string {
+func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool) string {
 	upstreamSplit := strings.Split(upstream, ":")
 	// itterate apps and services to find name match
 	// TODO this should use relationships but those only get resolved when
@@ -25,8 +43,24 @@ func GetUpstreamHost(proj *project.Project, upstream string) string {
 	}
 	for _, serv := range proj.Services {
 		if serv.Name == upstreamSplit[0] {
+			// forward to app if allowServices is false
+			if !allowServices {
+				for _, relationship := range serv.Relationships {
+					rlSplit := strings.Split(relationship, ":")
+					return GetUpstreamHost(proj, fmt.Sprintf("%s:http", rlSplit[0]), allowServices)
+				}
+			}
 			containerConfig := proj.GetServiceContainerConfig(serv)
-			return containerConfig.GetContainerName()
+			// TODO use relationship to determine port
+			port := 80
+			switch serv.GetTypeName() {
+			case "varnish":
+				{
+					port = 8080
+					break
+				}
+			}
+			return fmt.Sprintf("%s:%d", containerConfig.GetContainerName(), port)
 		}
 	}
 	return ""
@@ -54,11 +88,13 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
-					"path":     path,
-					"type":     route.Type,
-					"upstream": GetUpstreamHost(proj, route.Upstream),
-					"to":       route.To,
-					"route":    route,
+					"path": path,
+					"type": route.Type,
+					"upstream": GetUpstreamHost(
+						proj, route.Upstream, proj.Flags.Has(project.EnableServiceRoutes),
+					),
+					"to":    route.To,
+					"route": route,
 				},
 			)
 		}

@@ -2,3 +2,6 @@
 - Fix shell to not use docker shell command
 - Implement MacOS NFS fixes...need testing
 - Implement service.yaml PCC override
+- Global project variables
+- Workers
+- .platform.app.pcc.yaml recursive override

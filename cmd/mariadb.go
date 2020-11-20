@@ -1,3 +1,20 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package cmd
 
 import (
@@ -28,7 +45,11 @@ var mariadbDumpCmd = &cobra.Command{
 		handleError(proj.ShellService(
 			service,
 			[]string{
-				"sh", "-c", fmt.Sprintf("mysqldump -h 127.0.0.1 %s", args[0]),
+				"sh", "-c",
+				fmt.Sprintf(
+					"mysqldump -p$(cat /mnt/data/.mysql-password) %s",
+					args[0],
+				),
 			},
 		))
 	},
@@ -43,12 +64,17 @@ var mariadbShellCmd = &cobra.Command{
 		handleError(err)
 		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		handleError(err)
+		dbCmdStr := ""
 		db := cmd.PersistentFlags().Lookup("database").Value.String()
-		shCmd := make([]string, 2)
-		shCmd[0] = "mysql"
-		shCmd[1] = "-h127.0.0.1"
 		if db != "" {
-			shCmd = append(shCmd, fmt.Sprintf("-D%s", db))
+			dbCmdStr = fmt.Sprintf(" -D%s", db)
+		}
+		shCmd := []string{
+			"sh", "-c",
+			fmt.Sprintf(
+				"mysql -p$(cat /mnt/data/.mysql-password)%s",
+				dbCmdStr,
+			),
 		}
 		handleError(proj.ShellService(
 			service,

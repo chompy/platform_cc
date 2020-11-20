@@ -1,3 +1,20 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package def
 
 import (
@@ -17,7 +34,7 @@ import (
 
 var projectPlatformDir = ".platform"
 
-// dirToTarGz - convert contents of directory to tar.gz
+// dirToTarGz converts contents of directory to tar.gz.
 func dirToTarGz(pathTo string) (bytes.Buffer, error) {
 	pathTo = filepath.Join(projectPlatformDir, pathTo)
 	out := bytes.Buffer{}
@@ -57,7 +74,7 @@ func dirToTarGz(pathTo string) (bytes.Buffer, error) {
 	return out, nil
 }
 
-// dirToTarGzB64 - convert contents of directory to tar.gz base64 encoded
+// dirToTarGzB64 converts contents of directory to tar.gz base64 encoded.
 func dirToTarGzB64(path string) (string, error) {
 	data, err := dirToTarGz(path)
 	if err != nil {
@@ -66,7 +83,7 @@ func dirToTarGzB64(path string) (string, error) {
 	return base64.StdEncoding.EncodeToString(data.Bytes()), nil
 }
 
-// unmarshalYamlValue - get value of current node
+// unmarshalYamlValue gets value of current node.
 func unmarshalYamlValue(value *yaml.Node) interface{} {
 	switch value.Tag {
 	case "!!map", "!!seq":
@@ -118,7 +135,7 @@ func unmarshalYamlValue(value *yaml.Node) interface{} {
 	}
 }
 
-// unmarshalYamlWithCustomTags - unmarshal yaml with custom tags
+// unmarshalYamlWithCustomTags unmarshals yaml with custom tags.
 func unmarshalYamlWithCustomTags(value *yaml.Node) interface{} {
 	switch value.Tag {
 	case "!!map":
