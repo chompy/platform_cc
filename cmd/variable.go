@@ -103,5 +103,5 @@ func init() {
 	varCmd.AddCommand(varGetCmd)
 	varCmd.AddCommand(varDelCmd)
 	varCmd.AddCommand(varListCmd)
-	rootCmd.AddCommand(varCmd)
+	RootCmd.AddCommand(varCmd)
 }

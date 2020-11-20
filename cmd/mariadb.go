@@ -88,5 +88,5 @@ func init() {
 	mariadbCmd.PersistentFlags().StringP("service", "s", "", "name of service")
 	mariadbCmd.AddCommand(mariadbDumpCmd)
 	mariadbCmd.AddCommand(mariadbShellCmd)
-	rootCmd.AddCommand(mariadbCmd)
+	RootCmd.AddCommand(mariadbCmd)
 }

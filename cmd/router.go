@@ -87,5 +87,5 @@ func init() {
 	routerCmd.AddCommand(routerAddCmd)
 	routerCmd.AddCommand(routerDelCmd)
 	routerCmd.AddCommand(routerListCmd)
-	rootCmd.AddCommand(routerCmd)
+	RootCmd.AddCommand(routerCmd)
 }

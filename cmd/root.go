@@ -25,9 +25,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
+// RootCmd is the top level command.
+var RootCmd = &cobra.Command{
 	Use:     "platform_cc",
-	Version: "2.0.0",
+	Version: "",
 	Short:   "Platform.cc is a tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.",
 }
 
@@ -42,7 +43,7 @@ func Execute() error {
 		args = append(args, os.Args[2:]...)
 	}
 	os.Args = args
-	return rootCmd.Execute()
+	return RootCmd.Execute()
 }
 
 func er(msg interface{}) {

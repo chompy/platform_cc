@@ -69,5 +69,5 @@ func init() {
 	appCmd.AddCommand(appBuildCmd)
 	appCmd.AddCommand(appDeployCmd)
 	appCmd.AddCommand(appShellCmd)
-	rootCmd.AddCommand(appCmd)
+	RootCmd.AddCommand(appCmd)
 }

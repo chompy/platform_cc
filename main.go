@@ -21,6 +21,9 @@ import (
 	"gitlab.com/contextualcode/platform_cc/cmd"
 )
 
+var version string
+
 func main() {
+	cmd.RootCmd.Version = version
 	cmd.Execute()
 }

@@ -59,5 +59,5 @@ var allPurgeCmd = &cobra.Command{
 func init() {
 	allCmd.AddCommand(allStopCmd)
 	allCmd.AddCommand(allPurgeCmd)
-	rootCmd.AddCommand(allCmd)
+	RootCmd.AddCommand(allCmd)
 }

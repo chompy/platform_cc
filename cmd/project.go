@@ -124,5 +124,5 @@ func init() {
 	projectCmd.AddCommand(projectDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
-	rootCmd.AddCommand(projectCmd)
+	RootCmd.AddCommand(projectCmd)
 }

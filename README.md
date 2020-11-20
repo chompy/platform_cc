@@ -36,7 +36,10 @@ Requirements / Installation
 
 ### Installation
 
-TODO
+Run the following in a Bash shell...
+`curl -s https://gitlab.com/contextualcode/platform_cc/-/raw/v2.0.x/install.sh | bash /dev/stdin`
+
+After that use the `pcc` command to run Platform_cc.
 
 
 Quick Start
