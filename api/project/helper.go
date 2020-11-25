@@ -19,8 +19,43 @@ package project
 
 import (
 	"runtime"
+	"strings"
+
+	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/docker"
+
+	"gitlab.com/contextualcode/platform_cc/api/def"
 )
+
+const containerDataDirectory = "/mnt/data"
 
 func isMacOS() bool {
 	return runtime.GOOS == "darwin"
+}
+
+func prepareNfsVolume(p *Project, d interface{}) error {
+	name := ""
+	containerType := docker.ObjectContainerApp
+	switch d.(type) {
+	case def.App:
+		{
+			name = d.(def.App).Name
+			break
+		}
+	case def.AppWorker:
+		{
+			name = d.(def.AppWorker).Name
+			containerType = docker.ObjectContainerWorker
+			break
+		}
+	}
+	if !isMacOS() {
+		return nil
+	}
+	if err := p.docker.CreateNFSVolume(p.ID, name+"-nfs", containerType); err != nil {
+		if !strings.Contains(err.Error(), "exists") {
+			return tracerr.Wrap(err)
+		}
+	}
+	return nil
 }

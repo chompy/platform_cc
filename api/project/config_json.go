@@ -18,18 +18,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package project
 
 import (
-	"crypto/md5"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os/user"
 	"strconv"
-	"strings"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
-
-const entropySalt = "Dyt+&&*^dKfD9,$rZRA$|I^DLKr%<By"
 
 // BuildConfigJSON makes config.json for container runtime.
 func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
@@ -52,28 +47,36 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	if err != nil {
 		hostIP = "-"
 	}
-	// grab values from app or service def
-	serviceName := "-"
-	hostname := "-"
+	// get name
+	name := ""
+	appName := ""
 	switch d.(type) {
-	case *def.Service:
+	case def.App:
 		{
-			c := p.GetServiceContainerConfig(d.(*def.Service))
-			hostname = c.GetContainerName()
-			serviceName = d.(*def.Service).Name
+			appName = d.(def.App).Name
+			name = appName
 			break
 		}
-	case *def.App:
+	case def.AppWorker:
 		{
-			c := p.GetAppContainerConfig(d.(*def.App))
-			hostname = c.GetContainerName()
-			serviceName = d.(*def.App).Name
+			name = d.(def.AppWorker).Name
+			break
+		}
+	case def.Service:
+		{
+			name = d.(def.Service).Name
 			break
 		}
 	}
 	// build application json
 	appJsons := make([]map[string]interface{}, 0)
+	if appName != "" {
+		appJsons = append(appJsons, p.buildConfigAppJSON(d))
+	}
 	for _, app := range p.Apps {
+		if appName == "" && app.Name == appName {
+			continue
+		}
 		appJsons = append(appJsons, p.buildConfigAppJSON(app))
 	}
 	out := map[string]interface{}{
@@ -120,10 +123,10 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			"external ip": "127.0.0.1",
 		},
 		"name":       p.ID,
-		"service":    serviceName,
+		"service":    name,
 		"cluster":    "-",
 		"region":     "pcc.local",
-		"hostname":   hostname,
+		"hostname":   hostIP,
 		"instance":   p.ID,
 		"nameserver": "127.0.0.11",
 		"web_uid":    uid,
@@ -140,109 +143,103 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		"workers": 2,
 	}
 	switch d.(type) {
-	case *def.Service:
+	case def.Service:
 		{
 			out["hosts"] = map[string]interface{}{}
-			out["configuration"] = d.(*def.Service).Configuration
+			out["configuration"] = d.(def.Service).Configuration
 			break
 		}
 	}
 	return json.Marshal(out)
-
 }
 
 // buildConfigAppJSON builds the application section of config.json.
-func (p *Project) buildConfigAppJSON(app *def.App) map[string]interface{} {
-	// build PLATFORM_ROUTES
-	routes := make(map[string]*def.Route)
-	for _, route := range p.Routes {
-		if strings.HasPrefix(route.Path, ".") {
-			continue
-		}
-		routes[route.Path] = route
-	}
-	routesJSON, _ := json.Marshal(routes)
-	routesJSONB64 := base64.StdEncoding.EncodeToString(routesJSON)
-	// build PLATFORM_PROJECT_ENTROPY
-	entH := md5.New()
-	entH.Write([]byte(entropySalt))
-	entH.Write([]byte(p.ID))
-	entH.Write([]byte(entropySalt))
-	// build PLATFORM_VARIABLES
-	appVars := p.getAppVariables(app)
-	appVarsJSON, _ := json.Marshal(appVars)
-	appVarsB64 := base64.StdEncoding.EncodeToString(appVarsJSON)
-	// build environment vars
-	envVars := map[string]string{
-		"PLATFORM_DOCUMENT_ROOT":    "/app/web",
-		"PLATFORM_APPLICATION":      app.BuildPlatformApplicationVar(),
-		"PLATFORM_PROJECT":          "-",
-		"PLATFORM_PROJECT_ENTROPY":  fmt.Sprintf("%x", entH.Sum(nil)),
-		"PLATFORM_APPLICATION_NAME": app.Name,
-		"PLATFORM_BRANCH":           "pcc",
-		"PLATFORM_DIR":              def.AppDir,
-		"PLATFORM_TREE_ID":          "-",
-		"PLATFORM_ENVIRONMENT":      "pcc",
-		"PLATFORM_VARIABLES":        appVarsB64,
-		"PLATFORM_ROUTES":           routesJSONB64,
-	}
-	for k, v := range app.Variables["env"] {
-		switch v.(type) {
-		case int:
-			{
-				envVars[k] = fmt.Sprintf("%d", v.(int))
-				break
-			}
-		case string:
-			{
-				envVars[k] = v.(string)
-				break
-			}
-		}
-	}
-	for k, v := range p.Variables["env"] {
-		envVars[k] = v
-	}
-	// provide crons if flag is set
+func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
+	// grab variables for given def
+	name := ""
 	crons := map[string]*def.AppCron{}
-	if p.Flags.Has(EnableCron) {
-		crons = app.Crons
+	hooks := def.AppHooks{}
+	disk := 0
+	appType := ""
+	mounts := map[string]*def.AppMount{}
+	worker := &def.AppWorker{}
+	runtime := def.AppRuntime{}
+	appWeb := &def.AppWeb{}
+	dependencies := def.AppDependencies{}
+	switch d.(type) {
+	case def.App:
+		{
+			name = d.(def.App).Name
+			if p.Flags.Has(EnableCron) {
+				crons = d.(def.App).Crons
+			}
+			appType = d.(def.App).Type
+			hooks = d.(def.App).Hooks
+			disk = d.(def.App).Disk
+			mounts = d.(def.App).Mounts
+			runtime = d.(def.App).Runtime
+			appWebo := d.(def.App).Web
+			appWeb = &appWebo
+			dependencies = d.(def.App).Dependencies
+			worker = nil
+			break
+		}
+	case def.AppWorker:
+		{
+			name = d.(def.AppWorker).Name
+			appType = d.(def.AppWorker).Type
+			disk = d.(def.AppWorker).Disk
+			mounts = d.(def.AppWorker).Mounts
+			workero := d.(def.AppWorker)
+			worker = &workero
+			appWeb = nil
+			break
+		}
 	}
-	return map[string]interface{}{
-		"name":                  app.Name,
-		"crons":                 crons,
-		"enable_smtp":           "false",
-		"mounts":                app.Mounts,
-		"hooks":                 app.Hooks,
-		"cron_minimum_interval": "1",
-		"dependencies":          app.Dependencies,
-		"configuration": map[string]interface{}{
-			"app_dir":       def.AppDir,
-			"hooks":         app.Hooks,
-			"variables":     envVars,
-			"timezone":      nil,
-			"disk":          app.Disk,
-			"slug_id":       "-",
-			"size":          "AUTO",
-			"relationships": app.Relationships,
-			"web":           app.Web,
-			"is_production": false,
-			"name":          app.Name,
-			"access":        map[string]string{},
-			"preflight": map[string]interface{}{
-				"enabled":       true,
-				"ignored_rules": []string{},
-			},
-			"tree_id":   "-",
-			"mounts":    app.Mounts,
-			"runtime":   app.Runtime,
-			"type":      app.Type,
-			"crons":     crons,
-			"slug":      "-",
-			"resources": nil,
-			"project_info": map[string]interface{}{
-				"ssh_key": "",
-			},
+	// build configuration section
+	configuration := map[string]interface{}{
+		"app_dir":       def.AppDir,
+		"hooks":         hooks,
+		"variables":     p.GetPlatformEnvironmentVariables(d),
+		"timezone":      nil,
+		"disk":          disk,
+		"slug_id":       "-",
+		"size":          "AUTO",
+		"relationships": p.GetDefinitionRelationships(d),
+		"is_production": false,
+		"name":          name,
+		"access":        map[string]string{},
+		"preflight": map[string]interface{}{
+			"enabled":       true,
+			"ignored_rules": []string{},
+		},
+		"tree_id":   "-",
+		"mounts":    mounts,
+		"runtime":   runtime,
+		"type":      appType,
+		"crons":     crons,
+		"slug":      "-",
+		"resources": nil,
+		"project_info": map[string]interface{}{
+			"ssh_key": "",
 		},
 	}
+	if appWeb != nil {
+		configuration["web"] = appWeb
+	}
+	if worker != nil {
+		configuration["worker"] = worker
+		configuration["mounts"] = worker.Mounts
+	}
+	return map[string]interface{}{
+		"name":                  name,
+		"crons":                 crons,
+		"enable_smtp":           "false",
+		"mounts":                mounts,
+		"hooks":                 hooks,
+		"cron_minimum_interval": "1",
+		"dependencies":          dependencies,
+		"configuration":         configuration,
+	}
+
 }

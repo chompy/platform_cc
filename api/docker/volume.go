@@ -31,12 +31,12 @@ import (
 const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 
 // CreateNFSVolume creates a NFS Docker volume.
-func (d *Client) CreateNFSVolume(pid string, name string) error {
-	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name))
+func (d *Client) CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error {
+	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name, containerType))
 	_, err := d.cli.VolumeCreate(
 		context.Background(),
 		volume.VolumesCreateBody{
-			Name:   GetVolumeName(pid, name),
+			Name:   GetVolumeName(pid, name, containerType),
 			Driver: "local",
 			DriverOpts: map[string]string{
 				"type":   "nfs",
@@ -111,6 +111,6 @@ func (d *Client) deleteVolumes(volList volume.VolumesListOKBody) error {
 }
 
 // GetVolumeName generates a volume name for given project id and container name.
-func GetVolumeName(pid string, name string) string {
-	return fmt.Sprintf(dockerNamingPrefix+"%s-v", pid, name)
+func GetVolumeName(pid string, name string, containerType ObjectContainerType) string {
+	return fmt.Sprintf(dockerNamingPrefix+"%s-%s", pid, string(containerType), name)
 }

@@ -19,14 +19,12 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/ztrue/tracerr"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // ShellContainer creates an interactive shell in given container.
@@ -73,23 +71,23 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 	}
 	// use docker cli to shell for best experience
 	// TODO figure out how to improve direct terminal access
-	cmd := exec.Command(
+	/*cmd := exec.Command(
 		"sh", "-c",
-		fmt.Sprintf("docker exec --user %s -i -t %s sh -c '%s'", user, id, strings.Join(command, " ")),
+		fmt.Sprintf("docker exec --user %s -i -t %s %s", user, id, strings.Join(command, " ")),
 	)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return nil
-	}
+	}*/
 	// create interactive shell
-	/*oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
 	go func() { io.Copy(hresp.Conn, os.Stdin) }()
-	io.Copy(os.Stdout, hresp.Reader)*/
+	io.Copy(os.Stdout, hresp.Reader)
 	return nil
 }

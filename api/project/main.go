@@ -46,9 +46,9 @@ const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 type Project struct {
 	ID            string                       `json:"id"`
 	Path          string                       `json:"-"`
-	Apps          []*def.App                   `json:"-"`
-	Routes        []*def.Route                 `json:"-"`
-	Services      []*def.Service               `json:"-"`
+	Apps          []def.App                    `json:"-"`
+	Routes        []def.Route                  `json:"-"`
+	Services      []def.Service                `json:"-"`
 	Variables     map[string]map[string]string `json:"vars"`
 	Flags         Flag                         `json:"flags"`
 	Options       map[Option]string            `json:"options"`
@@ -80,7 +80,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		o.Save()
 	}
 	// read app yaml
-	apps := make([]*def.App, 0)
+	apps := make([]def.App, 0)
 	if parseYaml {
 		appYamlFiles := scanPlatformAppYaml(path)
 		if len(appYamlFiles) == 0 {
@@ -95,13 +95,13 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 				}
 			}
 			if app != nil {
-				apps = append(apps, app)
+				apps = append(apps, *app)
 			}
 		}
 		o.Apps = apps
 	}
 	// read services yaml
-	services := []*def.Service{}
+	services := []def.Service{}
 	if parseYaml {
 		fullServiceYamlPath := filepath.Join(path, servicesYamlPath)
 		services, err = def.ParseServicesYamlFile(fullServiceYamlPath)
@@ -111,7 +111,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		o.Services = services
 	}
 	// read routes yaml
-	routes := make([]*def.Route, 0)
+	routes := make([]def.Route, 0)
 	if parseYaml {
 		fullRouteYamlPath := filepath.Join(path, routesYamlPath)
 		routes, err = def.ParseRoutesYamlFile(fullRouteYamlPath)
@@ -202,36 +202,50 @@ func (p *Project) Start() error {
 	}
 	// services
 	for _, service := range p.Services {
+		// skip if service requires relationships (start after apps start)
+		// this is needed by varnish
 		if len(service.Relationships) > 0 {
 			continue
 		}
-		if err := p.startService(service); err != nil {
+		// start
+		c := p.NewContainer(service)
+		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		if err := p.openService(service); err != nil {
+		// open + process relationships
+		rels, err := c.Open()
+		if err != nil {
 			return tracerr.Wrap(err)
 		}
+		p.relationships = append(p.relationships, rels...)
 	}
 	// app
 	for _, app := range p.Apps {
-		if err := p.startApp(app); err != nil {
+		// start
+		c := p.NewContainer(app)
+		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		if err := p.openApp(app); err != nil {
+		// open + process relationships
+		rels, err := c.Open()
+		if err != nil {
 			return tracerr.Wrap(err)
 		}
+		p.relationships = append(p.relationships, rels...)
 	}
 	// services with relationships (varnish, etc)
 	for _, service := range p.Services {
-		if len(service.Relationships) == 0 {
-			continue
-		}
-		if err := p.startService(service); err != nil {
+		// start
+		c := p.NewContainer(service)
+		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		if err := p.openService(service); err != nil {
+		// open + process relationships
+		rels, err := c.Open()
+		if err != nil {
 			return tracerr.Wrap(err)
 		}
+		p.relationships = append(p.relationships, rels...)
 	}
 	log.Println("Project started.")
 	return nil
@@ -250,7 +264,8 @@ func (p *Project) Build() error {
 	log.Printf("Build project '%s.'", p.ID)
 	// app
 	for _, app := range p.Apps {
-		if err := p.BuildApp(app); err != nil {
+		c := p.NewContainer(app)
+		if err := c.Build(); err != nil {
 			return tracerr.Wrap(err)
 		}
 	}
@@ -262,7 +277,8 @@ func (p *Project) Deploy() error {
 	log.Printf("Run deploy hooks for project '%s.'", p.ID)
 	// app
 	for _, app := range p.Apps {
-		if err := p.DeployApp(app); err != nil {
+		c := p.NewContainer(app)
+		if err := c.Deploy(); err != nil {
 			return tracerr.Wrap(err)
 		}
 	}

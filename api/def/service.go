@@ -82,25 +82,25 @@ func (d Service) GetEmptyRelationship() map[string]interface{} {
 }
 
 // ParseServicesYaml parses the contents of services.yaml.
-func ParseServicesYaml(d []byte) ([]*Service, error) {
+func ParseServicesYaml(d []byte) ([]Service, error) {
 	o := make(map[string]*Service)
 	e := yaml.Unmarshal(d, &o)
-	oo := make([]*Service, 0)
+	oo := make([]Service, 0)
 	for k := range o {
 		o[k].SetDefaults()
 		o[k].Name = k
-		oo = append(oo, o[k])
+		oo = append(oo, *o[k])
 	}
 	return oo, e
 }
 
 // ParseServicesYamlFile - open services yaml file and parse it
-func ParseServicesYamlFile(f string) ([]*Service, error) {
+func ParseServicesYamlFile(f string) ([]Service, error) {
 	log.Printf("Parse services at '%s.'", f)
 	projectPlatformDir = filepath.Dir(f)
 	d, e := ioutil.ReadFile(f)
 	if e != nil {
-		return []*Service{}, e
+		return []Service{}, e
 	}
 	return ParseServicesYaml(d)
 }

@@ -18,8 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package def
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -47,6 +45,7 @@ type App struct {
 	Crons         map[string]*AppCron               `yaml:"crons" json:"crons"`
 	Dependencies  AppDependencies                   `yaml:"dependencies"`
 	Runtime       AppRuntime                        `yaml:"runtime"`
+	Workers       map[string]*AppWorker             `yaml:"workers" json:"workers"`
 }
 
 // SetDefaults sets the default values.
@@ -125,36 +124,6 @@ func (d App) GetTypeName() string {
 	return strings.Split(d.Type, ":")[0]
 }
 
-// BuildPlatformApplicationVar builds the PLATFORM_APPLICATION env var.
-func (d *App) BuildPlatformApplicationVar() string {
-	jsonData, _ := json.Marshal(map[string]interface{}{
-		"resources":     nil,
-		"size":          "AUTO",
-		"disk":          d.Disk,
-		"access":        map[string]string{},
-		"relationships": d.Relationships,
-		"mounts":        d.Mounts,
-		"timezone":      nil,
-		"variables":     d.Variables,
-		"firewall":      nil,
-		"name":          d.Name,
-		"type":          d.Type,
-		"runtime":       d.Runtime,
-		"preflight": map[string]interface{}{
-			"enabled":       true,
-			"ignored_rules": []string{},
-		},
-		"tree_id":      "-",
-		"slug_id":      "-",
-		"app_dir":      AppDir,
-		"web":          d.Web,
-		"hook":         d.Hooks,
-		"crons":        d.Crons,
-		"dependencies": d.Dependencies,
-	})
-	return base64.StdEncoding.EncodeToString(jsonData)
-}
-
 // GetEmptyRelationship returns an empty relationship.
 func (d App) GetEmptyRelationship() map[string]interface{} {
 	return map[string]interface{}{
@@ -178,6 +147,7 @@ func ParseAppYaml(d []byte, append *App) (*App, error) {
 	o := &App{
 		Crons:         make(map[string]*AppCron),
 		Mounts:        make(map[string]*AppMount),
+		Workers:       make(map[string]*AppWorker),
 		Relationships: make(map[string]string),
 		Variables:     make(map[string]map[string]interface{}),
 	}
@@ -186,6 +156,12 @@ func ParseAppYaml(d []byte, append *App) (*App, error) {
 	}
 	e := yaml.Unmarshal(d, o)
 	o.SetDefaults()
+	for name, w := range o.Workers {
+		w.Name = name
+		w.Type = o.Type
+		w.Runtime = o.Runtime
+		w.Dependencies = o.Dependencies
+	}
 	return o, e
 }
 
@@ -196,7 +172,10 @@ func ParseAppYamlFile(f string, append *App) (*App, error) {
 	if e != nil {
 		return nil, e
 	}
-	out, e := ParseAppYaml(d, append)
-	out.Path, _ = filepath.Abs(filepath.Dir(f))
-	return out, e
+	o, e := ParseAppYaml(d, append)
+	o.Path, _ = filepath.Abs(filepath.Dir(f))
+	for _, w := range o.Workers {
+		w.Path = o.Path
+	}
+	return o, e
 }

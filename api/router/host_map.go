@@ -27,11 +27,11 @@ import (
 // HostRoute contains all routes mapped to a host.
 type HostRoute struct {
 	Host   string
-	Routes []*def.Route
+	Routes []def.Route
 }
 
 // AddRoute adds a given route to the host map if its host matches.
-func (h *HostRoute) AddRoute(r *def.Route) bool {
+func (h *HostRoute) AddRoute(r def.Route) bool {
 	parsedURL, err := url.Parse(r.Path)
 	if err != nil {
 		log.Printf("URL parse error: %s", err)
@@ -45,7 +45,7 @@ func (h *HostRoute) AddRoute(r *def.Route) bool {
 }
 
 // MapHostRoutes maps all routes to their hosts.
-func MapHostRoutes(routes []*def.Route) []HostRoute {
+func MapHostRoutes(routes []def.Route) []HostRoute {
 	out := make([]HostRoute, 0)
 	for _, route := range routes {
 		hasHostRoute := false
@@ -63,7 +63,7 @@ func MapHostRoutes(routes []*def.Route) []HostRoute {
 			}
 			hostRoute := HostRoute{
 				Host:   parsedURL.Hostname(),
-				Routes: make([]*def.Route, 0),
+				Routes: make([]def.Route, 0),
 			}
 			hostRoute.AddRoute(route)
 			out = append(out, hostRoute)

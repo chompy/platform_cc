@@ -44,6 +44,9 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 	// get mounts
 	mounts := make([]mount.Mount, 0)
 	for k, v := range c.Volumes {
+		if k == "" || v == "" {
+			continue
+		}
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeVolume,
 			Source: k,
@@ -51,6 +54,9 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 		})
 	}
 	for k, v := range c.Binds {
+		if k == "" || v == "" {
+			continue
+		}
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: k,

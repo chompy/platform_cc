@@ -37,8 +37,7 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 	// services are opened...sooo??
 	for _, app := range proj.Apps {
 		if app.Name == upstreamSplit[0] {
-			containerConfig := proj.GetAppContainerConfig(app)
-			return containerConfig.GetContainerName()
+			return proj.GetDefinitionHostName(app)
 		}
 	}
 	for _, serv := range proj.Services {
@@ -50,7 +49,6 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 					return GetUpstreamHost(proj, fmt.Sprintf("%s:http", rlSplit[0]), allowServices)
 				}
 			}
-			containerConfig := proj.GetServiceContainerConfig(serv)
 			// TODO use relationship to determine port
 			port := 80
 			switch serv.GetTypeName() {
@@ -60,7 +58,7 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 					break
 				}
 			}
-			return fmt.Sprintf("%s:%d", containerConfig.GetContainerName(), port)
+			return fmt.Sprintf("%s:%d", proj.GetDefinitionHostName(serv), port)
 		}
 	}
 	return ""

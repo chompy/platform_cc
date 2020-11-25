@@ -19,11 +19,17 @@ package def
 
 // AppWorker defines a worker.
 type AppWorker struct {
-	Size          string                            `yaml:"size"`
-	Disk          int                               `yaml:"disk"`
-	Mounts        map[string]*AppMount              `yaml:"mounts"`
-	Relationships map[string]string                 `yaml:"relationships"`
-	Variables     map[string]map[string]interface{} `yaml:"variables"`
+	Name          string                            `json:"-"`
+	Path          string                            `json:"-"`
+	Type          string                            `json:"-"`
+	Runtime       AppRuntime                        `json:"-"`
+	Dependencies  AppDependencies                   `json:"-"`
+	Size          string                            `yaml:"size" json:"size"`
+	Disk          int                               `yaml:"disk" json:"disk"`
+	Mounts        map[string]*AppMount              `yaml:"mounts" json:"mounts"`
+	Relationships map[string]string                 `yaml:"relationships" json:"relationship"`
+	Variables     map[string]map[string]interface{} `yaml:"variables" json:"variables"`
+	Commands      AppWorkersCommands                `yaml:"commands" json:"commands"`
 }
 
 // SetDefaults sets the default values.
@@ -40,7 +46,15 @@ func (d *AppWorker) SetDefaults() {
 }
 
 // Validate checks for errors.
-func (d AppWorker) Validate() []error {
-	// TODO
-	return []error{}
+func (d AppWorker) Validate(root *App) []error {
+	o := make([]error, 0)
+	if e := d.Commands.Validate(root); len(e) > 0 {
+		o = append(o, e...)
+	}
+	for _, mount := range d.Mounts {
+		if e := mount.Validate(root); len(e) > 0 {
+			o = append(o, e...)
+		}
+	}
+	return o
 }

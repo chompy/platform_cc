@@ -35,7 +35,8 @@ var appBuildCmd = &cobra.Command{
 		handleError(err)
 		app, err := getApp(appCmd, proj)
 		handleError(err)
-		handleError(proj.BuildApp(app))
+		c := proj.NewContainer(app)
+		handleError(c.Build())
 	},
 }
 
@@ -47,12 +48,13 @@ var appDeployCmd = &cobra.Command{
 		handleError(err)
 		app, err := getApp(appCmd, proj)
 		handleError(err)
-		handleError(proj.DeployApp(app))
+		c := proj.NewContainer(app)
+		handleError(c.Deploy())
 	},
 }
 
 var appShellCmd = &cobra.Command{
-	Use:     "shell",
+	Use:     "shell [--root]",
 	Aliases: []string{"sh"},
 	Short:   "Shell in to an application.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -60,11 +62,17 @@ var appShellCmd = &cobra.Command{
 		handleError(err)
 		app, err := getApp(appCmd, proj)
 		handleError(err)
-		handleError(proj.ShellApp(app))
+		user := "web"
+		if cmd.PersistentFlags().Lookup("root").Value.String() == "true" {
+			user = "root"
+		}
+		c := proj.NewContainer(app)
+		handleError(c.Shell(user, "bash"))
 	},
 }
 
 func init() {
+	appShellCmd.PersistentFlags().Bool("root", false, "shell as root")
 	appCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	appCmd.AddCommand(appBuildCmd)
 	appCmd.AddCommand(appDeployCmd)

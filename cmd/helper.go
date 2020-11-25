@@ -37,7 +37,7 @@ func getProject(parseYaml bool) (*project.Project, error) {
 }
 
 // getApp fetches an app definition.
-func getApp(cmd *cobra.Command, proj *project.Project) (*def.App, error) {
+func getApp(cmd *cobra.Command, proj *project.Project) (def.App, error) {
 	name := cmd.PersistentFlags().Lookup("name").Value.String()
 	if name == "" {
 		name = proj.Apps[0].Name
@@ -47,11 +47,11 @@ func getApp(cmd *cobra.Command, proj *project.Project) (*def.App, error) {
 			return app, nil
 		}
 	}
-	return nil, fmt.Errorf("app '%s' not found", name)
+	return def.App{}, fmt.Errorf("app '%s' not found", name)
 }
 
 // getService fetches a service definition.
-func getService(cmd *cobra.Command, proj *project.Project, filterType []string) (*def.Service, error) {
+func getService(cmd *cobra.Command, proj *project.Project, filterType []string) (def.Service, error) {
 	name := cmd.PersistentFlags().Lookup("service").Value.String()
 	for _, serv := range proj.Services {
 		for _, t := range filterType {
@@ -60,7 +60,7 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 			}
 		}
 	}
-	return nil, fmt.Errorf("service '%s' not found", name)
+	return def.Service{}, fmt.Errorf("service '%s' not found", name)
 }
 
 // handleError handles an error.

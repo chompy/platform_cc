@@ -31,8 +31,12 @@ const containerNetworkNameFormat = dockerNamingPrefix + "n"
 type ObjectContainerType byte
 
 const (
+	// ObjectContainerNone is an unknown container.
+	ObjectContainerNone ObjectContainerType = '-'
 	// ObjectContainerApp is an application container.
 	ObjectContainerApp ObjectContainerType = 'a'
+	// ObjectContainerWorker is a worker container.
+	ObjectContainerWorker ObjectContainerType = 'w'
 	// ObjectContainerService is a service container.
 	ObjectContainerService ObjectContainerType = 's'
 	// ObjectContainerRouter is the router container.

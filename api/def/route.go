@@ -71,8 +71,8 @@ func (d Route) Validate() []error {
 }
 
 // ParseRoutesYaml parses contents of routes.yaml file.
-func ParseRoutesYaml(d []byte) ([]*Route, error) {
-	out := make([]*Route, 0)
+func ParseRoutesYaml(d []byte) ([]Route, error) {
+	out := make([]Route, 0)
 	routes := make(map[string]*Route)
 	if err := yaml.Unmarshal(d, &routes); err != nil {
 		return nil, err
@@ -80,28 +80,28 @@ func ParseRoutesYaml(d []byte) ([]*Route, error) {
 	for path, route := range routes {
 		route.Path = strings.ReplaceAll(path, "{default}", defaultPath)
 		route.SetDefaults()
-		out = append(out, route)
+		out = append(out, *route)
 	}
 	return out, nil
 }
 
 // ParseRoutesYamlFile opens the routes.yaml file and parses it.
-func ParseRoutesYamlFile(f string) ([]*Route, error) {
+func ParseRoutesYamlFile(f string) ([]Route, error) {
 	log.Printf("Parse routes at '%s.'", f)
 	d, e := ioutil.ReadFile(f)
 	if e != nil {
-		return []*Route{}, e
+		return []Route{}, e
 	}
 	return ParseRoutesYaml(d)
 }
 
 // ExpandRoutes expands routes to include internal verisons and makes modifications for use with PCC.
-func ExpandRoutes(inRoutes []*Route, internalDomainSuffix string) ([]*Route, error) {
-	out := make([]*Route, 0)
+func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error) {
+	out := make([]Route, 0)
 	// make copy of routes
 	copyRoutes := make([]Route, 0)
 	for _, route := range inRoutes {
-		copyRoutes = append(copyRoutes, *route)
+		copyRoutes = append(copyRoutes, route)
 	}
 	// convienence functions
 	isRouteHTTPS := func(path string) bool {
@@ -157,7 +157,7 @@ func ExpandRoutes(inRoutes []*Route, internalDomainSuffix string) ([]*Route, err
 			route.To = replaceHTTPS(route.To)
 		}
 		r := route
-		out = append(out, &r)
+		out = append(out, r)
 		// internal route
 		route.Primary.DefaultValue = false
 		route.Primary.SetDefaults()
@@ -175,14 +175,14 @@ func ExpandRoutes(inRoutes []*Route, internalDomainSuffix string) ([]*Route, err
 			}
 		}
 		ri := route
-		out = append(out, &ri)
+		out = append(out, ri)
 	}
 	return out, nil
 }
 
 // RoutesToMap converts route array in to map.
-func RoutesToMap(routes []*Route) map[string]*Route {
-	data := make(map[string]*Route)
+func RoutesToMap(routes []Route) map[string]Route {
+	data := make(map[string]Route)
 	for _, route := range routes {
 		data[route.Path] = route
 	}

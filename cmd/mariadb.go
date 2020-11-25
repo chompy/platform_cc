@@ -42,15 +42,13 @@ var mariadbDumpCmd = &cobra.Command{
 		handleError(err)
 		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		handleError(err)
-		handleError(proj.ShellService(
-			service,
-			[]string{
-				"sh", "-c",
-				fmt.Sprintf(
-					"mysqldump -p$(cat /mnt/data/.mysql-password) %s",
-					args[0],
-				),
-			},
+		c := proj.NewContainer(service)
+		handleError(c.Shell(
+			"root",
+			fmt.Sprintf(
+				"'mysqldump --password=$(cat /mnt/data/.mysql-password) %s'",
+				args[0],
+			),
 		))
 	},
 }
@@ -64,21 +62,15 @@ var mariadbShellCmd = &cobra.Command{
 		handleError(err)
 		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		handleError(err)
-		dbCmdStr := ""
+		shellCmd := "mysql --password=$(cat /mnt/data/.mysql-password)"
 		db := cmd.PersistentFlags().Lookup("database").Value.String()
 		if db != "" {
-			dbCmdStr = fmt.Sprintf(" -D%s", db)
+			shellCmd += fmt.Sprintf(" -D%s", db)
 		}
-		shCmd := []string{
-			"sh", "-c",
-			fmt.Sprintf(
-				"mysql -p$(cat /mnt/data/.mysql-password)%s",
-				dbCmdStr,
-			),
-		}
-		handleError(proj.ShellService(
-			service,
-			shCmd,
+		c := proj.NewContainer(service)
+		handleError(c.Shell(
+			"root",
+			shellCmd,
 		))
 	},
 }
