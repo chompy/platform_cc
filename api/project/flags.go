@@ -27,6 +27,8 @@ const (
 	EnableWorkers
 	// EnableServiceRoutes enables routes to services like Varnish.
 	EnableServiceRoutes
+	// EnablePHPOpcache enables PHP opcache.
+	EnablePHPOpcache
 )
 
 // Add adds a flag.
@@ -50,6 +52,7 @@ func (f Flag) List() map[string]Flag {
 		"enable_cron":           EnableCron,
 		"enable_workers":        EnableWorkers,
 		"enable_service_routes": EnableServiceRoutes,
+		"enable_php_opcache":    EnablePHPOpcache,
 	}
 }
 
@@ -59,5 +62,6 @@ func (f Flag) Descriptions() map[string]string {
 		"enable_cron":           "Enables cron jobs.",
 		"enable_workers":        "Enables workers.",
 		"enable_service_routes": "Enable routes to services like Varnish.",
+		"enable_php_opcache":    "Enables PHP Opcache.",
 	}
 }

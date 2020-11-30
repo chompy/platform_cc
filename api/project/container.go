@@ -16,14 +16,15 @@ import (
 
 // Container contains information needed to run a container.
 type Container struct {
-	Config            docker.ContainerConfig
-	Name              string
-	Definition        interface{}
-	Relationships     map[string][]map[string]interface{}
-	docker            docker.Client
-	configJSON        []byte
-	emptyRelationship map[string]interface{}
-	buildCommand      string
+	Config        docker.ContainerConfig
+	Name          string
+	Definition    interface{}
+	Relationships map[string][]map[string]interface{}
+	docker        docker.Client
+	configJSON    []byte
+	buildCommand  string
+	mountCommand  string
+	setupCommand  string
 }
 
 // NewContainer creates a new container.
@@ -45,10 +46,11 @@ func (p *Project) NewContainer(d interface{}) Container {
 			Env:        p.GetDefinitionEnvironmentVariables(d),
 			WorkingDir: def.AppDir,
 		},
-		docker:            p.docker,
-		configJSON:        configJSON,
-		emptyRelationship: p.GetDefinitionEmptyRelationship(d),
-		buildCommand:      p.GetDefinitionBuildCommand(d),
+		docker:       p.docker,
+		configJSON:   configJSON,
+		buildCommand: p.GetDefinitionBuildCommand(d),
+		mountCommand: p.GetDefinitionMountCommand(d),
+		setupCommand: p.GetDefinitionSetupCommand(d),
 	}
 
 }
@@ -115,7 +117,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	// process output relationship
 	out := make([]map[string]interface{}, 0)
 	for k, v := range data {
-		rel := c.emptyRelationship
+		rel := GetDefinitionEmptyRelationship(c.Definition)
 		for kk, vv := range v.(map[string]interface{}) {
 			rel[kk] = vv
 		}
@@ -130,12 +132,51 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 
 // Build runs the build hooks.
 func (c Container) Build() error {
+	if c.buildCommand == "" {
+		return nil
+	}
 	log.Printf("Building %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
 	// run command
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", c.buildCommand},
+		os.Stdout,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
+}
+
+// SetupMounts sets up mounts in container.
+func (c Container) SetupMounts() error {
+	if c.mountCommand == "" {
+		return nil
+	}
+	log.Printf("Set up mounts for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	// run command
+	if err := c.docker.RunContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", c.mountCommand},
+		os.Stdout,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
+}
+
+// Setup runs container setup command.
+func (c Container) Setup() error {
+	if c.setupCommand == "" {
+		return nil
+	}
+	log.Printf("Additional setup for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	// run command
+	if err := c.docker.RunContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", c.setupCommand},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)
@@ -159,6 +200,11 @@ func (c Container) Deploy() error {
 
 // Shell accesses the container shell.
 func (c Container) Shell(user string, cmd string) error {
+	log.Printf(
+		"Access shell for %s '%s.'",
+		c.Config.ObjectType.TypeName(),
+		c.Name,
+	)
 	return tracerr.Wrap(c.docker.ShellContainer(
 		c.Config.GetContainerName(),
 		user,

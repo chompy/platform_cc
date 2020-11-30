@@ -20,8 +20,6 @@ package project
 import (
 	"encoding/json"
 	"fmt"
-	"os/user"
-	"strconv"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -29,37 +27,35 @@ import (
 // BuildConfigJSON makes config.json for container runtime.
 func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	// determine uid/gid to set
-	uid := 0
-	gid := 0
-	currentUser, _ := user.Current()
-	if currentUser != nil {
-		uid, _ = strconv.Atoi(currentUser.Uid)
-		gid, _ = strconv.Atoi(currentUser.Gid)
-	}
-	if uid == 0 {
-		uid = 1000
-	}
-	if gid == 0 {
-		gid = 1000
-	}
+	uid, gid := p.getUID()
 	// get host ip
 	hostIP, err := p.docker.GetNetworkHostIP()
 	if err != nil {
 		hostIP = "-"
 	}
-	// get name
+	// get name + build app json
 	name := ""
-	appName := ""
+	appJsons := make([]map[string]interface{}, 0)
 	switch d.(type) {
 	case def.App:
 		{
-			appName = d.(def.App).Name
-			name = appName
+			name = d.(def.App).Name
+			// ensure this app is the first item in application json list
+			appJsons = append(appJsons, p.buildConfigAppJSON(d))
+			// build rest of application json
+			for _, app := range p.Apps {
+				if app.Name == name {
+					continue
+				}
+				appJsons = append(appJsons, p.buildConfigAppJSON(app))
+			}
 			break
 		}
 	case def.AppWorker:
 		{
 			name = d.(def.AppWorker).Name
+			// put worker in application json list
+			appJsons = append(appJsons, p.buildConfigAppJSON(d))
 			break
 		}
 	case def.Service:
@@ -67,17 +63,6 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			name = d.(def.Service).Name
 			break
 		}
-	}
-	// build application json
-	appJsons := make([]map[string]interface{}, 0)
-	if appName != "" {
-		appJsons = append(appJsons, p.buildConfigAppJSON(d))
-	}
-	for _, app := range p.Apps {
-		if appName == "" && app.Name == appName {
-			continue
-		}
-		appJsons = append(appJsons, p.buildConfigAppJSON(app))
 	}
 	out := map[string]interface{}{
 		"primary_ip":   "127.0.0.1",
@@ -190,6 +175,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 			appType = d.(def.AppWorker).Type
 			disk = d.(def.AppWorker).Disk
 			mounts = d.(def.AppWorker).Mounts
+			runtime = d.(def.AppWorker).Runtime
 			workero := d.(def.AppWorker)
 			worker = &workero
 			appWeb = nil
@@ -229,7 +215,6 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	}
 	if worker != nil {
 		configuration["worker"] = worker
-		configuration["mounts"] = worker.Mounts
 	}
 	return map[string]interface{}{
 		"name":                  name,

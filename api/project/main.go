@@ -87,16 +87,11 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 			return nil, tracerr.Wrap(fmt.Errorf("could not location app yaml file"))
 		}
 		for _, appYamlFileList := range appYamlFiles {
-			var app *def.App = nil
-			for _, appYamlFile := range appYamlFileList {
-				app, err = def.ParseAppYamlFile(appYamlFile, app)
-				if err != nil {
-					return nil, err
-				}
+			app, err := def.ParseAppYamlFiles(appYamlFileList)
+			if err != nil {
+				return nil, tracerr.Wrap(err)
 			}
-			if app != nil {
-				apps = append(apps, *app)
-			}
+			apps = append(apps, *app)
 		}
 		o.Apps = apps
 	}
@@ -221,9 +216,17 @@ func (p *Project) Start() error {
 	}
 	// app
 	for _, app := range p.Apps {
+		// prepare nfs volume (if needed)
+		if err := prepareNfsVolume(p, app); err != nil {
+			return tracerr.Wrap(err)
+		}
 		// start
 		c := p.NewContainer(app)
 		if err := c.Start(); err != nil {
+			return tracerr.Wrap(err)
+		}
+		// setup mounts
+		if err := c.SetupMounts(); err != nil {
 			return tracerr.Wrap(err)
 		}
 		// open + process relationships
@@ -232,9 +235,44 @@ func (p *Project) Start() error {
 			return tracerr.Wrap(err)
 		}
 		p.relationships = append(p.relationships, rels...)
+		// setup command
+		if err := c.Setup(); err != nil {
+			return tracerr.Wrap(err)
+		}
+		// workers
+		if p.Flags.Has(EnableWorkers) {
+			for _, worker := range app.Workers {
+				wc := p.NewContainer(*worker)
+				// prepare nfs volume (if needed)
+				if err := prepareNfsVolume(p, *worker); err != nil {
+					return tracerr.Wrap(err)
+				}
+				// start
+				if err := wc.Start(); err != nil {
+					return tracerr.Wrap(err)
+				}
+				// setup mounts
+				if err := wc.SetupMounts(); err != nil {
+					return tracerr.Wrap(err)
+				}
+				// open
+				_, err := c.Open()
+				if err != nil {
+					return tracerr.Wrap(err)
+				}
+				// setup command
+				if err := wc.Setup(); err != nil {
+					return tracerr.Wrap(err)
+				}
+			}
+		}
 	}
 	// services with relationships (varnish, etc)
 	for _, service := range p.Services {
+		// skip if service has no relationships, it was already started
+		if len(service.Relationships) == 0 {
+			continue
+		}
 		// start
 		c := p.NewContainer(service)
 		if err := c.Start(); err != nil {

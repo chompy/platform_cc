@@ -3,5 +3,8 @@
 - Implement MacOS NFS fixes...need testing
 - Implement service.yaml PCC override
 - Global project variables
-- Workers
-- .platform.app.pcc.yaml recursive override
+- Workers...need testing
+- Better shell output...
+    - Show .platform.app.yaml parse progress
+    - Show image pull progress
+    - Fancy project start progress indicator

@@ -46,7 +46,7 @@ var mariadbDumpCmd = &cobra.Command{
 		handleError(c.Shell(
 			"root",
 			fmt.Sprintf(
-				"'mysqldump --password=$(cat /mnt/data/.mysql-password) %s'",
+				"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
 				args[0],
 			),
 		))

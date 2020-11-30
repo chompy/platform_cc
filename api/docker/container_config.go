@@ -50,6 +50,10 @@ func (o ObjectContainerType) TypeName() string {
 		{
 			return "app"
 		}
+	case ObjectContainerWorker:
+		{
+			return "worker"
+		}
 	case ObjectContainerService:
 		{
 			return "service"

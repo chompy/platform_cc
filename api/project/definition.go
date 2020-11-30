@@ -62,7 +62,7 @@ func (p *Project) GetDefinitionHostName(d interface{}) string {
 // GetDefinitionStartCommand returns the start command for the given definition.
 func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 	switch d.(type) {
-	case def.App:
+	case def.App, def.AppWorker:
 		{
 			uid, gid := p.getUID()
 			command := fmt.Sprintf(
@@ -73,11 +73,6 @@ func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 				gid,
 			)
 			return []string{"sh", "-c", command}
-		}
-	case def.AppWorker:
-		{
-			// TODO
-			return []string{"sleep", "999"}
 		}
 	case def.Service:
 		{
@@ -280,7 +275,7 @@ func (p *Project) GetDefinitionRelationships(d interface{}) map[string][]map[str
 }
 
 // GetDefinitionEmptyRelationship returns a relationship template/empty for given definition.
-func (p *Project) GetDefinitionEmptyRelationship(d interface{}) map[string]interface{} {
+func GetDefinitionEmptyRelationship(d interface{}) map[string]interface{} {
 	switch d.(type) {
 	case def.App:
 		{
@@ -310,6 +305,7 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 				"gid":         gid,
 			}
 			buildJSON, _ := json.Marshal(buildData)
+			//log.Println(string(buildJSON))
 			buildB64 := base64.StdEncoding.EncodeToString(buildJSON)
 			// build flavor
 			buildFlavorComposer := strings.ToLower(d.(def.App).Build.Flavor) == "composer"
@@ -318,7 +314,69 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 				strings.Title(strconv.FormatBool(buildFlavorComposer)),
 				buildB64,
 			)
+			//return "sleep 5"
 		}
+	}
+	return ""
+}
+
+// GetDefinitionSetupCommand returns command that should be ran to complete container setup for given definition.
+func (p *Project) GetDefinitionSetupCommand(d interface{}) string {
+	out := ""
+	switch d.(type) {
+	case def.App:
+		{
+			appDef := d.(def.App)
+			if appDef.GetTypeName() == "php" && !p.Flags.Has(EnablePHPOpcache) {
+				out += "echo ' * Disable PHP opcache' && "
+				out += "sed -i 's/opcache\\.enable\\=1/opcache\\.enable\\=0/g' /etc/php/*/fpm/php.ini && "
+				out += "sv restart app"
+			}
+			break
+		}
+	}
+	return out
+}
+
+// GetDefinitionMountCommand returns command to setup mounts for given definition.
+func (p *Project) GetDefinitionMountCommand(d interface{}) string {
+	var mounts map[string]*def.AppMount
+	switch d.(type) {
+	case def.App:
+		{
+			mounts = d.(def.App).Mounts
+		}
+	case def.AppWorker:
+		{
+			mounts = d.(def.AppWorker).Mounts
+		}
+	}
+	if mounts != nil {
+		out := ""
+		for dest, mount := range mounts {
+			destPath := fmt.Sprintf(
+				"%s/%s",
+				def.AppDir,
+				strings.Trim(dest, "/"),
+			)
+			srcPath := fmt.Sprintf(
+				"%s/%s",
+				containerDataDirectory,
+				strings.Trim(mount.SourcePath, "/"),
+			)
+			if out != "" {
+				out += " && "
+			}
+			out += fmt.Sprintf(
+				"mkdir -p %s && mkdir -p %s && chown -Rf web %s && mount -o user_xattr --bind %s %s",
+				destPath,
+				srcPath,
+				srcPath,
+				srcPath,
+				destPath,
+			)
+		}
+		return out
 	}
 	return ""
 }

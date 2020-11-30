@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ztrue/tracerr"
 	"gopkg.in/yaml.v3"
 )
 
@@ -143,7 +144,7 @@ func (d App) GetEmptyRelationship() map[string]interface{} {
 }
 
 // ParseAppYaml parses the contents of a .platform.app.yaml file.
-func ParseAppYaml(d []byte, append *App) (*App, error) {
+func ParseAppYaml(d []byte) (*App, error) {
 	o := &App{
 		Crons:         make(map[string]*AppCron),
 		Mounts:        make(map[string]*AppMount),
@@ -151,10 +152,7 @@ func ParseAppYaml(d []byte, append *App) (*App, error) {
 		Relationships: make(map[string]string),
 		Variables:     make(map[string]map[string]interface{}),
 	}
-	if append != nil {
-		o = append
-	}
-	e := yaml.Unmarshal(d, o)
+	err := yaml.Unmarshal(d, o)
 	o.SetDefaults()
 	for name, w := range o.Workers {
 		w.Name = name
@@ -162,20 +160,62 @@ func ParseAppYaml(d []byte, append *App) (*App, error) {
 		w.Runtime = o.Runtime
 		w.Dependencies = o.Dependencies
 	}
-	return o, e
+	return o, tracerr.Wrap(err)
 }
 
 // ParseAppYamlFile opens the .platform.app.yaml file and parses it.
-func ParseAppYamlFile(f string, append *App) (*App, error) {
+func ParseAppYamlFile(f string) (*App, error) {
 	log.Printf("Parse app at '%s.'", f)
-	d, e := ioutil.ReadFile(f)
-	if e != nil {
-		return nil, e
+	d, err := ioutil.ReadFile(f)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
 	}
-	o, e := ParseAppYaml(d, append)
+	o, e := ParseAppYaml(d)
 	o.Path, _ = filepath.Abs(filepath.Dir(f))
 	for _, w := range o.Workers {
 		w.Path = o.Path
 	}
 	return o, e
+}
+
+// ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
+func ParseAppYamls(d [][]byte) (*App, error) {
+
+	defData := map[string]interface{}{}
+	for _, raw := range d {
+		newData := map[string]interface{}{}
+		if err := yaml.Unmarshal(raw, &newData); err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		mergeMaps(defData, newData)
+	}
+	defBytes, err := yaml.Marshal(defData)
+
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return ParseAppYaml(defBytes)
+}
+
+// ParseAppYamlFiles parses multiple .platform.app.yaml files and merges them in to one.
+func ParseAppYamlFiles(fileList []string) (*App, error) {
+	byteList := make([][]byte, 0)
+	for _, f := range fileList {
+		log.Printf("Parse app at '%s.'", f)
+		d, err := ioutil.ReadFile(f)
+		if err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		byteList = append(byteList, d)
+	}
+	a, err := ParseAppYamls(byteList)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	// append path to app def
+	a.Path, _ = filepath.Abs(filepath.Dir(fileList[0]))
+	for _, w := range a.Workers {
+		w.Path = a.Path
+	}
+	return a, nil
 }

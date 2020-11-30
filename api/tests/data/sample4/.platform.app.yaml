@@ -4,3 +4,8 @@ variables:
     env:
         TEST_ENV: "yes"
         TEST_THREE: "test123"
+
+runtime:
+    extensions:
+        - redis
+        - xsl

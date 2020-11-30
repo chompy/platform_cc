@@ -60,16 +60,22 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 		"unexpected variables.env.TEST_ENV_TWO",
 		t,
 	)
-	/*assertEqual(
+	assertEqual(
 		p.Apps[0].Variables["env"]["TEST_THREE"],
 		"test123",
 		"unexpected variables.env.TEST_THREE",
 		t,
-	)*/
+	)
 	assertEqual(
 		p.Apps[0].Type,
 		"php:7.4",
 		"unexpected app.type",
+		t,
+	)
+	assertEqual(
+		len(p.Apps[0].Runtime.Extensions),
+		3,
+		"unexpected app.runtime.extensions length",
 		t,
 	)
 }
