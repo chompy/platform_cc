@@ -15,6 +15,8 @@ replace gitlab.com/contextualcode/platform_cc/cmd => ./cmd
 replace gitlab.com/contextualcode/platform_cc/api/tests => ./api/tests
 
 require (
+	github.com/creack/pty v1.1.11 // indirect
+	github.com/docker/cli v20.10.0-rc1+incompatible // indirect
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/goccy/go-yaml v1.8.3 // indirect
 	github.com/gopherjs/vecty v0.5.0 // indirect

@@ -21,11 +21,31 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/docker/docker/api/types"
 	"github.com/ztrue/tracerr"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+// resizeShell resizes the given Docker process to match the current terminal.
+func (d *Client) resizeShell(execID string) error {
+	w, h, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	resizeOpts := types.ResizeOptions{
+		Width:  uint(w),
+		Height: uint(h),
+	}
+	err = d.cli.ContainerExecResize(
+		context.Background(),
+		execID,
+		resizeOpts,
+	)
+	return tracerr.Wrap(err)
+}
 
 // ShellContainer creates an interactive shell in given container.
 func (d *Client) ShellContainer(id string, user string, command []string) error {
@@ -64,29 +84,38 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 		return tracerr.Wrap(err)
 	}
 	defer hresp.Close()
-	// don't create interactive shell for stdin
+	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		_, err = io.Copy(hresp.Conn, os.Stdin)
 		return tracerr.Wrap(err)
 	}
-	// use docker cli to shell for best experience
-	// TODO figure out how to improve direct terminal access
-	/*cmd := exec.Command(
-		"sh", "-c",
-		fmt.Sprintf("docker exec --user %s -i -t %s %s", user, id, strings.Join(command, " ")),
-	)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return nil
-	}*/
 	// create interactive shell
+	// handle resizing
+	err = d.resizeShell(resp.ID)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	go func() {
+		for {
+			sigc := make(chan os.Signal, 1)
+			signal.Notify(sigc, syscall.SIGWINCH)
+			s := <-sigc
+			switch s {
+			case syscall.SIGWINCH:
+				{
+					d.resizeShell(resp.ID)
+					break
+				}
+			}
+		}
+	}()
+	// make raw
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
+	// read/write connection to stdin and stdout
 	go func() { io.Copy(hresp.Conn, os.Stdin) }()
 	io.Copy(os.Stdout, hresp.Reader)
 	return nil
