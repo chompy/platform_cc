@@ -21,8 +21,7 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/ztrue/tracerr"
@@ -45,6 +44,28 @@ func (d *Client) resizeShell(execID string) error {
 		resizeOpts,
 	)
 	return tracerr.Wrap(err)
+}
+
+// handleResizeShell resizes the given Docker process anytime the current terminal is resized.
+func (d *Client) handleResizeShell(execID string) error {
+	cw, ch, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	for range time.Tick(time.Millisecond * 100) {
+		w, h, err := terminal.GetSize(int(os.Stdin.Fd()))
+		if err != nil {
+			return tracerr.Wrap(err)
+		}
+		if cw != w || ch != h {
+			if err := d.resizeShell(execID); err != nil {
+				return tracerr.Wrap(err)
+			}
+			cw = w
+			ch = h
+		}
+	}
+	return nil
 }
 
 // ShellContainer creates an interactive shell in given container.
@@ -91,8 +112,10 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 	}
 	// create interactive shell
 	// handle resizing
-	err = d.resizeShell(resp.ID)
-	if err != nil {
+	if err := d.resizeShell(resp.ID); err != nil {
+		return tracerr.Wrap(err)
+	}
+	/*if err != nil {
 		return tracerr.Wrap(err)
 	}
 	go func() {
@@ -108,7 +131,9 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 				}
 			}
 		}
-	}()
+	}()*/
+	go d.handleResizeShell(resp.ID)
+
 	// make raw
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
