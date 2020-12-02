@@ -26,6 +26,13 @@ var version string
 
 func main() {
 	output.Enable = true
+	output.Logging = true
+	if err := output.LogRotate(); err != nil {
+		output.Warn("Error while trimming log, " + err.Error())
+	}
+	if version == "" {
+		version = "DEV"
+	}
 	cmd.RootCmd.Version = version
 	cmd.Execute()
 }

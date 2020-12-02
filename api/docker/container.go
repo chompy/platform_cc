@@ -76,24 +76,27 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 		return tracerr.Wrap(err)
 	}
 	// create container
+	cConfig := &container.Config{
+		Image:        c.Image,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Cmd:          c.GetCommand(),
+		Env:          c.GetEnv(),
+		WorkingDir:   c.WorkingDir,
+		ExposedPorts: exposedPorts,
+	}
+	cHostConfig := &container.HostConfig{
+		AutoRemove:   true,
+		Privileged:   true,
+		Mounts:       mounts,
+		PortBindings: portBinding,
+	}
+	output.LogDebug(fmt.Sprintf("Container create. (Name %s)", c.GetContainerName()), []interface{}{cConfig, cHostConfig})
 	resp, err := d.cli.ContainerCreate(
 		context.Background(),
-		&container.Config{
-			Image:        c.Image,
-			AttachStdin:  true,
-			AttachStdout: true,
-			AttachStderr: true,
-			Cmd:          c.GetCommand(),
-			Env:          c.GetEnv(),
-			WorkingDir:   c.WorkingDir,
-			ExposedPorts: exposedPorts,
-		},
-		&container.HostConfig{
-			AutoRemove:   true,
-			Privileged:   true,
-			Mounts:       mounts,
-			PortBindings: portBinding,
-		},
+		cConfig,
+		cHostConfig,
 		&network.NetworkingConfig{},
 		c.GetContainerName(),
 	)
@@ -103,9 +106,7 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 		}
 		return tracerr.Wrap(err)
 	}
-	for _, w := range resp.Warnings {
-		output.Warn(w)
-	}
+	output.LogDebug("Container created.", resp)
 	// attach container to project network
 	err = d.cli.NetworkConnect(
 		context.Background(),
@@ -173,6 +174,7 @@ func (d *Client) DeleteAllContainers() error {
 // deleteContainers deletes all provided containers.
 func (d *Client) deleteContainers(containers []types.Container) error {
 	timeout := 30 * time.Second
+	output.LogDebug("Delete containers.", containers)
 	// output progress
 	msgs := make([]string, len(containers))
 	for i := range containers {
@@ -192,7 +194,7 @@ func (d *Client) deleteContainers(containers []types.Container) error {
 				&timeout,
 			); err != nil {
 				prog(i, output.ProgressMessageError)
-				output.Warn(err.Error())
+				output.LogError(err)
 			}
 			prog(i, output.ProgressMessageDone)
 		}(containers[i].ID, i)
@@ -212,6 +214,7 @@ func (d *Client) RunContainerCommand(id string, user string, cmd []string, out i
 		AttachStdout: true,
 		Cmd:          cmd,
 	}
+	output.LogDebug(fmt.Sprintf("Container exec create. (Container ID %s)", id), execConfig)
 	resp, err := d.cli.ContainerExecCreate(
 		context.Background(),
 		id,
@@ -220,6 +223,7 @@ func (d *Client) RunContainerCommand(id string, user string, cmd []string, out i
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	output.LogDebug("Container exec created.", resp.ID)
 	hresp, err := d.cli.ContainerExecAttach(
 		context.Background(),
 		resp.ID,
@@ -228,10 +232,18 @@ func (d *Client) RunContainerCommand(id string, user string, cmd []string, out i
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	// get command stdout
+	var buf bytes.Buffer
+	var mWriter io.Writer
+	mWriter = &buf
 	if out != nil {
-		_, err = io.Copy(out, hresp.Reader)
+		mWriter = io.MultiWriter(&buf, out)
 	}
-	return tracerr.Wrap(err)
+	if _, err := io.Copy(mWriter, hresp.Reader); err != nil {
+		return tracerr.Wrap(err)
+	}
+	output.LogDebug("Container exec finished.", string(buf.Bytes()))
+	return nil
 }
 
 // UploadDataToContainer uploads data to container as a file.
@@ -243,6 +255,15 @@ func (d *Client) UploadDataToContainer(id string, path string, r io.Reader) erro
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	// log debug
+	output.LogDebug(
+		"Upload to container.",
+		map[string]interface{}{
+			"container_id": id,
+			"size":         len(data),
+			"path":         path,
+		},
+	)
 	// gzip data stream
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
@@ -274,6 +295,10 @@ func (d *Client) GetContainerIP(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	output.LogDebug(
+		fmt.Sprintf("Inspected container (%s) for IP address.", id),
+		data.NetworkSettings,
+	)
 	for name, network := range data.NetworkSettings.Networks {
 		if name == globalNetworkName {
 			return network.IPAddress, nil
@@ -288,6 +313,13 @@ func (d *Client) PullImage(c ContainerConfig) error {
 	done := output.Duration(
 		fmt.Sprintf("Pull Docker container image for '%s.'", c.GetContainerName()),
 	)
+	output.LogDebug(
+		"Pull container image.",
+		map[string]interface{}{
+			"container_id": c.GetContainerName(),
+			"image":        c.Image,
+		},
+	)
 	r, err := d.cli.ImagePull(
 		context.Background(),
 		c.Image,
@@ -296,7 +328,6 @@ func (d *Client) PullImage(c ContainerConfig) error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	defer r.Close()
 	b := make([]byte, 1024)
 	for {
@@ -339,7 +370,7 @@ func (d *Client) PullImages(containerConfigs []ContainerConfig) error {
 			output.Enable = false
 			if err := d.PullImage(c); err != nil {
 				prog(i, output.ProgressMessageError)
-				output.Warn(err.Error())
+				output.LogError(err)
 			}
 			prog(i, output.ProgressMessageDone)
 		}(i, c)

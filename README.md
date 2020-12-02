@@ -37,9 +37,9 @@ Requirements / Installation
 ### Installation
 
 Run the following in a Bash shell...
-`curl -s https://gitlab.com/contextualcode/platform_cc/-/raw/v2.0.x/install.sh | bash /dev/stdin`
+`curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin`
 
-After that use the `pcc` command to run Platform_cc.
+After that use the `pcc` command to run Platform.CC.
 
 
 Quick Start
@@ -84,7 +84,7 @@ This assumes that you have a project ready to go with all the appropiate configu
 
 3) (Optional) Install database dumps.
 
-    All databases will work but Platform_cc currently only has commands to interact with MySQL/MariaDB. For all other database types you will need to user `docker exec` to access them.
+    All databases will work but Platform.CC currently only has commands to interact with MySQL/MariaDB. For all other database types you will need to user `docker exec` to access them.
 
     For MySQL databases you can use the `pcc mysql:sql` command to execute queries.
 
@@ -108,26 +108,25 @@ This assumes that you have a project ready to go with all the appropiate configu
     $ pcc project:deploy
     ```
 
-    This runs the deploy hooks defined in .platform.app.yaml. If you have multiple applications you will
-    need to run this command for each application.
+    This runs the deploy hooks defined in .platform.app.yaml.
 
 
 Supported Languages
 -------------------
 
-Platform_cc should support all languages that are supported by Platform.sh. Please see https://docs.platform.sh/ for a list of languages.
+Platform.CC should support all languages that are supported by Platform.sh. Please see https://docs.platform.sh/ for a list of languages.
 
 
 Supported Services
 ------------------
 
-Platform_cc should support all services that are supported by Platform.sh. Please see https://docs.platform.sh/ for a list of services.
+Platform.CC should support all services that are supported by Platform.sh. Please see https://docs.platform.sh/ for a list of services.
 
 
-Options and Flags
------------------
+Flags
+-----
 
-Some functionality is disabled by default. You can reenable the functionality by setting flags...
+Some functionality is disabled by default. You can re-enable the functionality by setting flags.
 
 
 **enable_cron**
@@ -142,7 +141,22 @@ Enable cron jobs for the current project.
 Enable routes to services such as Varnish.
 
 
-You can also set options...
+**enable_workers**
+
+`pcc project:flag:set enable_workers`
+Enables workers.
+
+
+**enable_php_opcache**
+
+`pcc project:flag:set enable_php_opcache`
+Enables PHP Opcache.
+
+
+Options
+-------
+
+Options are like flags except that they are specific values and not just on or off.
 
 **domain_suffix**
 
@@ -153,6 +167,14 @@ Set the internal route domain, default is "pcc.localtest.me." Every route gets a
 Platform.CC Specific Configurations
 -----------------------------------
 
-If you find that you need some configurations that are specific only to your Platform_cc projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
+If you find that you need some configurations that are specific only to your Platform.CC projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
 
-This is still WIP with this version of Platform_cc. It partially works...it needs to be fixed to merge values from .platform.app.yaml better instead of doing a full override.
+
+Share Logs
+----------
+
+A script is included that will allow you to share your Platform.CC logs with ease.
+
+`pcc_send_log`
+
+After running the command it will give you a URL that you can share.

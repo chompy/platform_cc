@@ -19,12 +19,14 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -77,29 +79,37 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 		hasStdin = true
 	}
 	// open shell
+	execConfig := types.ExecConfig{
+		User:         user,
+		Tty:          !hasStdin,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          command,
+	}
+	output.LogDebug(
+		fmt.Sprintf("Docker open shell. (Container ID %s)", id), execConfig,
+	)
 	resp, err := d.cli.ContainerExecCreate(
 		context.Background(),
 		id,
-		types.ExecConfig{
-			User:         user,
-			Tty:          !hasStdin,
-			AttachStdin:  true,
-			AttachStderr: true,
-			AttachStdout: true,
-			Cmd:          command,
-		},
+		execConfig,
+	)
+	execConfig = types.ExecConfig{
+		User:         user,
+		Tty:          !hasStdin,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          command,
+	}
+	output.LogDebug(
+		fmt.Sprintf("Docker container attach. (Exec ID %s)", resp.ID), execConfig,
 	)
 	hresp, err := d.cli.ContainerExecAttach(
 		context.Background(),
 		resp.ID,
-		types.ExecConfig{
-			User:         user,
-			Tty:          !hasStdin,
-			AttachStdin:  true,
-			AttachStderr: true,
-			AttachStdout: true,
-			Cmd:          command,
-		},
+		execConfig,
 	)
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -107,6 +117,7 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 	defer hresp.Close()
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
+		output.LogDebug("Disable interactive shell, Stdin present.", nil)
 		_, err = io.Copy(hresp.Conn, os.Stdin)
 		return tracerr.Wrap(err)
 	}
@@ -115,25 +126,7 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 	if err := d.resizeShell(resp.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
-	/*if err != nil {
-		return tracerr.Wrap(err)
-	}
-	go func() {
-		for {
-			sigc := make(chan os.Signal, 1)
-			signal.Notify(sigc, syscall.SIGWINCH)
-			s := <-sigc
-			switch s {
-			case syscall.SIGWINCH:
-				{
-					d.resizeShell(resp.ID)
-					break
-				}
-			}
-		}
-	}()*/
 	go d.handleResizeShell(resp.ID)
-
 	// make raw
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {

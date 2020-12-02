@@ -53,7 +53,6 @@ func (p *Project) NewContainer(d interface{}) Container {
 		mountCommand: p.GetDefinitionMountCommand(d),
 		setupCommand: p.GetDefinitionSetupCommand(d),
 	}
-
 }
 
 // Start starts the container.

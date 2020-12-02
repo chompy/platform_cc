@@ -11,8 +11,11 @@ import (
 
 const levelSpacer = "   "
 
-// Enable is a flag that sets whether or not to enable terminal output.
+// Enable is a flag that enables terminal output.
 var Enable = false
+
+// Logging is a flag that enables writting to log file.
+var Logging = false
 
 // IndentLevel is the current indentation level.
 var IndentLevel = 0
@@ -49,6 +52,7 @@ func levelMsg(msg string) {
 
 // Info prints information to the terminal.
 func Info(msg string) {
+	LogInfo(msg)
 	if !Enable {
 		return
 	}
@@ -57,6 +61,7 @@ func Info(msg string) {
 
 // Warn prints a warning message to the terminal.
 func Warn(msg string) {
+	LogWarn(msg)
 	if !Enable {
 		return
 	}
@@ -67,17 +72,21 @@ func Warn(msg string) {
 
 // Duration prints information and returns channel
 func Duration(msg string) func() {
-	if !Enable {
-		return func() {}
-	}
 	start := time.Now()
-	Info(msg)
+	if !Enable {
+		return func() {
+			dur := time.Now().Sub(start)
+			LogInfo(msg + fmt.Sprintf(" (%dms).", dur.Milliseconds()))
+		}
+	}
+	levelMsg(msg)
 	IndentLevel++
 	done := func() {
 		dur := time.Now().Sub(start)
-		Info(
-			fmt.Sprintf("Done (%dms).", dur.Milliseconds()),
+		levelMsg(
+			colorSuccess(fmt.Sprintf("Done (%dms).", dur.Milliseconds())),
 		)
+		LogInfo(msg + fmt.Sprintf(" (%dms).", dur.Milliseconds()))
 		IndentLevel--
 	}
 	return done
@@ -85,6 +94,7 @@ func Duration(msg string) func() {
 
 // Error prints an error message to the terminal and then exists.
 func Error(err error) {
+	LogError(err)
 	if !Enable || err == nil {
 		return
 	}

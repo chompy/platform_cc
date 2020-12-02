@@ -363,6 +363,12 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 				containerDataDirectory,
 				strings.Trim(mount.SourcePath, "/"),
 			)
+			destPath = strings.ReplaceAll(
+				destPath, ":", "_",
+			)
+			srcPath = strings.ReplaceAll(
+				srcPath, ":", "_",
+			)
 			if out != "" {
 				out += " && "
 			}

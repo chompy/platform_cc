@@ -30,6 +30,7 @@ func (p *Project) VarSet(key string, value string) error {
 	output.Info(
 		fmt.Sprintf("Set var '%s.'", key),
 	)
+	output.LogDebug(fmt.Sprintf("Set var '%s.'", key), value)
 	keySplit := strings.Split(key, ":")
 	if len(keySplit) != 2 {
 		return tracerr.Wrap(fmt.Errorf("invalid variable key"))
@@ -53,7 +54,9 @@ func (p *Project) VarGet(key string) (string, error) {
 	if p.Variables[keySplit[0]] == nil {
 		return "", nil
 	}
-	return p.Variables[keySplit[0]][keySplit[1]], nil
+	out := p.Variables[keySplit[0]][keySplit[1]]
+	output.LogDebug(fmt.Sprintf("Get var '%s.'", key), out)
+	return out, nil
 }
 
 // VarDelete deletes a project variable.

@@ -28,7 +28,14 @@ import (
 var RootCmd = &cobra.Command{
 	Use:     "platform_cc",
 	Version: "",
-	Short:   "Platform.cc is a tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.",
+	Long: strings.TrimSpace(`
+================================
+ PLATFORM.CC BY CONTEXTUAL CODE
+================================
+
+A tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.
+
+`),
 }
 
 // Execute - run root command

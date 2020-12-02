@@ -170,6 +170,7 @@ func generateProjectID() string {
 
 // Load loads the project info from file.
 func (p *Project) Load() error {
+	output.LogDebug("Load project.", p.ID)
 	data, err := ioutil.ReadFile(
 		filepath.Join(p.Path, projectJSONFilename),
 	)
@@ -183,6 +184,7 @@ func (p *Project) Load() error {
 
 // Save saves the project info to file.
 func (p *Project) Save() error {
+	output.LogDebug("Save project.", p.ID)
 	data, err := json.Marshal(p)
 	if err != nil {
 		return tracerr.Wrap(err)

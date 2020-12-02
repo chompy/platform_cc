@@ -34,18 +34,21 @@ const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 // CreateNFSVolume creates a NFS Docker volume.
 func (d *Client) CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error {
 	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name, containerType))
-	_, err := d.cli.VolumeCreate(
-		context.Background(),
-		volume.VolumesCreateBody{
-			Name:   GetVolumeName(pid, name, containerType),
-			Driver: "local",
-			DriverOpts: map[string]string{
-				"type":   "nfs",
-				"o":      "addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3",
-				"device": pathString,
-			},
+	volCreateBody := volume.VolumesCreateBody{
+		Name:   GetVolumeName(pid, name, containerType),
+		Driver: "local",
+		DriverOpts: map[string]string{
+			"type":   "nfs",
+			"o":      "addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3",
+			"device": pathString,
 		},
+	}
+	output.LogDebug("Create Docker NFS volume.", volCreateBody)
+	v, err := d.cli.VolumeCreate(
+		context.Background(),
+		volCreateBody,
 	)
+	output.LogDebug("Created Docker NFS volume.", v)
 	return tracerr.Wrap(err)
 }
 
@@ -89,6 +92,7 @@ func (d *Client) DeleteAllVolumes() error {
 
 func (d *Client) deleteVolumes(volList volume.VolumesListOKBody) error {
 	// prepare progress output
+	output.LogDebug("Delete Docker volumes.", volList)
 	msgs := make([]string, len(volList.Volumes))
 	for i, vol := range volList.Volumes {
 		msgs[i] = vol.Name
