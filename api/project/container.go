@@ -81,6 +81,7 @@ func (c Container) Start() error {
 
 // Open opens the container and returns the relationships.
 func (c Container) Open() ([]map[string]interface{}, error) {
+	indentLevel := output.IndentLevel
 	done := output.Duration(
 		fmt.Sprintf("Open %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
@@ -144,7 +145,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	}
 	d2()
 	done()
-	output.IndentLevel--
+	output.IndentLevel = indentLevel
 	return out, nil
 }
 

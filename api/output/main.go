@@ -26,7 +26,11 @@ func isTTY() bool {
 }
 
 func levelMsg(msg string) {
-	switch IndentLevel {
+	level := IndentLevel
+	if level < 0 {
+		level = 0
+	}
+	switch level {
 	case 0:
 		{
 			msg = "> " + msg
@@ -39,7 +43,7 @@ func levelMsg(msg string) {
 		}
 	}
 	fmt.Println(
-		strings.Repeat(levelSpacer, IndentLevel) + msg,
+		strings.Repeat(levelSpacer, level) + msg,
 	)
 }
 
