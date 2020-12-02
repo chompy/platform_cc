@@ -18,10 +18,11 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package router
 
 import (
-	"log"
+	"fmt"
 	"net/url"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // HostRoute contains all routes mapped to a host.
@@ -34,7 +35,9 @@ type HostRoute struct {
 func (h *HostRoute) AddRoute(r def.Route) bool {
 	parsedURL, err := url.Parse(r.Path)
 	if err != nil {
-		log.Printf("URL parse error: %s", err)
+		output.Warn(
+			fmt.Sprintf("URL parse error: %s", err),
+		)
 		return true
 	}
 	if parsedURL.Hostname() == h.Host {
@@ -58,7 +61,9 @@ func MapHostRoutes(routes []def.Route) []HostRoute {
 		if !hasHostRoute {
 			parsedURL, err := url.Parse(route.Path)
 			if err != nil {
-				log.Printf("URL parse error: %s", err)
+				output.Warn(
+					fmt.Sprintf("URL parse error: %s", err),
+				)
 				continue
 			}
 			hostRoute := HostRoute{

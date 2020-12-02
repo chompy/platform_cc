@@ -18,7 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"log"
 	"os"
 	"strings"
 
@@ -44,12 +43,4 @@ func Execute() error {
 	}
 	os.Args = args
 	return RootCmd.Execute()
-}
-
-func er(msg interface{}) {
-	log.Fatal(msg)
-}
-
-func init() {
-
 }

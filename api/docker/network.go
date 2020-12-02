@@ -19,8 +19,9 @@ package docker
 
 import (
 	"context"
-	"log"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -32,7 +33,7 @@ const globalNetworkName = "pcc"
 
 // CreateNetwork creates a global network for use with all PCC containers.
 func (d *Client) CreateNetwork() error {
-	log.Println("Create network.")
+	done := output.Duration("Create network.")
 	if _, err := d.cli.NetworkCreate(
 		context.Background(),
 		globalNetworkName,
@@ -44,12 +45,13 @@ func (d *Client) CreateNetwork() error {
 			return tracerr.Wrap(err)
 		}
 	}
+	done()
 	return nil
 }
 
 // DeleteNetwork deletes the global network.
 func (d *Client) DeleteNetwork() error {
-	log.Println("Delete network.")
+	done := output.Duration("Delete network.")
 	err := d.cli.NetworkRemove(
 		context.Background(),
 		globalNetworkName,
@@ -57,6 +59,7 @@ func (d *Client) DeleteNetwork() error {
 	if !client.IsErrNetworkNotFound(err) {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 

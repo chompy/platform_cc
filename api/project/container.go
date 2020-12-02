@@ -5,9 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -57,12 +58,15 @@ func (p *Project) NewContainer(d interface{}) Container {
 
 // Start starts the container.
 func (c Container) Start() error {
-	log.Printf("Start %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	done := output.Duration(
+		fmt.Sprintf("Start %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	// start container
 	if err := c.docker.StartContainer(c.Config); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// upload config.json
+	d2 := output.Duration("Upload config.json.")
 	if err := c.docker.UploadDataToContainer(
 		c.Config.GetContainerName(),
 		"/run/config.json",
@@ -70,12 +74,18 @@ func (c Container) Start() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	d2()
+	done()
 	return nil
 }
 
 // Open opens the container and returns the relationships.
 func (c Container) Open() ([]map[string]interface{}, error) {
+	done := output.Duration(
+		fmt.Sprintf("Open %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	// start service
+	d2 := output.Duration("Start service.")
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
@@ -84,7 +94,9 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+	d2()
 	// prepare relationships json
+	d2 = output.Duration("Parse relationships.")
 	relJSONData := map[string]interface{}{
 		"relationships": c.Relationships,
 	}
@@ -93,7 +105,9 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	relB64 := base64.StdEncoding.EncodeToString(relJSON)
+	d2()
 	// open service and retrieve relationships
+	d2 = output.Duration("Open service.")
 	var openOutput bytes.Buffer
 	cmd := fmt.Sprintf(serviceOpenCmd, relB64)
 	if err := c.docker.RunContainerCommand(
@@ -104,7 +118,9 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+	d2()
 	// process output relationships
+	d2 = output.Duration("Build relationship.")
 	openOutlineLines := bytes.Split(openOutput.Bytes(), []byte{'\n'})
 	rlRaw := openOutlineLines[len(openOutlineLines)-1]
 	data := make(map[string]interface{})
@@ -114,7 +130,6 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-	// process output relationship
 	out := make([]map[string]interface{}, 0)
 	for k, v := range data {
 		rel := GetDefinitionEmptyRelationship(c.Definition)
@@ -127,6 +142,9 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		rel["ip"] = ipAddress
 		out = append(out, rel)
 	}
+	d2()
+	done()
+	output.IndentLevel--
 	return out, nil
 }
 
@@ -135,7 +153,9 @@ func (c Container) Build() error {
 	if c.buildCommand == "" {
 		return nil
 	}
-	log.Printf("Building %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	done := output.Duration(
+		fmt.Sprintf("Building %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	// run command
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
@@ -145,6 +165,7 @@ func (c Container) Build() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 
@@ -153,7 +174,9 @@ func (c Container) SetupMounts() error {
 	if c.mountCommand == "" {
 		return nil
 	}
-	log.Printf("Set up mounts for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	done := output.Duration(
+		fmt.Sprintf("Set up mounts for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	// run command
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
@@ -163,6 +186,7 @@ func (c Container) SetupMounts() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 
@@ -171,7 +195,9 @@ func (c Container) Setup() error {
 	if c.setupCommand == "" {
 		return nil
 	}
-	log.Printf("Additional setup for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	done := output.Duration(
+		fmt.Sprintf("Additional setup for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	// run command
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
@@ -181,12 +207,15 @@ func (c Container) Setup() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 
 // Deploy runs the deploy hooks.
 func (c Container) Deploy() error {
-	log.Printf("Running deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name)
+	done := output.Duration(
+		fmt.Sprintf("Running deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
 	if err := c.docker.RunContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
@@ -195,15 +224,18 @@ func (c Container) Deploy() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 
 // Shell accesses the container shell.
 func (c Container) Shell(user string, cmd string) error {
-	log.Printf(
-		"Access shell for %s '%s.'",
-		c.Config.ObjectType.TypeName(),
-		c.Name,
+	output.Info(
+		fmt.Sprintf(
+			"Access shell for %s '%s.'",
+			c.Config.ObjectType.TypeName(),
+			c.Name,
+		),
 	)
 	return tracerr.Wrap(c.docker.ShellContainer(
 		c.Config.GetContainerName(),

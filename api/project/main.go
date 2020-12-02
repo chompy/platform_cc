@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -33,6 +32,7 @@ import (
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/docker"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
@@ -58,7 +58,9 @@ type Project struct {
 
 // LoadFromPath loads a project from its path.
 func LoadFromPath(path string, parseYaml bool) (*Project, error) {
-	log.Printf("Load project at '%s.'", path)
+	done := output.Duration(
+		fmt.Sprintf("Load project at '%s.'", path),
+	)
 	var err error
 	// build project
 	path, _ = filepath.Abs(path)
@@ -122,7 +124,11 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		}
 		o.Routes = routes
 	}
-	log.Printf("Project '%s' loaded.", o.ID)
+	if !parseYaml {
+		output.Info("Skipped (parseYaml=false).")
+	}
+	done()
+	output.Info(fmt.Sprintf("Loaded project '%s.'", o.ID))
 	return o, nil
 }
 
@@ -190,7 +196,11 @@ func (p *Project) Save() error {
 
 // Start starts the project.
 func (p *Project) Start() error {
-	log.Printf("Start project '%s.'", p.ID)
+	done := output.Duration("Start project.")
+	// pull images
+	if err := p.Pull(); err != nil {
+		return tracerr.Wrap(err)
+	}
 	// create network (if not already created)
 	if err := p.docker.CreateNetwork(); err != nil {
 		return tracerr.Wrap(err)
@@ -285,21 +295,27 @@ func (p *Project) Start() error {
 		}
 		p.relationships = append(p.relationships, rels...)
 	}
-	log.Println("Project started.")
+	done()
 	return nil
 }
 
 // Stop stops the project.
 func (p *Project) Stop() error {
-	log.Printf("Stop project '%s.'", p.ID)
-	p.docker.DeleteProjectContainers(p.ID)
-	log.Println("Project stopped.")
+	done := output.Duration(
+		fmt.Sprintf("Stop project '%s.'", p.ID),
+	)
+	if err := p.docker.DeleteProjectContainers(p.ID); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
 	return nil
 }
 
 // Build builds all applications in the project.
 func (p *Project) Build() error {
-	log.Printf("Build project '%s.'", p.ID)
+	done := output.Duration(
+		fmt.Sprintf("Build project '%s.'", p.ID),
+	)
 	// app
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
@@ -307,12 +323,15 @@ func (p *Project) Build() error {
 			return tracerr.Wrap(err)
 		}
 	}
+	done()
 	return nil
 }
 
 // Deploy runs deploy hooks for all applications in the project.
 func (p *Project) Deploy() error {
-	log.Printf("Run deploy hooks for project '%s.'", p.ID)
+	done := output.Duration(
+		fmt.Sprintf("Run deploy hooks for project '%s.'", p.ID),
+	)
 	// app
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
@@ -320,6 +339,7 @@ func (p *Project) Deploy() error {
 			return tracerr.Wrap(err)
 		}
 	}
+	done()
 	return nil
 }
 
@@ -328,14 +348,36 @@ func (p *Project) Purge() error {
 	if err := p.Stop(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	log.Printf("Purge project '%s.'", p.ID)
+
+	done := output.Duration(fmt.Sprintf("Purge project '%s.'", p.ID))
 	if err := p.docker.DeleteProjectVolumes(p.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
-	os.Remove(
+	if err := os.Remove(
 		filepath.Join(p.Path, projectJSONFilename),
-	)
-	log.Println("Project purged.")
+	); err != nil {
+		output.Warn(err.Error())
+	}
+	done()
+	return nil
+}
+
+// Pull fetches all the Docker container images needed by the project.
+func (p *Project) Pull() error {
+	done := output.Duration("Pull images.")
+	containerConfigs := make([]docker.ContainerConfig, 0)
+	for _, d := range p.Services {
+		c := p.NewContainer(d)
+		containerConfigs = append(containerConfigs, c.Config)
+	}
+	for _, d := range p.Apps {
+		c := p.NewContainer(d)
+		containerConfigs = append(containerConfigs, c.Config)
+	}
+	if err := p.docker.PullImages(containerConfigs); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
 	return nil
 }
 

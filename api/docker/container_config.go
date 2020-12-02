@@ -80,7 +80,7 @@ type ContainerConfig struct {
 	WorkingDir string
 }
 
-// GetContainerName gets the name of the Docker container.
+// GetContainerName return the name of the Docker container.
 func (d ContainerConfig) GetContainerName() string {
 	if d.ObjectType == ObjectContainerRouter {
 		return "pcc-router-1"
@@ -88,12 +88,24 @@ func (d ContainerConfig) GetContainerName() string {
 	return fmt.Sprintf(containerNameFormat, d.ProjectID, string(d.ObjectType), d.ObjectName)
 }
 
-// GetNetworkName gets the name of the Docker network.
+// GetHumanName returns human readable container name.
+func (d ContainerConfig) GetHumanName() string {
+	if d.ObjectType == ObjectContainerRouter {
+		return "router"
+	}
+	return fmt.Sprintf(
+		"%s/%s",
+		d.ObjectType.TypeName(),
+		d.ObjectName,
+	)
+}
+
+// GetNetworkName returns the name of the Docker network.
 func (d ContainerConfig) GetNetworkName() string {
 	return fmt.Sprintf(containerNetworkNameFormat, d.ProjectID)
 }
 
-// GetCommand gets the container command.
+// GetCommand returns the container command.
 func (d ContainerConfig) GetCommand() []string {
 	if len(d.Command) > 0 {
 		return d.Command

@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,6 +53,7 @@ var varGetCmd = &cobra.Command{
 	Aliases: []string{"g"},
 	Short:   "Get a variable.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		output.Enable = false
 		proj, err := getProject(false)
 		if err != nil {
 			return err
@@ -85,6 +88,7 @@ var varListCmd = &cobra.Command{
 	Aliases: []string{"l"},
 	Short:   "List project variables.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		output.Enable = false
 		proj, err := getProject(false)
 		if err != nil {
 			return err

@@ -305,7 +305,6 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 				"gid":         gid,
 			}
 			buildJSON, _ := json.Marshal(buildData)
-			//log.Println(string(buildJSON))
 			buildB64 := base64.StdEncoding.EncodeToString(buildJSON)
 			// build flavor
 			buildFlavorComposer := strings.ToLower(d.(def.App).Build.Flavor) == "composer"
@@ -328,7 +327,7 @@ func (p *Project) GetDefinitionSetupCommand(d interface{}) string {
 		{
 			appDef := d.(def.App)
 			if appDef.GetTypeName() == "php" && !p.Flags.Has(EnablePHPOpcache) {
-				out += "echo ' * Disable PHP opcache' && "
+				out += "echo ' - Disable PHP opcache' && "
 				out += "sed -i 's/opcache\\.enable\\=1/opcache\\.enable\\=0/g' /etc/php/*/fpm/php.ini && "
 				out += "sv restart app"
 			}

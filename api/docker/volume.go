@@ -20,11 +20,12 @@ package docker
 import (
 	"context"
 	"fmt"
-	"log"
+	"sync"
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // containerVolumeNameFormat is the format for mount volume names.
@@ -87,26 +88,31 @@ func (d *Client) DeleteAllVolumes() error {
 }
 
 func (d *Client) deleteVolumes(volList volume.VolumesListOKBody) error {
-	ch := make(chan error)
-	for _, vol := range volList.Volumes {
-		log.Printf("Delete Docker volume '%s.'", vol.Name)
-		go func(volName string) {
+	// prepare progress output
+	msgs := make([]string, len(volList.Volumes))
+	for i, vol := range volList.Volumes {
+		msgs[i] = vol.Name
+	}
+	prog := output.Progress(msgs)
+	// delete volumes
+	var wg sync.WaitGroup
+	for i, vol := range volList.Volumes {
+		wg.Add(1)
+		go func(volName string, i int) {
+			defer wg.Done()
 			if err := d.cli.VolumeRemove(
 				context.Background(),
 				volName,
 				true,
 			); err != nil {
-				ch <- err
+				prog(i, output.ProgressMessageError)
+				output.Warn(err.Error())
+				return
 			}
-			ch <- nil
-		}(vol.Name)
+			prog(i, output.ProgressMessageDone)
+		}(vol.Name, i)
 	}
-	for range volList.Volumes {
-		err := <-ch
-		if err != nil {
-			return tracerr.Wrap(err)
-		}
-	}
+	wg.Wait()
 	return nil
 }
 

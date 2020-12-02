@@ -18,12 +18,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package def
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strings"
 
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v3"
 )
 
@@ -163,24 +164,8 @@ func ParseAppYaml(d []byte) (*App, error) {
 	return o, tracerr.Wrap(err)
 }
 
-// ParseAppYamlFile opens the .platform.app.yaml file and parses it.
-func ParseAppYamlFile(f string) (*App, error) {
-	log.Printf("Parse app at '%s.'", f)
-	d, err := ioutil.ReadFile(f)
-	if err != nil {
-		return nil, tracerr.Wrap(err)
-	}
-	o, e := ParseAppYaml(d)
-	o.Path, _ = filepath.Abs(filepath.Dir(f))
-	for _, w := range o.Workers {
-		w.Path = o.Path
-	}
-	return o, e
-}
-
 // ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
 func ParseAppYamls(d [][]byte) (*App, error) {
-
 	defData := map[string]interface{}{}
 	for _, raw := range d {
 		newData := map[string]interface{}{}
@@ -199,9 +184,11 @@ func ParseAppYamls(d [][]byte) (*App, error) {
 
 // ParseAppYamlFiles parses multiple .platform.app.yaml files and merges them in to one.
 func ParseAppYamlFiles(fileList []string) (*App, error) {
+	done := output.Duration(
+		fmt.Sprintf("Parse app at '%s.'", strings.Join(fileList, ", ")),
+	)
 	byteList := make([][]byte, 0)
 	for _, f := range fileList {
-		log.Printf("Parse app at '%s.'", f)
 		d, err := ioutil.ReadFile(f)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
@@ -217,5 +204,6 @@ func ParseAppYamlFiles(fileList []string) (*App, error) {
 	for _, w := range a.Workers {
 		w.Path = a.Path
 	}
+	done()
 	return a, nil
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
@@ -31,9 +32,13 @@ import (
 func getProject(parseYaml bool) (*project.Project, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		return nil, tracerr.Wrap(err)
 	}
-	return project.LoadFromPath(cwd, parseYaml)
+	proj, err := project.LoadFromPath(cwd, parseYaml)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return proj, err
 }
 
 // getApp fetches an app definition.
@@ -65,10 +70,5 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 
 // handleError handles an error.
 func handleError(err error) {
-	if err == nil {
-		return
-	}
-	fmt.Println("= ERROR =======================================")
-	tracerr.PrintSourceColor(err)
-	os.Exit(1)
+	output.Error(err)
 }

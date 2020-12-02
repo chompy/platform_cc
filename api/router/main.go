@@ -20,11 +20,11 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/docker"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
@@ -45,7 +45,7 @@ func GetContainerConfig() docker.ContainerConfig {
 
 // Start starts the router.
 func Start() error {
-	log.Println("Start main router.")
+	done := output.Duration("Start main router.")
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -68,17 +68,22 @@ func Start() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	done()
 	return nil
 }
 
 // Stop stops the router.
 func Stop() error {
-	log.Println("Stop main router.")
+	done := output.Duration("Stop main router.")
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	return tracerr.Wrap(d.DeleteProjectContainers("router"))
+	if err := d.DeleteProjectContainers("router"); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
 }
 
 // Reload issues reload command to nginx in router container.
@@ -98,7 +103,9 @@ func Reload() error {
 
 // AddProjectRoutes adds given project's routes to router.
 func AddProjectRoutes(p *project.Project) error {
-	log.Printf("Add routes for project '%s.'", p.ID)
+	done := output.Duration(
+		fmt.Sprintf("Add routes for project '%s.'", p.ID),
+	)
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -118,12 +125,18 @@ func AddProjectRoutes(p *project.Project) error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
-	return tracerr.Wrap(Reload())
+	if err := Reload(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
 }
 
 // DeleteProjectRoutes deletes routes for given project.
 func DeleteProjectRoutes(p *project.Project) error {
-	log.Printf("Delete routes for project '%s.'", p.ID)
+	done := output.Duration(
+		fmt.Sprintf("Delete routes for project '%s.'", p.ID),
+	)
 	d, err := docker.NewClient()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -141,5 +154,9 @@ func DeleteProjectRoutes(p *project.Project) error {
 		}
 		return nil
 	}
-	return tracerr.Wrap(Reload())
+	if err := Reload(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
 }

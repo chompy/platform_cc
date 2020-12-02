@@ -26,8 +26,8 @@ import (
 )
 
 func TestParseFile(t *testing.T) {
-	p := path.Join("data", "sample1", ".platform.app.yaml")
-	d, e := def.ParseAppYamlFile(p)
+	p := []string{path.Join("data", "sample1", ".platform.app.yaml")}
+	d, e := def.ParseAppYamlFiles(p)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}

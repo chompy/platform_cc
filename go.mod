@@ -6,6 +6,8 @@ replace gitlab.com/contextualcode/platform_cc/api/project => ./api/project
 
 replace gitlab.com/contextualcode/platform_cc/api/docker => ./api/docker
 
+replace gitlab.com/contextualcode/platform_cc/api/output => ./api/output
+
 replace gitlab.com/contextualcode/platform_cc/api/def => ./api/def
 
 replace gitlab.com/contextualcode/platform_cc/api/router => ./api/router
@@ -28,11 +30,12 @@ require (
 	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/docker v0.0.1
+	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/project v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/router v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/tests v0.0.1
 	gitlab.com/contextualcode/platform_cc/cmd v0.0.1
-	golang.org/x/sys v0.0.0-20201110211018-35f3e6cf4a65 // indirect
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776

@@ -20,7 +20,6 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 	"text/template"
@@ -97,7 +96,6 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 			)
 		}
 		if !hasDefaultPath {
-			log.Println(hostMap.Host)
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{

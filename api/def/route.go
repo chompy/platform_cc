@@ -18,11 +18,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package def
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"strings"
 
+	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v2"
 )
 
@@ -87,12 +89,19 @@ func ParseRoutesYaml(d []byte) ([]Route, error) {
 
 // ParseRoutesYamlFile opens the routes.yaml file and parses it.
 func ParseRoutesYamlFile(f string) ([]Route, error) {
-	log.Printf("Parse routes at '%s.'", f)
-	d, e := ioutil.ReadFile(f)
-	if e != nil {
-		return []Route{}, e
+	done := output.Duration(
+		fmt.Sprintf("Parse routes at '%s.'", f),
+	)
+	d, err := ioutil.ReadFile(f)
+	if err != nil {
+		return []Route{}, tracerr.Wrap(err)
 	}
-	return ParseRoutesYaml(d)
+	r, err := ParseRoutesYaml(d)
+	if err != nil {
+		return r, tracerr.Wrap(err)
+	}
+	done()
+	return r, nil
 }
 
 // ExpandRoutes expands routes to include internal verisons and makes modifications for use with PCC.
@@ -164,14 +173,14 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 		var err error
 		route.Path, err = convertRoutePathToInternal(route.Path, internalDomainSuffix)
 		if err != nil {
-			return nil, err
+			return nil, tracerr.Wrap(err)
 		}
 		// - if redirect routes to internal then fix it up
 		if route.To != "" &&
 			redirectMatchesRoute(copyRoutes, route.To) {
 			route.To, err = convertRoutePathToInternal(replaceHTTPS(route.To), internalDomainSuffix)
 			if err != nil {
-				return nil, err
+				return nil, tracerr.Wrap(err)
 			}
 		}
 		ri := route

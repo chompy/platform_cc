@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -73,6 +74,7 @@ var routerListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List routes for project.",
 	Run: func(cmd *cobra.Command, args []string) {
+		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
 		routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")

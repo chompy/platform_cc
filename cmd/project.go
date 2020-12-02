@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -72,6 +73,16 @@ var projectRestartCmd = &cobra.Command{
 	},
 }
 
+var projectPullCmd = &cobra.Command{
+	Use:   "pull",
+	Short: "Pull all Docker images for project.",
+	Run: func(cmd *cobra.Command, args []string) {
+		proj, err := getProject(true)
+		handleError(err)
+		handleError(proj.Pull())
+	},
+}
+
 var projectBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build a project.",
@@ -106,6 +117,7 @@ var projectConfigJSONCmd = &cobra.Command{
 	Use:   "configjson",
 	Short: "Dump config.json.",
 	Run: func(cmd *cobra.Command, args []string) {
+		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
 		configJSON, err := proj.BuildConfigJSON(&proj.Apps[0])
@@ -120,6 +132,7 @@ func init() {
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)
+	projectCmd.AddCommand(projectPullCmd)
 	projectCmd.AddCommand(projectBuildCmd)
 	projectCmd.AddCommand(projectDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)

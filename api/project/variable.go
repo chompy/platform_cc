@@ -19,15 +19,17 @@ package project
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // VarSet sets a project variable.
 func (p *Project) VarSet(key string, value string) error {
-	log.Printf("Set var '%s.'", key)
+	output.Info(
+		fmt.Sprintf("Set var '%s.'", key),
+	)
 	keySplit := strings.Split(key, ":")
 	if len(keySplit) != 2 {
 		return tracerr.Wrap(fmt.Errorf("invalid variable key"))
@@ -41,6 +43,9 @@ func (p *Project) VarSet(key string, value string) error {
 
 // VarGet retrieves a project variable.
 func (p *Project) VarGet(key string) (string, error) {
+	output.Info(
+		fmt.Sprintf("Get var '%s.'", key),
+	)
 	keySplit := strings.Split(key, ":")
 	if len(keySplit) != 2 {
 		return "", tracerr.Wrap(fmt.Errorf("invalid variable key"))
@@ -53,7 +58,9 @@ func (p *Project) VarGet(key string) (string, error) {
 
 // VarDelete deletes a project variable.
 func (p *Project) VarDelete(key string) error {
-	log.Printf("Delete var '%s.'", key)
+	output.Info(
+		fmt.Sprintf("Delete var '%s.'", key),
+	)
 	keySplit := strings.Split(key, ":")
 	if len(keySplit) != 2 {
 		return tracerr.Wrap(fmt.Errorf("invalid variable key"))

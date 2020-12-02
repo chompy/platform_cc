@@ -24,11 +24,11 @@ import (
 	"encoding/base64"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,7 +94,7 @@ func unmarshalYamlValue(value *yaml.Node) interface{} {
 		{
 			out, err := dirToTarGzB64(value.Value)
 			if err != nil {
-				log.Println(err)
+				output.Warn(err.Error())
 			}
 			return out
 		}
@@ -119,7 +119,7 @@ func unmarshalYamlValue(value *yaml.Node) interface{} {
 			path = filepath.Join(projectPlatformDir, path)
 			data, err := ioutil.ReadFile(path)
 			if err != nil {
-				log.Println(err)
+				output.Warn(err.Error())
 				return ""
 			}
 			return string(data)

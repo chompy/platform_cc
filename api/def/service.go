@@ -18,11 +18,13 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package def
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strings"
 
+	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v3"
 )
 
@@ -84,23 +86,30 @@ func (d Service) GetEmptyRelationship() map[string]interface{} {
 // ParseServicesYaml parses the contents of services.yaml.
 func ParseServicesYaml(d []byte) ([]Service, error) {
 	o := make(map[string]*Service)
-	e := yaml.Unmarshal(d, &o)
+	err := yaml.Unmarshal(d, &o)
 	oo := make([]Service, 0)
 	for k := range o {
 		o[k].SetDefaults()
 		o[k].Name = k
 		oo = append(oo, *o[k])
 	}
-	return oo, e
+	return oo, tracerr.Wrap(err)
 }
 
 // ParseServicesYamlFile - open services yaml file and parse it
 func ParseServicesYamlFile(f string) ([]Service, error) {
-	log.Printf("Parse services at '%s.'", f)
+	done := output.Duration(
+		fmt.Sprintf("Parse services at '%s.'", f),
+	)
 	projectPlatformDir = filepath.Dir(f)
-	d, e := ioutil.ReadFile(f)
-	if e != nil {
-		return []Service{}, e
+	d, err := ioutil.ReadFile(f)
+	if err != nil {
+		return []Service{}, tracerr.Wrap(err)
 	}
-	return ParseServicesYaml(d)
+	s, err := ParseServicesYaml(d)
+	if err != nil {
+		return s, tracerr.Wrap(err)
+	}
+	done()
+	return s, nil
 }

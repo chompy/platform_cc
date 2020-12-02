@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -36,11 +36,18 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // StartContainer creates and starts a Docker container.
 func (d *Client) StartContainer(c ContainerConfig) error {
-	log.Printf("Start Docker container for %s '%s'", c.ObjectType.TypeName(), c.ObjectName)
+	done := output.Duration(
+		fmt.Sprintf(
+			"Start Docker container for %s '%s.'",
+			c.ObjectType.TypeName(),
+			c.ObjectName,
+		),
+	)
 	// get mounts
 	mounts := make([]mount.Mount, 0)
 	for k, v := range c.Volumes {
@@ -66,10 +73,6 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 	// get port mappings
 	exposedPorts, portBinding, err := nat.ParsePortSpecs(c.Ports)
 	if err != nil {
-		return tracerr.Wrap(err)
-	}
-	// pull image
-	if err := d.PullImage(c); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// create container
@@ -101,7 +104,7 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 		return tracerr.Wrap(err)
 	}
 	for _, w := range resp.Warnings {
-		log.Printf("WARN: %s", w)
+		output.Warn(w)
 	}
 	// attach container to project network
 	err = d.cli.NetworkConnect(
@@ -119,6 +122,9 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 		resp.ID,
 		types.ContainerStartOptions{},
 	)
+	if err == nil {
+		done()
+	}
 	return tracerr.Wrap(err)
 }
 
@@ -168,8 +174,10 @@ func (d *Client) DeleteAllContainers() error {
 func (d *Client) deleteContainers(containers []types.Container) error {
 	timeout := 30 * time.Second
 	ch := make(chan error)
+	msgs := make([]string, 0)
 	for _, c := range containers {
-		log.Printf("Delete Docker container '%s.'", c.Names[0])
+		//log.Printf("Delete Docker container '%s.'", c.Names[0])
+		msgs = append(msgs, strings.Trim(c.Names[0], "/"))
 		go func(cid string) {
 			if err := d.cli.ContainerStop(
 				context.Background(),
@@ -181,12 +189,20 @@ func (d *Client) deleteContainers(containers []types.Container) error {
 			ch <- nil
 		}(c.ID)
 	}
-	for range containers {
+	// output progress
+	done := output.Duration("Delete Docker containers.")
+	prog := output.Progress(msgs)
+
+	// wait for deletion
+	for i := range containers {
 		err := <-ch
 		if err != nil {
+			prog(i, output.ProgressMessageError)
 			return tracerr.Wrap(err)
 		}
+		prog(i, output.ProgressMessageDone)
 	}
+	done()
 	return nil
 }
 
@@ -273,7 +289,9 @@ func (d *Client) GetContainerIP(id string) (string, error) {
 
 // PullImage pulls the latest image for the given container.
 func (d *Client) PullImage(c ContainerConfig) error {
-	log.Printf("Pull Docker container image for '%s.'", c.GetContainerName())
+	done := output.Duration(
+		fmt.Sprintf("Pull Docker container image for '%s.'", c.GetContainerName()),
+	)
 	r, err := d.cli.ImagePull(
 		context.Background(),
 		c.Image,
@@ -291,5 +309,47 @@ func (d *Client) PullImage(c ContainerConfig) error {
 			break
 		}
 	}
+	done()
+	return nil
+}
+
+// PullImages pulls images for multiple containers.
+func (d *Client) PullImages(containerConfigs []ContainerConfig) error {
+
+	// get list of images and prepare progress output
+	images := make([]string, 0)
+	msgs := make([]string, 0)
+	for _, c := range containerConfigs {
+		hasImage := false
+		for _, image := range images {
+			if image == c.Image {
+				hasImage = true
+				break
+			}
+		}
+		if !hasImage {
+			images = append(images, c.Image)
+			msgs = append(msgs, c.GetHumanName())
+		}
+	}
+	prog := output.Progress(msgs)
+	// simultaneously pull images
+	outputEnabled := output.Enable
+	var wg sync.WaitGroup
+	for i, c := range containerConfigs {
+		wg.Add(1)
+		go func(i int, c ContainerConfig) {
+			defer wg.Done()
+			defer func() { output.Enable = outputEnabled }()
+			output.Enable = false
+			if err := d.PullImage(c); err != nil {
+				prog(i, output.ProgressMessageError)
+				output.Warn(err.Error())
+			}
+			prog(i, output.ProgressMessageDone)
+		}(i, c)
+
+	}
+	wg.Wait()
 	return nil
 }

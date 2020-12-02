@@ -18,12 +18,14 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/cmd"
 )
 
 var version string
 
 func main() {
+	output.Enable = true
 	cmd.RootCmd.Version = version
 	cmd.Execute()
 }
