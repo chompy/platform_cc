@@ -173,35 +173,31 @@ func (d *Client) DeleteAllContainers() error {
 // deleteContainers deletes all provided containers.
 func (d *Client) deleteContainers(containers []types.Container) error {
 	timeout := 30 * time.Second
-	ch := make(chan error)
-	msgs := make([]string, 0)
-	for _, c := range containers {
-		//log.Printf("Delete Docker container '%s.'", c.Names[0])
-		msgs = append(msgs, strings.Trim(c.Names[0], "/"))
-		go func(cid string) {
+	// output progress
+	msgs := make([]string, len(containers))
+	for i := range containers {
+		msgs[i] = strings.Trim(containers[i].Names[0], "/")
+	}
+	done := output.Duration("Delete Docker containers.")
+	prog := output.Progress(msgs)
+	// itterate containers and stop
+	var wg sync.WaitGroup
+	for i := range containers {
+		wg.Add(1)
+		go func(cid string, i int) {
+			defer wg.Done()
 			if err := d.cli.ContainerStop(
 				context.Background(),
 				cid,
 				&timeout,
 			); err != nil {
-				ch <- err
+				prog(i, output.ProgressMessageError)
+				output.Warn(err.Error())
 			}
-			ch <- nil
-		}(c.ID)
+			prog(i, output.ProgressMessageDone)
+		}(containers[i].ID, i)
 	}
-	// output progress
-	done := output.Duration("Delete Docker containers.")
-	prog := output.Progress(msgs)
-
-	// wait for deletion
-	for i := range containers {
-		err := <-ch
-		if err != nil {
-			prog(i, output.ProgressMessageError)
-			return tracerr.Wrap(err)
-		}
-		prog(i, output.ProgressMessageDone)
-	}
+	wg.Wait()
 	done()
 	return nil
 }
@@ -315,7 +311,6 @@ func (d *Client) PullImage(c ContainerConfig) error {
 
 // PullImages pulls images for multiple containers.
 func (d *Client) PullImages(containerConfigs []ContainerConfig) error {
-
 	// get list of images and prepare progress output
 	images := make([]string, 0)
 	msgs := make([]string, 0)
@@ -348,7 +343,6 @@ func (d *Client) PullImages(containerConfigs []ContainerConfig) error {
 			}
 			prog(i, output.ProgressMessageDone)
 		}(i, c)
-
 	}
 	wg.Wait()
 	return nil
