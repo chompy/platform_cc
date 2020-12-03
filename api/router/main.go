@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Package router is the main router and provides the main HTTP entry point for Platform.CC.
 package router
 
 import (

@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Package project provides tools to run a Platform.sh local development environment.
 package project
 
 import (
@@ -350,7 +351,6 @@ func (p *Project) Purge() error {
 	if err := p.Stop(); err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	done := output.Duration(fmt.Sprintf("Purge project '%s.'", p.ID))
 	if err := p.docker.DeleteProjectVolumes(p.ID); err != nil {
 		return tracerr.Wrap(err)

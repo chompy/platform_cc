@@ -1,12 +1,14 @@
 #!/bin/bash
 
-VERSION=`cat version`
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+ROOTPATH="$SCRIPTPATH/.."
+VERSION=`cat $ROOTPATH/version`
 PLATFORMS=("darwin/amd64" "windows/amd64" "linux/amd64")
 RELEASE_BUCKET="platform-cc-releases"
 
 # prepare build directory
-mkdir -p build/$VERSION
-rm -rf build/$VERSION/*
+mkdir -p $ROOTPATH/build/$VERSION
+rm -rf $ROOTPATH/build/$VERSION/*
 
 # s3 upload function
 upload() {
@@ -35,18 +37,18 @@ for platform in "${PLATFORMS[@]}"; do
     echo " > BUILD."
     GOOS=$platform GOARCH=$arch go build \
         -ldflags "-X main.version=$VERSION" \
-        -o "build/$VERSION/${platform}_${arch}"
-
+        -o "$ROOTPATH/build/$VERSION/${platform}_${arch}" \
+        $ROOTPATH/
     # upload to s3 release bucket
     if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
-        upload "build/$VERSION/${platform}_${arch}" "$VERSION/${platform}_${arch}"
+        upload "$ROOTPATH/build/$VERSION/${platform}_${arch}" "$VERSION/${platform}_${arch}"
     fi
 done
 
 # upload files
 if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "- Upload additional files..."
-    upload "version" "version"
-    upload "send_log.sh" "send_log.sh"
-    upload "install.sh" "install.sh"
+    upload "$ROOTPATH/version" "version"
+    upload "$ROOTPATH/scripts/send_log.sh" "send_log.sh"
+    upload "$ROOTPATH/scripts/install.sh" "install.sh"
 fi
