@@ -74,10 +74,7 @@ func (d *Client) handleResizeShell(execID string) error {
 func (d *Client) ShellContainer(id string, user string, command []string) error {
 	// check stdin
 	fi, _ := os.Stdin.Stat()
-	hasStdin := false
-	if fi.Size() > 0 {
-		hasStdin = true
-	}
+	hasStdin := fi.Mode()&os.ModeDevice == 0
 	// open shell
 	execConfig := types.ExecConfig{
 		User:         user,
@@ -118,14 +115,15 @@ func (d *Client) ShellContainer(id string, user string, command []string) error 
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		output.LogDebug("Disable interactive shell, Stdin present.", nil)
-		_, err = io.Copy(hresp.Conn, os.Stdin)
-		return tracerr.Wrap(err)
+		if _, err := io.Copy(hresp.Conn, os.Stdin); err != nil {
+			return tracerr.Wrap(err)
+		}
+		//io.Copy(os.Stdout, hresp.Reader)
+		return nil
 	}
 	// create interactive shell
 	// handle resizing
-	if err := d.resizeShell(resp.ID); err != nil {
-		return tracerr.Wrap(err)
-	}
+	d.resizeShell(resp.ID)
 	go d.handleResizeShell(resp.ID)
 	// make raw
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))

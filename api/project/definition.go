@@ -319,24 +319,6 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 	return ""
 }
 
-// GetDefinitionSetupCommand returns command that should be ran to complete container setup for given definition.
-func (p *Project) GetDefinitionSetupCommand(d interface{}) string {
-	out := ""
-	switch d.(type) {
-	case def.App:
-		{
-			appDef := d.(def.App)
-			if appDef.GetTypeName() == "php" && !p.Flags.Has(EnablePHPOpcache) {
-				out += "echo ' - Disable PHP opcache' && "
-				out += "sed -i 's/opcache\\.enable\\=1/opcache\\.enable\\=0/g' /etc/php/*/fpm/php.ini && "
-				out += "sv restart app"
-			}
-			break
-		}
-	}
-	return out
-}
-
 // GetDefinitionMountCommand returns command to setup mounts for given definition.
 func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 	var mounts map[string]*def.AppMount

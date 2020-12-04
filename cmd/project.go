@@ -120,7 +120,7 @@ var projectConfigJSONCmd = &cobra.Command{
 		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
-		configJSON, err := proj.BuildConfigJSON(&proj.Apps[0])
+		configJSON, err := proj.BuildConfigJSON(proj.Apps[0])
 		handleError(err)
 		fmt.Println(string(configJSON))
 	},

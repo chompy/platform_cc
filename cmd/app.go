@@ -18,6 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 )
 
@@ -54,7 +56,7 @@ var appDeployCmd = &cobra.Command{
 }
 
 var appShellCmd = &cobra.Command{
-	Use:     "shell [--root]",
+	Use:     "shell [--root] [command]",
 	Aliases: []string{"sh"},
 	Short:   "Shell in to an application.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -67,7 +69,13 @@ var appShellCmd = &cobra.Command{
 			user = "root"
 		}
 		c := proj.NewContainer(app)
-		handleError(c.Shell(user, "bash"))
+		shellCmd := []string{}
+		if len(args) > 0 {
+			shellCmd = []string{
+				"sh", "-c", strings.Join(args, " "),
+			}
+		}
+		handleError(c.Shell(user, shellCmd))
 	},
 }
 

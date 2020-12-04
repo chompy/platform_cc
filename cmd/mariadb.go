@@ -45,10 +45,14 @@ var mariadbDumpCmd = &cobra.Command{
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			fmt.Sprintf(
-				"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
-				args[0],
-			),
+			[]string{
+				"sh",
+				"-c",
+				fmt.Sprintf(
+					"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
+					args[0],
+				),
+			},
 		))
 	},
 }
@@ -70,7 +74,9 @@ var mariadbShellCmd = &cobra.Command{
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			shellCmd,
+			[]string{
+				"sh", "-c", shellCmd,
+			},
 		))
 	},
 }

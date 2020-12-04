@@ -128,6 +128,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if !parseYaml {
 		output.Info("Skipped (parseYaml=false).")
 	}
+	o.setAppFlags()
 	done()
 	output.Info(fmt.Sprintf("Loaded project '%s.'", o.ID))
 	return o, nil
@@ -248,10 +249,7 @@ func (p *Project) Start() error {
 			return tracerr.Wrap(err)
 		}
 		p.relationships = append(p.relationships, rels...)
-		// setup command
-		if err := c.Setup(); err != nil {
-			return tracerr.Wrap(err)
-		}
+
 		// workers
 		if p.Flags.Has(EnableWorkers) {
 			for _, worker := range app.Workers {
@@ -273,10 +271,7 @@ func (p *Project) Start() error {
 				if err != nil {
 					return tracerr.Wrap(err)
 				}
-				// setup command
-				if err := wc.Setup(); err != nil {
-					return tracerr.Wrap(err)
-				}
+
 			}
 		}
 	}
@@ -399,4 +394,16 @@ func (p *Project) getUID() (int, int) {
 		gid = 1000
 	}
 	return uid, gid
+}
+
+func (p *Project) setAppFlags() {
+	for i := range p.Apps {
+		// disable opcache if flag not present
+		if !p.Flags.Has(EnablePHPOpcache) {
+			p.Apps[i].Variables["php"]["enable.opcache"] = "0"
+			for j := range p.Apps[i].Workers {
+				p.Apps[i].Workers[j].Variables["php"]["enable.opcache"] = "0"
+			}
+		}
+	}
 }

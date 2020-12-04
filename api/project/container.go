@@ -25,7 +25,6 @@ type Container struct {
 	configJSON    []byte
 	buildCommand  string
 	mountCommand  string
-	setupCommand  string
 }
 
 // NewContainer creates a new container.
@@ -51,7 +50,6 @@ func (p *Project) NewContainer(d interface{}) Container {
 		configJSON:   configJSON,
 		buildCommand: p.GetDefinitionBuildCommand(d),
 		mountCommand: p.GetDefinitionMountCommand(d),
-		setupCommand: p.GetDefinitionSetupCommand(d),
 	}
 }
 
@@ -190,27 +188,6 @@ func (c Container) SetupMounts() error {
 	return nil
 }
 
-// Setup runs container setup command.
-func (c Container) Setup() error {
-	if c.setupCommand == "" {
-		return nil
-	}
-	done := output.Duration(
-		fmt.Sprintf("Additional setup for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
-	)
-	// run command
-	if err := c.docker.RunContainerCommand(
-		c.Config.GetContainerName(),
-		"root",
-		[]string{"sh", "-c", c.setupCommand},
-		os.Stdout,
-	); err != nil {
-		return tracerr.Wrap(err)
-	}
-	done()
-	return nil
-}
-
 // Deploy runs the deploy hooks.
 func (c Container) Deploy() error {
 	done := output.Duration(
@@ -229,7 +206,7 @@ func (c Container) Deploy() error {
 }
 
 // Shell accesses the container shell.
-func (c Container) Shell(user string, cmd string) error {
+func (c Container) Shell(user string, cmd []string) error {
 	output.Info(
 		fmt.Sprintf(
 			"Access shell for %s '%s.'",
@@ -237,9 +214,12 @@ func (c Container) Shell(user string, cmd string) error {
 			c.Name,
 		),
 	)
+	if len(cmd) == 0 {
+		cmd = []string{"bash"}
+	}
 	return tracerr.Wrap(c.docker.ShellContainer(
 		c.Config.GetContainerName(),
 		user,
-		[]string{"sh", "-c", cmd},
+		cmd,
 	))
 }
