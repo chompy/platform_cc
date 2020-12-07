@@ -29,6 +29,9 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
+// Port is the port to run the router on.
+var Port = uint16(80)
+
 // GetContainerConfig gets container configuration for the router.
 func GetContainerConfig() docker.ContainerConfig {
 	return docker.ContainerConfig{
@@ -39,7 +42,7 @@ func GetContainerConfig() docker.ContainerConfig {
 		Image:      "docker.io/library/nginx:1.19-alpine",
 		WorkingDir: "/routes",
 		Ports: []string{
-			"80:80/tcp",
+			fmt.Sprintf("%d:80/tcp", Port),
 		},
 	}
 }
