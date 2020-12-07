@@ -1,8 +1,8 @@
-- Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
 - Implement service.yaml PCC override.
 - Global project variables.
-- Platform.sh clone script.
-- Specify port main router uses (currently port 80).
+- Tests...
+    - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
 - Implemented but needs testing...
     - MacOS NFS volumes.
     - Workers.
+    - Platform.sh clone script
