@@ -20,7 +20,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -35,12 +34,9 @@ var routerCmd = &cobra.Command{
 }
 
 var routerStartCmd = &cobra.Command{
-	Use:   "start [-p port]",
+	Use:   "start",
 	Short: "Start router.",
 	Run: func(cmd *cobra.Command, args []string) {
-		port, err := strconv.Atoi(cmd.PersistentFlags().Lookup("port").Value.String())
-		handleError(err)
-		router.Port = uint16(port)
 		handleError(router.Start())
 	},
 }
@@ -88,7 +84,6 @@ var routerListCmd = &cobra.Command{
 }
 
 func init() {
-	routerStartCmd.PersistentFlags().Uint16P("port", "p", 80, "router http port")
 	routerCmd.AddCommand(routerStartCmd)
 	routerCmd.AddCommand(routerStopCmd)
 	routerCmd.AddCommand(routerAddCmd)

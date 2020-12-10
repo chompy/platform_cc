@@ -29,20 +29,36 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
-// Port is the port to run the router on.
-var Port = uint16(80)
+// HTTPPort is the port to accept HTTP requests on.
+var HTTPPort = uint16(80)
+
+// HTTPSPort is the port to accept HTTPS requests on.
+var HTTPSPort = uint16(443)
 
 // GetContainerConfig gets container configuration for the router.
 func GetContainerConfig() docker.ContainerConfig {
+	routerCmd := `
+apk add openssl
+mkdir /etc/nginx/ssl
+cd /etc/nginx/ssl
+openssl genrsa -des3 -passout "pass:^nx/{Dm[[k3b]ATf" -out server.pass.key 2048
+openssl rsa -passin "pass:^nx/{Dm[[k3b]ATf" -in server.pass.key -out server.key
+rm server.pass.key
+openssl req -new -key server.key -out server.csr \
+	-subj "/C=US/ST=Florida/L=Tallahassee/O=ContextualCode/OU=Developers/CN=dev.local"
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+nginx -g "daemon off;"
+`
 	return docker.ContainerConfig{
 		ProjectID:  "_",
 		ObjectName: "router",
 		ObjectType: docker.ObjectContainerRouter,
-		Command:    []string{"nginx", "-g", "daemon off;"},
+		Command:    []string{"sh", "-c", routerCmd},
 		Image:      "docker.io/library/nginx:1.19-alpine",
 		WorkingDir: "/routes",
 		Ports: []string{
-			fmt.Sprintf("%d:80/tcp", Port),
+			fmt.Sprintf("%d:80/tcp", HTTPPort),
+			fmt.Sprintf("%d:80/tcp", HTTPSPort),
 		},
 	}
 }
