@@ -400,8 +400,20 @@ func (p *Project) setAppFlags() {
 	for i := range p.Apps {
 		// disable opcache if flag not present
 		if !p.Flags.Has(EnablePHPOpcache) {
+			if p.Apps[i].Variables == nil {
+				p.Apps[i].Variables = make(map[string]map[string]interface{})
+			}
+			if p.Apps[i].Variables["php"] == nil {
+				p.Apps[i].Variables["php"] = make(map[string]interface{})
+			}
 			p.Apps[i].Variables["php"]["enable.opcache"] = "0"
 			for j := range p.Apps[i].Workers {
+				if p.Apps[i].Workers[j].Variables == nil {
+					p.Apps[i].Workers[j].Variables = make(map[string]map[string]interface{})
+				}
+				if p.Apps[i].Workers[j].Variables["php"] == nil {
+					p.Apps[i].Workers[j].Variables["php"] = make(map[string]interface{})
+				}
 				p.Apps[i].Workers[j].Variables["php"]["enable.opcache"] = "0"
 			}
 		}
