@@ -40,7 +40,7 @@ import (
 )
 
 // StartContainer creates and starts a Docker container.
-func (d *Client) StartContainer(c ContainerConfig) error {
+func (d MainClient) StartContainer(c ContainerConfig) error {
 	done := output.Duration(
 		fmt.Sprintf(
 			"Start Docker container for %s '%s.'",
@@ -130,7 +130,7 @@ func (d *Client) StartContainer(c ContainerConfig) error {
 }
 
 // GetProjectContainers gets a list of active containers for given project.
-func (d *Client) GetProjectContainers(pid string) ([]types.Container, error) {
+func (d MainClient) GetProjectContainers(pid string) ([]types.Container, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(dockerNamingPrefix+"*", pid))
 	return d.cli.ContainerList(
@@ -142,7 +142,7 @@ func (d *Client) GetProjectContainers(pid string) ([]types.Container, error) {
 }
 
 // GetAllContainers gets a list of all active PCC containers.
-func (d *Client) GetAllContainers() ([]types.Container, error) {
+func (d MainClient) GetAllContainers() ([]types.Container, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
 	return d.cli.ContainerList(
@@ -154,7 +154,7 @@ func (d *Client) GetAllContainers() ([]types.Container, error) {
 }
 
 // DeleteProjectContainers deletes all containers related to a project.
-func (d *Client) DeleteProjectContainers(pid string) error {
+func (d MainClient) DeleteProjectContainers(pid string) error {
 	containers, err := d.GetProjectContainers(pid)
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -163,7 +163,7 @@ func (d *Client) DeleteProjectContainers(pid string) error {
 }
 
 // DeleteAllContainers deletes all PCC containers.
-func (d *Client) DeleteAllContainers() error {
+func (d MainClient) DeleteAllContainers() error {
 	containers, err := d.GetAllContainers()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -172,7 +172,7 @@ func (d *Client) DeleteAllContainers() error {
 }
 
 // deleteContainers deletes all provided containers.
-func (d *Client) deleteContainers(containers []types.Container) error {
+func (d MainClient) deleteContainers(containers []types.Container) error {
 	timeout := 30 * time.Second
 	output.LogDebug("Delete containers.", containers)
 	// output progress
@@ -205,7 +205,7 @@ func (d *Client) deleteContainers(containers []types.Container) error {
 }
 
 // RunContainerCommand runs a command in a container.
-func (d *Client) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+func (d MainClient) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
 	execConfig := types.ExecConfig{
 		User:         user,
 		Tty:          true,
@@ -247,7 +247,7 @@ func (d *Client) RunContainerCommand(id string, user string, cmd []string, out i
 }
 
 // UploadDataToContainer uploads data to container as a file.
-func (d *Client) UploadDataToContainer(id string, path string, r io.Reader) error {
+func (d MainClient) UploadDataToContainer(id string, path string, r io.Reader) error {
 	// TODO this is not the best way to upload a file to the container but it's the only
 	// one that seems to work for now
 	// read data as bytes
@@ -287,7 +287,7 @@ func (d *Client) UploadDataToContainer(id string, path string, r io.Reader) erro
 }
 
 // GetContainerIP gets the IP address of the given container.
-func (d *Client) GetContainerIP(id string) (string, error) {
+func (d MainClient) GetContainerIP(id string) (string, error) {
 	data, err := d.cli.ContainerInspect(
 		context.Background(),
 		id,
@@ -309,7 +309,7 @@ func (d *Client) GetContainerIP(id string) (string, error) {
 }
 
 // PullImage pulls the latest image for the given container.
-func (d *Client) PullImage(c ContainerConfig) error {
+func (d MainClient) PullImage(c ContainerConfig) error {
 	done := output.Duration(
 		fmt.Sprintf("Pull Docker container image for '%s.'", c.GetContainerName()),
 	)
@@ -341,7 +341,7 @@ func (d *Client) PullImage(c ContainerConfig) error {
 }
 
 // PullImages pulls images for multiple containers.
-func (d *Client) PullImages(containerConfigs []ContainerConfig) error {
+func (d MainClient) PullImages(containerConfigs []ContainerConfig) error {
 	// get list of images and prepare progress output
 	images := make([]string, 0)
 	msgs := make([]string, 0)

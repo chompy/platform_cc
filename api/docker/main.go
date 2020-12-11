@@ -23,18 +23,18 @@ import (
 	"github.com/ztrue/tracerr"
 )
 
-// Client is the Docker client for PCC.
-type Client struct {
+// MainClient is the main Docker client for PCC.
+type MainClient struct {
 	cli *client.Client
 }
 
 // NewClient creates a docker client.
-func NewClient() (Client, error) {
+func NewClient() (MainClient, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		return Client{}, tracerr.Wrap(err)
+		return MainClient{}, tracerr.Wrap(err)
 	}
-	return Client{
+	return MainClient{
 		cli: cli,
 	}, nil
 }

@@ -152,6 +152,11 @@ Enables workers.
 `pcc project:flag:set enable_php_opcache`
 Enables PHP Opcache.
 
+**enable_mount_volume**
+
+`pcc project:flag:set enable_mount_volume`
+Enables mount volumes.
+
 
 Options
 -------

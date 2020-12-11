@@ -31,7 +31,7 @@ import (
 )
 
 // resizeShell resizes the given Docker process to match the current terminal.
-func (d *Client) resizeShell(execID string) error {
+func (d MainClient) resizeShell(execID string) error {
 	w, h, err := terminal.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -49,7 +49,7 @@ func (d *Client) resizeShell(execID string) error {
 }
 
 // handleResizeShell resizes the given Docker process anytime the current terminal is resized.
-func (d *Client) handleResizeShell(execID string) error {
+func (d MainClient) handleResizeShell(execID string) error {
 	cw, ch, err := terminal.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -71,7 +71,7 @@ func (d *Client) handleResizeShell(execID string) error {
 }
 
 // ShellContainer creates an interactive shell in given container.
-func (d *Client) ShellContainer(id string, user string, command []string) error {
+func (d MainClient) ShellContainer(id string, user string, command []string) error {
 	// check stdin
 	fi, _ := os.Stdin.Stat()
 	hasStdin := fi.Mode()&os.ModeDevice == 0

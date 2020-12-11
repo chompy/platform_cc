@@ -24,7 +24,7 @@ type AppMount struct {
 	SourcePath string `yaml:"source_path" json:"souce_path"`
 }
 
-// SetDefaults - set default valuts
+// SetDefaults sets the default values.
 func (d *AppMount) SetDefaults() {
 	if d.Source == "" {
 		d.Source = "local"

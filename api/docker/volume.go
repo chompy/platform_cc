@@ -32,7 +32,7 @@ import (
 const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 
 // CreateNFSVolume creates a NFS Docker volume.
-func (d *Client) CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error {
+func (d MainClient) CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error {
 	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name, containerType))
 	volCreateBody := volume.VolumesCreateBody{
 		Name:   GetVolumeName(pid, name, containerType),
@@ -53,7 +53,7 @@ func (d *Client) CreateNFSVolume(pid string, name string, containerType ObjectCo
 }
 
 // GetProjectVolumes gets a list of all volumes for given project.
-func (d *Client) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
+func (d MainClient) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(dockerNamingPrefix+"*", pid))
 	return d.cli.VolumeList(
@@ -63,7 +63,7 @@ func (d *Client) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 }
 
 // GetAllVolumes gets a list of all volumes used by PCC.
-func (d *Client) GetAllVolumes() (volume.VolumesListOKBody, error) {
+func (d MainClient) GetAllVolumes() (volume.VolumesListOKBody, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
 	return d.cli.VolumeList(
@@ -73,7 +73,7 @@ func (d *Client) GetAllVolumes() (volume.VolumesListOKBody, error) {
 }
 
 // DeleteProjectVolumes deletes all volumes for given project.
-func (d *Client) DeleteProjectVolumes(pid string) error {
+func (d MainClient) DeleteProjectVolumes(pid string) error {
 	volList, err := d.GetProjectVolumes(pid)
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -82,7 +82,7 @@ func (d *Client) DeleteProjectVolumes(pid string) error {
 }
 
 // DeleteAllVolumes deletes all volumes related to PCC.
-func (d *Client) DeleteAllVolumes() error {
+func (d MainClient) DeleteAllVolumes() error {
 	volList, err := d.GetAllVolumes()
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -90,7 +90,7 @@ func (d *Client) DeleteAllVolumes() error {
 	return d.deleteVolumes(volList)
 }
 
-func (d *Client) deleteVolumes(volList volume.VolumesListOKBody) error {
+func (d MainClient) deleteVolumes(volList volume.VolumesListOKBody) error {
 	// prepare progress output
 	output.LogDebug("Delete Docker volumes.", volList)
 	msgs := make([]string, len(volList.Volumes))

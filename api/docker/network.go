@@ -32,7 +32,7 @@ import (
 const globalNetworkName = "pcc"
 
 // CreateNetwork creates a global network for use with all PCC containers.
-func (d *Client) CreateNetwork() error {
+func (d MainClient) CreateNetwork() error {
 	done := output.Duration("Create network.")
 	if _, err := d.cli.NetworkCreate(
 		context.Background(),
@@ -50,7 +50,7 @@ func (d *Client) CreateNetwork() error {
 }
 
 // DeleteNetwork deletes the global network.
-func (d *Client) DeleteNetwork() error {
+func (d MainClient) DeleteNetwork() error {
 	done := output.Duration("Delete network.")
 	err := d.cli.NetworkRemove(
 		context.Background(),
@@ -64,7 +64,7 @@ func (d *Client) DeleteNetwork() error {
 }
 
 // GetNetworkHostIP gets the host IP address for the given project's network.
-func (d *Client) GetNetworkHostIP() (string, error) {
+func (d MainClient) GetNetworkHostIP() (string, error) {
 	net, err := d.cli.NetworkInspect(
 		context.Background(),
 		globalNetworkName,

@@ -2,6 +2,7 @@
 - Global project variables.
 - Tests...
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
+    - Docker mock tests.
 - Implemented but needs testing...
     - MacOS NFS volumes.
     - Workers.
