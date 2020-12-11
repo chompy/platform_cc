@@ -321,6 +321,9 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 
 // GetDefinitionMountCommand returns command to setup mounts for given definition.
 func (p *Project) GetDefinitionMountCommand(d interface{}) string {
+	if !p.Flags.Has(EnableMountVolume) {
+		return ""
+	}
 	var mounts map[string]*def.AppMount
 	switch d.(type) {
 	case def.App:

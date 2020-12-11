@@ -29,6 +29,8 @@ const (
 	EnableServiceRoutes
 	// EnablePHPOpcache enables PHP opcache.
 	EnablePHPOpcache
+	// EnableMountVolume mounts Docker volume for Platform.sh mounts.
+	EnableMountVolume
 )
 
 // Add adds a flag.
@@ -53,6 +55,7 @@ func (f Flag) List() map[string]Flag {
 		"enable_workers":        EnableWorkers,
 		"enable_service_routes": EnableServiceRoutes,
 		"enable_php_opcache":    EnablePHPOpcache,
+		"enable_mount_volume":   EnableMountVolume,
 	}
 }
 
@@ -63,5 +66,6 @@ func (f Flag) Descriptions() map[string]string {
 		"enable_workers":        "Enables workers.",
 		"enable_service_routes": "Enable routes to services like Varnish.",
 		"enable_php_opcache":    "Enables PHP Opcache.",
+		"enable_mount_volume":   "Enable mount volumes.",
 	}
 }
