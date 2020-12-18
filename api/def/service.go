@@ -20,6 +20,7 @@ package def
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -104,6 +105,9 @@ func ParseServicesYamlFile(f string) ([]Service, error) {
 	projectPlatformDir = filepath.Dir(f)
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []Service{}, nil
+		}
 		return []Service{}, tracerr.Wrap(err)
 	}
 	s, err := ParseServicesYaml(d)

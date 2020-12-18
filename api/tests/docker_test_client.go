@@ -20,6 +20,7 @@ package tests
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/volume"
@@ -32,8 +33,20 @@ const dockerTestContainerIPD = "192.1.2.4"
 // MockDockerClient is a test Docker client that makes no real connects.
 type MockDockerClient struct {
 	hasNetwork    *bool
-	volumeList    []string
-	containerList []string
+	volumeList    *[]string
+	containerList *[]string
+}
+
+// NewMockDockerClient creates a new MockDockerClient.
+func NewMockDockerClient() MockDockerClient {
+	hasNetwork := false
+	volumeList := make([]string, 0)
+	containerList := make([]string, 0)
+	return MockDockerClient{
+		hasNetwork:    &hasNetwork,
+		volumeList:    &volumeList,
+		containerList: &containerList,
+	}
 }
 
 // CreateNetwork simulates the creation of a Docker network.
@@ -50,7 +63,7 @@ func (d MockDockerClient) DeleteNetwork() error {
 
 // GetNetworkHostIP returns a fake IP if network we created, otherwise error.
 func (d MockDockerClient) GetNetworkHostIP() (string, error) {
-	if *d.hasNetwork {
+	if d.hasNetwork != nil && *d.hasNetwork {
 		return dockerTestNetworkIP, nil
 	}
 	return "", fmt.Errorf("network not started")
@@ -63,52 +76,105 @@ func (d MockDockerClient) CreateNFSVolume(pid string, name string, containerType
 
 // GetProjectVolumes returns a list of volumes for given project.
 func (d MockDockerClient) GetProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
-	return volume.VolumesListOKBody{}, nil
+	out := make([]*types.Volume, 0)
+	for _, name := range *d.volumeList {
+		if strings.Contains(name, pid) {
+			out = append(out, &types.Volume{
+				Name: name,
+			})
+		}
+	}
+	return volume.VolumesListOKBody{
+		Volumes: out,
+	}, nil
 }
 
 // GetAllVolumes returns list of all volumes.
 func (d MockDockerClient) GetAllVolumes() (volume.VolumesListOKBody, error) {
-	return volume.VolumesListOKBody{}, nil
+	out := make([]*types.Volume, 0)
+	for _, name := range *d.volumeList {
+		out = append(out, &types.Volume{
+			Name: name,
+		})
+	}
+	return volume.VolumesListOKBody{
+		Volumes: out,
+	}, nil
 }
 
 // DeleteProjectVolumes simulates deletion of all project volumes.
 func (d MockDockerClient) DeleteProjectVolumes(pid string) error {
+	out := make([]string, 0)
+	for _, name := range *d.volumeList {
+		if !strings.Contains(name, pid) {
+			out = append(out, name)
+		}
+	}
+	*d.volumeList = out
 	return nil
 }
 
 // DeleteAllVolumes simulates deletion of all Docker volumes.
 func (d MockDockerClient) DeleteAllVolumes() error {
+	*d.volumeList = make([]string, 0)
 	return nil
 }
 
 // StartContainer simulates starting a Docker container.
 func (d MockDockerClient) StartContainer(c docker.ContainerConfig) error {
-	for _, name := range d.containerList {
+	for _, name := range *d.containerList {
 		if name == c.GetContainerName() {
 			return nil
 		}
 	}
-	d.containerList = append(d.containerList, c.GetContainerName())
+	*d.containerList = append(*d.containerList, c.GetContainerName())
+	for name := range c.Volumes {
+		*d.volumeList = append(*d.volumeList, name)
+	}
 	return nil
 }
 
 // GetProjectContainers returns list of project Docker containers.
 func (d MockDockerClient) GetProjectContainers(pid string) ([]types.Container, error) {
-	return []types.Container{}, nil
+	out := make([]types.Container, 0)
+	for _, name := range *d.containerList {
+		if strings.Contains(name, pid) {
+			out = append(out, types.Container{
+				ID:    name,
+				Names: []string{name},
+			})
+		}
+	}
+	return out, nil
 }
 
 // GetAllContainers returns list of all Docker containers.
 func (d MockDockerClient) GetAllContainers() ([]types.Container, error) {
-	return nil, nil
+	out := make([]types.Container, 0)
+	for _, name := range *d.containerList {
+		out = append(out, types.Container{
+			ID:    name,
+			Names: []string{name},
+		})
+	}
+	return out, nil
 }
 
 // DeleteProjectContainers simulates deletion of project Docker containers.
 func (d MockDockerClient) DeleteProjectContainers(pid string) error {
+	out := make([]string, 0)
+	for _, name := range *d.containerList {
+		if !strings.Contains(name, pid) {
+			out = append(out, name)
+		}
+	}
+	*d.containerList = out
 	return nil
 }
 
 // DeleteAllContainers simulates deletion of all Docker containers.
 func (d MockDockerClient) DeleteAllContainers() error {
+	*d.containerList = make([]string, 0)
 	return nil
 }
 

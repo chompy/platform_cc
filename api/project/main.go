@@ -103,7 +103,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if parseYaml {
 		fullServiceYamlPath := filepath.Join(path, servicesYamlPath)
 		services, err = def.ParseServicesYamlFile(fullServiceYamlPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
 		o.Services = services
@@ -400,6 +400,7 @@ func (p *Project) setAppFlags() {
 	for i := range p.Apps {
 		// disable opcache if flag not present
 		if !p.Flags.Has(EnablePHPOpcache) {
+			output.LogDebug("Disable opcache.", nil)
 			if p.Apps[i].Variables == nil {
 				p.Apps[i].Variables = make(map[string]map[string]interface{})
 			}
@@ -418,4 +419,9 @@ func (p *Project) setAppFlags() {
 			}
 		}
 	}
+}
+
+// SetDockerClient sets the Docker client.
+func (p *Project) SetDockerClient(c docker.Client) {
+	p.docker = c
 }
