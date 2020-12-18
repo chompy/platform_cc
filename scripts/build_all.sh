@@ -51,4 +51,5 @@ if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
     upload "$ROOTPATH/version" "version"
     upload "$ROOTPATH/scripts/send_log.sh" "send_log.sh"
     upload "$ROOTPATH/scripts/install.sh" "install.sh"
+    upload "$ROOTPATH/scripts/platform_sh_clone.sh" "platform_sh_clone.sh"
 fi

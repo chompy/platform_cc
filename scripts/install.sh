@@ -3,9 +3,11 @@
 BASE_URL="https://platform-cc-releases.s3.amazonaws.com"
 VERSION_URL="$BASE_URL/version"
 SEND_LOG_URL="$BASE_URL/send_log.sh"
+PSH_CLONE_URL="$BASE_URL/platform_sh_clone.sh"
 INSTALL_PATH=~/.local/bin
 PCC_BIN_NAME="pcc"
 SEND_LOG_BIN_NAME="pcc_send_log"
+PSH_CLONE_BIN_NAME="pcc_psh_sync"
 
 echo ""
 printf "\e[33m================================\e[0m\n"
@@ -39,6 +41,16 @@ if [ "$?" != "0" ]; then
     progress_error "Could not download send log script."
 fi
 chmod +x $INSTALL_PATH/$SEND_LOG_BIN_NAME
+progress_success
+
+# fetch psh clone script
+printf "> Fetch Platform.sh sync script..."
+mkdir -p $INSTALL_PATH
+curl -s --fail -o $INSTALL_PATH/$PSH_CLONE_BIN_NAME "$PSH_CLONE_URL"
+if [ "$?" != "0" ]; then
+    progress_error "Could not download Platform.sh clone script."
+fi
+chmod +x $INSTALL_PATH/$PSH_CLONE_BIN_NAME
 progress_success
 
 # determine os

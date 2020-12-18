@@ -37,7 +37,7 @@ Requirements / Installation
 ### Installation
 
 Run the following in a Bash shell...
-`curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin`
+```curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin```
 
 After that use the `pcc` command to run Platform.CC.
 
@@ -45,10 +45,19 @@ After that use the `pcc` command to run Platform.CC.
 Quick Start
 -----------
 
-### Platform.sh Cloner
+### Platform.sh Cloner / Syncer
 
-TODO...provide bash script to perform this function.
+A shell script is included that allows syncing a Platform.sh environment to a local Platform.CC environment. To use it you need the SSH URL to your Platform.sh environment and the current user should have permission to access the environment over SSH.
 
+```pcc_psh_sync <ssh_url>```
+
+This script does not clone the repository. Make sure you do that prior and run the script inside the root directory of the project.
+
+This script will sync the following...
+
+- Mount directories (Rsync).
+- Variables.
+- MySQL databases.
 
 ### Local Project
 
@@ -99,6 +108,7 @@ This assumes that you have a project ready to go with all the appropiate configu
     ```
     $ platform db:dump -emaster -fdb_dump.sql
     $ pcc mysql:sql -d main < db_dump.sql
+    ```
 
 4) Run deploy hooks.
 
