@@ -20,6 +20,4 @@ func TestOutputProgress(t *testing.T) {
 	prog(1, output.ProgressMessageDone)
 	prog(2, output.ProgressMessageError)
 
-	t.Error("DONE")
-
 }

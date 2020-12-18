@@ -1,0 +1,25 @@
+image: golang:1.15
+
+cache:
+  paths:
+    - /apt-cache
+    - /go/src/github.com
+    - /go/src/golang.org
+    - /go/src/google.golang.org
+    - /go/src/gopkg.in
+
+stages:
+  - test
+
+before_script:
+  - go get -u golang.org/x/lint/golint
+
+lint_code:
+  stage: test
+  script:
+    - golint -set_exit_status $(go list ./... | grep -v /vendor/)
+
+unit_tests:
+  stage: test
+  script:
+    - cd api/tests/ && go test -race -short ./...

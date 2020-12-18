@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/ztrue/tracerr"
@@ -94,6 +95,9 @@ func ParseRoutesYamlFile(f string) ([]Route, error) {
 	)
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []Route{}, nil
+		}
 		return []Route{}, tracerr.Wrap(err)
 	}
 	r, err := ParseRoutesYaml(d)

@@ -20,4 +20,6 @@ require (
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/project v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/router v0.0.1
+	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
+	golang.org/x/tools v0.0.0-20201217235154-5b06639e575e // indirect
 )
