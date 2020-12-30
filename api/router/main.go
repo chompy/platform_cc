@@ -58,7 +58,7 @@ nginx -g "daemon off;"
 		WorkingDir: "/routes",
 		Ports: []string{
 			fmt.Sprintf("%d:80/tcp", HTTPPort),
-			fmt.Sprintf("%d:80/tcp", HTTPSPort),
+			fmt.Sprintf("%d:443/tcp", HTTPSPort),
 		},
 	}
 }
@@ -74,8 +74,12 @@ func Start() error {
 	if err := d.CreateNetwork(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// start container
+	// get container config and pull image
 	containerConf := GetContainerConfig()
+	if err := d.PullImage(containerConf); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// start container
 	if err := d.StartContainer(containerConf); err != nil {
 		return tracerr.Wrap(err)
 	}

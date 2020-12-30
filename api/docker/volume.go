@@ -20,6 +20,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/docker/docker/api/types/filters"
@@ -33,14 +34,15 @@ const containerVolumeNameFormat = dockerNamingPrefix + "v-%s"
 
 // CreateNFSVolume creates a NFS Docker volume.
 func (d MainClient) CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error {
-	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", GetVolumeName(pid, name, containerType))
+	pathString := fmt.Sprintf("/System/Volumes/Data/%s", GetVolumeName(pid, name, containerType))
+	os.MkdirAll(pathString, 0655)
 	volCreateBody := volume.VolumesCreateBody{
 		Name:   GetVolumeName(pid, name, containerType),
 		Driver: "local",
 		DriverOpts: map[string]string{
 			"type":   "nfs",
 			"o":      "addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3",
-			"device": pathString,
+			"device": ":" + pathString,
 		},
 	}
 	output.LogDebug("Create Docker NFS volume.", volCreateBody)

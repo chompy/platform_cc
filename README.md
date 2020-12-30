@@ -7,32 +7,7 @@ Requirements / Installation
 
 ### Requirements
 
-- Docker
-    - Mac OS:
-        1.  Install Version 17.09.1-ce-mac42 https://download.docker.com/mac/stable/21090/Docker.dmg. If you are unable to install that version - try to upgrade your OS.
-        2.  Open Docker -> Preferences -> File Sharing and remove all directories except `/tmp`.
-        3.  Open Docker -> Preferences -> Advanced and increase memory to 4.0 GB.
-        4.  Install `d4m-nfs`:
-
-                $ cd ~
-                $ git clone git@github.com:IFSight/d4m-nfs.git
-                $ cd d4m-nfs
-                $ echo /Users:/Users > etc/d4m-nfs-mounts.txt
-                $ sudo rm /etc/exports && sudo touch /etc/exports
-                $ ./d4m-nfs.sh
-
-    - Linux
-        - Debian
-
-            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/debian/
-
-        - Ubuntu
-
-            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/ubuntu/
-
-        - CentOS
-
-            Follow the instructions here: https://docs.docker.com/install/linux/docker-ce/centos/
+- Docker (See https://docs.docker.com/desktop/)
 
 ### Installation
 
