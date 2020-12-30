@@ -127,7 +127,7 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 	out := map[string]string{
 		docker.GetVolumeName(p.ID, name, objectContainerType): containerDataDirectory,
 	}
-	if isMacOS() && objectContainerType != docker.ObjectContainerService {
+	if p.Flags.Has(EnableOSXNFSMounts) && isMacOS() && objectContainerType != docker.ObjectContainerService {
 		volName := docker.GetVolumeName(p.ID, name+"-nfs", objectContainerType)
 		out[volName] = def.AppDir
 	}
@@ -153,7 +153,7 @@ func (p *Project) GetDefinitionBinds(d interface{}) map[string]string {
 			return map[string]string{}
 		}
 	}
-	if isMacOS() {
+	if p.Flags.Has(EnableOSXNFSMounts) && isMacOS() {
 		return map[string]string{}
 	}
 	return map[string]string{

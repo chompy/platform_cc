@@ -142,6 +142,10 @@ Enables PHP Opcache.
 `pcc project:flag:set enable_mount_volume`
 Enables mount volumes.
 
+**enable_osx_nfs_mounts**
+`pcc project:flag:set enable_osx_nfs_mounts`
+Enables NFS mounts on OSX.
+
 
 Options
 -------

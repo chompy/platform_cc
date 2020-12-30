@@ -29,7 +29,7 @@ type Client interface {
 	CreateNetwork() error
 	DeleteNetwork() error
 	GetNetworkHostIP() (string, error)
-	CreateNFSVolume(pid string, name string, containerType ObjectContainerType) error
+	CreateNFSVolume(pid string, name string, path string, containerType ObjectContainerType) error
 	GetProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 	GetAllVolumes() (volume.VolumesListOKBody, error)
 	DeleteProjectVolumes(pid string) error

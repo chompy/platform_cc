@@ -35,24 +35,27 @@ func isMacOS() bool {
 
 func prepareNfsVolume(p *Project, d interface{}) error {
 	name := ""
+	path := ""
 	containerType := docker.ObjectContainerApp
 	switch d.(type) {
 	case def.App:
 		{
 			name = d.(def.App).Name
+			path = d.(def.App).Path
 			break
 		}
 	case def.AppWorker:
 		{
 			name = d.(def.AppWorker).Name
+			path = d.(def.AppWorker).Path
 			containerType = docker.ObjectContainerWorker
 			break
 		}
 	}
-	if !isMacOS() {
+	if !p.Flags.Has(EnableOSXNFSMounts) || !isMacOS() {
 		return nil
 	}
-	if err := p.docker.CreateNFSVolume(p.ID, name+"-nfs", containerType); err != nil {
+	if err := p.docker.CreateNFSVolume(p.ID, name+"-nfs", path, containerType); err != nil {
 		if !strings.Contains(err.Error(), "exists") {
 			return tracerr.Wrap(err)
 		}

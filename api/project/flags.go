@@ -31,6 +31,8 @@ const (
 	EnablePHPOpcache
 	// EnableMountVolume mounts Docker volume for Platform.sh mounts.
 	EnableMountVolume
+	// EnableOSXNFSMounts uses NFS for mounts on OSX.
+	EnableOSXNFSMounts
 )
 
 // Add adds a flag.
@@ -56,6 +58,7 @@ func (f Flag) List() map[string]Flag {
 		"enable_service_routes": EnableServiceRoutes,
 		"enable_php_opcache":    EnablePHPOpcache,
 		"enable_mount_volume":   EnableMountVolume,
+		"enable_osx_nfs_mounts": EnableOSXNFSMounts,
 	}
 }
 
@@ -67,5 +70,6 @@ func (f Flag) Descriptions() map[string]string {
 		"enable_service_routes": "Enable routes to services like Varnish.",
 		"enable_php_opcache":    "Enables PHP Opcache.",
 		"enable_mount_volume":   "Enable mount volumes.",
+		"enable_nfs_mounts":     "Enable NFS mounts on OSX.",
 	}
 }

@@ -206,9 +206,6 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 		"crons":     crons,
 		"slug":      "-",
 		"resources": nil,
-		"project_info": map[string]interface{}{
-			"ssh_key": "",
-		},
 	}
 	if appWeb != nil {
 		configuration["web"] = appWeb
@@ -225,6 +222,9 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 		"cron_minimum_interval": "1",
 		"dependencies":          dependencies,
 		"configuration":         configuration,
+		"project_info": map[string]interface{}{
+			"ssh_key": "=",
+		},
 	}
 
 }
