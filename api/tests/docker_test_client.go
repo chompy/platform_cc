@@ -70,7 +70,7 @@ func (d MockDockerClient) GetNetworkHostIP() (string, error) {
 }
 
 // CreateNFSVolume simulates the creation of a Docker NFS volume.
-func (d MockDockerClient) CreateNFSVolume(pid string, name string, containerType docker.ObjectContainerType) error {
+func (d MockDockerClient) CreateNFSVolume(pid string, name string, path string, containerType docker.ObjectContainerType) error {
 	return nil
 }
 
