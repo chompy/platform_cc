@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 BASE_URL="https://platform-cc-releases.s3.amazonaws.com"
 VERSION_URL="$BASE_URL/version"
 SEND_LOG_URL="$BASE_URL/send_log.sh"
 PSH_CLONE_URL="$BASE_URL/platform_sh_clone.sh"
 INSTALL_PATH=~/.local/bin
+MAC_INSTALL_PATH=/usr/local/bin
 PCC_BIN_NAME="pcc"
 SEND_LOG_BIN_NAME="pcc_send_log"
 PSH_CLONE_BIN_NAME="pcc_psh_sync"
@@ -23,6 +28,11 @@ progress_error() {
     printf "\n\e[31mERROR:\e[0m\n$1\n\n"
     exit 1
 }
+
+# change install path for mac
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    INSTALL_PATH="$MAC_INSTALL_PATH"
+fi
 
 # fetch current version
 printf "> Fetch current version number..."
@@ -58,6 +68,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     BASE_URL="$BASE_URL/$VERSION/linux_amd64"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     BASE_URL="$BASE_URL/$VERSION/darwin_amd64"
+    INSTALL_PATH="$MAC_INSTALL_PATH"
 else
     BASE_URL="$BASE_URL/$VERSION/windows_amd64"
 fi

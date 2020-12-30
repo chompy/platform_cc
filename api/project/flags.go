@@ -70,6 +70,6 @@ func (f Flag) Descriptions() map[string]string {
 		"enable_service_routes": "Enable routes to services like Varnish.",
 		"enable_php_opcache":    "Enables PHP Opcache.",
 		"enable_mount_volume":   "Enable mount volumes.",
-		"enable_nfs_mounts":     "Enable NFS mounts on OSX.",
+		"enable_osx_nfs_mounts": "Enable NFS mounts on OSX.",
 	}
 }

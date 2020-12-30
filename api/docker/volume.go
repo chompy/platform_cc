@@ -43,7 +43,7 @@ func (d MainClient) CreateNFSVolume(pid string, name string, path string, contai
 		DriverOpts: map[string]string{
 			"type":   "nfs",
 			"o":      "addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3",
-			"device": ":" + pathString,
+			"device": pathString,
 		},
 	}
 	output.LogDebug("Create Docker NFS volume.", volCreateBody)
