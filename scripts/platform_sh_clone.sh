@@ -5,6 +5,9 @@ SSH_URL="$1"
 PCC_PATH=~/.local/bin/pcc
 PRIVATE_SSH_KEY_PATH=~/.ssh/id_rsa
 RSYNC_PARAMS="-auve 'ssh -i /tmp/id_rsa' --include='*/' --include='*.jpg' --include='*.jpeg' --include='*.gif' --include='*.png' --include='*.webp' --exclude='*'"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PCC_PATH=/usr/local/bin/pcc
+fi
 
 # - fetch code
 GET_VARIABLES_CODE=$(cat <<END

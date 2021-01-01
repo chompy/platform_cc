@@ -221,5 +221,6 @@ func (c Container) Shell(user string, cmd []string) error {
 		c.Config.GetContainerName(),
 		user,
 		cmd,
+		nil,
 	))
 }

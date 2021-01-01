@@ -145,7 +145,7 @@ func (d App) GetEmptyRelationship() map[string]interface{} {
 }
 
 // ParseAppYaml parses the contents of a .platform.app.yaml file.
-func ParseAppYaml(d []byte) (*App, error) {
+func ParseAppYaml(d []byte, global *GlobalConfig) (*App, error) {
 	o := &App{
 		Crons:         make(map[string]*AppCron),
 		Mounts:        make(map[string]*AppMount),
@@ -161,11 +161,18 @@ func ParseAppYaml(d []byte) (*App, error) {
 		w.Runtime = o.Runtime
 		w.Dependencies = o.Dependencies
 	}
+	// merge global variables
+	if err == nil && global != nil {
+		output.LogDebug(fmt.Sprintf("Merge app '%s' variables with global variables.", o.Name), nil)
+		for k := range o.Variables {
+			mergeMaps(o.Variables[k], global.Variables[k])
+		}
+	}
 	return o, tracerr.Wrap(err)
 }
 
 // ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
-func ParseAppYamls(d [][]byte) (*App, error) {
+func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 	defData := map[string]interface{}{}
 	for _, raw := range d {
 		newData := map[string]interface{}{}
@@ -179,11 +186,11 @@ func ParseAppYamls(d [][]byte) (*App, error) {
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-	return ParseAppYaml(defBytes)
+	return ParseAppYaml(defBytes, global)
 }
 
 // ParseAppYamlFiles parses multiple .platform.app.yaml files and merges them in to one.
-func ParseAppYamlFiles(fileList []string) (*App, error) {
+func ParseAppYamlFiles(fileList []string, global *GlobalConfig) (*App, error) {
 	done := output.Duration(
 		fmt.Sprintf("Parse app at '%s.'", strings.Join(fileList, ", ")),
 	)
@@ -195,7 +202,7 @@ func ParseAppYamlFiles(fileList []string) (*App, error) {
 		}
 		byteList = append(byteList, d)
 	}
-	a, err := ParseAppYamls(byteList)
+	a, err := ParseAppYamls(byteList, global)
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}

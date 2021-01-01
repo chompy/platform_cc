@@ -158,6 +158,39 @@ Options are like flags except that they are specific values and not just on or o
 Set the internal route domain, default is "pcc.localtest.me." Every route gets an internal route... example... www.example.com becomes www-example-com.pcc.localtest.me.
 
 
+Global Configuration
+--------------------
+
+You can create global configuration file that allows setting configuration that applies to all projects. Platform.CC looks for the global configuration file in the following locations...
+
+```
+~/.config/platform_cc.yaml
+~/platform_cc.yaml
+```
+
+**Variables**
+
+You can configure project variables that get applied to all project.
+
+Example...
+```
+variables:
+    env:
+        COMPOSER_AUTH: '{"github-oauth":{"github.com":"SECRET_KEY_HERE"}'
+```
+
+**Router**
+
+You can configure the ports used by the router.
+
+Example...
+```
+router:
+    http: 80
+    https: 443
+```
+
+
 Platform.CC Specific Configurations
 -----------------------------------
 

@@ -21,10 +21,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
@@ -248,42 +246,29 @@ func (d MainClient) RunContainerCommand(id string, user string, cmd []string, ou
 
 // UploadDataToContainer uploads data to container as a file.
 func (d MainClient) UploadDataToContainer(id string, path string, r io.Reader) error {
-	// TODO this is not the best way to upload a file to the container but it's the only
-	// one that seems to work for now
-	// read data as bytes
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return tracerr.Wrap(err)
-	}
 	// log debug
 	output.LogDebug(
 		"Upload to container.",
 		map[string]interface{}{
 			"container_id": id,
-			"size":         len(data),
 			"path":         path,
 		},
 	)
 	// gzip data stream
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
-	if _, err := zw.Write(data); err != nil {
+	if _, err := io.Copy(zw, r); err != nil {
 		return tracerr.Wrap(err)
 	}
 	if err := zw.Close(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// convert to base64 string
-	dataB64 := base64.StdEncoding.EncodeToString(buf.Bytes())
-	if err := d.RunContainerCommand(
-		id,
-		"root",
-		[]string{"sh", "-c", "echo '" + dataB64 + "' | base64 -d | gunzip -c > " + path},
-		nil,
-	); err != nil {
-		return tracerr.Wrap(err)
-	}
-	return nil
+	// push file to container via stdin
+	return d.ShellContainer(
+		id, "root",
+		[]string{"sh", "-c", fmt.Sprintf("cat | gunzip > %s", path)},
+		&buf,
+	)
 }
 
 // GetContainerIP gets the IP address of the given container.

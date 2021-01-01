@@ -71,10 +71,14 @@ func (d MainClient) handleResizeShell(execID string) error {
 }
 
 // ShellContainer creates an interactive shell in given container.
-func (d MainClient) ShellContainer(id string, user string, command []string) error {
+func (d MainClient) ShellContainer(id string, user string, command []string, stdin io.Reader) error {
 	// check stdin
-	fi, _ := os.Stdin.Stat()
-	hasStdin := fi.Mode()&os.ModeDevice == 0
+	hasStdin := true
+	if stdin == nil {
+		fi, _ := os.Stdin.Stat()
+		hasStdin = fi.Mode()&os.ModeDevice == 0
+		stdin = os.Stdin
+	}
 	// open shell
 	execConfig := types.ExecConfig{
 		User:         user,
@@ -115,10 +119,9 @@ func (d MainClient) ShellContainer(id string, user string, command []string) err
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		output.LogDebug("Disable interactive shell, Stdin present.", nil)
-		if _, err := io.Copy(hresp.Conn, os.Stdin); err != nil {
+		if _, err := io.Copy(hresp.Conn, stdin); err != nil {
 			return tracerr.Wrap(err)
 		}
-		//io.Copy(os.Stdout, hresp.Reader)
 		return nil
 	}
 	// create interactive shell
@@ -132,7 +135,7 @@ func (d MainClient) ShellContainer(id string, user string, command []string) err
 	}
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
 	// read/write connection to stdin and stdout
-	go func() { io.Copy(hresp.Conn, os.Stdin) }()
+	go func() { io.Copy(hresp.Conn, stdin) }()
 	io.Copy(os.Stdout, hresp.Reader)
 	return nil
 }

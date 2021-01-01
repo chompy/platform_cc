@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/def"
+
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/docker"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -70,6 +72,13 @@ func Start() error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	// load global config
+	gc, err := def.ParseGlobalYamlFile()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	HTTPPort = gc.Router.HTTP
+	HTTPSPort = gc.Router.HTTPS
 	// create network (if not already created)
 	if err := d.CreateNetwork(); err != nil {
 		return tracerr.Wrap(err)

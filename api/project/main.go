@@ -63,6 +63,11 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		fmt.Sprintf("Load project at '%s.'", path),
 	)
 	var err error
+	// global config
+	gc, err := def.ParseGlobalYamlFile()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
 	// build project
 	path, _ = filepath.Abs(path)
 	DockerClient, err := docker.NewClient()
@@ -90,7 +95,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 			return nil, tracerr.Wrap(fmt.Errorf("could not location app yaml file"))
 		}
 		for _, appYamlFileList := range appYamlFiles {
-			app, err := def.ParseAppYamlFiles(appYamlFileList)
+			app, err := def.ParseAppYamlFiles(appYamlFileList, gc)
 			if err != nil {
 				return nil, tracerr.Wrap(err)
 			}

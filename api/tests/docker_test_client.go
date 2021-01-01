@@ -204,6 +204,6 @@ func (d MockDockerClient) PullImages(containerConfigs []docker.ContainerConfig) 
 }
 
 // ShellContainer simulates shelling in to a Docker container.
-func (d MockDockerClient) ShellContainer(id string, user string, command []string) error {
+func (d MockDockerClient) ShellContainer(id string, user string, command []string, stdin io.Reader) error {
 	return nil
 }
