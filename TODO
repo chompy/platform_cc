@@ -1,9 +1,10 @@
+- App:sh freezes/hangs when project isn't started.
+- Router catch redirect loops.
 - Implement service.yaml PCC override.
-- Global project variables.
+- Generate report command, would contain docker logs + pcc logs, and other useful things to diagnose issues.
 - Tests...
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Docker mock tests.
 - Implemented but needs testing...
-    - MacOS NFS volumes.
     - Workers.
     - Platform.sh clone script

@@ -82,6 +82,16 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 			if path == "/" {
 				hasDefaultPath = true
 			}
+			to := strings.ReplaceAll(route.To, "{default}", project.OptionDomainSuffix.Value(proj.Options))
+			redirects := make([]map[string]interface{}, 0)
+			for k, v := range route.Redirects.Paths {
+				redirectTo := strings.ReplaceAll(v.To, "{default}", project.OptionDomainSuffix.Value(proj.Options))
+				redirects = append(redirects, map[string]interface{}{
+					"path": k,
+					"to":   redirectTo,
+					"code": v.Code,
+				})
+			}
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
@@ -90,19 +100,22 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 					"upstream": GetUpstreamHost(
 						proj, route.Upstream, proj.Flags.Has(project.EnableServiceRoutes),
 					),
-					"to":    route.To,
-					"route": route,
+					"to":        to,
+					"redirects": redirects,
+					"route":     route,
 				},
 			)
 		}
 		if !hasDefaultPath {
+			to := outHm["routes"].([]map[string]interface{})[0]["path"].(string)
+			to = strings.ReplaceAll(to, "{default}", project.OptionDomainSuffix.Value(proj.Options))
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
 					"path":     "/",
 					"type":     "redirect",
 					"upstream": "",
-					"to":       outHm["routes"].([]map[string]interface{})[0]["path"],
+					"to":       to,
 					"route":    nil,
 				},
 			)

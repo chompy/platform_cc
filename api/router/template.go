@@ -76,9 +76,9 @@ server {
     {{ range .routes }}
 	{{ if eq .type "upstream" }}
 	location "{{ .path }}" {
-		{{ range $k, $v := .route.Redirects.Paths }}
-		location ~ "{{ $k }}" {
-			return {{ $v.Code }} {{ $v.To }};
+		{{ range .redirects }}
+		location ~ "{{ .path }}" {
+			return {{ .code }} {{ .to }};
 		}
 		{{ end }}
 		location ~* {
