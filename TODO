@@ -1,7 +1,10 @@
-- App:sh freezes/hangs when project isn't started.
-- Router catch redirect loops.
-- Implement service.yaml PCC override.
+- Bug fixes...
+    - App:sh freezes/hangs when project isn't started.
+    - Router catch redirect loops.
 - Generate report command, would contain docker logs + pcc logs, and other useful things to diagnose issues.
+- Experiement with size limitations of STDIN.
+- Router default page to lists all available routes.
+- Implement service.yaml PCC override.
 - Tests...
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Docker mock tests.

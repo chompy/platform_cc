@@ -412,7 +412,8 @@ func (p *Project) setAppFlags() {
 			if p.Apps[i].Variables["php"] == nil {
 				p.Apps[i].Variables["php"] = make(map[string]interface{})
 			}
-			p.Apps[i].Variables["php"]["enable.opcache"] = "0"
+			p.Apps[i].Variables["php"]["enable.opcache"] = "off"
+			p.Apps[i].Variables["php"]["opcache.enable"] = "off"
 			for j := range p.Apps[i].Workers {
 				if p.Apps[i].Workers[j].Variables == nil {
 					p.Apps[i].Workers[j].Variables = make(map[string]map[string]interface{})
@@ -420,7 +421,8 @@ func (p *Project) setAppFlags() {
 				if p.Apps[i].Workers[j].Variables["php"] == nil {
 					p.Apps[i].Workers[j].Variables["php"] = make(map[string]interface{})
 				}
-				p.Apps[i].Workers[j].Variables["php"]["enable.opcache"] = "0"
+				p.Apps[i].Workers[j].Variables["php"]["enable.opcache"] = "off"
+				p.Apps[i].Workers[j].Variables["php"]["opcache.enable"] = "off"
 			}
 		}
 	}
