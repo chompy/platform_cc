@@ -72,6 +72,10 @@ func (d MainClient) handleResizeShell(execID string) error {
 
 // ShellContainer creates an interactive shell in given container.
 func (d MainClient) ShellContainer(id string, user string, command []string, stdin io.Reader) error {
+	// ensure container is running
+	if !d.isContainerRunning(id) {
+		return tracerr.Errorf("container %s is not running", id)
+	}
 	// check stdin
 	hasStdin := true
 	if stdin == nil {

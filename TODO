@@ -1,5 +1,4 @@
 - Bug fixes...
-    - App:sh freezes/hangs when project isn't started.
     - Router catch redirect loops.
 - Generate report command, would contain docker logs + pcc logs, and other useful things to diagnose issues.
 - Experiement with size limitations of STDIN.

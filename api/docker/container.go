@@ -293,6 +293,21 @@ func (d MainClient) GetContainerIP(id string) (string, error) {
 
 }
 
+// isContainerRunning returns true if given container is running.
+func (d MainClient) isContainerRunning(id string) bool {
+	data, err := d.cli.ContainerInspect(
+		context.Background(),
+		id,
+	)
+	if err != nil {
+		return false
+	}
+	if data.State == nil {
+		return false
+	}
+	return data.State.Running
+}
+
 // PullImage pulls the latest image for the given container.
 func (d MainClient) PullImage(c ContainerConfig) error {
 	done := output.Duration(
