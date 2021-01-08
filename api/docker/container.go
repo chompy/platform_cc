@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package docker
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -377,4 +378,34 @@ func (d MainClient) PullImages(containerConfigs []ContainerConfig) error {
 	}
 	wg.Wait()
 	return nil
+}
+
+// ContainerLog logs container output.
+func (d MainClient) ContainerLog(id string) {
+	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", id))
+	go func() {
+		res, err := d.cli.ContainerLogs(
+			context.Background(),
+			id,
+			types.ContainerLogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Follow:     true,
+			},
+		)
+		if err != nil {
+			output.LogError(err)
+			return
+		}
+		scanner := bufio.NewScanner(res)
+		defer res.Close()
+		for {
+			for scanner.Scan() {
+				output.LogDebug(fmt.Sprintf("[%s] %s", id, scanner.Text()), nil)
+			}
+			if err := scanner.Err(); err != nil {
+				output.LogError(err)
+			}
+		}
+	}()
 }

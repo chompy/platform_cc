@@ -73,6 +73,7 @@ func (c Container) Start() error {
 	}
 	d2()
 	done()
+	c.docker.ContainerLog(c.Config.GetContainerName())
 	return nil
 }
 

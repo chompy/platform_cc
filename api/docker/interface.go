@@ -45,4 +45,5 @@ type Client interface {
 	PullImage(c ContainerConfig) error
 	PullImages(containerConfigs []ContainerConfig) error
 	ShellContainer(id string, user string, command []string, stdin io.Reader) error
+	ContainerLog(id string)
 }
