@@ -207,3 +207,7 @@ func (d MockDockerClient) PullImages(containerConfigs []docker.ContainerConfig) 
 func (d MockDockerClient) ShellContainer(id string, user string, command []string, stdin io.Reader) error {
 	return nil
 }
+
+// ContainerLog simulates container logging.
+func (d MockDockerClient) ContainerLog(id string) {
+}
