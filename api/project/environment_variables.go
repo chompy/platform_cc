@@ -146,6 +146,7 @@ func (p *Project) GetPlatformEnvironmentVariables(d interface{}) map[string]stri
 		"PLATFORM_APPLICATION_NAME": name,
 		"PLATFORM_BRANCH":           "pcc",
 		"PLATFORM_DIR":              def.AppDir,
+		"PLATFORM_APP_DIR":          def.AppDir,
 		"PLATFORM_TREE_ID":          "-",
 		"PLATFORM_ENVIRONMENT":      "pcc",
 		"PLATFORM_VARIABLES":        p.GetPlatformVariables(d),
