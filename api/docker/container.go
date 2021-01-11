@@ -40,6 +40,9 @@ import (
 
 // StartContainer creates and starts a Docker container.
 func (d MainClient) StartContainer(c ContainerConfig) error {
+	if d.isContainerRunning(c.GetContainerName()) {
+		return nil
+	}
 	done := output.Duration(
 		fmt.Sprintf(
 			"Start Docker container for %s '%s.'",
@@ -107,25 +110,24 @@ func (d MainClient) StartContainer(c ContainerConfig) error {
 	}
 	output.LogDebug("Container created.", resp)
 	// attach container to project network
-	err = d.cli.NetworkConnect(
+	if err := d.cli.NetworkConnect(
 		context.Background(),
 		globalNetworkName,
 		resp.ID,
 		nil,
-	)
-	if err != nil {
+	); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// start container
-	err = d.cli.ContainerStart(
+	if err := d.cli.ContainerStart(
 		context.Background(),
 		resp.ID,
 		types.ContainerStartOptions{},
-	)
-	if err == nil {
-		done()
+	); err != nil {
+		return tracerr.Wrap(err)
 	}
-	return tracerr.Wrap(err)
+	done()
+	return nil
 }
 
 // GetProjectContainers gets a list of active containers for given project.

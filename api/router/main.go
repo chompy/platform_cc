@@ -40,6 +40,7 @@ var HTTPSPort = uint16(443)
 // GetContainerConfig gets container configuration for the router.
 func GetContainerConfig() docker.ContainerConfig {
 	routerCmd := `
+mkdir /www
 apk add openssl
 mkdir /etc/nginx/ssl
 cd /etc/nginx/ssl
@@ -90,6 +91,15 @@ func Start() error {
 	}
 	// start container
 	if err := d.StartContainer(containerConf); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// upload index html
+	indexHTMLReader := bytes.NewReader([]byte(routeListHTML))
+	if err := d.UploadDataToContainer(
+		containerConf.GetContainerName(),
+		"/www/index.html",
+		indexHTMLReader,
+	); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// upload nginx conf
@@ -161,6 +171,26 @@ func AddProjectRoutes(p *project.Project) error {
 	if err := Reload(); err != nil {
 		return tracerr.Wrap(err)
 	}
+	// generate and upload route list json
+	routeJSON, err := GenerateRouteListJSON(p)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	routeJSONReader := bytes.NewReader(routeJSON)
+	if err := d.UploadDataToContainer(
+		containerConf.GetContainerName(),
+		fmt.Sprintf("/www/%s.json", p.ID),
+		routeJSONReader,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// add to project list
+	d.RunContainerCommand(
+		containerConf.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", fmt.Sprintf("echo '%s' >> /www/projects.txt", p.ID)},
+		nil,
+	)
 	done()
 	return nil
 }
@@ -189,6 +219,18 @@ func DeleteProjectRoutes(p *project.Project) error {
 	}
 	if err := Reload(); err != nil {
 		return tracerr.Wrap(err)
+	}
+	// delete json file
+	if err := d.RunContainerCommand(
+		containerConf.GetContainerName(),
+		"root",
+		[]string{"rm", "-rf", fmt.Sprintf("/www/%s.json", p.ID)},
+		nil,
+	); err != nil {
+		if !strings.Contains(err.Error(), "No such container") {
+			return tracerr.Wrap(err)
+		}
+		return nil
 	}
 	done()
 	return nil

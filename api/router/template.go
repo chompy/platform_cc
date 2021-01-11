@@ -59,6 +59,17 @@ http {
     fastcgi_read_timeout      86400s;
     proxy_send_timeout        86400s;
     fastcgi_send_timeout      86400s;
+    server {
+        server_name default;
+        listen 80 default;
+        listen 443 ssl;
+        ssl_certificate /etc/nginx/ssl/server.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        root /www;
+        location / {
+            index index.html;
+        }
+    }
     include /routes/*.conf;
 }
 `
@@ -100,4 +111,92 @@ server {
     {{ end }}
 }
 {{ end }}
+`
+
+const routeListHTML = `
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Platform.CC Routes</title>
+    <style type="text/css">
+        html, body { font-family: sans-serif; }
+        table { width: 90%; }
+        th, td { padding: 5px; }
+        th { text-align: left; background-color: teal; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Routes</h1>
+        <div id="inject"></div>
+    </div>
+    <script type="text/javascript">
+        function fetchFile(name, callback) {
+            fetch(name)
+                .then(response => response.text()) 
+                .then(textString => {
+                    callback(textString);
+                }
+            );            
+        }
+        function createTableHead(values) {
+            let tr = document.createElement("thead");
+            for (let i in values) {
+                let td = document.createElement("th")
+                td.innerText = values[i];
+                tr.appendChild(td);
+            }
+            return tr;
+        }
+        function createTableRow(values) {
+            let tr = document.createElement("tr");
+            for (let i in values) {
+                let td = document.createElement("td")
+                td.innerHTML = values[i];
+                tr.appendChild(td);
+            }
+            return tr;
+        }
+        function addProject(id, data) {
+            let e = document.createElement("div");
+            let header = document.createElement("h2");
+            header.innerText = id;
+            e.appendChild(header);
+            let t = document.createElement("table");
+            t.appendChild(
+                createTableHead(["Host", "Upstream"])
+            );
+            for (let i in data) {
+                let upstream = "";
+                for (let j in data[i].routes) {
+                    if (data[i].routes[j].type == "upstream") {
+                        upstream = data[i].routes[j].upstream;
+                    }
+                }
+                t.appendChild(
+                    createTableRow(["<a target='_blank' href='//"+data[i].host+"'>"+data[i].host+"</a>", upstream])
+                );
+            }
+            e.appendChild(t);
+            document.getElementById("inject").appendChild(e);
+        }
+
+        fetchFile("projects.txt", function(data) {
+            data = data.split("\n");
+            let processed = [];
+            for (let i in data) {
+                let fileName = data[i];
+                if (!fileName || processed.indexOf(fileName) > -1) {
+                    continue;
+                }
+                fetchFile(fileName + ".json", function(data) {
+                    addProject(fileName, JSON.parse(data));
+                });
+                processed.push(fileName);
+            }
+        });
+    </script>
+</body>
+</html>
 `

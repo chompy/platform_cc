@@ -19,6 +19,7 @@ package router
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -136,4 +137,9 @@ func GenerateNginxConfig(proj *project.Project) ([]byte, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	return buf.Bytes(), nil
+}
+
+// GenerateRouteListJSON creates a list of routes for project as JSON.
+func GenerateRouteListJSON(proj *project.Project) ([]byte, error) {
+	return json.Marshal(GenerateTemplateVars(proj))
 }
