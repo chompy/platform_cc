@@ -87,8 +87,10 @@ func ParseGlobalYamlFile() (*GlobalConfig, error) {
 		done()
 		return o, nil
 	}
-	return &GlobalConfig{
+	o := &GlobalConfig{
 		Variables: make(map[string]map[string]interface{}),
-	}, nil
+	}
+	o.SetDefaults()
+	return o, nil
 
 }
