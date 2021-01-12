@@ -186,7 +186,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	configuration := map[string]interface{}{
 		"app_dir":       def.AppDir,
 		"hooks":         hooks,
-		"variables":     p.GetPlatformEnvironmentVariables(d),
+		"variables":     p.GetDefinitionEnvironmentVariables(d),
 		"timezone":      nil,
 		"disk":          disk,
 		"slug_id":       "-",
