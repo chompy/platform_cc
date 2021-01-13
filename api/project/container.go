@@ -21,6 +21,7 @@ type Container struct {
 	Name          string
 	Definition    interface{}
 	Relationships map[string][]map[string]interface{}
+	HasBuild      bool
 	docker        docker.Client
 	configJSON    []byte
 	buildCommand  string
@@ -31,7 +32,7 @@ type Container struct {
 func (p *Project) NewContainer(d interface{}) Container {
 	typeName := strings.Split(p.GetDefinitionType(d), ":")
 	configJSON, _ := p.BuildConfigJSON(d)
-	return Container{
+	o := Container{
 		Name:          p.GetDefinitionName(d),
 		Definition:    d,
 		Relationships: p.GetDefinitionRelationships(d),
@@ -46,11 +47,19 @@ func (p *Project) NewContainer(d interface{}) Container {
 			Env:        p.GetDefinitionEnvironmentVariables(d),
 			WorkingDir: def.AppDir,
 		},
+		HasBuild:     false,
 		docker:       p.docker,
 		configJSON:   configJSON,
 		buildCommand: p.GetDefinitionBuildCommand(d),
 		mountCommand: p.GetDefinitionMountCommand(d),
 	}
+	// retrieve committed image
+	committedImage, err := p.docker.GetCommittedImage(o.Config)
+	if err == nil && committedImage != "" {
+		o.Config.Image = committedImage
+		o.HasBuild = true
+	}
+	return o
 }
 
 // Start starts the container.
@@ -58,6 +67,14 @@ func (c Container) Start() error {
 	done := output.Duration(
 		fmt.Sprintf("Start %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
+	// retrieve committed image
+	committedImage, err := c.docker.GetCommittedImage(c.Config)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	if committedImage != "" {
+		c.Config.Image = committedImage
+	}
 	// start container
 	if err := c.docker.StartContainer(c.Config); err != nil {
 		return tracerr.Wrap(err)
@@ -150,6 +167,10 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 // Build runs the build hooks.
 func (c Container) Build() error {
 	if c.buildCommand == "" {
+		output.LogDebug(
+			fmt.Sprintf("Skip build for %s, no build command defined.", c.Config.GetContainerName()),
+			nil,
+		)
 		return nil
 	}
 	done := output.Duration(
@@ -224,4 +245,9 @@ func (c Container) Shell(user string, cmd []string) error {
 		cmd,
 		nil,
 	))
+}
+
+// Commit commits the container.
+func (c Container) Commit() error {
+	return tracerr.Wrap(c.docker.CommitContainer(c.Config.GetContainerName()))
 }

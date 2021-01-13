@@ -51,6 +51,7 @@ var allPurgeCmd = &cobra.Command{
 		docker, err := docker.NewClient()
 		handleError(err)
 		handleError(docker.DeleteAllContainers())
+		handleError(docker.DeleteAllImages())
 		handleError(docker.DeleteAllVolumes())
 		handleError(docker.DeleteNetwork())
 	},

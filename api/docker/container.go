@@ -205,6 +205,115 @@ func (d MainClient) deleteContainers(containers []types.Container) error {
 	return nil
 }
 
+// GetCommittedImage returns the image ID of the container's committed image if it exists.
+func (d MainClient) GetCommittedImage(c ContainerConfig) (string, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(
+		"reference",
+		fmt.Sprintf(
+			"%s%s", dockerCommitTagPrefix,
+			c.GetContainerName(),
+		),
+	)
+	imageList, err := d.cli.ImageList(
+		context.Background(),
+		types.ImageListOptions{
+			Filters: filterArgs,
+		},
+	)
+	if err != nil {
+		return "", tracerr.Wrap(err)
+	}
+	if len(imageList) > 0 {
+		return imageList[0].ID, nil
+	}
+	return "", nil
+}
+
+func (d MainClient) getProjectImages(pid string) ([]types.ImageSummary, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(
+		"reference",
+		fmt.Sprintf(
+			"%s%s*", dockerCommitTagPrefix,
+			fmt.Sprintf(dockerNamingPrefix, pid),
+		),
+	)
+	imageList, err := d.cli.ImageList(
+		context.Background(),
+		types.ImageListOptions{
+			Filters: filterArgs,
+		},
+	)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return imageList, nil
+}
+
+func (d MainClient) getAllImages() ([]types.ImageSummary, error) {
+	filterArgs := filters.NewArgs()
+	filterArgs.Add(
+		"reference",
+		fmt.Sprintf(
+			"%s*", dockerCommitTagPrefix,
+		),
+	)
+	imageList, err := d.cli.ImageList(
+		context.Background(),
+		types.ImageListOptions{
+			Filters: filterArgs,
+		},
+	)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return imageList, nil
+}
+
+func (d MainClient) deleteImages(list []types.ImageSummary) error {
+	output.LogDebug("Delete images.", list)
+	// output progress
+	msgs := make([]string, len(list))
+	for i := range list {
+		msgs[i] = list[i].ID
+	}
+	done := output.Duration("Delete Docker images.")
+	prog := output.Progress(msgs)
+	// itterate images and delete
+	for i, image := range list {
+		if _, err := d.cli.ImageRemove(
+			context.Background(),
+			image.ID,
+			types.ImageRemoveOptions{Force: true},
+		); err != nil {
+			prog(i, output.ProgressMessageError)
+			return tracerr.Wrap(err)
+		}
+		prog(i, output.ProgressMessageDone)
+	}
+	done()
+	return nil
+}
+
+// DeleteProjectImages deletes images related to a given project.
+func (d MainClient) DeleteProjectImages(pid string) error {
+	list, err := d.getProjectImages(pid)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	return tracerr.Wrap(d.deleteImages(list))
+}
+
+// DeleteAllImages deletes all images related to PCC.
+func (d MainClient) DeleteAllImages() error {
+	list, err := d.getAllImages()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	return tracerr.Wrap(d.deleteImages(list))
+}
+
 // RunContainerCommand runs a command in a container.
 func (d MainClient) RunContainerCommand(id string, user string, cmd []string, out io.Writer) error {
 	execConfig := types.ExecConfig{
@@ -410,4 +519,47 @@ func (d MainClient) ContainerLog(id string) {
 			}
 		}
 	}()
+}
+
+// CommitContainer saves the container state.
+func (d MainClient) CommitContainer(id string) error {
+	// check container state
+	data, err := d.cli.ContainerInspect(
+		context.Background(),
+		id,
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	if !data.State.Running {
+		return tracerr.Errorf("container %s is not running", id)
+	}
+	done := output.Duration(
+		fmt.Sprintf(
+			"Commit container '%s.'",
+			id,
+		),
+	)
+	// commit image
+	idResp, err := d.cli.ContainerCommit(
+		context.Background(),
+		data.ID,
+		types.ContainerCommitOptions{},
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// tag image
+	if err := d.cli.ImageTag(
+		context.Background(),
+		idResp.ID,
+		fmt.Sprintf("%s%s", dockerCommitTagPrefix, strings.Trim(data.Name, "/")),
+	); err != nil {
+		d.cli.ImageRemove(
+			context.Background(), idResp.ID, types.ImageRemoveOptions{Force: true},
+		)
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
 }

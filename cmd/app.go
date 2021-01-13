@@ -39,6 +39,7 @@ var appBuildCmd = &cobra.Command{
 		handleError(err)
 		c := proj.NewContainer(app)
 		handleError(c.Build())
+		handleError(c.Commit())
 	},
 }
 

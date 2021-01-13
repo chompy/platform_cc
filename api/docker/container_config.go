@@ -20,6 +20,7 @@ package docker
 import "fmt"
 
 const dockerNamingPrefix = "pcc-%s-"
+const dockerCommitTagPrefix = "pcc.local/build:"
 
 // containerNamePrefix is the container name prefix.
 const containerNameFormat = dockerNamingPrefix + "%s-%s"

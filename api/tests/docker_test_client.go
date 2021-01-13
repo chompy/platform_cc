@@ -211,3 +211,23 @@ func (d MockDockerClient) ShellContainer(id string, user string, command []strin
 // ContainerLog simulates container logging.
 func (d MockDockerClient) ContainerLog(id string) {
 }
+
+// CommitContainer simulates commiting a container.
+func (d MockDockerClient) CommitContainer(id string) error {
+	return nil
+}
+
+// DeleteProjectImages simulates deleting project images.
+func (d MockDockerClient) DeleteProjectImages(pid string) error {
+	return nil
+}
+
+// DeleteAllImages simulates deleting all PCC images.
+func (d MockDockerClient) DeleteAllImages() error {
+	return nil
+}
+
+// GetCommittedImage simulates retrivial of committed container image.
+func (d MockDockerClient) GetCommittedImage(c docker.ContainerConfig) (string, error) {
+	return "", nil
+}

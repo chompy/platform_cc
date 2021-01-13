@@ -40,7 +40,7 @@ var projectStartCmd = &cobra.Command{
 		handleError(proj.Start())
 		noBuildFlag := cmd.Flags().Lookup("no-build")
 		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
-			handleError(proj.Build())
+			handleError(proj.Build(false))
 		}
 		noRouterFlag := cmd.Flags().Lookup("no-router")
 		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
@@ -89,7 +89,7 @@ var projectBuildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		handleError(proj.Build())
+		handleError(proj.Build(true))
 	},
 }
 

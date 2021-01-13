@@ -46,4 +46,8 @@ type Client interface {
 	PullImages(containerConfigs []ContainerConfig) error
 	ShellContainer(id string, user string, command []string, stdin io.Reader) error
 	ContainerLog(id string)
+	CommitContainer(id string) error
+	DeleteProjectImages(pid string) error
+	DeleteAllImages() error
+	GetCommittedImage(c ContainerConfig) (string, error)
 }

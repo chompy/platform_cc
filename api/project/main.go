@@ -315,14 +315,24 @@ func (p *Project) Stop() error {
 }
 
 // Build builds all applications in the project.
-func (p *Project) Build() error {
+func (p *Project) Build(force bool) error {
 	done := output.Duration(
 		fmt.Sprintf("Build project '%s.'", p.ID),
 	)
 	// app
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
+		if c.HasBuild && !force {
+			output.LogDebug(
+				fmt.Sprintf("Skip build for %s, already committed, not forced.", c.Config.GetContainerName()),
+				nil,
+			)
+			continue
+		}
 		if err := c.Build(); err != nil {
+			return tracerr.Wrap(err)
+		}
+		if err := c.Commit(); err != nil {
 			return tracerr.Wrap(err)
 		}
 	}
@@ -355,6 +365,9 @@ func (p *Project) Purge() error {
 	if err := p.docker.DeleteProjectVolumes(p.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
+	if err := p.docker.DeleteProjectImages(p.ID); err != nil {
+		return tracerr.Wrap(err)
+	}
 	if err := os.Remove(
 		filepath.Join(p.Path, projectJSONFilename),
 	); err != nil {
@@ -374,6 +387,13 @@ func (p *Project) Pull() error {
 	}
 	for _, d := range p.Apps {
 		c := p.NewContainer(d)
+		if c.HasBuild {
+			output.LogDebug(
+				fmt.Sprintf("Skip pulling image for %s, has committed image.", c.Config.GetContainerName()),
+				nil,
+			)
+			continue
+		}
 		containerConfigs = append(containerConfigs, c.Config)
 	}
 	if err := p.docker.PullImages(containerConfigs); err != nil {
