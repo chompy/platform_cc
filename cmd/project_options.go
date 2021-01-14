@@ -33,27 +33,43 @@ var projectOptionsCmd = &cobra.Command{
 }
 
 var projectOptionListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "list [--json]",
 	Short: "List project options.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
 		handleError(err)
 		descs := project.ListOptionDescription()
-		data := make(map[string]map[string]interface{})
-		for opt, desc := range descs {
-			data[string(opt)] = map[string]interface{}{
-				"description": desc,
-				"default":     opt.DefaultValue(),
-				"value":       opt.Value(proj.Options),
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			data := make(map[string]map[string]interface{})
+			for opt, desc := range descs {
+				data[string(opt)] = map[string]interface{}{
+					"description": desc,
+					"default":     opt.DefaultValue(),
+					"value":       opt.Value(proj.Options),
+				}
 			}
+			out, err := json.MarshalIndent(
+				data,
+				"",
+				"  ",
+			)
+			handleError(err)
+			fmt.Println(string(out))
+			return
 		}
-		out, err := json.MarshalIndent(
+		// table out
+		data := make([][]string, 0)
+		for opt, desc := range descs {
+			data = append(data, []string{
+				string(opt), desc, opt.DefaultValue(), opt.Value(proj.Options),
+			})
+		}
+		drawTable(
+			[]string{"Name", "Description", "Default", "Value"},
 			data,
-			"",
-			"  ",
 		)
-		handleError(err)
-		fmt.Println(string(out))
 	},
 }
 
@@ -95,6 +111,7 @@ var projectOptionDelCmd = &cobra.Command{
 }
 
 func init() {
+	projectOptionListCmd.Flags().Bool("json", false, "JSON output")
 	projectOptionsCmd.AddCommand(projectOptionListCmd)
 	projectOptionsCmd.AddCommand(projectOptionSetCmd)
 	projectOptionsCmd.AddCommand(projectOptionDelCmd)

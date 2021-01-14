@@ -71,19 +71,42 @@ var routerDelCmd = &cobra.Command{
 }
 
 var routerListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "list [--json]",
 	Short: "List routes for project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
-		routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
-		handleError(err)
-		fmt.Println(string(routesJSON))
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
+			handleError(err)
+			fmt.Println(string(routesJSON))
+			return
+		}
+		// table out
+		data := make([][]string, 0)
+		for _, route := range proj.Routes {
+			to := route.To
+			if route.Type == "upstream" {
+				to = route.Upstream
+			}
+			data = append(data, []string{
+				route.Path,
+				route.Type,
+				to,
+			})
+		}
+		drawTable(
+			[]string{"Path", "Type", "Upstream / To"},
+			data,
+		)
 	},
 }
 
 func init() {
+	routerListCmd.Flags().Bool("json", false, "JSON output")
 	routerCmd.AddCommand(routerStartCmd)
 	routerCmd.AddCommand(routerStopCmd)
 	routerCmd.AddCommand(routerAddCmd)

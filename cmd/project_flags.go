@@ -31,27 +31,48 @@ var projectFlagCmd = &cobra.Command{
 }
 
 var projectFlagListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "list [--json]",
 	Short: "List project flags.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
 		handleError(err)
 		descs := proj.Flags.Descriptions()
 		flags := proj.Flags.List()
-		data := make(map[string]map[string]interface{})
-		for name, desc := range descs {
-			data[name] = map[string]interface{}{
-				"description": desc,
-				"enabled":     proj.Flags.Has(flags[name]),
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			data := make(map[string]map[string]interface{})
+			for name, desc := range descs {
+				data[name] = map[string]interface{}{
+					"description": desc,
+					"enabled":     proj.Flags.Has(flags[name]),
+				}
 			}
+			out, err := json.MarshalIndent(
+				data,
+				"",
+				"  ",
+			)
+			handleError(err)
+			fmt.Println(string(out))
+			return
 		}
-		out, err := json.MarshalIndent(
+		// table out
+		// TODO sort by keys
+		data := make([][]string, 0)
+		for name, desc := range descs {
+			stateStr := "off"
+			if proj.Flags.Has(flags[name]) {
+				stateStr = "on"
+			}
+			data = append(data, []string{
+				name, desc, stateStr,
+			})
+		}
+		drawTable(
+			[]string{"Name", "Description", "Enabled"},
 			data,
-			"",
-			"  ",
 		)
-		handleError(err)
-		fmt.Println(string(out))
 	},
 }
 
@@ -97,6 +118,7 @@ var projectFlagDelCmd = &cobra.Command{
 }
 
 func init() {
+	projectFlagListCmd.Flags().Bool("json", false, "JSON output")
 	projectFlagCmd.AddCommand(projectFlagListCmd)
 	projectFlagCmd.AddCommand(projectFlagSetCmd)
 	projectFlagCmd.AddCommand(projectFlagDelCmd)

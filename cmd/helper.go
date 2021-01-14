@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -71,4 +72,30 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 // handleError handles an error.
 func handleError(err error) {
 	output.Error(err)
+}
+
+// drawTable draws an ASCII table to stdout.
+func drawTable(head []string, data [][]string) {
+	truncateString := func(size int, value string) string {
+		if len(value) <= size {
+			return value
+		}
+		return value[0:size-3] + "..."
+	}
+	for i := range head {
+		head[i] = truncateString(32, head[i])
+	}
+	for i := range data {
+		for j := range data[i] {
+			data[i][j] = truncateString(256/len(data[i]), data[i][j])
+		}
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(head)
+	table.SetBorder(false)
+	table.AppendBulk(data)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	println("")
+	table.Render()
+	println("")
 }

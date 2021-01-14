@@ -128,24 +128,50 @@ var projectConfigJSONCmd = &cobra.Command{
 }
 
 var projectStatusCmd = &cobra.Command{
-	Use:   "status",
+	Use:   "status [--json]",
 	Short: "Display status of project containers.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
 		status := proj.Status()
-		out, err := json.MarshalIndent(
-			status, "", "  ",
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			out, err := json.Marshal(status)
+			handleError(err)
+			fmt.Println(string(out))
+			return
+		}
+		// table out
+		data := make([][]string, 0)
+		for _, s := range status {
+			runningStr := "stopped"
+			ipAddrStr := "n/a"
+			if s.Running {
+				runningStr = "running"
+			}
+			if s.IPAddress != "" {
+				ipAddrStr = s.IPAddress
+			}
+			data = append(data, []string{
+				s.Name,
+				s.Type,
+				runningStr,
+				ipAddrStr,
+			})
+		}
+		drawTable(
+			[]string{"Name", "Type", "Status", "IP Address"},
+			data,
 		)
-		handleError(err)
-		fmt.Println(string(out))
 	},
 }
 
 func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
+	projectStatusCmd.Flags().Bool("json", false, "JSON output")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)

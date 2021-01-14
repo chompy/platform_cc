@@ -84,25 +84,39 @@ var varDelCmd = &cobra.Command{
 }
 
 var varListCmd = &cobra.Command{
-	Use:     "list",
+	Use:     "list [--json]",
 	Aliases: []string{"l"},
 	Short:   "List project variables.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(false)
-		if err != nil {
-			return err
+		handleError(err)
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			out, err := json.MarshalIndent(proj.Variables, "", "  ")
+			handleError(err)
+			fmt.Println(string(out))
 		}
-		out, err := json.MarshalIndent(proj.Variables, "", "  ")
-		if err != nil {
-			return err
+		// table out
+		data := make([][]string, 0)
+		for key, vari := range proj.Variables {
+			for subKey, subVar := range vari {
+				data = append(data, []string{
+					fmt.Sprintf("%s.%s", key, subKey),
+					subVar,
+				})
+			}
 		}
-		fmt.Println(string(out))
-		return nil
+		drawTable(
+			[]string{"Key", "Value"},
+			data,
+		)
 	},
 }
 
 func init() {
+	varListCmd.Flags().Bool("json", false, "JSON output")
 	varCmd.AddCommand(varSetCmd)
 	varCmd.AddCommand(varGetCmd)
 	varCmd.AddCommand(varDelCmd)
