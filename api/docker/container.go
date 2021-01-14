@@ -390,10 +390,13 @@ func (d MainClient) GetContainerIP(id string) (string, error) {
 		id,
 	)
 	if err != nil {
-		return "", err
+		return "", tracerr.Wrap(err)
+	}
+	if !data.State.Running {
+		return "", tracerr.Errorf("container %s is not running", id)
 	}
 	output.LogDebug(
-		fmt.Sprintf("Inspected container (%s) for IP address.", id),
+		fmt.Sprintf("Inspected container %s for IP address.", id),
 		data.NetworkSettings,
 	)
 	for name, network := range data.NetworkSettings.Networks {
@@ -401,7 +404,7 @@ func (d MainClient) GetContainerIP(id string) (string, error) {
 			return network.IPAddress, nil
 		}
 	}
-	return "", tracerr.Wrap(fmt.Errorf("network not found for container '%s'", id))
+	return "", tracerr.Wrap(fmt.Errorf("network not found for container %s", id))
 
 }
 

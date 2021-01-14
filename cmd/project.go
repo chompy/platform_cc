@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -126,6 +127,22 @@ var projectConfigJSONCmd = &cobra.Command{
 	},
 }
 
+var projectStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Display status of project containers.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output.Enable = false
+		proj, err := getProject(true)
+		handleError(err)
+		status := proj.Status()
+		out, err := json.MarshalIndent(
+			status, "", "  ",
+		)
+		handleError(err)
+		fmt.Println(string(out))
+	},
+}
+
 func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
@@ -137,5 +154,6 @@ func init() {
 	projectCmd.AddCommand(projectDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
+	projectCmd.AddCommand(projectStatusCmd)
 	RootCmd.AddCommand(projectCmd)
 }
