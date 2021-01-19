@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/api/docker"
+	"gitlab.com/contextualcode/platform_cc/api/container"
 )
 
 var allCmd = &cobra.Command{
@@ -34,11 +34,10 @@ var allStopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop all PCC containers.",
 	Run: func(cmd *cobra.Command, args []string) {
-		docker, err := docker.NewClient()
-		if err != nil {
-			handleError(err)
-		}
-		handleError(docker.DeleteAllContainers())
+		// TODO configurable
+		containerHandler, err := container.NewDocker()
+		handleError(err)
+		handleError(containerHandler.AllStop())
 	},
 }
 
@@ -48,12 +47,10 @@ var allPurgeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("!!! WARNING: PURGING ALL PLATFORM.CC DATA IN 5 SECONDS !!!")
 		time.Sleep(5 * time.Second)
-		docker, err := docker.NewClient()
+		// TODO configurable
+		containerHandler, err := container.NewDocker()
 		handleError(err)
-		handleError(docker.DeleteAllContainers())
-		handleError(docker.DeleteAllImages())
-		handleError(docker.DeleteAllVolumes())
-		handleError(docker.DeleteNetwork())
+		handleError(containerHandler.AllPurge())
 	},
 }
 

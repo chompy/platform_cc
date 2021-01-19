@@ -15,26 +15,24 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// Package docker provides an abstraction to the Docker API.
-package docker
+package container
 
 import (
-	"github.com/docker/docker/client"
-	"github.com/ztrue/tracerr"
+	"io"
 )
 
-// MainClient is the main Docker client for PCC.
-type MainClient struct {
-	cli *client.Client
-}
-
-// NewClient creates a docker client.
-func NewClient() (MainClient, error) {
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return MainClient{}, tracerr.Wrap(err)
-	}
-	return MainClient{
-		cli: cli,
-	}, nil
+// Interface defines methods used to interact with container.
+type Interface interface {
+	ContainerStart(c Config) error
+	ContainerCommand(id string, user string, cmd []string, out io.Writer) error
+	ContainerShell(id string, user string, command []string, stdin io.Reader) error
+	ContainerStatus(id string) (Status, error)
+	ContainerUpload(id string, path string, r io.Reader) error
+	ContainerLog(id string) (io.ReadCloser, error)
+	ContainerCommit(id string) error
+	ImagePull(c []Config) error
+	ProjectStop(pid string) error
+	ProjectPurge(pid string) error
+	AllStop() error
+	AllPurge() error
 }

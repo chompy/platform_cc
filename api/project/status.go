@@ -17,6 +17,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package project
 
+import (
+	"gitlab.com/contextualcode/platform_cc/api/output"
+)
+
 // ContainerStatus defines the status of a container.
 type ContainerStatus struct {
 	Name      string    `json:"name"`
@@ -31,24 +35,32 @@ func (p *Project) Status() []ContainerStatus {
 	out := make([]ContainerStatus, 0)
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
-		ipAddress, _ := c.docker.GetContainerIP(c.Config.GetContainerName())
+		status, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
+		if err != nil {
+			output.LogError(err)
+			continue
+		}
 		out = append(out, ContainerStatus{
 			Name:      app.Name,
 			Type:      app.Type,
 			Container: c,
-			Running:   ipAddress != "",
-			IPAddress: ipAddress,
+			Running:   status.Running,
+			IPAddress: status.IPAddress,
 		})
 	}
 	for _, service := range p.Services {
 		c := p.NewContainer(service)
-		ipAddress, _ := c.docker.GetContainerIP(c.Config.GetContainerName())
+		status, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
+		if err != nil {
+			output.LogError(err)
+			continue
+		}
 		out = append(out, ContainerStatus{
 			Name:      service.Name,
 			Type:      service.Type,
 			Container: c,
-			Running:   ipAddress != "",
-			IPAddress: ipAddress,
+			Running:   status.Running,
+			IPAddress: status.IPAddress,
 		})
 	}
 	return out

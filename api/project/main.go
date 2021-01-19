@@ -31,8 +31,8 @@ import (
 
 	"github.com/martinlindhe/base36"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
-	"gitlab.com/contextualcode/platform_cc/api/docker"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -45,16 +45,16 @@ const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // Project defines a platform.sh/cc project.
 type Project struct {
-	ID            string                       `json:"id"`
-	Path          string                       `json:"-"`
-	Apps          []def.App                    `json:"-"`
-	Routes        []def.Route                  `json:"-"`
-	Services      []def.Service                `json:"-"`
-	Variables     map[string]map[string]string `json:"vars"`
-	Flags         Flag                         `json:"flags"`
-	Options       map[Option]string            `json:"options"`
-	relationships []map[string]interface{}
-	docker        docker.Client
+	ID               string                       `json:"id"`
+	Path             string                       `json:"-"`
+	Apps             []def.App                    `json:"-"`
+	Routes           []def.Route                  `json:"-"`
+	Services         []def.Service                `json:"-"`
+	Variables        map[string]map[string]string `json:"vars"`
+	Flags            Flag                         `json:"flags"`
+	Options          map[Option]string            `json:"options"`
+	relationships    []map[string]interface{}
+	containerHandler container.Interface
 }
 
 // LoadFromPath loads a project from its path.
@@ -70,17 +70,18 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	}
 	// build project
 	path, _ = filepath.Abs(path)
-	DockerClient, err := docker.NewClient()
+	// TODO allow container handler to be configured
+	containerHandler, err := container.NewDocker()
 	if err != nil {
 		return nil, err
 	}
 	o := &Project{
-		ID:            "",
-		Path:          path,
-		Variables:     make(map[string]map[string]string),
-		Options:       make(map[Option]string),
-		docker:        DockerClient,
-		relationships: make([]map[string]interface{}, 0),
+		ID:               "",
+		Path:             path,
+		Variables:        make(map[string]map[string]string),
+		Options:          make(map[Option]string),
+		containerHandler: containerHandler,
+		relationships:    make([]map[string]interface{}, 0),
 	}
 	o.Load()
 	if o.ID == "" {
@@ -210,10 +211,6 @@ func (p *Project) Start() error {
 	if err := p.Pull(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// create network (if not already created)
-	if err := p.docker.CreateNetwork(); err != nil {
-		return tracerr.Wrap(err)
-	}
 	// services
 	for _, service := range p.Services {
 		// skip if service requires relationships (start after apps start)
@@ -235,10 +232,6 @@ func (p *Project) Start() error {
 	}
 	// app
 	for _, app := range p.Apps {
-		// prepare nfs volume (if needed)
-		if err := prepareNfsVolume(p, app); err != nil {
-			return tracerr.Wrap(err)
-		}
 		// start
 		c := p.NewContainer(app)
 		if err := c.Start(); err != nil {
@@ -259,10 +252,6 @@ func (p *Project) Start() error {
 		if p.Flags.Has(EnableWorkers) {
 			for _, worker := range app.Workers {
 				wc := p.NewContainer(*worker)
-				// prepare nfs volume (if needed)
-				if err := prepareNfsVolume(p, *worker); err != nil {
-					return tracerr.Wrap(err)
-				}
 				// start
 				if err := wc.Start(); err != nil {
 					return tracerr.Wrap(err)
@@ -307,7 +296,7 @@ func (p *Project) Stop() error {
 	done := output.Duration(
 		fmt.Sprintf("Stop project '%s.'", p.ID),
 	)
-	if err := p.docker.DeleteProjectContainers(p.ID); err != nil {
+	if err := p.containerHandler.ProjectStop(p.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -362,10 +351,7 @@ func (p *Project) Purge() error {
 		return tracerr.Wrap(err)
 	}
 	done := output.Duration(fmt.Sprintf("Purge project '%s.'", p.ID))
-	if err := p.docker.DeleteProjectVolumes(p.ID); err != nil {
-		return tracerr.Wrap(err)
-	}
-	if err := p.docker.DeleteProjectImages(p.ID); err != nil {
+	if err := p.containerHandler.ProjectPurge(p.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
 	if err := os.Remove(
@@ -380,7 +366,7 @@ func (p *Project) Purge() error {
 // Pull fetches all the Docker container images needed by the project.
 func (p *Project) Pull() error {
 	done := output.Duration("Pull images.")
-	containerConfigs := make([]docker.ContainerConfig, 0)
+	containerConfigs := make([]container.Config, 0)
 	for _, d := range p.Services {
 		c := p.NewContainer(d)
 		containerConfigs = append(containerConfigs, c.Config)
@@ -396,7 +382,7 @@ func (p *Project) Pull() error {
 		}
 		containerConfigs = append(containerConfigs, c.Config)
 	}
-	if err := p.docker.PullImages(containerConfigs); err != nil {
+	if err := p.containerHandler.ImagePull(containerConfigs); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -448,7 +434,7 @@ func (p *Project) setAppFlags() {
 	}
 }
 
-// SetDockerClient sets the Docker client.
-func (p *Project) SetDockerClient(c docker.Client) {
-	p.docker = c
+// SetContainerHandler sets the container handler.
+func (p *Project) SetContainerHandler(c container.Interface) {
+	p.containerHandler = c
 }

@@ -1,6 +1,7 @@
 package project
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
@@ -8,24 +9,25 @@ import (
 	"os"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/container"
+
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
-	"gitlab.com/contextualcode/platform_cc/api/docker"
 )
 
 // Container contains information needed to run a container.
 type Container struct {
-	Config        docker.ContainerConfig
-	Name          string
-	Definition    interface{}
-	Relationships map[string][]map[string]interface{}
-	HasBuild      bool
-	docker        docker.Client
-	configJSON    []byte
-	buildCommand  string
-	mountCommand  string
+	Config           container.Config
+	Name             string
+	Definition       interface{}
+	Relationships    map[string][]map[string]interface{}
+	HasBuild         bool
+	containerHandler container.Interface
+	configJSON       []byte
+	buildCommand     string
+	mountCommand     string
 }
 
 // NewContainer creates a new container.
@@ -36,7 +38,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 		Name:          p.GetDefinitionName(d),
 		Definition:    d,
 		Relationships: p.GetDefinitionRelationships(d),
-		Config: docker.ContainerConfig{
+		Config: container.Config{
 			ProjectID:  p.ID,
 			ObjectType: p.GetDefinitionContainerType(d),
 			ObjectName: p.GetDefinitionName(d),
@@ -47,17 +49,10 @@ func (p *Project) NewContainer(d interface{}) Container {
 			Env:        p.GetDefinitionEnvironmentVariables(d),
 			WorkingDir: def.AppDir,
 		},
-		HasBuild:     false,
-		docker:       p.docker,
-		configJSON:   configJSON,
-		buildCommand: p.GetDefinitionBuildCommand(d),
-		mountCommand: p.GetDefinitionMountCommand(d),
-	}
-	// retrieve committed image
-	committedImage, err := p.docker.GetCommittedImage(o.Config)
-	if err == nil && committedImage != "" {
-		o.Config.Image = committedImage
-		o.HasBuild = true
+		containerHandler: p.containerHandler,
+		configJSON:       configJSON,
+		buildCommand:     p.GetDefinitionBuildCommand(d),
+		mountCommand:     p.GetDefinitionMountCommand(d),
 	}
 	return o
 }
@@ -67,21 +62,13 @@ func (c Container) Start() error {
 	done := output.Duration(
 		fmt.Sprintf("Start %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
-	// retrieve committed image
-	committedImage, err := c.docker.GetCommittedImage(c.Config)
-	if err != nil {
-		return tracerr.Wrap(err)
-	}
-	if committedImage != "" {
-		c.Config.Image = committedImage
-	}
 	// start container
-	if err := c.docker.StartContainer(c.Config); err != nil {
+	if err := c.containerHandler.ContainerStart(c.Config); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// upload config.json
 	d2 := output.Duration("Upload config.json.")
-	if err := c.docker.UploadDataToContainer(
+	if err := c.containerHandler.ContainerUpload(
 		c.Config.GetContainerName(),
 		"/run/config.json",
 		bytes.NewReader(c.configJSON),
@@ -90,8 +77,7 @@ func (c Container) Start() error {
 	}
 	d2()
 	done()
-	c.docker.ContainerLog(c.Config.GetContainerName())
-	return nil
+	return c.Log()
 }
 
 // Open opens the container and returns the relationships.
@@ -102,7 +88,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	)
 	// start service
 	d2 := output.Duration("Start service.")
-	if err := c.docker.RunContainerCommand(
+	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", serviceStartCmd},
@@ -126,7 +112,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	d2 = output.Duration("Open service.")
 	var openOutput bytes.Buffer
 	cmd := fmt.Sprintf(serviceOpenCmd, relB64)
-	if err := c.docker.RunContainerCommand(
+	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", cmd},
@@ -142,9 +128,15 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	json.Unmarshal(rlRaw, &data)
 	// get ip address
-	ipAddress, err := c.docker.GetContainerIP(c.Config.GetContainerName())
+	containerStatus, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 	if err != nil {
 		return nil, tracerr.Wrap(err)
+	}
+	if !containerStatus.Running {
+		return nil, tracerr.New("container not running")
+	}
+	if containerStatus.IPAddress == "" {
+		return nil, tracerr.New("container has no ip address")
 	}
 	out := make([]map[string]interface{}, 0)
 	for k, v := range data {
@@ -155,7 +147,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		rel["rel"] = k
 		rel["host"] = c.Config.GetContainerName()
 		rel["hostname"] = c.Config.GetContainerName()
-		rel["ip"] = ipAddress
+		rel["ip"] = containerStatus.IPAddress
 		out = append(out, rel)
 	}
 	d2()
@@ -177,7 +169,7 @@ func (c Container) Build() error {
 		fmt.Sprintf("Building %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
 	// run command
-	if err := c.docker.RunContainerCommand(
+	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", c.buildCommand},
@@ -198,7 +190,7 @@ func (c Container) SetupMounts() error {
 		fmt.Sprintf("Set up mounts for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
 	// run command
-	if err := c.docker.RunContainerCommand(
+	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", c.mountCommand},
@@ -215,7 +207,7 @@ func (c Container) Deploy() error {
 	done := output.Duration(
 		fmt.Sprintf("Running deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
-	if err := c.docker.RunContainerCommand(
+	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", appDeployCmd},
@@ -239,7 +231,7 @@ func (c Container) Shell(user string, cmd []string) error {
 	if len(cmd) == 0 {
 		cmd = []string{"bash"}
 	}
-	return tracerr.Wrap(c.docker.ShellContainer(
+	return tracerr.Wrap(c.containerHandler.ContainerShell(
 		c.Config.GetContainerName(),
 		user,
 		cmd,
@@ -247,7 +239,30 @@ func (c Container) Shell(user string, cmd []string) error {
 	))
 }
 
+// Log outputs container logs to stdout.
+func (c Container) Log() error {
+	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
+	go func() {
+		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName())
+		if err != nil {
+			output.LogError(err)
+			return
+		}
+		scanner := bufio.NewScanner(out)
+		defer out.Close()
+		for {
+			for scanner.Scan() {
+				output.LogDebug(fmt.Sprintf("[%s] %s", c.Config.GetContainerName(), scanner.Text()), nil)
+			}
+			if err := scanner.Err(); err != nil {
+				output.LogError(err)
+			}
+		}
+	}()
+	return nil
+}
+
 // Commit commits the container.
 func (c Container) Commit() error {
-	return tracerr.Wrap(c.docker.CommitContainer(c.Config.GetContainerName()))
+	return tracerr.Wrap(c.containerHandler.ContainerCommit(c.Config.GetContainerName()))
 }

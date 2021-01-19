@@ -26,7 +26,7 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/def"
 
 	"github.com/ztrue/tracerr"
-	"gitlab.com/contextualcode/platform_cc/api/docker"
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
@@ -38,7 +38,7 @@ var HTTPPort = uint16(80)
 var HTTPSPort = uint16(443)
 
 // GetContainerConfig gets container configuration for the router.
-func GetContainerConfig() docker.ContainerConfig {
+func GetContainerConfig() container.Config {
 	routerCmd := `
 mkdir /www
 apk add openssl
@@ -52,10 +52,10 @@ openssl req -new -key server.key -out server.csr \
 openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 nginx -g "daemon off;"
 `
-	return docker.ContainerConfig{
+	return container.Config{
 		ProjectID:  "_",
 		ObjectName: "router",
-		ObjectType: docker.ObjectContainerRouter,
+		ObjectType: container.ObjectContainerRouter,
 		Command:    []string{"sh", "-c", routerCmd},
 		Image:      "docker.io/library/nginx:1.19-alpine",
 		WorkingDir: "/routes",
@@ -69,7 +69,8 @@ nginx -g "daemon off;"
 // Start starts the router.
 func Start() error {
 	done := output.Duration("Start main router.")
-	d, err := docker.NewClient()
+	// TODO make container handler configurable
+	d, err := container.NewDocker()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -80,22 +81,19 @@ func Start() error {
 	}
 	HTTPPort = gc.Router.HTTP
 	HTTPSPort = gc.Router.HTTPS
-	// create network (if not already created)
-	if err := d.CreateNetwork(); err != nil {
-		return tracerr.Wrap(err)
-	}
+
 	// get container config and pull image
 	containerConf := GetContainerConfig()
-	if err := d.PullImage(containerConf); err != nil {
+	if err := d.ImagePull([]container.Config{containerConf}); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// start container
-	if err := d.StartContainer(containerConf); err != nil {
+	if err := d.ContainerStart(containerConf); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// upload index html
 	indexHTMLReader := bytes.NewReader([]byte(routeListHTML))
-	if err := d.UploadDataToContainer(
+	if err := d.ContainerUpload(
 		containerConf.GetContainerName(),
 		"/www/index.html",
 		indexHTMLReader,
@@ -104,7 +102,7 @@ func Start() error {
 	}
 	// upload nginx conf
 	nginxConfReader := bytes.NewReader([]byte(nginxBaseConf))
-	if err := d.UploadDataToContainer(
+	if err := d.ContainerUpload(
 		containerConf.GetContainerName(),
 		"/etc/nginx/nginx.conf",
 		nginxConfReader,
@@ -118,11 +116,11 @@ func Start() error {
 // Stop stops the router.
 func Stop() error {
 	done := output.Duration("Stop main router.")
-	d, err := docker.NewClient()
+	d, err := container.NewDocker()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	if err := d.DeleteProjectContainers("router"); err != nil {
+	if err := d.ProjectStop("router"); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -131,12 +129,12 @@ func Stop() error {
 
 // Reload issues reload command to nginx in router container.
 func Reload() error {
-	d, err := docker.NewClient()
+	d, err := container.NewDocker()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	containerConf := GetContainerConfig()
-	return tracerr.Wrap(d.RunContainerCommand(
+	return tracerr.Wrap(d.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"nginx", "-s", "reload"},
@@ -149,7 +147,7 @@ func AddProjectRoutes(p *project.Project) error {
 	done := output.Duration(
 		fmt.Sprintf("Add routes for project '%s.'", p.ID),
 	)
-	d, err := docker.NewClient()
+	d, err := container.NewDocker()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -161,7 +159,7 @@ func AddProjectRoutes(p *project.Project) error {
 	}
 	// upload to container
 	configReader := bytes.NewReader(routerNginxConf)
-	if err := d.UploadDataToContainer(
+	if err := d.ContainerUpload(
 		containerConf.GetContainerName(),
 		fmt.Sprintf("/routes/%s.conf", p.ID),
 		configReader,
@@ -177,7 +175,7 @@ func AddProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	routeJSONReader := bytes.NewReader(routeJSON)
-	if err := d.UploadDataToContainer(
+	if err := d.ContainerUpload(
 		containerConf.GetContainerName(),
 		fmt.Sprintf("/www/%s.json", p.ID),
 		routeJSONReader,
@@ -185,7 +183,7 @@ func AddProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	// add to project list
-	d.RunContainerCommand(
+	d.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", fmt.Sprintf("echo '%s' >> /www/projects.txt", p.ID)},
@@ -200,13 +198,13 @@ func DeleteProjectRoutes(p *project.Project) error {
 	done := output.Duration(
 		fmt.Sprintf("Delete routes for project '%s.'", p.ID),
 	)
-	d, err := docker.NewClient()
+	d, err := container.NewDocker()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	containerConf := GetContainerConfig()
 	// delete config file
-	if err := d.RunContainerCommand(
+	if err := d.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
@@ -221,7 +219,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	// delete json file
-	if err := d.RunContainerCommand(
+	if err := d.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"rm", "-rf", fmt.Sprintf("/www/%s.json", p.ID)},

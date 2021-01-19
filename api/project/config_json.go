@@ -28,11 +28,6 @@ import (
 func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	// determine uid/gid to set
 	uid, gid := p.getUID()
-	// get host ip
-	hostIP, err := p.docker.GetNetworkHostIP()
-	if err != nil {
-		hostIP = "-"
-	}
 	// get name + build app json
 	name := ""
 	appJsons := make([]map[string]interface{}, 0)
@@ -68,7 +63,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		"primary_ip":   "127.0.0.1",
 		"features":     []string{},
 		"domainname":   fmt.Sprintf("%s.pcc.local", p.ID),
-		"host_ip":      hostIP,
+		"host_ip":      "127.0.0.1",
 		"applications": appJsons,
 		"configuration": map[string]interface{}{
 			"access": map[string]interface{}{
@@ -111,7 +106,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		"service":    name,
 		"cluster":    "-",
 		"region":     "pcc.local",
-		"hostname":   hostIP,
+		"hostname":   "pcc.local",
 		"instance":   p.ID,
 		"nameserver": "127.0.0.11",
 		"web_uid":    uid,

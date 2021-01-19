@@ -1,0 +1,363 @@
+/*
+This file is part of Platform.CC.
+
+Platform.CC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Platform.CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+package container
+
+import (
+	"bytes"
+	"compress/gzip"
+	"context"
+	"fmt"
+	"io"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-connections/nat"
+	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
+)
+
+// ContainerStart starts a Docker container.
+func (d Docker) ContainerStart(c Config) error {
+	// ensure not already running
+	if status, _ := d.ContainerStatus(c.GetContainerName()); status.Running {
+		return nil
+	}
+	done := output.Duration(
+		fmt.Sprintf(
+			"Start Docker container for %s '%s.'",
+			c.ObjectType.TypeName(),
+			c.ObjectName,
+		),
+	)
+	// get mounts
+	mounts := make([]mount.Mount, 0)
+	for k, v := range c.Volumes {
+		if k == "" || v == "" {
+			continue
+		}
+		mounts = append(mounts, mount.Mount{
+			Type:   mount.TypeVolume,
+			Source: getVolumeName(c.ProjectID, k, c.ObjectType),
+			Target: v,
+		})
+	}
+	for k, v := range c.Binds {
+		if k == "" || v == "" {
+			continue
+		}
+		// use nfs if macos
+		if isMacOS() {
+			if err := d.createNFSVolume(
+				c.ProjectID, path.Base(v), k, c.ObjectType,
+			); err != nil {
+				return tracerr.Wrap(err)
+			}
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeVolume,
+				Source: getVolumeName(c.ProjectID, path.Base(v), c.ObjectType),
+				Target: v,
+			})
+			continue
+		}
+		mounts = append(mounts, mount.Mount{
+			Type:   mount.TypeBind,
+			Source: k,
+			Target: v,
+		})
+	}
+	// get port mappings
+	exposedPorts, portBinding, err := nat.ParsePortSpecs(c.Ports)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// create network
+	if err := d.createNetwork(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// check for committed image
+	image := fmt.Sprintf("%s%s", containerCommitTagPrefix, c.GetContainerName())
+	if !d.hasImage(image) {
+		image = c.Image
+	}
+	// create container
+	cConfig := &container.Config{
+		Image:        image,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Cmd:          c.GetCommand(),
+		Env:          c.GetEnv(),
+		WorkingDir:   c.WorkingDir,
+		ExposedPorts: exposedPorts,
+	}
+	cHostConfig := &container.HostConfig{
+		AutoRemove:   true,
+		Privileged:   true,
+		Mounts:       mounts,
+		PortBindings: portBinding,
+	}
+	output.LogDebug(fmt.Sprintf("Container create. (Name %s)", c.GetContainerName()), []interface{}{cConfig, cHostConfig})
+	resp, err := d.client.ContainerCreate(
+		context.Background(),
+		cConfig,
+		cHostConfig,
+		&network.NetworkingConfig{},
+		c.GetContainerName(),
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "already in use") {
+			return nil
+		}
+		return tracerr.Wrap(err)
+	}
+	output.LogDebug("Container created.", resp)
+	// attach container to project network
+	if err := d.client.NetworkConnect(
+		context.Background(),
+		dockerNetworkName,
+		resp.ID,
+		nil,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// start container
+	if err := d.client.ContainerStart(
+		context.Background(),
+		resp.ID,
+		types.ContainerStartOptions{},
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
+
+// ContainerCommand runs a command inside a Docker container.
+func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+	execConfig := types.ExecConfig{
+		User:         user,
+		Tty:          true,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Cmd:          cmd,
+	}
+	output.LogDebug(fmt.Sprintf("Container exec create. (Container ID %s)", id), execConfig)
+	resp, err := d.client.ContainerExecCreate(
+		context.Background(),
+		id,
+		execConfig,
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	output.LogDebug("Container exec created.", resp.ID)
+	hresp, err := d.client.ContainerExecAttach(
+		context.Background(),
+		resp.ID,
+		execConfig,
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// get command stdout
+	var buf bytes.Buffer
+	var mWriter io.Writer
+	mWriter = &buf
+	if out != nil {
+		mWriter = io.MultiWriter(&buf, out)
+	}
+	if _, err := io.Copy(mWriter, hresp.Reader); err != nil {
+		return tracerr.Wrap(err)
+	}
+	output.LogDebug("Container exec finished.", string(buf.Bytes()))
+	return nil
+}
+
+// ContainerStatus returns status of Docker container.
+func (d Docker) ContainerStatus(id string) (Status, error) {
+	data, err := d.client.ContainerInspect(
+		context.Background(),
+		id,
+	)
+	if err != nil {
+		return Status{Running: false}, tracerr.Wrap(err)
+	}
+	ipAddress := ""
+	for name, network := range data.NetworkSettings.Networks {
+		if name == dockerNetworkName {
+			ipAddress = network.IPAddress
+			break
+		}
+	}
+	return Status{
+		Name:      data.Name,
+		Running:   data.State.Running,
+		IPAddress: ipAddress,
+	}, nil
+}
+
+// ContainerUpload uploads a file to a Docker container.
+func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
+	// log debug
+	output.LogDebug(
+		"Upload to container.",
+		map[string]interface{}{
+			"container_id": id,
+			"path":         path,
+		},
+	)
+	// gzip data stream
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := io.Copy(zw, r); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := zw.Close(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// push file to container via stdin
+	return d.ContainerShell(
+		id, "root",
+		[]string{"sh", "-c", fmt.Sprintf("cat | gunzip > %s", path)},
+		&buf,
+	)
+}
+
+// ContainerLog returns a reader containing log data for a Docker container.
+func (d Docker) ContainerLog(id string) (io.ReadCloser, error) {
+	output.LogDebug(fmt.Sprintf("Read logs for container '%s.'", id), nil)
+	return d.client.ContainerLogs(
+		context.Background(),
+		id,
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Follow:     true,
+		},
+	)
+}
+
+// ContainerCommit stores a Docker container's state as an image.
+func (d Docker) ContainerCommit(id string) error {
+	// check container state
+	data, err := d.client.ContainerInspect(
+		context.Background(),
+		id,
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	if !data.State.Running {
+		return tracerr.Errorf("container %s is not running", id)
+	}
+	done := output.Duration(
+		fmt.Sprintf(
+			"Commit container '%s.'",
+			id,
+		),
+	)
+	// commit image
+	idResp, err := d.client.ContainerCommit(
+		context.Background(),
+		data.ID,
+		types.ContainerCommitOptions{},
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// tag image
+	if err := d.client.ImageTag(
+		context.Background(),
+		idResp.ID,
+		fmt.Sprintf("%s%s", containerCommitTagPrefix, strings.Trim(data.Name, "/")),
+	); err != nil {
+		d.client.ImageRemove(
+			context.Background(), idResp.ID, types.ImageRemoveOptions{Force: true},
+		)
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
+
+// listProjectContainers gets a list of active containers for given project.
+func (d Docker) listProjectContainers(pid string) ([]types.Container, error) {
+	output.LogDebug(fmt.Sprintf("List containers for project '%s.'", pid), nil)
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
+	return d.client.ContainerList(
+		context.Background(),
+		types.ContainerListOptions{
+			Filters: filterArgs,
+		},
+	)
+}
+
+// listAllContainers gets a list of all active Platform.CC containers.
+func (d Docker) listAllContainers() ([]types.Container, error) {
+	output.LogDebug("List all Platform.CC containers.", nil)
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("name", "pcc-*")
+	return d.client.ContainerList(
+		context.Background(),
+		types.ContainerListOptions{
+			Filters: filterArgs,
+		},
+	)
+}
+
+// deleteContainers deletes all provided containers.
+func (d Docker) deleteContainers(containers []types.Container) error {
+	timeout := 30 * time.Second
+	output.LogDebug("Delete containers.", containers)
+	// output progress
+	msgs := make([]string, len(containers))
+	for i := range containers {
+		msgs[i] = strings.Trim(containers[i].Names[0], "/")
+	}
+	done := output.Duration("Delete Docker containers.")
+	prog := output.Progress(msgs)
+	// itterate containers and stop
+	var wg sync.WaitGroup
+	for i := range containers {
+		wg.Add(1)
+		go func(cid string, i int) {
+			defer wg.Done()
+			if err := d.client.ContainerStop(
+				context.Background(),
+				cid,
+				&timeout,
+			); err != nil {
+				prog(i, output.ProgressMessageError)
+				output.LogError(err)
+			}
+			prog(i, output.ProgressMessageDone)
+		}(containers[i].ID, i)
+	}
+	wg.Wait()
+	done()
+	return nil
+}

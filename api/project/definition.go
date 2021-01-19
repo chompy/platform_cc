@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
-	"gitlab.com/contextualcode/platform_cc/api/docker"
 )
+
+const containerDataDirectory = "/mnt/data"
 
 // GetDefinitionName returns the name of given definition.
 func (p *Project) GetDefinitionName(d interface{}) string {
@@ -51,7 +53,7 @@ func (p *Project) GetDefinitionType(d interface{}) string {
 
 // GetDefinitionHostName returns the host name for the container of the given definition.
 func (p *Project) GetDefinitionHostName(d interface{}) string {
-	dummyConfig := docker.ContainerConfig{
+	dummyConfig := container.Config{
 		ProjectID:  p.ID,
 		ObjectType: p.GetDefinitionContainerType(d),
 		ObjectName: p.GetDefinitionName(d),
@@ -83,27 +85,26 @@ func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 }
 
 // GetDefinitionContainerType returns the container type for given definition.
-func (p *Project) GetDefinitionContainerType(d interface{}) docker.ObjectContainerType {
+func (p *Project) GetDefinitionContainerType(d interface{}) container.ObjectContainerType {
 	switch d.(type) {
 	case def.App:
 		{
-			return docker.ObjectContainerApp
+			return container.ObjectContainerApp
 		}
 	case def.AppWorker:
 		{
-			return docker.ObjectContainerWorker
+			return container.ObjectContainerWorker
 		}
 	case def.Service:
 		{
-			return docker.ObjectContainerService
+			return container.ObjectContainerService
 		}
 	}
-	return docker.ObjectContainerNone
+	return container.ObjectContainerNone
 }
 
 // GetDefinitionVolumes returns list of Docker volumes for given definition.
 func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
-	objectContainerType := docker.ObjectContainerApp
 	name := ""
 	switch d.(type) {
 	case def.App:
@@ -114,22 +115,16 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 	case def.AppWorker:
 		{
 			name = d.(def.AppWorker).Name
-			objectContainerType = docker.ObjectContainerWorker
 			break
 		}
 	case def.Service:
 		{
 			name = d.(def.Service).Name
-			objectContainerType = docker.ObjectContainerService
 			break
 		}
 	}
 	out := map[string]string{
-		docker.GetVolumeName(p.ID, name, objectContainerType): containerDataDirectory,
-	}
-	if p.Flags.Has(EnableOSXNFSMounts) && isMacOS() && objectContainerType != docker.ObjectContainerService {
-		volName := docker.GetVolumeName(p.ID, name+"-nfs", objectContainerType)
-		out[volName] = def.AppDir
+		name: containerDataDirectory,
 	}
 	return out
 }
@@ -152,9 +147,6 @@ func (p *Project) GetDefinitionBinds(d interface{}) map[string]string {
 		{
 			return map[string]string{}
 		}
-	}
-	if p.Flags.Has(EnableOSXNFSMounts) && isMacOS() {
-		return map[string]string{}
 	}
 	return map[string]string{
 		path: def.AppDir,
