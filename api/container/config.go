@@ -20,7 +20,6 @@ package container
 import "fmt"
 
 const containerNamingPrefix = "pcc-%s-"
-const containerCommitTagPrefix = "pcc.local/build:"
 const containerVolumeNameFormat = containerNamingPrefix + "v-%s"
 const containerNameFormat = containerNamingPrefix + "%s-%s"
 const containerNetworkNameFormat = containerNamingPrefix + "n"

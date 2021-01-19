@@ -75,6 +75,7 @@ EOF
 mkdir /tmp/cache
 chown -R web:web /tmp/cache
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
+touch /config/built
 `
 
 // appDeployCmd is the deploy command for applications.

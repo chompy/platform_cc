@@ -38,6 +38,8 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
+const dockerCommitTagPrefix = "pcc.local/build:"
+
 // ContainerStart starts a Docker container.
 func (d Docker) ContainerStart(c Config) error {
 	// ensure not already running
@@ -97,7 +99,7 @@ func (d Docker) ContainerStart(c Config) error {
 		return tracerr.Wrap(err)
 	}
 	// check for committed image
-	image := fmt.Sprintf("%s%s", containerCommitTagPrefix, c.GetContainerName())
+	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, c.GetContainerName())
 	if !d.hasImage(image) {
 		image = c.Image
 	}
@@ -292,7 +294,7 @@ func (d Docker) ContainerCommit(id string) error {
 	if err := d.client.ImageTag(
 		context.Background(),
 		idResp.ID,
-		fmt.Sprintf("%s%s", containerCommitTagPrefix, strings.Trim(data.Name, "/")),
+		fmt.Sprintf("%s%s", dockerCommitTagPrefix, strings.Trim(data.Name, "/")),
 	); err != nil {
 		d.client.ImageRemove(
 			context.Background(), idResp.ID, types.ImageRemoveOptions{Force: true},

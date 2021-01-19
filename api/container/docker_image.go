@@ -110,7 +110,14 @@ func (d Docker) hasImage(name string) bool {
 // listProjectImages returns list of all project Docker images.
 func (d Docker) listProjectImages(pid string) ([]types.ImageSummary, error) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add("name", "pcc-*")
+	filterArgs.Add(
+		"reference",
+		fmt.Sprintf(
+			"%s%s*",
+			dockerCommitTagPrefix,
+			fmt.Sprintf(containerNamingPrefix, pid),
+		),
+	)
 	return d.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{
@@ -122,7 +129,7 @@ func (d Docker) listProjectImages(pid string) ([]types.ImageSummary, error) {
 // listAllImages returns list of all Platform.CC Docker images.
 func (d Docker) listAllImages() ([]types.ImageSummary, error) {
 	filterArgs := filters.NewArgs()
-	filterArgs.Add("name", "pcc-*")
+	filterArgs.Add("reference", dockerCommitTagPrefix+"*")
 	return d.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{

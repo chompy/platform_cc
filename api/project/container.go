@@ -23,7 +23,6 @@ type Container struct {
 	Name             string
 	Definition       interface{}
 	Relationships    map[string][]map[string]interface{}
-	HasBuild         bool
 	containerHandler container.Interface
 	configJSON       []byte
 	buildCommand     string
@@ -154,6 +153,21 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	done()
 	output.IndentLevel = indentLevel
 	return out, nil
+}
+
+// HasBuild returns true if container has been built.
+func (c Container) HasBuild() bool {
+	var buf bytes.Buffer
+	if err := c.containerHandler.ContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", "[ -f /config/built ] && echo 'YES'"},
+		&buf,
+	); err != nil {
+		output.LogError(err)
+		return false
+	}
+	return strings.TrimSpace(string(buf.Bytes())) == "YES"
 }
 
 // Build runs the build hooks.

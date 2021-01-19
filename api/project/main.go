@@ -311,7 +311,7 @@ func (p *Project) Build(force bool) error {
 	// app
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
-		if c.HasBuild && !force {
+		if c.HasBuild() && !force {
 			output.LogDebug(
 				fmt.Sprintf("Skip build for %s, already committed, not forced.", c.Config.GetContainerName()),
 				nil,
@@ -373,7 +373,7 @@ func (p *Project) Pull() error {
 	}
 	for _, d := range p.Apps {
 		c := p.NewContainer(d)
-		if c.HasBuild {
+		if c.HasBuild() {
 			output.LogDebug(
 				fmt.Sprintf("Skip pulling image for %s, has committed image.", c.Config.GetContainerName()),
 				nil,
