@@ -139,3 +139,24 @@ func TestVariables(t *testing.T) {
 	}
 	assertEqual(v, "", "secret:api_secret unexpected value", t)
 }
+
+func TestYAMLFunction(t *testing.T) {
+	projectPath := path.Join("data", "sample5")
+	p, e := project.LoadFromPath(projectPath, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	assertEqual(
+		p.Apps[0].Name,
+		"test_app",
+		"unspected app.type",
+		t,
+	)
+	assertEqual(
+		strings.Contains(p.Apps[0].Hooks.Build, "TEST!"),
+		true,
+		"incorrect build hook",
+		t,
+	)
+}

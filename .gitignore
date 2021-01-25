@@ -3,3 +3,4 @@
 aws_build_upload.sh
 platform_cc
 /build
+.platform_cc.log

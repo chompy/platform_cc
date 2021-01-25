@@ -171,18 +171,26 @@ func ParseAppYaml(d []byte, global *GlobalConfig) (*App, error) {
 	return o, tracerr.Wrap(err)
 }
 
+// AppMerge provides interface for creating app def map that is mergable.
+type AppMerge map[string]interface{}
+
+// UnmarshalYAML unmarshals YAML for app def.
+func (a *AppMerge) UnmarshalYAML(value *yaml.Node) error {
+	*a = unmarshalYamlWithCustomTags(value).(map[string]interface{})
+	return nil
+}
+
 // ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
 func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 	defData := map[string]interface{}{}
 	for _, raw := range d {
-		newData := map[string]interface{}{}
+		newData := AppMerge{}
 		if err := yaml.Unmarshal(raw, &newData); err != nil {
 			return nil, tracerr.Wrap(err)
 		}
 		mergeMaps(defData, newData)
 	}
 	defBytes, err := yaml.Marshal(defData)
-
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
@@ -196,6 +204,7 @@ func ParseAppYamlFiles(fileList []string, global *GlobalConfig) (*App, error) {
 	)
 	byteList := make([][]byte, 0)
 	for _, f := range fileList {
+		projectPlatformDir = filepath.Dir(f)
 		d, err := ioutil.ReadFile(f)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
