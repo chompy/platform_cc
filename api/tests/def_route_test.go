@@ -19,7 +19,6 @@ package tests
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"testing"
 
@@ -133,7 +132,7 @@ func TestLargeRoutes(t *testing.T) {
 	if e != nil {
 		t.Errorf("failed to parse routes yaml, %s", e)
 	}
-	log.Println(routes[0].Validate())
+	//log.Println(routes[0].Validate())
 	assertEqual(
 		len(routes[0].Validate()),
 		0,

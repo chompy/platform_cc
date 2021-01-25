@@ -23,26 +23,35 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 )
+
+// DummyTracker trackes
+type DummyTracker struct {
+	Volumes    []string
+	Containers []string
+	Sync       sync.Mutex
+}
 
 // Dummy defines the dummy container handler.
 type Dummy struct {
-	Volumes    *[]string
-	Containers *[]string
+	Tracker *DummyTracker
 }
 
 // NewDummy creates a new dummy handler.
 func NewDummy() Dummy {
-	volumeList := make([]string, 0)
-	containerList := make([]string, 0)
 	return Dummy{
-		Volumes:    &volumeList,
-		Containers: &containerList,
+		Tracker: &DummyTracker{
+			Volumes:    make([]string, 0),
+			Containers: make([]string, 0),
+		},
 	}
 }
 
 func (d Dummy) hasContainer(id string) bool {
-	for _, c := range *d.Containers {
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	for _, c := range d.Tracker.Containers {
 		if c == id {
 			return true
 		}
@@ -51,7 +60,9 @@ func (d Dummy) hasContainer(id string) bool {
 }
 
 func (d Dummy) hasVolume(id string) bool {
-	for _, v := range *d.Volumes {
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	for _, v := range d.Tracker.Volumes {
 		if v == id {
 			return true
 		}
@@ -61,9 +72,11 @@ func (d Dummy) hasVolume(id string) bool {
 
 // ContainerStart starts dummy container.
 func (d Dummy) ContainerStart(c Config) error {
-	*d.Containers = append(*d.Containers, c.GetContainerName())
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	d.Tracker.Containers = append(d.Tracker.Containers, c.GetContainerName())
 	for k := range c.Volumes {
-		*d.Volumes = append(*d.Volumes, c.ProjectID+"_"+k)
+		d.Tracker.Volumes = append(d.Tracker.Volumes, c.ProjectID+"_"+k)
 	}
 	return nil
 }
@@ -120,39 +133,45 @@ func (d Dummy) ImagePull(c []Config) error {
 
 // ProjectStop stops dummy containers.
 func (d Dummy) ProjectStop(pid string) error {
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
 	containers := make([]string, 0)
-	for _, c := range *d.Containers {
+	for _, c := range d.Tracker.Containers {
 		if !strings.Contains(c, pid) {
 			containers = append(containers, c)
 		}
 	}
-	*d.Containers = containers
+	d.Tracker.Containers = containers
 	return nil
 }
 
 // ProjectPurge purges dummy resources.
 func (d Dummy) ProjectPurge(pid string) error {
 	d.ProjectStop(pid)
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
 	volumes := make([]string, 0)
-	for _, c := range *d.Volumes {
+	for _, c := range d.Tracker.Volumes {
 		if !strings.Contains(c, pid) {
 			volumes = append(volumes, c)
 		}
 	}
-	*d.Volumes = volumes
+	d.Tracker.Volumes = volumes
 	return nil
 }
 
 // AllStop stops dummy containers.
 func (d Dummy) AllStop() error {
-	containers := make([]string, 0)
-	*d.Containers = containers
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	d.Tracker.Containers = make([]string, 0)
 	return nil
 }
 
 // AllPurge purges dummy resources.
 func (d Dummy) AllPurge() error {
-	volumes := make([]string, 0)
-	*d.Volumes = volumes
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	d.Tracker.Volumes = make([]string, 0)
 	return nil
 }

@@ -38,14 +38,14 @@ func TestStartStopProject(t *testing.T) {
 	p.Start()
 	// number of "running" containers should be len apps + len services
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		len(p.Apps)+len(p.Services),
 		"wrong number of running containers",
 		t,
 	)
 	// check number of volumes
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		len(p.Apps)+len(p.Services),
 		"wrong number of volumes",
 		t,
@@ -69,14 +69,14 @@ func TestStartStopProject(t *testing.T) {
 	)
 	// ensure no containers are running
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		0,
 		"wrong number of running containers",
 		t,
 	)
 	// check number of volumes
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		len(p.Apps)+len(p.Services),
 		"wrong number of volumes",
 		t,
@@ -84,7 +84,7 @@ func TestStartStopProject(t *testing.T) {
 	p.Purge()
 	// ensure no volumes remain
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		0,
 		"wrong number of volumes",
 		t,
@@ -116,14 +116,14 @@ func TestStartMultipleProjects(t *testing.T) {
 	p2.Start()
 	// number of "running" containers should be len apps + len services
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
 		"wrong number of running containers",
 		t,
 	)
 	// check number of volumes
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
 		"wrong number of volumes",
 		t,
@@ -133,14 +133,14 @@ func TestStartMultipleProjects(t *testing.T) {
 
 	// number of "running" containers should be len apps + len services
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		len(p2.Apps)+len(p2.Services),
 		"wrong number of running containers",
 		t,
 	)
 	// check number of volumes
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
 		"wrong number of volumes",
 		t,
@@ -149,13 +149,13 @@ func TestStartMultipleProjects(t *testing.T) {
 	p1.Purge()
 	p2.Purge()
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		0,
 		"wrong number of running containers",
 		t,
 	)
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		0,
 		"wrong number of volumes",
 		t,
@@ -165,13 +165,13 @@ func TestStartMultipleProjects(t *testing.T) {
 	p2.Start()
 	ch.AllStop()
 	assertEqual(
-		len(*ch.Containers),
+		len(ch.Tracker.Containers),
 		0,
 		"wrong number of running containers",
 		t,
 	)
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
 		"wrong number of volumes",
 		t,
@@ -179,7 +179,7 @@ func TestStartMultipleProjects(t *testing.T) {
 	// test all purge
 	ch.AllPurge()
 	assertEqual(
-		len(*ch.Volumes),
+		len(ch.Tracker.Volumes),
 		0,
 		"wrong number of volumes",
 		t,

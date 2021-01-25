@@ -18,7 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package tests
 
 import (
-	"log"
 	"path"
 	"testing"
 
@@ -108,7 +107,6 @@ dependencies:
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
-	log.Println(d.Dependencies.PHP)
 	assertEqual(
 		d.Dependencies.PHP.Require["platformsh/client"],
 		"dev-master",
@@ -140,7 +138,6 @@ dependencies:
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
-	log.Println(d.Dependencies.PHP)
 	assertEqual(
 		d.Dependencies.PHP.Require["platformsh/client"],
 		"dev-master",
