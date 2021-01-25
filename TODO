@@ -1,11 +1,10 @@
 - ASAP
-    - Commit command.
-    - Delete commit command.
 
 - BACKBURNER
     - Router catch redirect loops.
     - Implement service.yaml PCC override.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
+    - Delete commit command.
     - [PARTIAL COMPLETE] Docker mock tests.
 
 - NEEDS MORE TESTING    
