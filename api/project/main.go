@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -128,7 +127,6 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-		log.Println(o.Routes)
 		o.Routes, err = def.ExpandRoutes(
 			o.Routes,
 			OptionDomainSuffix.Value(o.Options),
