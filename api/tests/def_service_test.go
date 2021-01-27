@@ -27,7 +27,7 @@ import (
 
 func TestServices(t *testing.T) {
 	p := path.Join("data", "sample1", ".platform", "services.yaml")
-	services, e := def.ParseServicesYamlFile(p)
+	services, e := def.ParseServiceYamlFiles([]string{p})
 	if e != nil {
 		t.Errorf("failed to parse services yaml, %s", e)
 	}

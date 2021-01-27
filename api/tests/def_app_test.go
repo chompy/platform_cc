@@ -48,14 +48,14 @@ func TestParseFile(t *testing.T) {
 }
 
 func TestInvalidCron(t *testing.T) {
-	d, e := def.ParseAppYaml([]byte(`
+	d, e := def.ParseAppYamls([][]byte{[]byte(`
 name: test_app_cron
 type: php:7.4
 crons:
     test:
         spec: "*/5 * * *"
         cmd: "sleep 5"
-`), nil)
+`)}, nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -65,7 +65,7 @@ crons:
 }
 
 func TestInvalidMount(t *testing.T) {
-	d, e := def.ParseAppYaml([]byte(`
+	d, e := def.ParseAppYamls([][]byte{[]byte(`
 name: test_app_cron
 type: php:7.4
 mounts:
@@ -73,7 +73,7 @@ mounts:
         source_path: test2
         source: this_does_not_exist
         service: files
-`), nil)
+`)}, nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -96,14 +96,14 @@ mounts:
 
 func TestPHPDependencies(t *testing.T) {
 
-	d, e := def.ParseAppYaml([]byte(`
+	d, e := def.ParseAppYamls([][]byte{[]byte(`
 name: test_app_cron
 type: php:7.4
 dependencies:
     php:
         "platformsh/client": "dev-master"
         "something/something": "~1.4"
-`), nil)
+`)}, nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
@@ -123,7 +123,7 @@ dependencies:
 }
 
 func TestPHPDependenciesExpanded(t *testing.T) {
-	d, e := def.ParseAppYaml([]byte(`
+	d, e := def.ParseAppYamls([][]byte{[]byte(`
 name: test_app_cron
 type: php:7.4
 dependencies:
@@ -134,7 +134,7 @@ dependencies:
         repositories:
             - type: vcs
               url: "git@github.com:platformsh/platformsh-client-php.git"
-`), nil)
+`)}, nil)
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}

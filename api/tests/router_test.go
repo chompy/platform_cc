@@ -39,7 +39,6 @@ func TestGenerateNginx(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	//t.Error(string(out))
 	stringConf := string(out)
 	assertEqual(
 		strings.Contains(stringConf, "return 301 /test"),

@@ -26,7 +26,6 @@ import (
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gopkg.in/yaml.v3"
 )
 
 // Service defines a service.
@@ -36,6 +35,7 @@ type Service struct {
 	Disk          int                  `yaml:"disk" json:"disk"`
 	Configuration ServiceConfiguration `yaml:"configuration" json:"configuration,omitempty"`
 	Relationships map[string]string    `yaml:"relationships" json:"relationships,omitempty"`
+	Disable       bool                 `yaml:"_disable"`
 }
 
 // SetDefaults sets the default values.
@@ -84,36 +84,46 @@ func (d Service) GetEmptyRelationship() map[string]interface{} {
 	}
 }
 
-// ParseServicesYaml parses the contents of services.yaml.
-func ParseServicesYaml(d []byte) ([]Service, error) {
+// ParseServiceYamls parses multiple services.yaml contents and merges them in to one.
+func ParseServiceYamls(d [][]byte) ([]Service, error) {
 	o := make(map[string]*Service)
-	err := yaml.Unmarshal(d, &o)
+	if err := mergeYamls(d, o); err != nil {
+		return []Service{}, tracerr.Wrap(err)
+	}
+	// set defaults + transfer to new slice
 	oo := make([]Service, 0)
 	for k := range o {
+		if o[k].Disable {
+			continue
+		}
 		o[k].SetDefaults()
 		o[k].Name = k
 		oo = append(oo, *o[k])
 	}
-	return oo, tracerr.Wrap(err)
+	return oo, nil
 }
 
-// ParseServicesYamlFile - open services yaml file and parse it
-func ParseServicesYamlFile(f string) ([]Service, error) {
+// ParseServiceYamlFiles parses multiple services.yaml files and merges them in to one.
+func ParseServiceYamlFiles(fileList []string) ([]Service, error) {
 	done := output.Duration(
-		fmt.Sprintf("Parse services at '%s.'", f),
+		fmt.Sprintf("Parse service at '%s.'", strings.Join(fileList, ", ")),
 	)
-	projectPlatformDir = filepath.Dir(f)
-	d, err := ioutil.ReadFile(f)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Service{}, nil
+	byteList := make([][]byte, 0)
+	for _, f := range fileList {
+		projectPlatformDir = filepath.Dir(f)
+		d, err := ioutil.ReadFile(f)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, tracerr.Wrap(err)
 		}
-		return []Service{}, tracerr.Wrap(err)
+		byteList = append(byteList, d)
 	}
-	s, err := ParseServicesYaml(d)
+	a, err := ParseServiceYamls(byteList)
 	if err != nil {
-		return s, tracerr.Wrap(err)
+		return nil, tracerr.Wrap(err)
 	}
 	done()
-	return s, nil
+	return a, nil
 }

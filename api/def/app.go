@@ -25,7 +25,6 @@ import (
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gopkg.in/yaml.v3"
 )
 
 // AppDir defines the app directory.
@@ -144,8 +143,8 @@ func (d App) GetEmptyRelationship() map[string]interface{} {
 	}
 }
 
-// ParseAppYaml parses the contents of a .platform.app.yaml file.
-func ParseAppYaml(d []byte, global *GlobalConfig) (*App, error) {
+// ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
+func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 	o := &App{
 		Crons:         make(map[string]*AppCron),
 		Mounts:        make(map[string]*AppMount),
@@ -153,8 +152,12 @@ func ParseAppYaml(d []byte, global *GlobalConfig) (*App, error) {
 		Relationships: make(map[string]string),
 		Variables:     make(map[string]map[string]interface{}),
 	}
-	err := yaml.Unmarshal(d, o)
+	if err := mergeYamls(d, o); err != nil {
+		return &App{}, tracerr.Wrap(err)
+	}
+	// set defaults
 	o.SetDefaults()
+	// transfer app attributes to its workers
 	for name, w := range o.Workers {
 		w.Name = name
 		w.Type = o.Type
@@ -162,39 +165,13 @@ func ParseAppYaml(d []byte, global *GlobalConfig) (*App, error) {
 		w.Dependencies = o.Dependencies
 	}
 	// merge global variables
-	if err == nil && global != nil {
+	if global != nil {
 		output.LogDebug(fmt.Sprintf("Merge app '%s' variables with global variables.", o.Name), nil)
 		for k := range o.Variables {
 			mergeMaps(o.Variables[k], global.Variables[k])
 		}
 	}
-	return o, tracerr.Wrap(err)
-}
-
-// AppMerge provides interface for creating app def map that is mergable.
-type AppMerge map[string]interface{}
-
-// UnmarshalYAML unmarshals YAML for app def.
-func (a *AppMerge) UnmarshalYAML(value *yaml.Node) error {
-	*a = unmarshalYamlWithCustomTags(value).(map[string]interface{})
-	return nil
-}
-
-// ParseAppYamls parses multiple .platform.app.yaml contents and merges them in to one.
-func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
-	defData := map[string]interface{}{}
-	for _, raw := range d {
-		newData := AppMerge{}
-		if err := yaml.Unmarshal(raw, &newData); err != nil {
-			return nil, tracerr.Wrap(err)
-		}
-		mergeMaps(defData, newData)
-	}
-	defBytes, err := yaml.Marshal(defData)
-	if err != nil {
-		return nil, tracerr.Wrap(err)
-	}
-	return ParseAppYaml(defBytes, global)
+	return o, nil
 }
 
 // ParseAppYamlFiles parses multiple .platform.app.yaml files and merges them in to one.
@@ -207,7 +184,7 @@ func ParseAppYamlFiles(fileList []string, global *GlobalConfig) (*App, error) {
 		projectPlatformDir = filepath.Dir(f)
 		d, err := ioutil.ReadFile(f)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return &App{}, tracerr.Wrap(err)
 		}
 		byteList = append(byteList, d)
 	}

@@ -2,11 +2,11 @@
 
 - BACKBURNER
     - Router catch redirect loops.
-    - Implement service.yaml PCC override.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Delete commit command.
     - [PARTIAL COMPLETE] Docker mock tests.
 
 - NEEDS MORE TESTING    
     - Workers.
-    - Platform.sh clone script
+    - Platform.sh clone script.
+    - Implement service.yaml PCC override.

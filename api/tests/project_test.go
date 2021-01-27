@@ -78,6 +78,26 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 		"unexpected app.runtime.extensions length",
 		t,
 	)
+	// also test service override
+	// three services defined but mysqldb disabled in services.pcc.yaml override
+	assertEqual(
+		len(p.Services),
+		2,
+		"unexpected number of services",
+		t,
+	)
+	assertEqual(
+		p.Services[0].Type,
+		"redis:3.2",
+		"unspected service type",
+		t,
+	)
+	assertEqual(
+		p.Services[1].Type,
+		"redis:3.2",
+		"unspected service type",
+		t,
+	)
 }
 
 func TestConfigJSON(t *testing.T) {

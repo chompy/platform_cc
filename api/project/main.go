@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -37,6 +38,7 @@ import (
 )
 
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
+var serviceYamlFilenames = []string{".platform/services.yaml", ".platform/services.pcc.yaml"}
 
 const routesYamlPath = ".platform/routes.yaml"
 const servicesYamlPath = ".platform/services.yaml"
@@ -105,31 +107,35 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		o.Apps = apps
 	}
 	// read services yaml
-	services := []def.Service{}
 	if parseYaml {
-		fullServiceYamlPath := filepath.Join(path, servicesYamlPath)
-		services, err = def.ParseServicesYamlFile(fullServiceYamlPath)
+		serviceYamlPaths := make([]string, 0)
+		for _, fn := range serviceYamlFilenames {
+			serviceYamlPaths = append(
+				serviceYamlPaths,
+				filepath.Join(path, fn),
+			)
+		}
+		o.Services, err = def.ParseServiceYamlFiles(serviceYamlPaths)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-		o.Services = services
 	}
 	// read routes yaml
-	routes := make([]def.Route, 0)
 	if parseYaml {
-		fullRouteYamlPath := filepath.Join(path, routesYamlPath)
-		routes, err = def.ParseRoutesYamlFile(fullRouteYamlPath)
-		if err != nil && !os.IsNotExist(err) {
+		o.Routes, err = def.ParseRoutesYamlFile(
+			filepath.Join(path, routesYamlPath),
+		)
+		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-		routes, err = def.ExpandRoutes(
-			routes,
+		log.Println(o.Routes)
+		o.Routes, err = def.ExpandRoutes(
+			o.Routes,
 			OptionDomainSuffix.Value(o.Options),
 		)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-		o.Routes = routes
 	}
 	if !parseYaml {
 		output.Info("Skipped (parseYaml=false).")

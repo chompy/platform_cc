@@ -17,6 +17,7 @@ replace gitlab.com/contextualcode/platform_cc/cmd => ./cmd
 replace gitlab.com/contextualcode/platform_cc/api/tests => ./api/tests
 
 require (
+	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/cmd v0.0.1

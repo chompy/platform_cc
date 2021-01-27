@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v3"
 )
@@ -158,4 +159,33 @@ func unmarshalYamlWithCustomTags(value *yaml.Node) interface{} {
 		}
 	}
 	return nil
+}
+
+// YamlMerge provides interface for creating yaml that is mergable with support for custom tags.
+type YamlMerge map[string]interface{}
+
+// UnmarshalYAML unmarshals YAML for app def.
+func (m *YamlMerge) UnmarshalYAML(value *yaml.Node) error {
+	*m = unmarshalYamlWithCustomTags(value).(map[string]interface{})
+	return nil
+}
+
+// mergeYamls takes multiple yaml byte arrays and merge them and unmarshals in to given interface.
+func mergeYamls(data [][]byte, def interface{}) error {
+	// unmarshal yaml in to maps and merge the maps
+	mapData := map[string]interface{}{}
+	for _, raw := range data {
+		newData := YamlMerge{}
+		if err := yaml.Unmarshal(raw, &newData); err != nil {
+			return tracerr.Wrap(err)
+		}
+		mergeMaps(mapData, newData)
+	}
+	// marshal merged maps back in to yaml
+	defBytes, err := yaml.Marshal(mapData)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// unmarshal yaml back in to interface
+	return tracerr.Wrap(yaml.Unmarshal(defBytes, def))
 }

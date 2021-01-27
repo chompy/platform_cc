@@ -44,6 +44,7 @@ type Route struct {
 	SSI         RoutesSsi         `yaml:"ssi" json:"-"`
 	Primary     Bool              `json:"primary"`
 	OriginalURL string            `json:"original_url"`
+	Disable     bool              `json:"_disable"`
 }
 
 // SetDefaults sets the default values.
