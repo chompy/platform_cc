@@ -32,7 +32,7 @@ patch_all();
 from gevent_jsonrpc import RpcServer;
 import json;
 def rootFactory(c, a):
-	with open("/tmp/.ready", "w") as f: f.write("true")
+	with open("/tmp/.ready2", "w") as f: f.write("true")
 	c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]}))
 RpcServer(
 	"/run/shared/agent.sock",
@@ -41,11 +41,18 @@ RpcServer(
 	root_factory=rootFactory
 )._accepter_greenlet.get();
 EOF
+until [ -f /run/config.json ]; do sleep 1; done
+rm -rf /etc/service/*
 python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 chown -R web:web /run
-until [ -f /run/config.json ]; do sleep 1; done
+mkdir -p /run/sshd
+chown -R root:root /run/sshd
+chmod -R -rwx /run/sshd
+rm -f /run/rsa_hostkey
 /etc/platform/boot
+sleep 5
+touch /tmp/.ready1
 exec init
 `
 
@@ -102,7 +109,7 @@ patch_all();
 from gevent_jsonrpc import RpcServer;
 import json;
 def rootFactory(c, a):
-	with open("/tmp/.ready", "w") as f: f.write("true")
+	with open("/tmp/.ready2", "w") as f: f.write("true")
 	c.send(json.dumps({"jsonrpc":"2.0","result":True,"id": json.loads(c.recv(1024))["id"]}))
 RpcServer(
 	"/run/shared/agent.sock",
@@ -111,24 +118,32 @@ RpcServer(
 	root_factory=rootFactory
 )._accepter_greenlet.get();
 EOF
-python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
-sleep 1
-runsvdir -P /etc/service &> /tmp/runsvdir.log &
-sleep 1
 until [ -f /run/config.json ]; do sleep 1; done
+rm -rf /etc/service/*
+python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+runsvdir -P /etc/service &> /tmp/runsvdir.log &
+mkdir -p /run/sshd
+chown -R root:root /run/sshd
+chmod -R -rwx /run/sshd
+rm -f /run/rsa_hostkey
 /etc/platform/boot
+sleep 5
+touch /tmp/.ready1
 exec init
 `
 
 // serviceStartCmd is the command to start a service.
 const serviceStartCmd = `
 until [ -f /run/config.json ]; do sleep 1; done
+until [ -f /tmp/.ready1 ]; do sleep 1; done
+until [ -f /tmp/.ready2 ]; do sleep 1; done
 /etc/platform/start &
-until [ -f /run/config.json ]; do sleep 1; done
 `
 
 // serviceOpenCmd is the command to open a service.
 const serviceOpenCmd = `
-until [ -f /tmp/.ready ]; do sleep 1; done
+until [ -f /run/config.json ]; do sleep 1; done
+until [ -f /tmp/.ready1 ]; do sleep 1; done
+until [ -f /tmp/.ready2 ]; do sleep 1; done
 echo '%s' | base64 -d | /etc/platform/commands/open
 `
