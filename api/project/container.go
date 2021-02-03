@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -253,7 +254,7 @@ func (c Container) Shell(user string, cmd []string) error {
 	))
 }
 
-// Log outputs container logs to stdout.
+// Log outputs container logs to log file.
 func (c Container) Log() error {
 	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
 	go func() {
@@ -270,6 +271,29 @@ func (c Container) Log() error {
 			}
 			if err := scanner.Err(); err != nil {
 				output.LogError(err)
+			}
+		}
+	}()
+	return nil
+}
+
+// LogStdout dumps container log to stdout.
+func (c Container) LogStdout() error {
+	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
+	go func() {
+		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName())
+		if err != nil {
+			output.LogError(err)
+			return
+		}
+		scanner := bufio.NewScanner(out)
+		defer out.Close()
+		for {
+			for scanner.Scan() {
+				log.Printf("[%s] %s", c.Config.GetContainerName(), scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				log.Println(err)
 			}
 		}
 	}()

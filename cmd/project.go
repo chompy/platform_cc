@@ -168,6 +168,25 @@ var projectStatusCmd = &cobra.Command{
 	},
 }
 
+var projectLogsCmd = &cobra.Command{
+	Use:   "logs",
+	Short: "Display logs for all project containers.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output.Enable = false
+		proj, err := getProject(true)
+		handleError(err)
+
+		for _, app := range proj.Apps {
+			handleError(proj.NewContainer(app).LogStdout())
+		}
+		for _, service := range proj.Services {
+			handleError(proj.NewContainer(service).LogStdout())
+		}
+		select {}
+
+	},
+}
+
 func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
@@ -181,5 +200,6 @@ func init() {
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
 	projectCmd.AddCommand(projectStatusCmd)
+	projectCmd.AddCommand(projectLogsCmd)
 	RootCmd.AddCommand(projectCmd)
 }
