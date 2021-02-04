@@ -305,6 +305,36 @@ func (d Docker) ContainerCommit(id string) error {
 	return nil
 }
 
+// ContainerDeleteCommit deletes Docker image for given container.
+func (d Docker) ContainerDeleteCommit(id string) error {
+	done := output.Duration(
+		fmt.Sprintf(
+			"Delete committed container image '%s.'",
+			id,
+		),
+	)
+	// ensure container isn't running
+	s, _ := d.ContainerStatus(id)
+	if s.Running {
+		return tracerr.New("cannot delete commit for running container")
+	}
+	// check for committed image
+	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, id)
+	if !d.hasImage(image) {
+		return tracerr.New(fmt.Sprintf("container %s has no comitted image", id))
+	}
+	// delete
+	if _, err := d.client.ImageRemove(
+		context.Background(),
+		image,
+		types.ImageRemoveOptions{Force: true},
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
+
 // listProjectContainers gets a list of active containers for given project.
 func (d Docker) listProjectContainers(pid string) ([]types.Container, error) {
 	output.LogDebug(fmt.Sprintf("List containers for project '%s.'", pid), nil)

@@ -20,6 +20,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -181,12 +182,12 @@ var projectLogsCmd = &cobra.Command{
 		for _, service := range proj.Services {
 			handleError(proj.NewContainer(service).LogStdout())
 		}
+		time.Sleep(time.Second)
 		// follow logs
 		followFlag := cmd.Flags().Lookup("follow")
 		if followFlag != nil && followFlag.Value.String() != "false" {
 			select {}
 		}
-
 	},
 }
 

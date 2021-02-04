@@ -304,3 +304,8 @@ func (c Container) LogStdout() error {
 func (c Container) Commit() error {
 	return tracerr.Wrap(c.containerHandler.ContainerCommit(c.Config.GetContainerName()))
 }
+
+// DeleteCommit deletes the commit image.
+func (c Container) DeleteCommit() error {
+	return tracerr.Wrap(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
+}

@@ -30,6 +30,7 @@ type Interface interface {
 	ContainerUpload(id string, path string, r io.Reader) error
 	ContainerLog(id string) (io.ReadCloser, error)
 	ContainerCommit(id string) error
+	ContainerDeleteCommit(id string) error
 	ImagePull(c []Config) error
 	ProjectStop(pid string) error
 	ProjectPurge(pid string) error

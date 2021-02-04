@@ -126,6 +126,14 @@ func (d Dummy) ContainerCommit(id string) error {
 	return nil
 }
 
+// ContainerDeleteCommit deletes dummy commit.
+func (d Dummy) ContainerDeleteCommit(id string) error {
+	if d.hasContainer(id) {
+		return fmt.Errorf("container %s is running", id)
+	}
+	return nil
+}
+
 // ImagePull pulls dummy images.
 func (d Dummy) ImagePull(c []Config) error {
 	return nil
