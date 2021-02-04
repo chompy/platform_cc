@@ -169,20 +169,23 @@ var projectStatusCmd = &cobra.Command{
 }
 
 var projectLogsCmd = &cobra.Command{
-	Use:   "logs",
+	Use:   "logs [-f follow]",
 	Short: "Display logs for all project containers.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
-
 		for _, app := range proj.Apps {
 			handleError(proj.NewContainer(app).LogStdout())
 		}
 		for _, service := range proj.Services {
 			handleError(proj.NewContainer(service).LogStdout())
 		}
-		select {}
+		// follow logs
+		followFlag := cmd.Flags().Lookup("follow")
+		if followFlag != nil && followFlag.Value.String() != "false" {
+			select {}
+		}
 
 	},
 }
@@ -191,6 +194,7 @@ func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
+	projectLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)
