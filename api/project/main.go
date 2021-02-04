@@ -92,7 +92,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	// read app yaml
 	apps := make([]def.App, 0)
 	if parseYaml {
-		appYamlFiles := scanPlatformAppYaml(path)
+		appYamlFiles := scanPlatformAppYaml(path, o.Flags.Has(DisableYamlOverrides))
 		if len(appYamlFiles) == 0 {
 			return nil, tracerr.Wrap(fmt.Errorf("could not location app yaml file"))
 		}
@@ -113,6 +113,9 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 				serviceYamlPaths,
 				filepath.Join(path, fn),
 			)
+			if o.Flags.Has(DisableYamlOverrides) {
+				break
+			}
 		}
 		o.Services, err = def.ParseServiceYamlFiles(serviceYamlPaths)
 		if err != nil {
@@ -144,7 +147,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	return o, nil
 }
 
-func scanPlatformAppYaml(path string) [][]string {
+func scanPlatformAppYaml(path string, disableOverrides bool) [][]string {
 	o := make([][]string, 0)
 	appYamlPaths := make([]string, 0)
 	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
@@ -161,7 +164,9 @@ func scanPlatformAppYaml(path string) [][]string {
 				hasOut := false
 				for i := range o {
 					if filepath.Dir(o[i][0]) == filepath.Dir(appYamlPath) {
-						o[i] = append(o[i], appYamlPath)
+						if !disableOverrides {
+							o[i] = append(o[i], appYamlPath)
+						}
 						hasOut = true
 					}
 				}

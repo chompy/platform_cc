@@ -33,6 +33,8 @@ const (
 	EnableMountVolume
 	// EnableOSXNFSMounts uses NFS for mounts on OSX.
 	EnableOSXNFSMounts
+	// DisableYamlOverrides disables Platform.CC specific YAML override files.
+	DisableYamlOverrides
 )
 
 // Add adds a flag.
@@ -53,23 +55,25 @@ func (f Flag) Has(flag Flag) bool {
 // List returns a mapping of flag name to flag value.
 func (f Flag) List() map[string]Flag {
 	return map[string]Flag{
-		"enable_cron":           EnableCron,
-		"enable_workers":        EnableWorkers,
-		"enable_service_routes": EnableServiceRoutes,
-		"enable_php_opcache":    EnablePHPOpcache,
-		"enable_mount_volume":   EnableMountVolume,
-		"enable_osx_nfs_mounts": EnableOSXNFSMounts,
+		"enable_cron":            EnableCron,
+		"enable_workers":         EnableWorkers,
+		"enable_service_routes":  EnableServiceRoutes,
+		"enable_php_opcache":     EnablePHPOpcache,
+		"enable_mount_volume":    EnableMountVolume,
+		"enable_osx_nfs_mounts":  EnableOSXNFSMounts,
+		"disable_yaml_overrides": DisableYamlOverrides,
 	}
 }
 
 // Descriptions returns a mapping of flag name to its description.
 func (f Flag) Descriptions() map[string]string {
 	return map[string]string{
-		"enable_cron":           "Enables cron jobs.",
-		"enable_workers":        "Enables workers.",
-		"enable_service_routes": "Enable routes to services like Varnish.",
-		"enable_php_opcache":    "Enables PHP Opcache.",
-		"enable_mount_volume":   "Enable mount volumes.",
-		"enable_osx_nfs_mounts": "Enable NFS mounts on OSX.",
+		"enable_cron":            "Enables cron jobs.",
+		"enable_workers":         "Enables workers.",
+		"enable_service_routes":  "Enable routes to services like Varnish.",
+		"enable_php_opcache":     "Enables PHP Opcache.",
+		"enable_mount_volume":    "Enable mount volumes.",
+		"enable_osx_nfs_mounts":  "Enable NFS mounts on OSX.",
+		"disable_yaml_overrides": "Disable Platform.CC specific YAML override files (.platform.app.pcc.yaml, services.pcc.yaml).",
 	}
 }
