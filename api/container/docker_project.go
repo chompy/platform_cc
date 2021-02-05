@@ -17,7 +17,11 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package container
 
-import "github.com/ztrue/tracerr"
+import (
+	"log"
+
+	"github.com/ztrue/tracerr"
+)
 
 // ProjectStop stops all running Docker containers for given project.
 func (d Docker) ProjectStop(pid string) error {
@@ -48,6 +52,24 @@ func (d Docker) ProjectPurge(pid string) error {
 		return tracerr.Wrap(err)
 	}
 	if err := d.deleteImages(images); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
+}
+
+// ProjectPurgeSlot deletes all Docker resources for given project slot.
+func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
+	// stop
+	if err := d.ProjectStop(pid); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// delete volumes
+	vols, err := d.listProjectSlotVolumes(pid, slot)
+	if err != nil {
+		log.Println(err)
+		return tracerr.Wrap(err)
+	}
+	if err := d.deleteVolumes(vols); err != nil {
 		return tracerr.Wrap(err)
 	}
 	return nil

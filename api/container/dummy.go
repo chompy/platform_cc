@@ -168,6 +168,24 @@ func (d Dummy) ProjectPurge(pid string) error {
 	return nil
 }
 
+// ProjectPurgeSlot purges dummy project slot.
+func (d Dummy) ProjectPurgeSlot(pid string, slot int) error {
+	if slot <= 1 {
+		return fmt.Errorf("cannot delete slot 1")
+	}
+	d.ProjectStop(pid)
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	volumes := make([]string, 0)
+	for _, c := range d.Tracker.Volumes {
+		if !strings.Contains(c, pid) || !strings.Contains(c, fmt.Sprintf("-%d", slot)) {
+			volumes = append(volumes, c)
+		}
+	}
+	d.Tracker.Volumes = volumes
+	return nil
+}
+
 // AllStop stops dummy containers.
 func (d Dummy) AllStop() error {
 	d.Tracker.Sync.Lock()

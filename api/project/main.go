@@ -84,7 +84,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Options:          make(map[Option]string),
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
-		volumeSlot:       0,
+		volumeSlot:       1,
 	}
 	o.Load()
 	if o.ID == "" {
@@ -377,6 +377,16 @@ func (p *Project) Purge() error {
 	return nil
 }
 
+// PurgeSlot purges volumes for current slot.
+func (p *Project) PurgeSlot() error {
+	done := output.Duration(fmt.Sprintf("Purge project '%s' slot %d.", p.ID, p.volumeSlot))
+	if err := p.containerHandler.ProjectPurgeSlot(p.ID, p.volumeSlot); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
+
 // Pull fetches all the Docker container images needed by the project.
 func (p *Project) Pull() error {
 	done := output.Duration("Pull images.")
@@ -456,8 +466,8 @@ func (p *Project) SetContainerHandler(c container.Interface) {
 // SetVolumeSlot sets the current volume slot.
 func (p *Project) SetVolumeSlot(slot int) {
 	if p.volumeSlot != slot {
-		if slot > 0 {
-			slot++
+		if slot <= 0 {
+			slot = 1
 		}
 		output.Info(fmt.Sprintf("Set volume slot %d.", slot))
 		p.volumeSlot = slot

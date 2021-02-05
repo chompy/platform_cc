@@ -123,7 +123,7 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 			break
 		}
 	}
-	if p.volumeSlot > 0 {
+	if p.volumeSlot > 1 {
 		name = fmt.Sprintf("%s-%d", name, p.volumeSlot)
 	}
 	out := map[string]string{

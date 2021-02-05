@@ -19,6 +19,7 @@ package tests
 
 import (
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/ztrue/tracerr"
@@ -184,4 +185,70 @@ func TestStartMultipleProjects(t *testing.T) {
 		"wrong number of volumes",
 		t,
 	)
+}
+
+func TestStartProjectSlots(t *testing.T) {
+	ch := container.NewDummy()
+	// load sample1 project
+	pPath := path.Join("data", "sample1")
+	p, e := project.LoadFromPath(pPath, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	p.SetContainerHandler(ch)
+	p.ID = "sample1"
+	// set slot 2 and try purging
+	p.SetVolumeSlot(2)
+	p.Start()
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		5,
+		"expected five container volumes",
+		t,
+	)
+	assertEqual(
+		strings.Contains(ch.Tracker.Volumes[0], "-2"),
+		true,
+		"expected volume to contain slot suffix (-2)",
+		t,
+	)
+	p.PurgeSlot()
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		0,
+		"expected zero container volumes",
+		t,
+	)
+	// start project twice with slot 1 and slot 2
+	p.Start()
+	p.Stop()
+	p.SetVolumeSlot(1)
+	p.Start()
+	p.Stop()
+	// try to purge slot 1, expect error
+	e = p.PurgeSlot()
+	assertEqual(
+		e != nil && strings.Contains(e.Error(), "cannot delete"),
+		true,
+		"expected cannot delete slot error",
+		t,
+	)
+	// ensure number of volumes
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		10,
+		"expected 10 volumes",
+		t,
+	)
+	// delete slot 2
+	p.SetVolumeSlot(2)
+	p.PurgeSlot()
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		5,
+		"expected five volumes",
+		t,
+	)
+
 }

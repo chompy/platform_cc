@@ -20,9 +20,11 @@ package container
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/ztrue/tracerr"
@@ -60,6 +62,33 @@ func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 		context.Background(),
 		filterArgs,
 	)
+}
+
+// listProjectSlotVolumes gets a list of all volumes for given project slot.
+func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesListOKBody, error) {
+
+	filterArgs := filters.NewArgs()
+	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
+	list, err := d.client.VolumeList(
+		context.Background(),
+		filterArgs,
+	)
+	if err != nil {
+		return volume.VolumesListOKBody{}, tracerr.Wrap(err)
+	}
+	out := make([]*types.Volume, 0)
+	for _, v := range list.Volumes {
+		if slot > 1 && strings.HasSuffix(v.Name, fmt.Sprintf("-%d", slot)) {
+			out = append(out, v)
+		} else if slot <= 1 {
+			m, _ := regexp.MatchString(".*-[0-9]{1,}", v.Name)
+			if !m {
+				out = append(out, v)
+			}
+		}
+	}
+	list.Volumes = out
+	return list, nil
 }
 
 // listAllVolumes gets a list of all volumes used by Platform.CC.

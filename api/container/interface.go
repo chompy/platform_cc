@@ -34,6 +34,7 @@ type Interface interface {
 	ImagePull(c []Config) error
 	ProjectStop(pid string) error
 	ProjectPurge(pid string) error
+	ProjectPurgeSlot(pid string, slot int) error
 	AllStop() error
 	AllPurge() error
 }
