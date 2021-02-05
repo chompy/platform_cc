@@ -20,6 +20,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -34,11 +35,16 @@ var projectCmd = &cobra.Command{
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--no-build] [--no-router] [--no-commit]",
+	Use:   "start [--no-build] [--no-router] [--no-commit] [-s slot]",
 	Short: "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
+		// determine volume slot
+		slot, err := strconv.Atoi(cmd.Flags().Lookup("slot").Value.String())
+		handleError(err)
+		proj.SetVolumeSlot(slot)
+		// start
 		handleError(proj.Start())
 		noCommitFlag := cmd.Flags().Lookup("no-commit")
 		noBuildFlag := cmd.Flags().Lookup("no-build")
@@ -199,6 +205,7 @@ func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectStartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
+	projectStartCmd.Flags().IntP("slot", "s", 0, "set volume slot")
 	projectBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
 	projectLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")

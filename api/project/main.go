@@ -56,6 +56,7 @@ type Project struct {
 	Options          map[Option]string            `json:"options"`
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
+	volumeSlot       int
 }
 
 // LoadFromPath loads a project from its path.
@@ -83,6 +84,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Options:          make(map[Option]string),
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
+		volumeSlot:       0,
 	}
 	o.Load()
 	if o.ID == "" {
@@ -321,7 +323,7 @@ func (p *Project) Build(force bool, commit bool) error {
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		if c.HasBuild() && !force {
-			output.LogInfo("Already built, skipped.")
+			output.Info("Already built, skipped.")
 			output.LogDebug(
 				fmt.Sprintf("Skip build for %s, already committed, not forced.", c.Config.GetContainerName()),
 				nil,
@@ -449,4 +451,15 @@ func (p *Project) setAppFlags() {
 // SetContainerHandler sets the container handler.
 func (p *Project) SetContainerHandler(c container.Interface) {
 	p.containerHandler = c
+}
+
+// SetVolumeSlot sets the current volume slot.
+func (p *Project) SetVolumeSlot(slot int) {
+	if p.volumeSlot != slot {
+		if slot > 0 {
+			slot++
+		}
+		output.Info(fmt.Sprintf("Set volume slot %d.", slot))
+		p.volumeSlot = slot
+	}
 }

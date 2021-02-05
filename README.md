@@ -204,6 +204,16 @@ Platform.CC Specific Configurations
 If you find that you need some configurations that are specific only to your Platform.CC projects, you can put those in a file called `.platform.app.pcc.yaml`. This should be in the same format as your `.platform.app.yaml` file.
 
 
+Slots
+-----
+
+When you start a project you can specify a 'save slot' to use with the 'slot' or 's' option. This lets you start the project with different storage locations for the services in your project. An example use case is loading a different MySQL database without losing the original.
+
+Examples...
+`pcc project:start -s 1`
+`pcc project:start --slot 2`
+
+
 Share Logs
 ----------
 

@@ -123,6 +123,9 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 			break
 		}
 	}
+	if p.volumeSlot > 0 {
+		name = fmt.Sprintf("%s-%d", name, p.volumeSlot)
+	}
 	out := map[string]string{
 		name: containerDataDirectory,
 	}

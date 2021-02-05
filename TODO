@@ -2,12 +2,12 @@
 
 - QOL
     - Service purge...delete all service related volumes.
-    - Slot system to swap between different versions of database(s) without having to reimport.
 
 - BACKBURNER
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - [PARTIAL COMPLETE] Docker mock tests.
+    - Restart command doesn't support save slots.
 
 - NEEDS MORE TESTING    
     - Workers.
