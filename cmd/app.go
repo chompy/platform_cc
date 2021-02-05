@@ -19,7 +19,6 @@ package cmd
 
 import (
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -120,13 +119,12 @@ var appLogsCmd = &cobra.Command{
 		output.Enable = false
 		proj, err := getProject(true)
 		handleError(err)
+		followFlag := cmd.Flags().Lookup("follow")
+		hasFollow := followFlag != nil && followFlag.Value.String() != "false"
 		app, err := getApp(appCmd, proj)
 		handleError(err)
-		handleError(proj.NewContainer(app).LogStdout())
-		time.Sleep(time.Second)
-		// follow logs
-		followFlag := cmd.Flags().Lookup("follow")
-		if followFlag != nil && followFlag.Value.String() != "false" {
+		handleError(proj.NewContainer(app).LogStdout(hasFollow))
+		if hasFollow {
 			select {}
 		}
 	},

@@ -249,7 +249,7 @@ func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
 }
 
 // ContainerLog returns a reader containing log data for a Docker container.
-func (d Docker) ContainerLog(id string) (io.ReadCloser, error) {
+func (d Docker) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 	output.LogDebug(fmt.Sprintf("Read logs for container '%s.'", id), nil)
 	return d.client.ContainerLogs(
 		context.Background(),
@@ -257,7 +257,7 @@ func (d Docker) ContainerLog(id string) (io.ReadCloser, error) {
 		types.ContainerLogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
-			Follow:     true,
+			Follow:     follow,
 		},
 	)
 }

@@ -28,7 +28,7 @@ type Interface interface {
 	ContainerShell(id string, user string, command []string, stdin io.Reader) error
 	ContainerStatus(id string) (Status, error)
 	ContainerUpload(id string, path string, r io.Reader) error
-	ContainerLog(id string) (io.ReadCloser, error)
+	ContainerLog(id string, follow bool) (io.ReadCloser, error)
 	ContainerCommit(id string) error
 	ContainerDeleteCommit(id string) error
 	ImagePull(c []Config) error

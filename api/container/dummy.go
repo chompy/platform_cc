@@ -111,7 +111,7 @@ func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
 }
 
 // ContainerLog returns dummy logs.
-func (d Dummy) ContainerLog(id string) (io.ReadCloser, error) {
+func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 	if !d.hasContainer(id) {
 		return nil, fmt.Errorf("container %s not running", id)
 	}

@@ -258,7 +258,7 @@ func (c Container) Shell(user string, cmd []string) error {
 func (c Container) Log() error {
 	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
 	go func() {
-		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName())
+		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName(), true)
 		if err != nil {
 			output.LogError(err)
 			return
@@ -278,10 +278,10 @@ func (c Container) Log() error {
 }
 
 // LogStdout dumps container log to stdout.
-func (c Container) LogStdout() error {
+func (c Container) LogStdout(follow bool) error {
 	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
 	go func() {
-		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName())
+		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName(), follow)
 		if err != nil {
 			output.LogError(err)
 			return
