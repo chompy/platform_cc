@@ -137,14 +137,21 @@ Enables workers.
 `pcc project:flag:set enable_php_opcache`
 Enables PHP Opcache.
 
+
 **enable_mount_volume**
 
 `pcc project:flag:set enable_mount_volume`
 Enables mount volumes.
 
+
 **enable_osx_nfs_mounts**
 `pcc project:flag:set enable_osx_nfs_mounts`
 Enables NFS mounts on OSX.
+
+
+**disable_yaml_overrides**
+`pcc project:flag:set disable_yaml_overrides`
+Disables Platform.CC specific YAML overrides (.platform.app.pcc.yaml and services.pcc.yaml).
 
 
 Options

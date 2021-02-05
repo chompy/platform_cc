@@ -35,6 +35,8 @@ const (
 	EnableOSXNFSMounts
 	// DisableYamlOverrides disables Platform.CC specific YAML override files.
 	DisableYamlOverrides
+	// DisableAutoCommit disables automatic commit of application container.
+	DisableAutoCommit
 )
 
 // Add adds a flag.

@@ -3,8 +3,6 @@
 - QOL
     - Service purge...delete all service related volumes.
     - Slot system to swap between different versions of database(s) without having to reimport.
-    - Delete commit command.
-    - Options to logs command... display only specific app/service logs, tail, follow, etc.
 
 - BACKBURNER
     - Router catch redirect loops.

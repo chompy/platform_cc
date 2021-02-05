@@ -313,7 +313,7 @@ func (p *Project) Stop() error {
 }
 
 // Build builds all applications in the project.
-func (p *Project) Build(force bool) error {
+func (p *Project) Build(force bool, commit bool) error {
 	done := output.Duration(
 		fmt.Sprintf("Build project '%s.'", p.ID),
 	)
@@ -321,6 +321,7 @@ func (p *Project) Build(force bool) error {
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		if c.HasBuild() && !force {
+			output.LogInfo("Already built, skipped.")
 			output.LogDebug(
 				fmt.Sprintf("Skip build for %s, already committed, not forced.", c.Config.GetContainerName()),
 				nil,
@@ -330,8 +331,10 @@ func (p *Project) Build(force bool) error {
 		if err := c.Build(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		if err := c.Commit(); err != nil {
-			return tracerr.Wrap(err)
+		if commit {
+			if err := c.Commit(); err != nil {
+				return tracerr.Wrap(err)
+			}
 		}
 	}
 	done()

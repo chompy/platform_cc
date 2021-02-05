@@ -32,7 +32,7 @@ var appCmd = &cobra.Command{
 }
 
 var appBuildCmd = &cobra.Command{
-	Use:   "build",
+	Use:   "build [--no-commit]",
 	Short: "Run application build commands.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
@@ -41,7 +41,10 @@ var appBuildCmd = &cobra.Command{
 		handleError(err)
 		c := proj.NewContainer(app)
 		handleError(c.Build())
-		handleError(c.Commit())
+		noCommitFlag := cmd.Flags().Lookup("no-commit")
+		if noCommitFlag == nil || noCommitFlag.Value.String() == "false" {
+			handleError(c.Commit())
+		}
 	},
 }
 
@@ -130,6 +133,7 @@ var appLogsCmd = &cobra.Command{
 }
 
 func init() {
+	appBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	appShellCmd.PersistentFlags().Bool("root", false, "shell as root")
 	appCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	appLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")

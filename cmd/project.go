@@ -34,15 +34,17 @@ var projectCmd = &cobra.Command{
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--no-build] [--no-router]",
+	Use:   "start [--no-build] [--no-router] [--no-commit]",
 	Short: "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
 		handleError(proj.Start())
+		noCommitFlag := cmd.Flags().Lookup("no-commit")
 		noBuildFlag := cmd.Flags().Lookup("no-build")
 		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
-			handleError(proj.Build(false))
+			doCommit := noCommitFlag == nil || noCommitFlag.Value.String() == "false"
+			handleError(proj.Build(false, doCommit))
 		}
 		noRouterFlag := cmd.Flags().Lookup("no-router")
 		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
@@ -86,12 +88,14 @@ var projectPullCmd = &cobra.Command{
 }
 
 var projectBuildCmd = &cobra.Command{
-	Use:   "build",
+	Use:   "build [--no-commit]",
 	Short: "Build a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		handleError(proj.Build(true))
+		noCommitFlag := cmd.Flags().Lookup("no-commit")
+		doCommit := noCommitFlag == nil || noCommitFlag.Value.String() != "false"
+		handleError(proj.Build(true, doCommit))
 	},
 }
 
@@ -194,6 +198,8 @@ var projectLogsCmd = &cobra.Command{
 func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
+	projectStartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
+	projectBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
 	projectLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	projectCmd.AddCommand(projectStartCmd)
