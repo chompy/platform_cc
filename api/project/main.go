@@ -96,7 +96,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if parseYaml {
 		appYamlFiles := scanPlatformAppYaml(path, o.Flags.Has(DisableYamlOverrides))
 		if len(appYamlFiles) == 0 {
-			return nil, tracerr.Wrap(fmt.Errorf("could not location app yaml file"))
+			return nil, tracerr.Wrap(fmt.Errorf("could not locate app yaml file"))
 		}
 		for _, appYamlFileList := range appYamlFiles {
 			app, err := def.ParseAppYamlFiles(appYamlFileList, gc)
@@ -153,6 +153,17 @@ func scanPlatformAppYaml(path string, disableOverrides bool) [][]string {
 	o := make([][]string, 0)
 	appYamlPaths := make([]string, 0)
 	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+		// check sub directory
+		if f.IsDir() && f.Name() != "." {
+			for _, appYamlFilename := range appYamlFilenames {
+				possiblePath := filepath.Join(path, appYamlFilename)
+				if _, err := os.Stat(possiblePath); !os.IsNotExist(err) {
+					appYamlPaths = append(appYamlPaths, possiblePath)
+				}
+			}
+			return filepath.SkipDir
+		}
+		// check root directory
 		for _, appYamlFilename := range appYamlFilenames {
 			if f.Name() == appYamlFilename {
 				appYamlPaths = append(appYamlPaths, path)

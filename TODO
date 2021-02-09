@@ -1,7 +1,8 @@
 - ASAP
 
 - QOL
-    - Service purge...delete all service related volumes.
+    - Copy slot command.
+    - Throw an error if upstream service does not exist when generating router Nginx.
 
 - BACKBURNER
     - Router catch redirect loops.

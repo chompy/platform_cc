@@ -74,3 +74,64 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 	}
 	return nil
 }
+
+// ProjectCopySlot copies volumes in given slot to another slot.
+/*func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
+	// can't have same slots
+	if sourceSlot == destSlot {
+		return tracerr.New("source and destination slots cannot be the same")
+	}
+	// purge dest slot in prep for copy
+	d.ProjectPurgeSlot(pid, destSlot)
+
+	// get list of source slot volumes
+	volList, err := d.listProjectSlotVolumes(pid, sourceSlot)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+
+	// create container
+	cConfig := &container.Config{
+		Image: "busybox",
+		Cmd:   []string{""},
+	}
+	cHostConfig := &container.HostConfig{
+		AutoRemove:   true,
+		Privileged:   true,
+		Mounts:       mounts,
+		PortBindings: portBinding,
+	}
+	output.LogDebug(fmt.Sprintf("Container create. (Name %s)", c.GetContainerName()), []interface{}{cConfig, cHostConfig})
+	resp, err := d.client.ContainerCreate(
+		context.Background(),
+		cConfig,
+		cHostConfig,
+		&network.NetworkingConfig{},
+		c.GetContainerName(),
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "already in use") {
+			return nil
+		}
+		return tracerr.Wrap(err)
+	}
+	output.LogDebug("Container created.", resp)
+	// attach container to project network
+	if err := d.client.NetworkConnect(
+		context.Background(),
+		dockerNetworkName,
+		resp.ID,
+		nil,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// start container
+	if err := d.client.ContainerStart(
+		context.Background(),
+		resp.ID,
+		types.ContainerStartOptions{},
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+
+}*/
