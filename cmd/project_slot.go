@@ -20,6 +20,7 @@ package cmd
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -34,19 +35,42 @@ var projectSlotDelete = &cobra.Command{
 	Use:   "delete slot",
 	Short: "Delete slot.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
+		if len(args) != 1 {
 			handleError(fmt.Errorf("slot argument not provided"))
 		}
 		proj, err := getProject(false)
 		handleError(err)
 		slot, err := strconv.Atoi(args[0])
 		handleError(err)
-		proj.SetVolumeSlot(slot)
+		proj.SetSlot(slot)
+		if slot <= 1 {
+			fmt.Println("!!! WARNING: DELETING ALL DATA IN SLOT 1 IN 5 SECONDS !!!")
+			time.Sleep(time.Second * 5)
+		}
 		handleError(proj.PurgeSlot())
+	},
+}
+
+var projectSlotCopy = &cobra.Command{
+	Use:   "copy source dest",
+	Short: "Copy slot.",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			handleError(fmt.Errorf("slot source and/or slot destination not provided"))
+		}
+		proj, err := getProject(false)
+		handleError(err)
+		source, err := strconv.Atoi(args[0])
+		handleError(err)
+		dest, err := strconv.Atoi(args[1])
+		handleError(err)
+		proj.SetSlot(source)
+		handleError(proj.CopySlot(dest))
 	},
 }
 
 func init() {
 	projectSlotCmd.AddCommand(projectSlotDelete)
+	projectSlotCmd.AddCommand(projectSlotCopy)
 	projectCmd.AddCommand(projectSlotCmd)
 }

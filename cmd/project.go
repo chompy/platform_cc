@@ -42,7 +42,7 @@ var projectStartCmd = &cobra.Command{
 		// determine volume slot
 		slot, err := strconv.Atoi(cmd.Flags().Lookup("slot").Value.String())
 		handleError(err)
-		proj.SetVolumeSlot(slot)
+		proj.SetSlot(slot)
 		// start
 		handleError(proj.Start())
 		noCommitFlag := cmd.Flags().Lookup("no-commit")

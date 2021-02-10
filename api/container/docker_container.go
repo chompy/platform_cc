@@ -55,16 +55,18 @@ func (d Docker) ContainerStart(c Config) error {
 	)
 	// get mounts
 	mounts := make([]mount.Mount, 0)
+	// volumes
 	for k, v := range c.Volumes {
 		if k == "" || v == "" {
 			continue
 		}
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeVolume,
-			Source: getVolumeName(c.ProjectID, k, c.ObjectType),
+			Source: volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot),
 			Target: v,
 		})
 	}
+	// binds
 	for k, v := range c.Binds {
 		if k == "" || v == "" {
 			continue
@@ -78,7 +80,7 @@ func (d Docker) ContainerStart(c Config) error {
 			}
 			mounts = append(mounts, mount.Mount{
 				Type:   mount.TypeVolume,
-				Source: getVolumeName(c.ProjectID, path.Base(v), c.ObjectType),
+				Source: getMountName(c.ProjectID, path.Base(v), c.ObjectType),
 				Target: v,
 			})
 			continue

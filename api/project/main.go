@@ -56,7 +56,7 @@ type Project struct {
 	Options          map[Option]string            `json:"options"`
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
-	volumeSlot       int
+	slot             int
 }
 
 // LoadFromPath loads a project from its path.
@@ -84,7 +84,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Options:          make(map[Option]string),
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
-		volumeSlot:       1,
+		slot:             1,
 	}
 	o.Load()
 	if o.ID == "" {
@@ -390,8 +390,8 @@ func (p *Project) Purge() error {
 
 // PurgeSlot purges volumes for current slot.
 func (p *Project) PurgeSlot() error {
-	done := output.Duration(fmt.Sprintf("Purge project '%s' slot %d.", p.ID, p.volumeSlot))
-	if err := p.containerHandler.ProjectPurgeSlot(p.ID, p.volumeSlot); err != nil {
+	done := output.Duration(fmt.Sprintf("Purge project '%s' slot %d.", p.ID, p.slot))
+	if err := p.containerHandler.ProjectPurgeSlot(p.ID, p.slot); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -474,13 +474,20 @@ func (p *Project) SetContainerHandler(c container.Interface) {
 	p.containerHandler = c
 }
 
-// SetVolumeSlot sets the current volume slot.
-func (p *Project) SetVolumeSlot(slot int) {
-	if p.volumeSlot != slot {
+// SetSlot sets the current slot.
+func (p *Project) SetSlot(slot int) {
+	if p.slot != slot {
 		if slot <= 0 {
 			slot = 1
 		}
-		output.Info(fmt.Sprintf("Set volume slot %d.", slot))
-		p.volumeSlot = slot
+		output.Info(fmt.Sprintf("Set slot %d.", slot))
+		p.slot = slot
 	}
+}
+
+// CopySlot copies the current slot to a given destination slot.
+func (p *Project) CopySlot(destSlot int) error {
+	return tracerr.Wrap(p.containerHandler.ProjectCopySlot(
+		p.ID, p.slot, destSlot,
+	))
 }

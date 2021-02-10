@@ -66,6 +66,7 @@ func (o ObjectContainerType) TypeName() string {
 // Config contains configuration for a Docker container.
 type Config struct {
 	ProjectID  string
+	Slot       int
 	ObjectType ObjectContainerType
 	ObjectName string
 	Command    []string

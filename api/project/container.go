@@ -40,6 +40,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 		Relationships: p.GetDefinitionRelationships(d),
 		Config: container.Config{
 			ProjectID:  p.ID,
+			Slot:       p.slot,
 			ObjectType: p.GetDefinitionContainerType(d),
 			ObjectName: p.GetDefinitionName(d),
 			Command:    p.GetDefinitionStartCommand(d),

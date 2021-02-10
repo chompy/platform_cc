@@ -31,13 +31,15 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
+var volumeSlotRegex = regexp.MustCompile("(.*)-[0-9]{1,}")
+
 // createNFSVolume creates a NFS Docker volume.
 func (d Docker) createNFSVolume(pid string, name string, path string, containerType ObjectContainerType) error {
 	path = strings.TrimLeft(path, "/")
 	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", path)
 	output.LogDebug("NFS mount path.", pathString)
 	volCreateBody := volume.VolumesCreateBody{
-		Name:   getVolumeName(pid, name, containerType),
+		Name:   getMountName(pid, name, containerType),
 		Driver: "local",
 		DriverOpts: map[string]string{
 			"type":   "nfs",
@@ -56,6 +58,7 @@ func (d Docker) createNFSVolume(pid string, name string, path string, containerT
 
 // listProjectVolumes gets a list of all volumes for given project.
 func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
+	output.LogDebug(fmt.Sprintf("List volumes for project %s (all slots).", pid), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
 	return d.client.VolumeList(
@@ -66,7 +69,7 @@ func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 
 // listProjectSlotVolumes gets a list of all volumes for given project slot.
 func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesListOKBody, error) {
-
+	output.LogDebug(fmt.Sprintf("List volumes for project %s in slot %d.", pid, slot), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
 	list, err := d.client.VolumeList(
@@ -78,13 +81,8 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 	}
 	out := make([]*types.Volume, 0)
 	for _, v := range list.Volumes {
-		if slot > 1 && strings.HasSuffix(v.Name, fmt.Sprintf("-%d", slot)) {
+		if volumeBelongsToSlot(v.Name, slot) {
 			out = append(out, v)
-		} else if slot <= 1 {
-			m, _ := regexp.MatchString(".*-[0-9]{1,}", v.Name)
-			if !m {
-				out = append(out, v)
-			}
 		}
 	}
 	list.Volumes = out
@@ -93,6 +91,7 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 
 // listAllVolumes gets a list of all volumes used by Platform.CC.
 func (d Docker) listAllVolumes() (volume.VolumesListOKBody, error) {
+	output.LogDebug("List all volumes.", nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
 	return d.client.VolumeList(
@@ -132,9 +131,4 @@ func (d Docker) deleteVolumes(volList volume.VolumesListOKBody) error {
 	wg.Wait()
 	done()
 	return nil
-}
-
-// getVolumeName generates a volume name for given project id and container name.
-func getVolumeName(pid string, name string, containerType ObjectContainerType) string {
-	return fmt.Sprintf(containerNamingPrefix+"%s-%s", pid, string(containerType), name)
 }

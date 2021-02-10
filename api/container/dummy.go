@@ -76,7 +76,10 @@ func (d Dummy) ContainerStart(c Config) error {
 	defer d.Tracker.Sync.Unlock()
 	d.Tracker.Containers = append(d.Tracker.Containers, c.GetContainerName())
 	for k := range c.Volumes {
-		d.Tracker.Volumes = append(d.Tracker.Volumes, c.ProjectID+"_"+k)
+		d.Tracker.Volumes = append(
+			d.Tracker.Volumes,
+			volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot),
+		)
 	}
 	return nil
 }
@@ -178,11 +181,26 @@ func (d Dummy) ProjectPurgeSlot(pid string, slot int) error {
 	defer d.Tracker.Sync.Unlock()
 	volumes := make([]string, 0)
 	for _, c := range d.Tracker.Volumes {
-		if !strings.Contains(c, pid) || !strings.Contains(c, fmt.Sprintf("-%d", slot)) {
+		if !strings.Contains(c, pid) || !volumeBelongsToSlot(c, slot) {
 			volumes = append(volumes, c)
 		}
 	}
 	d.Tracker.Volumes = volumes
+	return nil
+}
+
+// ProjectCopySlot copy dummy slots.
+func (d Dummy) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
+	if err := d.ProjectPurgeSlot(pid, destSlot); err != nil {
+		return err
+	}
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	for _, c := range d.Tracker.Volumes {
+		if strings.Contains(c, pid) && volumeBelongsToSlot(c, sourceSlot) {
+			d.Tracker.Volumes = append(d.Tracker.Volumes, volumeWithSlot(c, destSlot))
+		}
+	}
 	return nil
 }
 

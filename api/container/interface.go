@@ -35,6 +35,7 @@ type Interface interface {
 	ProjectStop(pid string) error
 	ProjectPurge(pid string) error
 	ProjectPurgeSlot(pid string, slot int) error
+	ProjectCopySlot(pid string, sourceSlot int, destSlot int) error
 	AllStop() error
 	AllPurge() error
 }

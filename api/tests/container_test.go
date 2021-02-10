@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package tests
 
 import (
+	"fmt"
 	"path"
 	"strings"
 	"testing"
@@ -199,7 +200,7 @@ func TestStartProjectSlots(t *testing.T) {
 	p.SetContainerHandler(ch)
 	p.ID = "sample1"
 	// set slot 2 and try purging
-	p.SetVolumeSlot(2)
+	p.SetSlot(2)
 	p.Start()
 	assertEqual(
 		len(ch.Tracker.Volumes),
@@ -223,7 +224,7 @@ func TestStartProjectSlots(t *testing.T) {
 	// start project twice with slot 1 and slot 2
 	p.Start()
 	p.Stop()
-	p.SetVolumeSlot(1)
+	p.SetSlot(1)
 	p.Start()
 	p.Stop()
 	// try to purge slot 1, expect error
@@ -242,7 +243,7 @@ func TestStartProjectSlots(t *testing.T) {
 		t,
 	)
 	// delete slot 2
-	p.SetVolumeSlot(2)
+	p.SetSlot(2)
 	p.PurgeSlot()
 	assertEqual(
 		len(ch.Tracker.Volumes),
@@ -250,5 +251,45 @@ func TestStartProjectSlots(t *testing.T) {
 		"expected five volumes",
 		t,
 	)
+}
 
+func TestSlotCopy(t *testing.T) {
+	ch := container.NewDummy()
+	// load sample1 project
+	pPath := path.Join("data", "sample1")
+	p, e := project.LoadFromPath(pPath, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	p.SetContainerHandler(ch)
+	p.ID = "sample1"
+	// start under slot 1
+	p.SetSlot(1)
+	p.Start()
+	// record number of volumes
+	volBefore := len(ch.Tracker.Volumes)
+	// perform copy
+	destVol := 3
+	p.CopySlot(destVol)
+	// assert that number of volumes has doubled
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		volBefore*2,
+		"expected number of volumes to double",
+		t,
+	)
+	// assert that new volumes have correct slot suffix
+	newVolCount := 0
+	for _, volName := range ch.Tracker.Volumes {
+		if strings.Contains(volName, fmt.Sprintf("-%d", destVol)) {
+			newVolCount++
+		}
+	}
+	assertEqual(
+		newVolCount,
+		volBefore,
+		"expected new volumes to has correct slot suffix",
+		t,
+	)
 }

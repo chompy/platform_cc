@@ -18,9 +18,23 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package container
 
 import (
+	"context"
+	"fmt"
+	"io"
 	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
 
+	"github.com/docker/docker/api/types/mount"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // ProjectStop stops all running Docker containers for given project.
@@ -76,38 +90,57 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 }
 
 // ProjectCopySlot copies volumes in given slot to another slot.
-/*func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
+func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
 	// can't have same slots
 	if sourceSlot == destSlot {
 		return tracerr.New("source and destination slots cannot be the same")
 	}
 	// purge dest slot in prep for copy
 	d.ProjectPurgeSlot(pid, destSlot)
-
+	// log copy start
+	done := output.Duration(fmt.Sprintf("Copy slot %d to %d.", sourceSlot, destSlot))
 	// get list of source slot volumes
 	volList, err := d.listProjectSlotVolumes(pid, sourceSlot)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-
+	// create mounts for container, source and dest volumes for copy
+	mounts := make([]mount.Mount, 0)
+	for _, vol := range volList.Volumes {
+		mounts = append(
+			mounts,
+			mount.Mount{
+				Type:   mount.TypeVolume,
+				Source: vol.Name,
+				Target: "/mnt/src/" + volumeStripSlot(vol.Name),
+			},
+		)
+		mounts = append(
+			mounts,
+			mount.Mount{
+				Type:   mount.TypeVolume,
+				Source: volumeWithSlot(vol.Name, destSlot),
+				Target: "/mnt/dest/" + volumeStripSlot(vol.Name),
+			},
+		)
+	}
 	// create container
 	cConfig := &container.Config{
-		Image: "busybox",
-		Cmd:   []string{""},
+		Image:        "busybox",
+		Cmd:          []string{"sh", "-c", "cp -rv /mnt/src/* /mnt/dest/"},
+		AttachStdout: true,
 	}
 	cHostConfig := &container.HostConfig{
-		AutoRemove:   true,
-		Privileged:   true,
-		Mounts:       mounts,
-		PortBindings: portBinding,
+		AutoRemove: true,
+		Mounts:     mounts,
 	}
-	output.LogDebug(fmt.Sprintf("Container create. (Name %s)", c.GetContainerName()), []interface{}{cConfig, cHostConfig})
+	output.LogDebug("Slot copy container create.", []interface{}{cConfig, cHostConfig})
 	resp, err := d.client.ContainerCreate(
 		context.Background(),
 		cConfig,
 		cHostConfig,
 		&network.NetworkingConfig{},
-		c.GetContainerName(),
+		fmt.Sprintf(containerNamingPrefix, pid)+"slotcopy",
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "already in use") {
@@ -115,16 +148,7 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 		}
 		return tracerr.Wrap(err)
 	}
-	output.LogDebug("Container created.", resp)
-	// attach container to project network
-	if err := d.client.NetworkConnect(
-		context.Background(),
-		dockerNetworkName,
-		resp.ID,
-		nil,
-	); err != nil {
-		return tracerr.Wrap(err)
-	}
+	output.LogDebug("Slot copy container created.", resp)
 	// start container
 	if err := d.client.ContainerStart(
 		context.Background(),
@@ -133,5 +157,41 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
-
-}*/
+	cleanup := func() {
+		timeout := time.Second
+		d.client.ContainerStop(
+			context.Background(), resp.ID, &timeout,
+		)
+	}
+	defer cleanup()
+	// attach container
+	attachResp, err := d.client.ContainerAttach(
+		context.Background(),
+		resp.ID,
+		types.ContainerAttachOptions{
+			Stream: true,
+			Stdout: true,
+			Stderr: true,
+		},
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	defer attachResp.Close()
+	// capture interupt to stop container
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGINT)
+	go func() {
+		<-c
+		output.Info("Interupt detected, stopping.")
+		cleanup()
+		attachResp.Close()
+		os.Exit(1)
+	}()
+	// pipe to stdout
+	if _, err := io.Copy(os.Stdout, attachResp.Reader); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
