@@ -1,14 +1,15 @@
 - ASAP
 
 - QOL
-    - Copy slot command.
     - Throw an error if upstream service does not exist when generating router Nginx.
 
 - BACKBURNER
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
-    - [PARTIAL COMPLETE] Docker mock tests.
     - Restart command doesn't support save slots.
+
+- POSSIBLE/UNCERTAIN
+    - Project start --no-commit option should ignore committed images and start with the base image.
 
 - NEEDS MORE TESTING    
     - Workers.
