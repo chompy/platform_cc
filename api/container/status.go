@@ -22,4 +22,5 @@ type Status struct {
 	Name      string `json:"name"`
 	Running   bool   `json:"running"`
 	IPAddress string `json:"ip_address"`
+	Slot      int    `json:"slot"`
 }

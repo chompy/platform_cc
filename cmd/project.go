@@ -171,15 +171,20 @@ var projectStatusCmd = &cobra.Command{
 			if s.IPAddress != "" {
 				ipAddrStr = s.IPAddress
 			}
+			slot := "n/a"
+			if s.Slot > 0 {
+				slot = fmt.Sprintf("%d", s.Slot)
+			}
 			data = append(data, []string{
 				s.Name,
 				s.Type,
 				runningStr,
+				slot,
 				ipAddrStr,
 			})
 		}
 		drawTable(
-			[]string{"Name", "Type", "Status", "IP Address"},
+			[]string{"Name", "Type", "Status", "Slot", "IP Address"},
 			data,
 		)
 	},

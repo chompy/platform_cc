@@ -19,8 +19,12 @@ package container
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 )
+
+var volumeSlotRegex = regexp.MustCompile("(.*)-([0-9]{1,})")
 
 // getMountName generates a mount name for given project id and container name.
 func getMountName(pid string, name string, containerType ObjectContainerType) string {
@@ -48,4 +52,14 @@ func volumeWithSlot(name string, slot int) string {
 		return volumeStripSlot(name)
 	}
 	return fmt.Sprintf("%s-%d", volumeStripSlot(name), slot)
+}
+
+// volumeGetSlot returns the slot number of the given volume.
+func volumeGetSlot(name string) int {
+	res := volumeSlotRegex.FindStringSubmatch(name)
+	if res == nil || len(res) < 3 || res[2] == "" {
+		return 1
+	}
+	out, _ := strconv.Atoi(res[2])
+	return out
 }

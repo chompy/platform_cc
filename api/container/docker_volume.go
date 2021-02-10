@@ -20,7 +20,6 @@ package container
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -30,8 +29,6 @@ import (
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
-
-var volumeSlotRegex = regexp.MustCompile("(.*)-[0-9]{1,}")
 
 // createNFSVolume creates a NFS Docker volume.
 func (d Docker) createNFSVolume(pid string, name string, path string, containerType ObjectContainerType) error {

@@ -17,10 +17,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package project
 
-import (
-	"gitlab.com/contextualcode/platform_cc/api/output"
-)
-
 // ContainerStatus defines the status of a container.
 type ContainerStatus struct {
 	Name      string    `json:"name"`
@@ -28,6 +24,7 @@ type ContainerStatus struct {
 	Container Container `json:"-"`
 	Running   bool      `json:"running"`
 	IPAddress string    `json:"ip_address"`
+	Slot      int       `json:"slot"`
 }
 
 // Status returns list of container status
@@ -35,31 +32,25 @@ func (p *Project) Status() []ContainerStatus {
 	out := make([]ContainerStatus, 0)
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
-		status, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
-		if err != nil {
-			output.LogError(err)
-			continue
-		}
+		status, _ := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 		out = append(out, ContainerStatus{
 			Name:      app.Name,
 			Type:      app.Type,
 			Container: c,
 			Running:   status.Running,
+			Slot:      status.Slot,
 			IPAddress: status.IPAddress,
 		})
 	}
 	for _, service := range p.Services {
 		c := p.NewContainer(service)
-		status, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
-		if err != nil {
-			output.LogError(err)
-			continue
-		}
+		status, _ := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 		out = append(out, ContainerStatus{
 			Name:      service.Name,
 			Type:      service.Type,
 			Container: c,
 			Running:   status.Running,
+			Slot:      status.Slot,
 			IPAddress: status.IPAddress,
 		})
 	}
