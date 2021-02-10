@@ -285,7 +285,7 @@ func (p *Project) Start() error {
 					return tracerr.Wrap(err)
 				}
 				// open
-				_, err := c.Open()
+				_, err := wc.Open()
 				if err != nil {
 					return tracerr.Wrap(err)
 				}

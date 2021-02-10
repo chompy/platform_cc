@@ -313,9 +313,6 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 
 // GetDefinitionMountCommand returns command to setup mounts for given definition.
 func (p *Project) GetDefinitionMountCommand(d interface{}) string {
-	if !p.Flags.Has(EnableMountVolume) {
-		return ""
-	}
 	var mounts map[string]*def.AppMount
 	switch d.(type) {
 	case def.App:
@@ -350,13 +347,19 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 				out += " && "
 			}
 			out += fmt.Sprintf(
-				"mkdir -p %s && mkdir -p %s && chown -Rf web %s && mount -o user_xattr --bind %s %s",
+				"mkdir -p %s && mkdir -p %s && chown -f web %s && chown -Rf web %s",
 				destPath,
 				srcPath,
-				srcPath,
-				srcPath,
 				destPath,
+				srcPath,
 			)
+			if p.Flags.Has(EnableMountVolume) {
+				out += fmt.Sprintf(
+					" && mount -o user_xattr --bind %s %s",
+					srcPath,
+					destPath,
+				)
+			}
 		}
 		return out
 	}

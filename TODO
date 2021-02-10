@@ -9,10 +9,5 @@
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Restart command doesn't support save slots.
 
-- POSSIBLE/UNCERTAIN
-    - Project start --no-commit option should ignore committed images and start with the base image.
-
-- NEEDS MORE TESTING    
-    - Workers.
+- NEEDS MORE TESTING
     - Platform.sh clone script.
-    - Implement service.yaml PCC override.
