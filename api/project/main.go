@@ -57,6 +57,7 @@ type Project struct {
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	slot             int
+	noCommit         bool
 }
 
 // LoadFromPath loads a project from its path.
@@ -256,6 +257,7 @@ func (p *Project) Start() error {
 	for _, app := range p.Apps {
 		// start
 		c := p.NewContainer(app)
+		c.Config.NoCommit = p.noCommit
 		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
@@ -269,11 +271,11 @@ func (p *Project) Start() error {
 			return tracerr.Wrap(err)
 		}
 		p.relationships = append(p.relationships, rels...)
-
 		// workers
 		if p.Flags.Has(EnableWorkers) {
 			for _, worker := range app.Workers {
 				wc := p.NewContainer(*worker)
+				wc.Config.NoCommit = p.noCommit
 				// start
 				if err := wc.Start(); err != nil {
 					return tracerr.Wrap(err)
@@ -326,7 +328,7 @@ func (p *Project) Stop() error {
 }
 
 // Build builds all applications in the project.
-func (p *Project) Build(force bool, commit bool) error {
+func (p *Project) Build(force bool) error {
 	done := output.Duration(
 		fmt.Sprintf("Build project '%s.'", p.ID),
 	)
@@ -344,7 +346,7 @@ func (p *Project) Build(force bool, commit bool) error {
 		if err := c.Build(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		if commit {
+		if !p.noCommit {
 			if err := c.Commit(); err != nil {
 				return tracerr.Wrap(err)
 			}
@@ -490,4 +492,9 @@ func (p *Project) CopySlot(destSlot int) error {
 	return tracerr.Wrap(p.containerHandler.ProjectCopySlot(
 		p.ID, p.slot, destSlot,
 	))
+}
+
+// SetNoCommit sets the no commit flag.
+func (p *Project) SetNoCommit() {
+	p.noCommit = true
 }

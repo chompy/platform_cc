@@ -64,6 +64,7 @@ func (f Flag) List() map[string]Flag {
 		"enable_mount_volume":    EnableMountVolume,
 		"enable_osx_nfs_mounts":  EnableOSXNFSMounts,
 		"disable_yaml_overrides": DisableYamlOverrides,
+		"disable_auto_commit":    DisableAutoCommit,
 	}
 }
 
@@ -77,5 +78,6 @@ func (f Flag) Descriptions() map[string]string {
 		"enable_mount_volume":    "Enable mount volumes.",
 		"enable_osx_nfs_mounts":  "Enable NFS mounts on OSX.",
 		"disable_yaml_overrides": "Disable Platform.CC specific YAML override files (.platform.app.pcc.yaml, services.pcc.yaml).",
+		"disable_auto_commit":    "Disable auto commit of application containers on start.",
 	}
 }

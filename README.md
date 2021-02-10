@@ -12,7 +12,9 @@ Requirements / Installation
 ### Installation
 
 Run the following in a Bash shell...
-```curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin```
+```
+curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin
+```
 
 After that use the `pcc` command to run Platform.CC.
 
@@ -24,7 +26,9 @@ Quick Start
 
 A shell script is included that allows syncing a Platform.sh environment to a local Platform.CC environment. To use it you need the SSH URL to your Platform.sh environment and the current user should have permission to access the environment over SSH.
 
-```pcc_psh_sync <ssh_url>```
+```
+pcc_psh_sync <ssh_url>
+```
 
 This script does not clone the repository. Make sure you do that prior and run the script inside the root directory of the project.
 
@@ -111,47 +115,45 @@ Platform.CC should support all services that are supported by Platform.sh. Pleas
 Flags
 -----
 
-Some functionality is disabled by default. You can re-enable the functionality by setting flags.
+Flags enables or disable functionality on a per project basis. Some functionality is disabled by default (such as workers and cron jobs) and can be re-enabled with flags.
 
+Flags can be set with the following command...
 
-**enable_cron**
+```
+pcc project:flag:set <FLAG_NAME>
+```
 
-`pcc project:flag:set enable_cron`
+...and unset with the following...
+
+```
+pcc project:flag:delete <FLAG_NAME>
+```
+
+Lists of available flags...
+
+### enable_cron
 Enable cron jobs for the current project.
 
-
-**enable_service_routes**
-
-`pcc project:flag:set enable_service_routes`
+### enable_service_routes
 Enable routes to services such as Varnish.
 
-
-**enable_workers**
-
-`pcc project:flag:set enable_workers`
+### enable_workers
 Enables workers.
 
-
-**enable_php_opcache**
-
-`pcc project:flag:set enable_php_opcache`
+### enable_php_opcache
 Enables PHP Opcache.
 
-
-**enable_mount_volume**
-
-`pcc project:flag:set enable_mount_volume`
+### enable_mount_volume
 Enables mount volumes.
 
-
-**enable_osx_nfs_mounts**
-`pcc project:flag:set enable_osx_nfs_mounts`
+### enable_osx_nfs_mounts
 Enables NFS mounts on OSX.
 
-
-**disable_yaml_overrides**
-`pcc project:flag:set disable_yaml_overrides`
+### disable_yaml_overrides
 Disables Platform.CC specific YAML overrides (.platform.app.pcc.yaml and services.pcc.yaml).
+
+### disable_auto_commit
+Disables the auto commit of application containers when a project is started.
 
 
 Options
@@ -159,9 +161,10 @@ Options
 
 Options are like flags except that they are specific values and not just on or off.
 
-**domain_suffix**
-
-`pcc project:options:set domain_suffix <value>`
+### domain_suffix
+```
+pcc project:options:set domain_suffix <value>
+```
 Set the internal route domain, default is "pcc.localtest.me." Every route gets an internal route... example... www.example.com becomes www-example-com.pcc.localtest.me.
 
 
@@ -175,7 +178,7 @@ You can create global configuration file that allows setting configuration that 
 ~/platform_cc.yaml
 ```
 
-**Variables**
+### Variables
 
 You can configure project variables that get applied to all project.
 
@@ -186,7 +189,7 @@ variables:
         COMPOSER_AUTH: '{"github-oauth":{"github.com":"SECRET_KEY_HERE"}'
 ```
 
-**Router**
+### Router
 
 You can configure the ports used by the router.
 
@@ -196,7 +199,6 @@ router:
     http: 80
     https: 443
 ```
-
 
 Platform.CC Specific Configurations
 -----------------------------------
@@ -210,8 +212,26 @@ Slots
 When you start a project you can specify a 'save slot' to use with the 'slot' or 's' option. This lets you start the project with different storage locations for the services in your project. An example use case is loading a different MySQL database without losing the original.
 
 Examples...
-`pcc project:start -s 1`
-`pcc project:start --slot 2`
+```
+pcc project:start -s 1
+pcc project:start --slot 2
+```
+
+### Delete Slot
+```
+pcc project:slot:delete 2
+```
+
+### Copy Slot
+```
+pcc project:slot:copy 1 2
+```
+
+
+Container Commit
+----------------
+
+By default Platform.CC makes a commit of the application containers once the build hooks are completed. This saves time as the build hooks won't have to be ran on every start up. However, it does appear to cause some issues in a few cases. We have included ways to bypass this functionality both with the 'disable_auto_commit' flag and with the '--no-commit' option on the project:start command.
 
 
 Share Logs
@@ -219,6 +239,8 @@ Share Logs
 
 A script is included that will allow you to share your Platform.CC logs with ease.
 
-`pcc_send_log`
+```
+pcc_send_log
+```
 
 After running the command it will give you a URL that you can share.

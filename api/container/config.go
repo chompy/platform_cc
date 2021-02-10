@@ -66,7 +66,8 @@ func (o ObjectContainerType) TypeName() string {
 // Config contains configuration for a Docker container.
 type Config struct {
 	ProjectID  string
-	Slot       int
+	Slot       int  // set the slot to use for mount volumes
+	NoCommit   bool // when true don't use committed app image
 	ObjectType ObjectContainerType
 	ObjectName string
 	Command    []string

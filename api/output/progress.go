@@ -20,6 +20,7 @@ package output
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 const progressPadChar = "."
@@ -122,7 +123,10 @@ func Progress(msgs []string) func(i int, s ProgressMessageState) {
 	}
 	startIndent := IndentLevel
 	progressPrintAll(msgs, states)
+	wg := sync.Mutex{}
 	return func(i int, s ProgressMessageState) {
+		wg.Lock()
+		defer wg.Unlock()
 		if i < 0 || i >= len(msgs) {
 			return
 		}

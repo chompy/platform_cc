@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -43,20 +44,24 @@ var projectStartCmd = &cobra.Command{
 		slot, err := strconv.Atoi(cmd.Flags().Lookup("slot").Value.String())
 		handleError(err)
 		proj.SetSlot(slot)
-		// start
-		handleError(proj.Start())
+		// flags
 		noCommitFlag := cmd.Flags().Lookup("no-commit")
 		noBuildFlag := cmd.Flags().Lookup("no-build")
-		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
-			doCommit := noCommitFlag == nil || noCommitFlag.Value.String() == "false"
-			handleError(proj.Build(false, doCommit))
+		// set no commit
+		if proj.Flags.Has(project.DisableAutoCommit) || (noCommitFlag != nil && noCommitFlag.Value.String() != "false") {
+			proj.SetNoCommit()
 		}
+		// start project
+		handleError(proj.Start())
+		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
+			handleError(proj.Build(false))
+		}
+		// start router
 		noRouterFlag := cmd.Flags().Lookup("no-router")
 		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
 			handleError(router.Start())
 			handleError(router.AddProjectRoutes(proj))
 		}
-
 	},
 }
 
@@ -99,8 +104,10 @@ var projectBuildCmd = &cobra.Command{
 		proj, err := getProject(true)
 		handleError(err)
 		noCommitFlag := cmd.Flags().Lookup("no-commit")
-		doCommit := noCommitFlag == nil || noCommitFlag.Value.String() != "false"
-		handleError(proj.Build(true, doCommit))
+		if noCommitFlag != nil && noCommitFlag.Value.String() != "false" {
+			proj.SetNoCommit()
+		}
+		handleError(proj.Build(true))
 	},
 }
 

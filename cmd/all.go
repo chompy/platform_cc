@@ -32,7 +32,7 @@ var allCmd = &cobra.Command{
 
 var allStopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop all PCC containers.",
+	Short: "Stop all Platform.CC containers.",
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO configurable
 		containerHandler, err := container.NewDocker()
@@ -43,7 +43,7 @@ var allStopCmd = &cobra.Command{
 
 var allPurgeCmd = &cobra.Command{
 	Use:   "purge",
-	Short: "Purge all PCC data.",
+	Short: "Purge all Platform.CC data.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("!!! WARNING: PURGING ALL PLATFORM.CC DATA IN 5 SECONDS !!!")
 		time.Sleep(5 * time.Second)

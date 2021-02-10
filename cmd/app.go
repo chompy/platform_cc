@@ -25,9 +25,9 @@ import (
 )
 
 var appCmd = &cobra.Command{
-	Use:     "application [-n name]",
-	Aliases: []string{"app"},
-	Short:   "Manage applications.",
+	Use:     "app [-n name]",
+	Aliases: []string{"application", "ap", "appl"},
+	Short:   "Manage individual applications.",
 }
 
 var appBuildCmd = &cobra.Command{

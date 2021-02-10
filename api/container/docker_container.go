@@ -26,7 +26,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -102,7 +101,7 @@ func (d Docker) ContainerStart(c Config) error {
 	}
 	// check for committed image
 	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, c.GetContainerName())
-	if !d.hasImage(image) {
+	if c.NoCommit || !d.hasImage(image) {
 		image = c.Image
 	}
 	// create container
@@ -365,7 +364,7 @@ func (d Docker) listAllContainers() ([]types.Container, error) {
 
 // deleteContainers deletes all provided containers.
 func (d Docker) deleteContainers(containers []types.Container) error {
-	timeout := 30 * time.Second
+	//timeout := 30 * time.Second
 	output.LogDebug("Delete containers.", containers)
 	// output progress
 	msgs := make([]string, len(containers))
@@ -380,14 +379,23 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 		wg.Add(1)
 		go func(cid string, i int) {
 			defer wg.Done()
-			if err := d.client.ContainerStop(
+			// issue shutdown command to container, containers are set to be auto deleted
+			// once they exit
+			if err := d.ContainerCommand(
+				cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && nginx -s stop || true"}, nil,
+			); err != nil {
+				prog(i, output.ProgressMessageError)
+				output.LogError(err)
+			}
+			// old way of deleting, possibly use this as a fallback?
+			/*if err := d.client.ContainerStop(
 				context.Background(),
 				cid,
 				&timeout,
 			); err != nil {
 				prog(i, output.ProgressMessageError)
 				output.LogError(err)
-			}
+			}*/
 			prog(i, output.ProgressMessageDone)
 		}(containers[i].ID, i)
 	}
