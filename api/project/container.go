@@ -92,7 +92,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", serviceStartCmd},
+		[]string{"bash", "--login", "-c", serviceStartCmd},
 		os.Stdout,
 	); err != nil {
 		return nil, tracerr.Wrap(err)
@@ -116,7 +116,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", cmd},
+		[]string{"bash", "--login", "-c", cmd},
 		&openOutput,
 	); err != nil {
 		return nil, tracerr.Wrap(err)
@@ -163,7 +163,7 @@ func (c Container) HasBuild() bool {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", "[ -f /config/built ] && echo 'YES'"},
+		[]string{"bash", "--login", "-c", "[ -f /config/built ] && echo 'YES'"},
 		&buf,
 	); err != nil {
 		output.LogError(err)
@@ -188,7 +188,7 @@ func (c Container) Build() error {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", c.buildCommand},
+		[]string{"bash", "--login", "-c", c.buildCommand},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)
@@ -209,7 +209,7 @@ func (c Container) SetupMounts() error {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", c.mountCommand},
+		[]string{"bash", "--login", "-c", c.mountCommand},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)
@@ -226,7 +226,7 @@ func (c Container) Deploy() error {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", appDeployCmd},
+		[]string{"bash", "--login", "-c", appDeployCmd},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)
@@ -245,7 +245,7 @@ func (c Container) Shell(user string, cmd []string) error {
 		),
 	)
 	if len(cmd) == 0 {
-		cmd = []string{"bash"}
+		cmd = []string{"bash", "--login"}
 	}
 	return tracerr.Wrap(c.containerHandler.ContainerShell(
 		c.Config.GetContainerName(),

@@ -74,11 +74,11 @@ func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 				uid,
 				gid,
 			)
-			return []string{"sh", "-c", command}
+			return []string{"bash", "--login", "-c", command}
 		}
 	case def.Service:
 		{
-			return []string{"sh", "-c", serviceContainerCmd}
+			return []string{"bash", "--login", "-c", serviceContainerCmd}
 		}
 	}
 	return []string{}
