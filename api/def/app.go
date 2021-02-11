@@ -117,6 +117,24 @@ func (d App) Validate() []error {
 	if e := d.Runtime.Validate(&d); len(e) > 0 {
 		o = append(o, e...)
 	}
+	if d.Variables["env"] != nil {
+		for k, v := range d.Variables["env"] {
+			switch v.(type) {
+			case string, int, float32, float64:
+				{
+					break
+				}
+			default:
+				{
+					o = append(o, NewValidateError(
+						"app.variables.env."+k,
+						"should be a string",
+					))
+					break
+				}
+			}
+		}
+	}
 	return o
 }
 

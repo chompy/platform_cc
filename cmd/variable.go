@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/spf13/cobra"
@@ -91,6 +92,30 @@ var varListCmd = &cobra.Command{
 		output.Enable = false
 		proj, err := getProject(false)
 		handleError(err)
+
+		// global config
+		gc, err := def.ParseGlobalYamlFile()
+		handleError(err)
+
+		varList := make(map[string]map[string]string)
+
+		for k, v := range gc.Variables {
+			varList[k] = make(map[string]string)
+			for kk, vv := range v {
+				switch vv.(type) {
+				case string:
+					{
+						varList[k][kk] = vv.(string)
+						break
+					}
+				}
+			}
+		}
+
+		for k, v := range proj.Variables {
+			varList[k] = v
+		}
+
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {

@@ -48,7 +48,7 @@ var projectValidateCmd = &cobra.Command{
 			if len(errs) > 0 {
 				count += len(errs)
 				for _, err := range errs {
-					output.Info(err.Error())
+					output.ErrorText(err.Error())
 				}
 			}
 			done()

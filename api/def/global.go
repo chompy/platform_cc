@@ -54,6 +54,24 @@ func (d *GlobalConfig) SetDefaults() {
 // Validate checks for errors.
 func (d GlobalConfig) Validate() []error {
 	o := make([]error, 0)
+	if d.Variables["env"] != nil {
+		for k, v := range d.Variables["env"] {
+			switch v.(type) {
+			case string:
+				{
+					break
+				}
+			default:
+				{
+					o = append(o, NewValidateError(
+						"app.variables.env."+k,
+						"should be a string",
+					))
+					break
+				}
+			}
+		}
+	}
 	return o
 }
 

@@ -120,3 +120,11 @@ func Error(err error) {
 	tracerr.PrintSourceColor(err)
 	os.Exit(1)
 }
+
+// ErrorText prints message using the error text color.
+func ErrorText(msg string) {
+	if !Enable {
+		return
+	}
+	levelMsg(colorError(msg))
+}
