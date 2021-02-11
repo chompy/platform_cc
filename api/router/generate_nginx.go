@@ -30,14 +30,14 @@ import (
 )
 
 // GetUpstreamHost retrieves upstream hostname from upstream value in route.
-func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool) string {
+func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool) (string, error) {
 	upstreamSplit := strings.Split(upstream, ":")
 	// itterate apps and services to find name match
 	// TODO this should use relationships but those only get resolved when
 	// services are opened...sooo??
 	for _, app := range proj.Apps {
 		if app.Name == upstreamSplit[0] {
-			return proj.GetDefinitionHostName(app)
+			return proj.GetDefinitionHostName(app), nil
 		}
 	}
 	for _, serv := range proj.Services {
@@ -58,14 +58,14 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 					break
 				}
 			}
-			return fmt.Sprintf("%s:%d", proj.GetDefinitionHostName(serv), port)
+			return fmt.Sprintf("%s:%d", proj.GetDefinitionHostName(serv), port), nil
 		}
 	}
-	return ""
+	return "", tracerr.Errorf("could not find upstream %s", upstream)
 }
 
 // GenerateTemplateVars generates variables to inject in nginx template.
-func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
+func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, error) {
 	hostMaps := MapHostRoutes(proj.Routes)
 	out := make([]map[string]interface{}, 0)
 	for _, hostMap := range hostMaps {
@@ -93,14 +93,22 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 					"code": v.Code,
 				})
 			}
+			upstreamHost := ""
+			if route.Upstream != "" {
+				var err error
+				upstreamHost, err = GetUpstreamHost(
+					proj, route.Upstream, proj.Flags.Has(project.EnableServiceRoutes),
+				)
+				if err != nil {
+					return nil, tracerr.Wrap(err)
+				}
+			}
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
-					"path": path,
-					"type": route.Type,
-					"upstream": GetUpstreamHost(
-						proj, route.Upstream, proj.Flags.Has(project.EnableServiceRoutes),
-					),
+					"path":      path,
+					"type":      route.Type,
+					"upstream":  upstreamHost,
 					"to":        to,
 					"redirects": redirects,
 					"route":     route,
@@ -123,7 +131,7 @@ func GenerateTemplateVars(proj *project.Project) []map[string]interface{} {
 		}
 		out = append(out, outHm)
 	}
-	return out
+	return out, nil
 }
 
 // GenerateNginxConfig creates nginx configuration for given application.
@@ -132,8 +140,12 @@ func GenerateNginxConfig(proj *project.Project) ([]byte, error) {
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+	templateVars, err := GenerateTemplateVars(proj)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, GenerateTemplateVars(proj)); err != nil {
+	if err := t.Execute(&buf, templateVars); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
 	return buf.Bytes(), nil
@@ -141,5 +153,9 @@ func GenerateNginxConfig(proj *project.Project) ([]byte, error) {
 
 // GenerateRouteListJSON creates a list of routes for project as JSON.
 func GenerateRouteListJSON(proj *project.Project) ([]byte, error) {
-	return json.Marshal(GenerateTemplateVars(proj))
+	templateVars, err := GenerateTemplateVars(proj)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return json.Marshal(templateVars)
 }

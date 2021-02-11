@@ -1,8 +1,6 @@
 - ASAP
 
 - QOL
-    - Throw an error if upstream service does not exist when generating router Nginx.
-    - Display current slot with project:status.
 
 - BACKBURNER
     - Router catch redirect loops.
