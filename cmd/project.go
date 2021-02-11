@@ -57,14 +57,13 @@ var projectStartCmd = &cobra.Command{
 			valErrs := proj.Validate()
 			if len(valErrs) > 0 {
 				output.ErrorText(fmt.Sprintf("Validation failed with %d error(s).", len(valErrs)))
+				output.IndentLevel++
+				for _, e := range valErrs {
+					output.ErrorText(e.Error())
+				}
+				return
 			}
-			output.IndentLevel++
-			for _, e := range valErrs {
-				output.ErrorText(e.Error())
-			}
-			return
 		}
-
 		// start project
 		handleError(proj.Start())
 		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
