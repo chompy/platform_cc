@@ -498,3 +498,20 @@ func (p *Project) CopySlot(destSlot int) error {
 func (p *Project) SetNoCommit() {
 	p.noCommit = true
 }
+
+// Validate returns list of validation errors for project.
+func (p *Project) Validate() []error {
+	done := output.Duration("Validate project.")
+	out := make([]error, 0)
+	for _, app := range p.Apps {
+		out = append(out, app.Validate()...)
+	}
+	for _, serv := range p.Services {
+		out = append(out, serv.Validate()...)
+	}
+	for _, route := range p.Routes {
+		out = append(out, route.Validate()...)
+	}
+	done()
+	return out
+}

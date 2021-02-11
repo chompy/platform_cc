@@ -19,27 +19,18 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
 var projectValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate a project.",
 	Run: func(cmd *cobra.Command, args []string) {
+		proj, err := getProject(true)
+		handleError(err)
 		count := 0
-		cwd, err := os.Getwd()
-		if err != nil {
-			handleError(tracerr.Wrap(err))
-		}
-		proj, err := project.LoadFromPath(cwd, true)
-		if err != nil {
-			handleError(tracerr.Wrap(err))
-		}
 		for _, app := range proj.Apps {
 			done := output.Duration(
 				fmt.Sprintf("Validate app '%s.'", app.Name),

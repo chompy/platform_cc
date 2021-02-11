@@ -35,7 +35,7 @@ var projectCmd = &cobra.Command{
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--no-build] [--no-router] [--no-commit] [-s slot]",
+	Use:   "start [--no-build] [--no-router] [--no-commit] [--no-validate] [-s slot]",
 	Short: "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
@@ -47,10 +47,24 @@ var projectStartCmd = &cobra.Command{
 		// flags
 		noCommitFlag := cmd.Flags().Lookup("no-commit")
 		noBuildFlag := cmd.Flags().Lookup("no-build")
+		noValidateFlag := cmd.Flags().Lookup("no-validate")
 		// set no commit
 		if proj.Flags.Has(project.DisableAutoCommit) || (noCommitFlag != nil && noCommitFlag.Value.String() != "false") {
 			proj.SetNoCommit()
 		}
+		// validate
+		if noValidateFlag == nil || noValidateFlag.Value.String() == "false" {
+			valErrs := proj.Validate()
+			if len(valErrs) > 0 {
+				output.ErrorText(fmt.Sprintf("Validation failed with %d error(s).", len(valErrs)))
+			}
+			output.IndentLevel++
+			for _, e := range valErrs {
+				output.ErrorText(e.Error())
+			}
+			return
+		}
+
 		// start project
 		handleError(proj.Start())
 		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
@@ -215,6 +229,7 @@ func init() {
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectStartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
+	projectStartCmd.Flags().Bool("no-validate", false, "don't validate the project config files")
 	projectStartCmd.Flags().IntP("slot", "s", 0, "set volume slot")
 	projectBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
