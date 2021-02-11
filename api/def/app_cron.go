@@ -33,6 +33,7 @@ func (d *AppCron) SetDefaults() {
 // Validate checks for errors.
 func (d AppCron) Validate(root *App) []error {
 	o := make([]error, 0)
+	// TODO fix cron parser
 	/*p := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 	if _, e := p.Parse(d.Spec); e != nil {
 		log.Println(d.Spec)
