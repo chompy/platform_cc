@@ -17,10 +17,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
-import (
-	"github.com/gorhill/cronexpr"
-)
-
 // AppCron defines a cron job.
 type AppCron struct {
 	Spec    string `yaml:"spec" json:"spec"`
@@ -37,11 +33,13 @@ func (d *AppCron) SetDefaults() {
 // Validate checks for errors.
 func (d AppCron) Validate(root *App) []error {
 	o := make([]error, 0)
-	if _, e := cronexpr.Parse(d.Spec); e != nil {
+	/*p := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+	if _, e := p.Parse(d.Spec); e != nil {
+		log.Println(d.Spec)
 		o = append(o, NewValidateError(
 			"app.cron[].spec",
 			e.Error(),
 		))
-	}
+	}*/
 	return o
 }

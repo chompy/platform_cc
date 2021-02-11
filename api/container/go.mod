@@ -5,6 +5,7 @@ go 1.15
 replace gitlab.com/contextualcode/platform_cc/api/output => ../output
 
 require (
+	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
