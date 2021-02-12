@@ -88,6 +88,7 @@ var allStatusCmd = &cobra.Command{
 				s.Name = "router"
 				slot = "n/a"
 				s.ObjectType = container.ObjectContainerRouter
+				s.Type = "router"
 			}
 			serviceType := s.Type
 			if s.Committed {
