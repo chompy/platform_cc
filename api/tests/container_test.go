@@ -293,3 +293,86 @@ func TestSlotCopy(t *testing.T) {
 		t,
 	)
 }
+
+func TestProjectStatus(t *testing.T) {
+	projectPath := path.Join("data", "sample1")
+	p, e := project.LoadFromPath(projectPath, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	ch := container.NewDummy()
+	p.SetContainerHandler(ch)
+	p.Start()
+
+	count := len(p.Services)
+	for _, app := range p.Apps {
+		count += 1 + len(app.Workers)
+	}
+	// project status
+	s := p.Status()
+	assertEqual(
+		len(s),
+		count,
+		"unexpected number of containers returned in status",
+		t,
+	)
+	assertEqual(
+		s[0].ProjectID,
+		p.ID,
+		"status returned unexpected project id",
+		t,
+	)
+	// all status
+	as, _ := ch.AllStatus()
+	assertEqual(
+		len(as),
+		count,
+		"unexpected number of containers returned in all status",
+		t,
+	)
+	assertEqual(
+		as[0].ProjectID,
+		p.ID,
+		"all status returned unexpected project id",
+		t,
+	)
+}
+
+func TestAllStatus(t *testing.T) {
+	ch := container.NewDummy()
+	// load sample1 project
+	p1Path := path.Join("data", "sample1")
+	p1, e := project.LoadFromPath(p1Path, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	p1.SetContainerHandler(ch)
+	p1.ID = "sample1"
+	// load sample2 project
+	p2Path := path.Join("data", "sample2")
+	p2, e := project.LoadFromPath(p2Path, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	p2.SetContainerHandler(ch)
+	p2.ID = "sample2"
+	// start projects
+	p1.Start()
+	p2.Start()
+	s, _ := ch.AllStatus()
+	assertEqual(
+		len(s),
+		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
+		"unexpected number of results in all status",
+		t,
+	)
+	for _, st := range s {
+		if st.ProjectID != p1.ID && st.ProjectID != p2.ID {
+			t.Error("status did not have known project id")
+		}
+	}
+	// TODO more checks?
+}
