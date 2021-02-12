@@ -170,3 +170,40 @@ func (d Docker) deleteImages(images []types.ImageSummary) error {
 	done()
 	return nil
 }
+
+// serviceTypeFromImage extract the service type name from the Docker image.
+func (d Docker) serviceTypeFromImage(name string) string {
+	// extract type name from Platform.sh image name
+	sType := typeFromImageName(name)
+	if sType != "" {
+		return sType
+	}
+	// type name or raw image id was provided, inspect the image
+	inspectImage, _, err := d.client.ImageInspectWithRaw(
+		context.Background(),
+		name,
+	)
+	if err != nil {
+		output.LogError(err)
+		return ""
+	}
+	if len(inspectImage.RepoTags) > 0 {
+		sType := typeFromImageName(inspectImage.RepoTags[0])
+		if sType != "" {
+			return sType
+		}
+	}
+	// inspect parent
+	parentInspectImage, _, err := d.client.ImageInspectWithRaw(
+		context.Background(),
+		inspectImage.Parent,
+	)
+	if err != nil {
+		output.LogError(err)
+		return ""
+	}
+	if len(parentInspectImage.RepoTags) > 0 {
+		return typeFromImageName(parentInspectImage.RepoTags[0])
+	}
+	return ""
+}

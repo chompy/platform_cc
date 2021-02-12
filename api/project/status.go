@@ -17,42 +17,42 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package project
 
-// ContainerStatus defines the status of a container.
-type ContainerStatus struct {
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
-	Container Container `json:"-"`
-	Running   bool      `json:"running"`
-	IPAddress string    `json:"ip_address"`
-	Slot      int       `json:"slot"`
-}
+import (
+	"gitlab.com/contextualcode/platform_cc/api/container"
+)
 
 // Status returns list of container status
-func (p *Project) Status() []ContainerStatus {
-	out := make([]ContainerStatus, 0)
+func (p *Project) Status() []container.Status {
+	out := make([]container.Status, 0)
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		status, _ := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
-		out = append(out, ContainerStatus{
-			Name:      app.Name,
-			Type:      app.Type,
-			Container: c,
-			Running:   status.Running,
-			Slot:      status.Slot,
-			IPAddress: status.IPAddress,
-		})
+		if status.Name == "" {
+			status.Name = c.Config.ObjectName
+			status.ObjectType = c.Config.ObjectType
+			status.Type = app.Type
+		}
+		out = append(out, status)
+		for _, worker := range app.Workers {
+			wc := p.NewContainer(*worker)
+			status, _ := c.containerHandler.ContainerStatus(wc.Config.GetContainerName())
+			if status.Name == "" {
+				status.Name = wc.Config.ObjectName
+				status.ObjectType = wc.Config.ObjectType
+				status.Type = worker.Type
+			}
+			out = append(out, status)
+		}
 	}
 	for _, service := range p.Services {
 		c := p.NewContainer(service)
 		status, _ := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
-		out = append(out, ContainerStatus{
-			Name:      service.Name,
-			Type:      service.Type,
-			Container: c,
-			Running:   status.Running,
-			Slot:      status.Slot,
-			IPAddress: status.IPAddress,
-		})
+		if status.Name == "" {
+			status.Name = c.Config.ObjectName
+			status.ObjectType = c.Config.ObjectType
+			status.Type = service.Type
+		}
+		out = append(out, status)
 	}
 	return out
 }

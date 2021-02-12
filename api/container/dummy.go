@@ -102,7 +102,14 @@ func (d Dummy) ContainerShell(id string, user string, command []string, stdin io
 
 // ContainerStatus gets dummy status.
 func (d Dummy) ContainerStatus(id string) (Status, error) {
-	return Status{Running: d.hasContainer(id), IPAddress: "1.1.1.1", Name: id}, nil
+	config := containerConfigFromName(id)
+	return Status{
+		Running:    d.hasContainer(id),
+		IPAddress:  "1.1.1.1",
+		Name:       config.ObjectName,
+		ObjectType: config.ObjectType,
+		ProjectID:  config.ProjectID,
+	}, nil
 }
 
 // ContainerUpload uploads to dummy container.
@@ -218,4 +225,21 @@ func (d Dummy) AllPurge() error {
 	defer d.Tracker.Sync.Unlock()
 	d.Tracker.Volumes = make([]string, 0)
 	return nil
+}
+
+// AllStatus returns status of dummy containers.
+func (d Dummy) AllStatus() ([]Status, error) {
+	out := make([]Status, 0)
+	for _, c := range d.Tracker.Containers {
+		config := containerConfigFromName(c)
+		out = append(out, Status{
+			ID:         c,
+			Name:       config.ObjectName,
+			ObjectType: config.ObjectType,
+			ProjectID:  config.ProjectID,
+			Running:    true,
+			IPAddress:  "1.1.1.1",
+		})
+	}
+	return out, nil
 }

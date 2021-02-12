@@ -25,6 +25,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
@@ -47,6 +48,7 @@ func getProject(parseYaml bool) (*project.Project, error) {
 	return proj, err
 }
 
+// getDef returns the definition for the current command.
 func getDef(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
 	name := cmd.PersistentFlags().Lookup("name").Value.String()
 	if name == "" {
@@ -153,4 +155,16 @@ func drawTable(head []string, data [][]string) {
 	println("")
 	table.Render()
 	println("")
+}
+
+func drawKeys() {
+	println("[a] = application\t\t[s] = service")
+	println("[w] = worker\t\t\t[r] = router")
+	println("[c] = committed")
+}
+
+// getContainerHandler returns container handler.
+func getContainerHandler() (container.Interface, error) {
+	// TODO configurable
+	return container.NewDocker()
 }

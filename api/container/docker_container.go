@@ -217,16 +217,23 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 	}
 	slot := 1
 	for _, m := range data.Mounts {
-		slot = volumeGetSlot(m.Name)
-		break
+		if m.Type == mount.TypeVolume {
+			slot = volumeGetSlot(m.Name)
+			break
+		}
 	}
+	config := containerConfigFromName(data.Name)
 	return Status{
-		ID:        data.ID,
-		Name:      data.Name,
-		Image:     data.Image,
-		Running:   data.State.Running,
-		IPAddress: ipAddress,
-		Slot:      slot,
+		ID:         data.ID,
+		Name:       config.ObjectName,
+		ObjectType: config.ObjectType,
+		Image:      data.Image,
+		Type:       d.serviceTypeFromImage(data.Image),
+		Committed:  d.hasCommit(data.Name),
+		ProjectID:  config.ProjectID,
+		Running:    data.State.Running,
+		IPAddress:  ipAddress,
+		Slot:       slot,
 	}, nil
 }
 
@@ -410,4 +417,11 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 	wg.Wait()
 	done()
 	return nil
+}
+
+// hasCommit return true if a committed version of the given container exists.
+func (d Docker) hasCommit(name string) bool {
+	name = strings.TrimPrefix(name, "/")
+	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, name)
+	return d.hasImage(image)
 }

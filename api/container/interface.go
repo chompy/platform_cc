@@ -38,4 +38,5 @@ type Interface interface {
 	ProjectCopySlot(pid string, sourceSlot int, destSlot int) error
 	AllStop() error
 	AllPurge() error
+	AllStatus() ([]Status, error)
 }

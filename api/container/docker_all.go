@@ -17,7 +17,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package container
 
-import "github.com/ztrue/tracerr"
+import (
+	"github.com/docker/docker/api/types/mount"
+	"github.com/ztrue/tracerr"
+)
 
 // AllStop stops all Platform.CC Docker containers.
 func (d Docker) AllStop() error {
@@ -51,4 +54,50 @@ func (d Docker) AllPurge() error {
 		return tracerr.Wrap(err)
 	}
 	return nil
+}
+
+// AllStatus returns the status of all Platform.CC Docker containers.
+func (d Docker) AllStatus() ([]Status, error) {
+	containers, err := d.listAllContainers()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	out := make([]Status, len(containers))
+	for i, c := range containers {
+		// get ip address
+		ipAddress := ""
+		for name, network := range c.NetworkSettings.Networks {
+			if name == dockerNetworkName {
+				ipAddress = network.IPAddress
+				break
+			}
+		}
+		// get slot
+		slot := 1
+		for _, m := range c.Mounts {
+			if m.Type == mount.TypeVolume {
+				slot = volumeGetSlot(m.Name)
+				break
+			}
+		}
+		// get service name
+		name := ""
+		if len(c.Names) > 0 {
+			name = c.Names[0]
+		}
+		config := containerConfigFromName(name)
+		out[i] = Status{
+			ID:         c.ID,
+			Name:       config.ObjectName,
+			ObjectType: config.ObjectType,
+			Image:      c.Image,
+			Type:       d.serviceTypeFromImage(c.Image),
+			Committed:  d.hasCommit(c.Names[0]),
+			ProjectID:  config.ProjectID,
+			Running:    c.State == "running",
+			IPAddress:  ipAddress,
+			Slot:       slot,
+		}
+	}
+	return out, nil
 }

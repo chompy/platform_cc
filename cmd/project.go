@@ -175,31 +175,43 @@ var projectStatusCmd = &cobra.Command{
 		}
 		// table out
 		data := make([][]string, 0)
+		slot := "n/a"
+		activeCount := 0
 		for _, s := range status {
 			runningStr := "stopped"
 			ipAddrStr := "n/a"
 			if s.Running {
 				runningStr = "running"
+				activeCount++
 			}
 			if s.IPAddress != "" {
 				ipAddrStr = s.IPAddress
 			}
-			slot := "n/a"
-			if s.Slot > 0 {
+			if s.Slot > 0 && slot == "n/a" {
 				slot = fmt.Sprintf("%d", s.Slot)
 			}
+			serviceType := s.Type
+			if s.Committed {
+				serviceType = "[c] " + s.Type
+			}
+
 			data = append(data, []string{
-				s.Name,
-				s.Type,
+				fmt.Sprintf("[%s] %s", string(s.ObjectType), s.Name),
+				serviceType,
 				runningStr,
-				slot,
 				ipAddrStr,
 			})
 		}
+		println("")
+		println("ID\t\t", proj.ID)
+		println("SLOT\t\t", slot)
+		println("ACTIVE\t\t", fmt.Sprintf("%d/%d", activeCount, len(status)))
 		drawTable(
-			[]string{"Name", "Type", "Status", "Slot", "IP Address"},
+			[]string{"Name", "Type", "Status", "IP Address"},
 			data,
 		)
+		drawKeys()
+		println("")
 	},
 }
 
