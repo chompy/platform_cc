@@ -46,6 +46,7 @@ rm -rf /etc/service/*
 python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 chown -R web:web /run
+chown -R web:web /tmp
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd

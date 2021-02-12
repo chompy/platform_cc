@@ -1,6 +1,8 @@
 - ASAP
 
 - QOL
+    - Container status command.
+    - All status command.
 
 - BACKBURNER
     - Router catch redirect loops.

@@ -20,6 +20,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -28,6 +29,10 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
+
+var appPrefix = []string{"app-", "a-", "application-"}
+var servicePrefix = []string{"ser-", "s-", "service-"}
+var workerPrefix = []string{"wor-", "w-", "worker-"}
 
 // getProject fetches the project at the current working directory.
 func getProject(parseYaml bool) (*project.Project, error) {
@@ -42,18 +47,68 @@ func getProject(parseYaml bool) (*project.Project, error) {
 	return proj, err
 }
 
-// getApp fetches an app definition.
-func getApp(cmd *cobra.Command, proj *project.Project) (def.App, error) {
+func getDef(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
 	name := cmd.PersistentFlags().Lookup("name").Value.String()
 	if name == "" {
 		name = proj.Apps[0].Name
 	}
-	for _, app := range proj.Apps {
-		if app.Name == name {
-			return app, nil
+	// find via app prefix
+	for _, prefix := range appPrefix {
+		if strings.HasPrefix(name, prefix) {
+			name = name[len(prefix):]
+			for _, d := range proj.Apps {
+				if d.Name == name {
+					return d, nil
+				}
+			}
+			return nil, tracerr.Errorf("could not find application definition for %s", name)
 		}
 	}
-	return def.App{}, fmt.Errorf("app '%s' not found", name)
+	// find via service prefix
+	for _, prefix := range servicePrefix {
+		if strings.HasPrefix(name, prefix) {
+			name = name[len(prefix):]
+			for _, d := range proj.Services {
+				if d.Name == name {
+					return d, nil
+				}
+			}
+			return nil, tracerr.Errorf("could not find service definition for %s", name)
+		}
+	}
+	// find via worker prefix
+	for _, prefix := range workerPrefix {
+		if strings.HasPrefix(name, prefix) {
+			name = name[len(prefix):]
+			for _, d := range proj.Apps {
+				for _, w := range d.Workers {
+					if w.Name == name {
+						return w, nil
+					}
+				}
+			}
+			return nil, tracerr.Errorf("could not find service definition for %s", name)
+		}
+	}
+	// find from name with no prefix (order app > service > worker)
+	for _, d := range proj.Apps {
+		if d.Name == name {
+			return d, nil
+		}
+	}
+	for _, d := range proj.Services {
+		if d.Name == name {
+			return d, nil
+		}
+	}
+	for _, d := range proj.Apps {
+		for _, w := range d.Workers {
+			if w.Name == name {
+				return w, nil
+			}
+		}
+	}
+	return nil, tracerr.Errorf("could not find definition for %s", name)
 }
 
 // getService fetches a service definition.

@@ -19,7 +19,9 @@ package container
 
 // Status defines container status.
 type Status struct {
+	ID        string `json:"id"`
 	Name      string `json:"name"`
+	Image     string `json:"image"`
 	Running   bool   `json:"running"`
 	IPAddress string `json:"ip_address"`
 	Slot      int    `json:"slot"`

@@ -221,7 +221,9 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		break
 	}
 	return Status{
+		ID:        data.ID,
 		Name:      data.Name,
+		Image:     data.Image,
 		Running:   data.State.Running,
 		IPAddress: ipAddress,
 		Slot:      slot,
