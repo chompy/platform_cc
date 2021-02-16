@@ -56,8 +56,9 @@ type Project struct {
 	Options          map[Option]string            `json:"options"`
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
-	slot             int
-	noCommit         bool
+	slot             int  // set volume slot
+	noCommit         bool // flag that signifies apps should not be committed
+	noBuild          bool // flag that signifies apps should not be built on start up
 }
 
 // LoadFromPath loads a project from its path.
@@ -265,6 +266,17 @@ func (p *Project) Start() error {
 		if err := c.SetupMounts(); err != nil {
 			return tracerr.Wrap(err)
 		}
+		// build
+		if !p.noBuild && !c.HasBuild() {
+			if err := c.Build(); err != nil {
+				return tracerr.Wrap(err)
+			}
+			if !p.noCommit {
+				if err := c.Commit(); err != nil {
+					return tracerr.Wrap(err)
+				}
+			}
+		}
 		// open + process relationships
 		rels, err := c.Open()
 		if err != nil {
@@ -289,7 +301,6 @@ func (p *Project) Start() error {
 				if err != nil {
 					return tracerr.Wrap(err)
 				}
-
 			}
 		}
 	}
@@ -329,6 +340,9 @@ func (p *Project) Stop() error {
 
 // Build builds all applications in the project.
 func (p *Project) Build(force bool) error {
+	if p.noBuild {
+		return nil
+	}
 	done := output.Duration(
 		fmt.Sprintf("Build project '%s.'", p.ID),
 	)
@@ -497,6 +511,11 @@ func (p *Project) CopySlot(destSlot int) error {
 // SetNoCommit sets the no commit flag.
 func (p *Project) SetNoCommit() {
 	p.noCommit = true
+}
+
+// SetNoBuild sets the no build flag.
+func (p *Project) SetNoBuild() {
+	p.noBuild = true
 }
 
 // Validate returns list of validation errors for project.

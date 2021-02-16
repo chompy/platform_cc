@@ -52,6 +52,10 @@ var projectStartCmd = &cobra.Command{
 		if proj.Flags.Has(project.DisableAutoCommit) || (noCommitFlag != nil && noCommitFlag.Value.String() != "false") {
 			proj.SetNoCommit()
 		}
+		// set no build
+		if noBuildFlag != nil && noBuildFlag.Value.String() != "false" {
+			proj.SetNoBuild()
+		}
 		// validate
 		if noValidateFlag == nil || noValidateFlag.Value.String() == "false" {
 			valErrs := proj.Validate()
@@ -66,9 +70,6 @@ var projectStartCmd = &cobra.Command{
 		}
 		// start project
 		handleError(proj.Start())
-		if noBuildFlag == nil || noBuildFlag.Value.String() == "false" {
-			handleError(proj.Build(false))
-		}
 		// start router
 		noRouterFlag := cmd.Flags().Lookup("no-router")
 		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
@@ -107,20 +108,6 @@ var projectPullCmd = &cobra.Command{
 		proj, err := getProject(true)
 		handleError(err)
 		handleError(proj.Pull())
-	},
-}
-
-var projectBuildCmd = &cobra.Command{
-	Use:   "build [--no-commit]",
-	Short: "Build a project.",
-	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(true)
-		handleError(err)
-		noCommitFlag := cmd.Flags().Lookup("no-commit")
-		if noCommitFlag != nil && noCommitFlag.Value.String() != "false" {
-			proj.SetNoCommit()
-		}
-		handleError(proj.Build(true))
 	},
 }
 
@@ -242,14 +229,12 @@ func init() {
 	projectStartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectStartCmd.Flags().Bool("no-validate", false, "don't validate the project config files")
 	projectStartCmd.Flags().IntP("slot", "s", 0, "set volume slot")
-	projectBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
 	projectLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)
 	projectCmd.AddCommand(projectPullCmd)
-	projectCmd.AddCommand(projectBuildCmd)
 	projectCmd.AddCommand(projectDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)

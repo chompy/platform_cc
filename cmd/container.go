@@ -32,30 +32,6 @@ var containerCmd = &cobra.Command{
 	Short:   "Manage individual containers for applications, services, and workers.",
 }
 
-var containerAppBuildCmd = &cobra.Command{
-	Use:   "build [--no-commit]",
-	Short: "Run application build commands.",
-	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(true)
-		handleError(err)
-		d, err := getDef(containerCmd, proj)
-		handleError(err)
-		switch d.(type) {
-		case def.App:
-			{
-				c := proj.NewContainer(d)
-				handleError(c.Build())
-				noCommitFlag := cmd.Flags().Lookup("no-commit")
-				if noCommitFlag == nil || noCommitFlag.Value.String() == "false" {
-					handleError(c.Commit())
-				}
-				return
-			}
-		}
-		handleError(fmt.Errorf("can only build applications"))
-	},
-}
-
 var containerAppDeployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Run application deploy hook.",
@@ -168,11 +144,9 @@ var containerLogsCmd = &cobra.Command{
 }
 
 func init() {
-	containerAppBuildCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	containerShellCmd.PersistentFlags().Bool("root", false, "shell as root")
 	containerCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	containerLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
-	containerCmd.AddCommand(containerAppBuildCmd)
 	containerCmd.AddCommand(containerAppDeployCmd)
 	containerCmd.AddCommand(containerShellCmd)
 	containerCmd.AddCommand(containerAppCommitCmd)
