@@ -1,8 +1,7 @@
 - ASAP
 
 - QOL
-    - Container status command.
-    - All status command.
+    - Bash autocomplete for PCC commands.
 
 - BACKBURNER
     - Router catch redirect loops.

@@ -26,6 +26,12 @@ groupmod -g %d web
 umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
+mkdir /mnt/data/_tmp
+chown -R web:web /mnt/data/_tmp
+mount -o user_xattr --bind /mnt/data/_tmp /tmp
+rm -f /tmp/.ready*
+rm -f /tmp/*.log
+rm -f /tmp/*.py
 cat >/tmp/fake-rpc.py <<EOF
 from gevent.monkey import patch_all;
 patch_all();
@@ -54,6 +60,7 @@ rm -f /run/rsa_hostkey
 /etc/platform/boot
 sleep 5
 touch /tmp/.ready1
+chown -R web:web /mnt/data/_tmp
 exec init
 `
 
