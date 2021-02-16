@@ -20,6 +20,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
@@ -29,6 +30,7 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
+	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
 var appPrefix = []string{"app-", "a-", "application-"}
@@ -167,4 +169,65 @@ func drawKeys() {
 func getContainerHandler() (container.Interface, error) {
 	// TODO configurable
 	return container.NewDocker()
+}
+
+// checkFlag returns true if given flag is set.
+func checkFlag(cmd *cobra.Command, name string) bool {
+	if cmd == nil {
+		return false
+	}
+	flag := cmd.Flags().Lookup(name)
+	return flag != nil && flag.Value.String() != "false"
+}
+
+func projectStart(cmd *cobra.Command, p *project.Project, slot int) {
+	// get project
+	if p == nil {
+		var err error
+		p, err = getProject(true)
+		handleError(err)
+	}
+	// determine volume slot
+	var err error
+	if slot < 0 {
+		slot, err = strconv.Atoi(cmd.Flags().Lookup("slot").Value.String())
+		handleError(err)
+	}
+	p.SetSlot(slot)
+	// set no commit
+	if p.Flags.Has(project.DisableAutoCommit) || checkFlag(cmd, "no-commit") {
+		p.SetNoCommit()
+	}
+	// set no build
+	if checkFlag(cmd, "no-build") {
+		p.SetNoBuild()
+	}
+	// validate
+	if !checkFlag(cmd, "no-validate") {
+		valErrs := p.Validate()
+		if len(valErrs) > 0 {
+			output.ErrorText(fmt.Sprintf("Validation failed with %d error(s).", len(valErrs)))
+			output.IndentLevel++
+			for _, e := range valErrs {
+				output.ErrorText(e.Error())
+			}
+			return
+		}
+	}
+	// delete commits for rebuild
+	if checkFlag(cmd, "rebuild") && !checkFlag(cmd, "no-build") {
+		delComDone := output.Duration("Delete commits.")
+		for _, app := range p.Apps {
+			c := p.NewContainer(app)
+			handleError(c.DeleteCommit())
+		}
+		delComDone()
+	}
+	// start project
+	handleError(p.Start())
+	// start router
+	if !checkFlag(cmd, "no-router") {
+		handleError(router.Start())
+		handleError(router.AddProjectRoutes(p))
+	}
 }

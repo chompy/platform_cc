@@ -20,11 +20,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gitlab.com/contextualcode/platform_cc/api/project"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -35,47 +33,10 @@ var projectCmd = &cobra.Command{
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--no-build] [--no-router] [--no-commit] [--no-validate] [-s slot]",
+	Use:   "start [--rebuild] [--no-build] [--no-router] [--no-commit] [--no-validate] [-s slot]",
 	Short: "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(true)
-		handleError(err)
-		// determine volume slot
-		slot, err := strconv.Atoi(cmd.Flags().Lookup("slot").Value.String())
-		handleError(err)
-		proj.SetSlot(slot)
-		// flags
-		noCommitFlag := cmd.Flags().Lookup("no-commit")
-		noBuildFlag := cmd.Flags().Lookup("no-build")
-		noValidateFlag := cmd.Flags().Lookup("no-validate")
-		// set no commit
-		if proj.Flags.Has(project.DisableAutoCommit) || (noCommitFlag != nil && noCommitFlag.Value.String() != "false") {
-			proj.SetNoCommit()
-		}
-		// set no build
-		if noBuildFlag != nil && noBuildFlag.Value.String() != "false" {
-			proj.SetNoBuild()
-		}
-		// validate
-		if noValidateFlag == nil || noValidateFlag.Value.String() == "false" {
-			valErrs := proj.Validate()
-			if len(valErrs) > 0 {
-				output.ErrorText(fmt.Sprintf("Validation failed with %d error(s).", len(valErrs)))
-				output.IndentLevel++
-				for _, e := range valErrs {
-					output.ErrorText(e.Error())
-				}
-				return
-			}
-		}
-		// start project
-		handleError(proj.Start())
-		// start router
-		noRouterFlag := cmd.Flags().Lookup("no-router")
-		if noRouterFlag == nil || noRouterFlag.Value.String() == "false" {
-			handleError(router.Start())
-			handleError(router.AddProjectRoutes(proj))
-		}
+		projectStart(cmd, nil, -1)
 	},
 }
 
@@ -91,13 +52,22 @@ var projectStopCmd = &cobra.Command{
 }
 
 var projectRestartCmd = &cobra.Command{
-	Use:   "restart",
+	Use:   "restart [--rebuild] [--no-build] [--no-commit] [--no-validate]",
 	Short: "Restart a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		handleError(proj.Stop())
-		handleError(proj.Start())
+		// get status and retrieve slot + stop
+		slot := -1
+		status := proj.Status()
+		if len(status) > 0 {
+			slot = status[0].Slot
+			handleError(proj.Stop())
+		}
+		// remove from router
+		handleError(router.DeleteProjectRoutes(proj))
+		// start
+		projectStart(cmd, proj, slot)
 	},
 }
 
@@ -224,6 +194,7 @@ var projectLogsCmd = &cobra.Command{
 }
 
 func init() {
+	projectStartCmd.Flags().Bool("rebuild", false, "force rebuild of app containers")
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
 	projectStartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectStartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
@@ -231,6 +202,11 @@ func init() {
 	projectStartCmd.Flags().IntP("slot", "s", 0, "set volume slot")
 	projectStatusCmd.Flags().Bool("json", false, "JSON output")
 	projectLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
+	projectRestartCmd.Flags().Bool("rebuild", false, "force rebuild of app containers")
+	projectRestartCmd.Flags().Bool("no-build", false, "skip building project")
+	projectRestartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
+	projectRestartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
+	projectRestartCmd.Flags().Bool("no-validate", false, "don't validate the project config files")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)

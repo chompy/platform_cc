@@ -6,7 +6,6 @@
 - BACKBURNER
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
-    - Restart command doesn't support save slots.
 
 - NEEDS MORE TESTING
     - Platform.sh clone script.

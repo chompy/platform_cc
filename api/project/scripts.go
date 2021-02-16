@@ -28,6 +28,7 @@ umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
 # MOUNT TMP
+mkdir -p /mnt/data/_tmp
 mount -o user_xattr --bind /mnt/data/_tmp /tmp
 # CLEAN UP TMP
 rm -rf /tmp/cache
