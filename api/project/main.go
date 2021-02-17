@@ -397,11 +397,12 @@ func (p *Project) Purge() error {
 	if err := p.containerHandler.ProjectPurge(p.ID); err != nil {
 		return tracerr.Wrap(err)
 	}
-	if err := os.Remove(
+	// TODO not sure if purge should really delete platform_cc.json
+	/*if err := os.Remove(
 		filepath.Join(p.Path, projectJSONFilename),
 	); err != nil {
 		output.Warn(err.Error())
-	}
+	}*/
 	done()
 	return nil
 }

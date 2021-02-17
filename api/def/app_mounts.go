@@ -17,6 +17,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
+import (
+	"strings"
+)
+
 // AppMount defines persistent mount volumes
 type AppMount struct {
 	Source     string `yaml:"source" json:"source"`
@@ -63,5 +67,9 @@ func (d *AppMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	d.Source = "local"
 	d.SourcePath = sourcePath
+	mountStringStripPrefix := "shared:files"
+	if strings.HasPrefix(d.SourcePath, mountStringStripPrefix) {
+		d.SourcePath = d.SourcePath[len(mountStringStripPrefix):]
+	}
 	return nil
 }

@@ -332,14 +332,14 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 				def.AppDir,
 				strings.Trim(dest, "/"),
 			)
-			srcPath := fmt.Sprintf(
+			srcPath := strings.TrimRight(fmt.Sprintf(
 				"%s/%s",
 				containerDataDirectory,
 				strings.Trim(mount.SourcePath, "/"),
-			)
-			destPath = strings.ReplaceAll(
+			), "/")
+			destPath = strings.TrimRight(strings.ReplaceAll(
 				destPath, ":", "_",
-			)
+			), "/")
 			srcPath = strings.ReplaceAll(
 				srcPath, ":", "_",
 			)

@@ -1,4 +1,5 @@
 - ASAP
+    - Allow setting flags globally.
     - PSH mount handling improvments and bug fixes
         - 'shared:files' should be root mount point and contain all other mounts
         - Make mounts behave properly even when enable_mount_volumes disabled.
