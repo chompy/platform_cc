@@ -209,7 +209,7 @@ func (c Container) SetupMounts() error {
 	if err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
-		[]string{"bash", "--login", "-c", c.mountCommand},
+		[]string{"sh", "-c", c.mountCommand},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)

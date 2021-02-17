@@ -79,7 +79,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			},
 			"project_info": map[string]interface{}{
 				"name":    p.ID,
-				"ssh_key": "-",
+				"ssh_key": p.globalConfig.GetSSHKey(),
 				"settings": map[string]interface{}{
 					"systemd":          false,
 					"variables_prefix": "PLATFORM_",
@@ -218,8 +218,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 		"dependencies":          dependencies,
 		"configuration":         configuration,
 		"project_info": map[string]interface{}{
-			"ssh_key": "=",
+			"ssh_key": p.globalConfig.GetSSHKey(),
 		},
 	}
-
 }

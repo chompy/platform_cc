@@ -38,6 +38,9 @@ rm -rf /tmp/nginx
 rm -f /tmp/*.py
 rm -f /tmp/*.log
 rm -f /tmp/.ready*
+# CLEAN UP RUN
+rm -rf /run/ssh/*
+rm -rf /run/sshd/*
 # FAKE RPC
 cat >/tmp/fake-rpc.py <<EOF
 from gevent.monkey import patch_all;
@@ -68,6 +71,8 @@ chmod -R 0777 /mnt/data/_tmp
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
+chown -R root:root /run/ssh/id
+chmod -R -rwx /run//run/ssh/id
 rm -f /run/rsa_hostkey
 # BOOT
 /etc/platform/boot
@@ -81,6 +86,9 @@ const appBuildCmd = `
 until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
+chown -R web:web /tmp
+chmod -R 0777 /tmp
+chmod -R 0777 /mnt/data/_tmp
 cat >/tmp/build.py <<EOF
 from platformsh_gevent import patch ; patch()
 import os
@@ -106,8 +114,9 @@ mkdir -p /tmp/cache
 chown -R web:web /tmp/cache
 chmod -R 0777 /tmp/cache
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
-chown -R web:web /tmp/cache
-chmod -R 0777 /tmp/cache
+chown -R web:web /tmp
+chmod -R 0777 /tmp
+chmod -R 0777 /mnt/data/_tmp
 touch /config/built
 `
 
@@ -151,6 +160,8 @@ runsvdir -P /etc/service &> /tmp/runsvdir.log &
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
+chown -R root:root /run/ssh/id
+chmod -R -rwx /run//run/ssh/id
 rm -f /run/rsa_hostkey
 /etc/platform/boot
 sleep 5

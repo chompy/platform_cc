@@ -1,7 +1,11 @@
 - ASAP
+    - PSH mount handling improvments and bug fixes
+        - 'shared:files' should be root mount point and contain all other mounts
+        - Make mounts behave properly even when enable_mount_volumes disabled.
 
 - QOL
     - Bash autocomplete for PCC commands.
+    - 'pcc list' command to list all possible PCC commands and subcommands.
 
 - BACKBURNER
     - Router catch redirect loops.

@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -32,6 +34,8 @@ var globalConfigPaths = []string{
 	"~/platform_cc.yaml",
 }
 
+const defaultSSHKeyPath = "~/.ssh/pccid"
+
 // GlobalConfig defines global PCC configuration.
 type GlobalConfig struct {
 	Variables map[string]map[string]interface{} `yaml:"variables"`
@@ -39,6 +43,10 @@ type GlobalConfig struct {
 		HTTP  uint16 `yaml:"http"`
 		HTTPS uint16 `yaml:"https"`
 	} `yaml:"router"`
+	SSH struct {
+		KeyPath string `yaml:"key_path"`
+		Key     string `yaml:"key"`
+	} `yaml:"ssh"`
 }
 
 // SetDefaults sets the default values.
@@ -75,6 +83,32 @@ func (d GlobalConfig) Validate() []error {
 	return o
 }
 
+// GetSSHKey returns SSH key.
+func (d GlobalConfig) GetSSHKey() string {
+	keyPath := defaultSSHKeyPath
+	if d.SSH.Key != "" {
+		return d.SSH.Key
+	} else if d.SSH.KeyPath != "" {
+		keyPath = d.SSH.KeyPath
+	}
+	// get user home dir
+	homeDir := "~"
+	user, err := user.Current()
+	if err != nil {
+		output.LogError(err)
+	} else {
+		homeDir = user.HomeDir
+	}
+	// fix path
+	keyPath = strings.ReplaceAll(keyPath, "~", strings.TrimRight(homeDir, string(os.PathSeparator)))
+	// read key
+	sshKey, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		output.LogError(err)
+	}
+	return string(sshKey)
+}
+
 // ParseGlobalYaml parses the contents of a global configuration yaml file.
 func ParseGlobalYaml(d []byte) (*GlobalConfig, error) {
 	o := &GlobalConfig{
@@ -87,28 +121,27 @@ func ParseGlobalYaml(d []byte) (*GlobalConfig, error) {
 
 // ParseGlobalYamlFile itterates list of possible global configuration yaml files and parse first one found.
 func ParseGlobalYamlFile() (*GlobalConfig, error) {
+	o := &GlobalConfig{
+		Variables: make(map[string]map[string]interface{}),
+	}
 	for _, gcp := range globalConfigPaths {
 		d, err := ioutil.ReadFile(expandPath(gcp))
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, tracerr.Wrap(err)
+			return o, tracerr.Wrap(err)
 		}
 		done := output.Duration(
 			fmt.Sprintf("Parse global configuration at '%s.'", gcp),
 		)
 		o, err := ParseGlobalYaml(d)
 		if err != nil {
-			return nil, err
+			return o, err
 		}
 		done()
 		return o, nil
 	}
-	o := &GlobalConfig{
-		Variables: make(map[string]map[string]interface{}),
-	}
 	o.SetDefaults()
 	return o, nil
-
 }

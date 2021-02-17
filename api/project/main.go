@@ -56,6 +56,7 @@ type Project struct {
 	Options          map[Option]string            `json:"options"`
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
+	globalConfig     *def.GlobalConfig
 	slot             int  // set volume slot
 	noCommit         bool // flag that signifies apps should not be committed
 	noBuild          bool // flag that signifies apps should not be built on start up
@@ -87,6 +88,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
 		slot:             1,
+		globalConfig:     gc,
 	}
 	o.Load()
 	if o.ID == "" {
