@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -123,11 +124,27 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		output.LogDebug("Disable interactive shell, stdin present.", nil)
-		if n, err := io.Copy(hresp.Conn, stdin); err != nil {
-			output.LogDebug(fmt.Sprintf("Copy stdin errored after writing %d bytes.", n), resp.ID)
+		var n int64
+		var err error
+		for {
+			n, err = io.Copy(hresp.Conn, stdin)
+			if err == nil {
+				return nil
+			}
+			if strings.Contains(err.Error(), "broken pipe") {
+				output.LogDebug(fmt.Sprintf("Copy stdin broken pipe after writing %d bytes.", n), resp.ID)
+				hresp, err = d.client.ContainerExecAttach(
+					context.Background(),
+					resp.ID,
+					execConfig,
+				)
+				if err != nil {
+					return tracerr.Wrap(err)
+				}
+				continue
+			}
 			return tracerr.Wrap(err)
 		}
-		return nil
 	}
 	// create interactive shell
 	// handle resizing
