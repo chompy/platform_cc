@@ -122,8 +122,9 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 	defer hresp.Close()
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
-		output.LogDebug("Disable interactive shell, Stdin present.", nil)
-		if _, err := io.Copy(hresp.Conn, stdin); err != nil {
+		output.LogDebug("Disable interactive shell, stdin present.", nil)
+		if n, err := io.Copy(hresp.Conn, stdin); err != nil {
+			output.LogDebug(fmt.Sprintf("Copy stdin errored after writing %d bytes.", n), resp.ID)
 			return tracerr.Wrap(err)
 		}
 		return nil

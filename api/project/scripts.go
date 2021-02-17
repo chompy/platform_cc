@@ -106,6 +106,8 @@ mkdir -p /tmp/cache
 chown -R web:web /tmp/cache
 chmod -R 0777 /tmp/cache
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
+chown -R web:web /tmp/cache
+chmod -R 0777 /tmp/cache
 touch /config/built
 `
 
