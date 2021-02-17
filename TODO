@@ -10,6 +10,7 @@
 - BACKBURNER
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
+    - Configure SSH key on per project basis, instead of just global.
 
 - NEEDS MORE TESTING
     - Platform.sh clone script.
