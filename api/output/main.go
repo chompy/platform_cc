@@ -63,8 +63,8 @@ func levelMsg(msg string) {
 			break
 		}
 	}
-	fmt.Println(
-		strings.Repeat(levelSpacer, level) + msg,
+	os.Stderr.Write(
+		[]byte(strings.Repeat(levelSpacer, level) + msg + "\n"),
 	)
 }
 

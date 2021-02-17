@@ -288,6 +288,7 @@ func (c Container) LogStdout(follow bool) error {
 			return
 		}
 		scanner := bufio.NewScanner(out)
+		log.SetOutput(os.Stdout)
 		defer out.Close()
 		for {
 			for scanner.Scan() {
