@@ -209,7 +209,7 @@ router:
 
 ### SSH
 
-You set the SSH key used inside the application containers. By default Platform.CC looks for a SSH key in ~/.ssh/pccid, if this file exists it'll use the contents as your SSH key inside all application containers. If you specify a different path in the global configuration then it'll be used instead.
+You can set the SSH key used inside the application containers. By default Platform.CC looks for a SSH key in ~/.ssh/pccid, if this file exists it'll use the contents as your SSH key inside all application containers. If you specify a different path in the global configuration then it'll be used instead.
 
 Example...
 ```
