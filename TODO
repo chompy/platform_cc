@@ -6,6 +6,8 @@
     - Bash autocomplete for PCC commands.
     - 'pcc list' command to list all possible PCC commands and subcommands.
     - 'router:reset' command to restart router and remove all currently loaded routes.
+    - Update command to auto install the latest release.
+    - Dev option on installer to pull latest dev build.
 
 - BACKBURNER
     - Router catch redirect loops.
