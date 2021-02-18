@@ -15,5 +15,5 @@ cd $SCRIPTPATH/..
 go build -o $INSTALL_PATH/$PCC_BIN_NAME
 
 # complete out, let user know where pcc was installed
-PATH_TO=`realpath $INSTALL_PATH/$PCC_BIN_NAME`
+PATH_TO=$INSTALL_PATH/$PCC_BIN_NAME
 printf "\e[32mBUILT AT \e[0m$PATH_TO\e[0m\n"
