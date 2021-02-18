@@ -85,10 +85,14 @@ CONFIG_JSON=$(${PCC_PATH} project:configjson)
 # - set variables
 echo "> Set variables."
 VAR_LIST=$(get_variables "$PLATFORM_VARIABLES")
-while IFS= read -r var; do
-    IFS=';' read -ra var_split <<< "$var"
-    $PCC_PATH var:set "${var_split[0]}" "${var_split[1]}"
-done <<< "$VAR_LIST"
+if [[ $VAR_LIST ]]; then
+    while IFS= read -r var; do
+        IFS=';' read -ra var_split <<< "$var"
+        $PCC_PATH var:set "${var_split[0]}" "${var_split[1]}"
+    done <<< "$VAR_LIST"
+else
+    echo "    No variables found"
+fi
 
 # - start project
 echo "> Start project."
@@ -97,20 +101,23 @@ $PCC_PATH project:start
 # - get databse dumps (mysql)
 echo "> Fetch database dumps."
 DATABASE_LIST=$(get_databases "$PLATFORM_RELATIONSHIPS")
-while IFS= read -r db; do
-    IFS=';' read -ra db_vals <<< "$db"
-    IFS=
-    if [ ! -z "${db_vals[4]}" ]; then
-        echo "> Dump ${db_vals[4]}."
-        ssh $SSH_URL "mysqldump --host=${db_vals[0]} --port=${db_vals[1]} --user=${db_vals[2]} --password=${db_vals[3]} ${db_vals[4]}" | gzip > /tmp/dump.sql.gz
-        gunzip /tmp/dump.sql.gz
-        echo "> Import ${db_vals[4]}."
-        echo "drop schema if exists ${db_vals[4]}; create schema ${db_vals[4]}" | $PCC_PATH mysql:sql
-        $PCC_PATH mysql:sql -d "${db_vals[4]}" < /tmp/dump.sql
-        rm /tmp/dump.sql
-    fi
-done <<< "$DATABASE_LIST"
-
+if [[ $DATABASE_LIST ]]; then
+    while IFS= read -r db; do
+        IFS=';' read -ra db_vals <<< "$db"
+        IFS=
+        if [ ! -z "${db_vals[4]}" ]; then
+            echo "> Dump ${db_vals[4]}."
+            ssh $SSH_URL "mysqldump --host=${db_vals[0]} --port=${db_vals[1]} --user=${db_vals[2]} --password=${db_vals[3]} ${db_vals[4]}" | gzip > /tmp/dump.sql.gz
+            gunzip /tmp/dump.sql.gz
+            echo "> Import ${db_vals[4]}."
+            echo "drop schema if exists ${db_vals[4]}; create schema ${db_vals[4]}" | $PCC_PATH mysql:sql
+            $PCC_PATH mysql:sql -d "${db_vals[4]}" < /tmp/dump.sql
+            rm /tmp/dump.sql
+        fi
+    done <<< "$DATABASE_LIST"
+else
+    echo "    No databases found"
+fi
 # - upload ssh key to app
 SSH_ID_RSA=`cat $PRIVATE_SSH_KEY_PATH`
 $PCC_PATH app:sh "echo '$SSH_ID_RSA' > /tmp/id_rsa && chmod 0600 /tmp/id_rsa"
