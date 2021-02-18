@@ -70,7 +70,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 	out := make([]map[string]interface{}, 0)
 	for _, hostMap := range hostMaps {
 		outHm := map[string]interface{}{
-			"host":   hostMap.Host,
+			"host":   ReplaceDefaultURL(hostMap.Host, proj),
 			"routes": make([]map[string]interface{}, 0),
 		}
 		hasDefaultPath := false
@@ -83,10 +83,10 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if path == "/" {
 				hasDefaultPath = true
 			}
-			to := strings.ReplaceAll(route.To, "{default}", proj.GetOption(project.OptionDomainSuffix))
+			to := ReplaceDefaultURL(route.To, proj)
 			redirects := make([]map[string]interface{}, 0)
 			for k, v := range route.Redirects.Paths {
-				redirectTo := strings.ReplaceAll(v.To, "{default}", proj.GetOption(project.OptionDomainSuffix))
+				redirectTo := ReplaceDefaultURL(v.To, proj)
 				redirects = append(redirects, map[string]interface{}{
 					"path": k,
 					"to":   redirectTo,
@@ -103,6 +103,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 					return nil, tracerr.Wrap(err)
 				}
 			}
+			route.OriginalURL = ReplaceDefaultURL(route.OriginalURL, proj)
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
@@ -116,8 +117,10 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			)
 		}
 		if !hasDefaultPath {
-			to := outHm["routes"].([]map[string]interface{})[0]["path"].(string)
-			to = strings.ReplaceAll(to, "{default}", proj.GetOption(project.OptionDomainSuffix))
+			to := ReplaceDefaultURL(
+				outHm["routes"].([]map[string]interface{})[0]["path"].(string),
+				proj,
+			)
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
@@ -158,4 +161,22 @@ func GenerateRouteListJSON(proj *project.Project) ([]byte, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	return json.Marshal(templateVars)
+}
+
+// ReplaceDefaultURL replace {default} in given URL with project id + domain suffix.
+func ReplaceDefaultURL(to string, p *project.Project) string {
+	out := strings.ReplaceAll(
+		to,
+		"{default}",
+		fmt.Sprintf(
+			"%s.default",
+			p.ID,
+		),
+	)
+	out = strings.ReplaceAll(
+		to,
+		"__PID__",
+		p.ID,
+	)
+	return out
 }

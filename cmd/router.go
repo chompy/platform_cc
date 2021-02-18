@@ -80,7 +80,13 @@ var routerListCmd = &cobra.Command{
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
-			routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
+			routesOrig := def.RoutesToMap(proj.Routes)
+			routes := make(map[string]def.Route)
+			for k, v := range routesOrig {
+				v.OriginalURL = router.ReplaceDefaultURL(v.OriginalURL, proj)
+				routes[router.ReplaceDefaultURL(k, proj)] = v
+			}
+			routesJSON, err := json.MarshalIndent(routes, "", "  ")
 			handleError(err)
 			fmt.Println(string(routesJSON))
 			return
@@ -93,7 +99,7 @@ var routerListCmd = &cobra.Command{
 				to = route.Upstream
 			}
 			data = append(data, []string{
-				route.Path,
+				router.ReplaceDefaultURL(route.Path, proj),
 				route.Type,
 				to,
 			})
