@@ -174,7 +174,7 @@ func ReplaceDefaultURL(to string, p *project.Project) string {
 		),
 	)
 	out = strings.ReplaceAll(
-		to,
+		out,
 		"__PID__",
 		p.ID,
 	)
