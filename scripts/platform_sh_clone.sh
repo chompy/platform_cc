@@ -125,17 +125,20 @@ $PCC_PATH app:sh "echo '$SSH_ID_RSA' > /tmp/id_rsa && chmod 0600 /tmp/id_rsa"
 # - sync mounts
 echo "> Fetch mounts."
 MOUNT_LIST=$(get_mounts "$CONFIG_JSON")
-MOUNT_SYNC_CMD=""
-while IFS= read -r mount; do
-    IFS=';' read -ra mount_split <<< "$mount"
-    IFS=
-    dest="${mount_split[0]}"
-    src=$(echo "${mount_split[1]}" | sed "s/\:/_/")
-    MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app$dest/ /mnt/data/$src/ || true && "
-done <<< "$MOUNT_LIST"
-MOUNT_SYNC_CMD+="true"
-$PCC_PATH app:sh --root "$MOUNT_SYNC_CMD"
-
+if [[ $MOUNT_LIST ]]; then
+    MOUNT_SYNC_CMD=""
+    while IFS= read -r mount; do
+        IFS=';' read -ra mount_split <<< "$mount"
+        IFS=
+        dest="${mount_split[0]}"
+        src=$(echo "${mount_split[1]}" | sed "s/\:/_/")
+        MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app$dest/ /mnt/data/$src/ || true && "
+    done <<< "$MOUNT_LIST"
+    MOUNT_SYNC_CMD+="true"
+    $PCC_PATH app:sh --root "$MOUNT_SYNC_CMD"
+else
+    echo "    No mounts found"
+fi
 # - deploy hook
 echo "> Deploy hook."
 $PCC_PATH project:deploy
