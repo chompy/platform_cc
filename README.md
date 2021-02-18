@@ -18,6 +18,13 @@ curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/std
 
 After that use the `pcc` command to run Platform.CC.
 
+### Development Release
+
+You can also install the latest development build with...
+```
+curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin -d
+```
+
 
 Quick Start
 -----------

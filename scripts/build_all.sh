@@ -10,6 +10,13 @@ RELEASE_BUCKET="platform-cc-releases"
 mkdir -p $ROOTPATH/build/$VERSION
 rm -rf $ROOTPATH/build/$VERSION/*
 
+# use dev version if -d flag set
+while getopts 'd' flag; do
+    if [ "$flag" = "d" ]; then
+        VERSION="dev"
+    fi
+done
+
 # s3 upload function
 upload() {
     echo " > UPLOAD $1 >> $2"
@@ -47,9 +54,11 @@ done
 
 # upload files
 if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
-    echo "- Upload additional files..."
-    upload "$ROOTPATH/version" "version"
-    upload "$ROOTPATH/scripts/send_log.sh" "send_log.sh"
-    upload "$ROOTPATH/scripts/install.sh" "install.sh"
-    upload "$ROOTPATH/scripts/platform_sh_clone.sh" "platform_sh_clone.sh"
+    if [ "$VERSION" != "dev" ]; then
+        echo "- Upload additional files..."
+        upload "$ROOTPATH/version" "version"
+        upload "$ROOTPATH/scripts/send_log.sh" "send_log.sh"
+        upload "$ROOTPATH/scripts/install.sh" "install.sh"
+        upload "$ROOTPATH/scripts/platform_sh_clone.sh" "platform_sh_clone.sh"
+    fi
 fi

@@ -29,19 +29,29 @@ progress_error() {
     exit 1
 }
 
+# set dev version if -d flag set
+VERSION=""
+while getopts 'd' flag; do
+    if [ "$flag" = "d" ]; then
+        VERSION="dev"
+    fi
+done
+
 # change install path for mac
 if [[ "$OSTYPE" == "darwin"* ]]; then
     INSTALL_PATH="$MAC_INSTALL_PATH"
 fi
 
 # fetch current version
-printf "> Fetch current version number..."
-VERSION=`curl -s --fail $VERSION_URL`
 if [ -z "$VERSION" ]; then
-    progress_error "Could not determine latest version."
+    printf "> Fetch current version number..."
+    VERSION=`curl -s --fail $VERSION_URL`
+    if [ -z "$VERSION" ]; then
+        progress_error "Could not determine latest version."
+    fi
+    progress_success
+    printf "> Version \e[36m$VERSION\e[0m found.\n"
 fi
-progress_success
-printf "> Version \e[36m$VERSION\e[0m found.\n"
 
 # fetch send log script
 printf "> Fetch send log script..."
@@ -87,4 +97,4 @@ echo ""
 # complete out, let user know where pcc was installed and provide readme
 PATH_TO=`realpath $INSTALL_PATH/$PCC_BIN_NAME`
 printf "\e[32mINSTALLED AT \e[0m$PATH_TO\e[0m\n"
-printf "\e[32mSEE README AT \e[0mhttps://gitlab.com/contextualcode/platform_cc/-/blob/v2.0.x/README.md\e[0m\n\n"
+printf "\e[32mSEE README AT \e[0mhttps://gitlab.com/contextualcode/platform_cc/-/blob/main/README.md\e[0m\n\n"
