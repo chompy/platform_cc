@@ -126,8 +126,15 @@ pcc project:flag:set <FLAG_NAME>
 ...and unset with the following...
 
 ```
-pcc project:flag:delete <FLAG_NAME>
+pcc project:flag:set --unset <FLAG_NAME>
 ```
+
+Additionally you can explictly turn off a flag so that a globally set flag (see the Global Configuration section on how to set global flags) does not override it with...
+
+```
+pcc project:flag:set --off <FLAG_NAME>
+```
+
 
 Lists of available flags...
 
@@ -144,7 +151,7 @@ Enables workers.
 Enables PHP Opcache.
 
 ### enable_mount_volume
-Enables mount volumes.
+Enables mount volumes. The default functionality is to ignore the mounts option in .platform.app.yaml and just mount the project root to /app. When this is enabled all the mount points defined in .platform.app.yaml will be mounted to a container volume.
 
 ### enable_osx_nfs_mounts
 Enables NFS mounts on OSX.
@@ -207,7 +214,29 @@ You set the SSH key used inside the application containers. By default Platform.
 Example...
 ```
 ssh:
-    key_path: "~/.ssh/id_rsa"```
+    key_path: "~/.ssh/id_rsa"
+```
+
+### Flags
+
+You can set flags globally. See the Flags section for a list of available flags.
+
+Example...
+```
+flags:
+  - enable_cron
+  - enable_workers
+```
+
+### Options
+
+You can set options globally. See the Options section for a list of available options.
+
+Example...
+```
+options:
+  domain_suffix: pcc.example.com
+```
 
 
 Platform.CC Specific Configurations
@@ -219,7 +248,7 @@ If you find that you need some configurations that are specific only to your Pla
 Slots
 -----
 
-When you start a project you can specify a 'save slot' to use with the 'slot' or 's' option. This lets you start the project with different storage locations for the services in your project. An example use case is loading a different MySQL database without losing the original.
+When you start a project you can specify a 'save slot' to use with the 'slot' or 's' option. This lets you start the project with different storage locations for the services in your project. An example use case is loading a different MySQL database without losing the original. The slot value must be an integer.
 
 Examples...
 ```

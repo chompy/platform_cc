@@ -452,10 +452,10 @@ func (p *Project) getUID() (int, int) {
 		uid, _ = strconv.Atoi(currentUser.Uid)
 		gid, _ = strconv.Atoi(currentUser.Gid)
 	}
-	if uid == 0 {
+	if uid <= 102 {
 		uid = 1000
 	}
-	if gid == 0 {
+	if gid <= 102 {
 		gid = 1000
 	}
 	return uid, gid
@@ -491,6 +491,11 @@ func (p *Project) setAppFlags() {
 // SetContainerHandler sets the container handler.
 func (p *Project) SetContainerHandler(c container.Interface) {
 	p.containerHandler = c
+}
+
+// SetGlobalConfig sets the global config, used for testing.
+func (p *Project) SetGlobalConfig(gc *def.GlobalConfig) {
+	p.globalConfig = gc
 }
 
 // SetSlot sets the current slot.

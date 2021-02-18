@@ -22,6 +22,8 @@ import (
 	"strings"
 	"testing"
 
+	"gitlab.com/contextualcode/platform_cc/api/def"
+
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
@@ -177,6 +179,67 @@ func TestYAMLFunction(t *testing.T) {
 		strings.Contains(p.Apps[0].Hooks.Build, "TEST!"),
 		true,
 		"incorrect build hook",
+		t,
+	)
+}
+
+func TestFlags(t *testing.T) {
+	gc := def.GlobalConfig{
+		Flags: []string{
+			project.EnableOSXNFSMounts, project.EnableServiceRoutes, project.DisableYamlOverrides, project.DisableAutoCommit,
+		},
+	}
+	p := project.Project{
+		Flags: project.Flags{
+			project.EnableMountVolume:    project.FlagOn,
+			project.EnableOSXNFSMounts:   project.FlagOn,
+			project.EnableCron:           project.FlagOff,
+			project.EnableServiceRoutes:  project.FlagOff,
+			project.EnableWorkers:        project.FlagUnset,
+			project.DisableYamlOverrides: project.FlagUnset,
+		},
+	}
+	p.SetGlobalConfig(&gc)
+	assertEqual(
+		p.HasFlag(project.EnableMountVolume),
+		true,
+		"expected flag 'enable_mount_volumes' on",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.EnableOSXNFSMounts),
+		true,
+		"expected flag 'enable_osx_nfs_mounts' on",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.EnableCron),
+		false,
+		"expected flag 'enable_cron' off",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.EnableServiceRoutes),
+		false,
+		"expected flag 'enable_service_routes' off",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.EnableWorkers),
+		false,
+		"expected flag 'enable_workers' off",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.DisableYamlOverrides),
+		true,
+		"expected flag 'disable_yaml_overrides' on",
+		t,
+	)
+	assertEqual(
+		p.HasFlag(project.DisableAutoCommit),
+		true,
+		"expected flag 'disable_auto_commit' on",
 		t,
 	)
 }
