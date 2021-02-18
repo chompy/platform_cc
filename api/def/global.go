@@ -39,6 +39,8 @@ const defaultSSHKeyPath = "~/.ssh/pccid"
 // GlobalConfig defines global PCC configuration.
 type GlobalConfig struct {
 	Variables map[string]map[string]interface{} `yaml:"variables"`
+	Flags     []string                          `yaml:"flags"`
+	Options   map[string]string                 `yaml:"options"`
 	Router    struct {
 		HTTP  uint16 `yaml:"http"`
 		HTTPS uint16 `yaml:"https"`

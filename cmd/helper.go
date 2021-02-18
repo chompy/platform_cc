@@ -195,7 +195,7 @@ func projectStart(cmd *cobra.Command, p *project.Project, slot int) {
 	}
 	p.SetSlot(slot)
 	// set no commit
-	if p.Flags.IsOn(project.DisableAutoCommit) || checkFlag(cmd, "no-commit") {
+	if p.HasFlag(project.DisableAutoCommit) || checkFlag(cmd, "no-commit") {
 		p.SetNoCommit()
 	}
 	// set no build

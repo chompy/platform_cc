@@ -187,6 +187,11 @@ func (f Flags) IsOff(name string) bool {
 	return f[name] == FlagOff || f[name] == FlagUnset
 }
 
+// IsSet returns true if given flag has been set by the user.
+func (f Flags) IsSet(name string) bool {
+	return f[name] != FlagUnset
+}
+
 // IsUnset returns true if given flag has not been set by the user.
 func (f Flags) IsUnset(name string) bool {
 	return f[name] == FlagUnset
@@ -214,4 +219,21 @@ func (f Flags) GetValueName(name string) string {
 			return "unset"
 		}
 	}
+}
+
+// HasFlag returns true if given flag is on globally or locally to the project.
+func (p *Project) HasFlag(name string) bool {
+	// check project flag
+	if p.Flags.IsSet(name) {
+		return p.Flags.IsOn(name)
+	}
+	// check global flag
+	if p.globalConfig != nil {
+		for _, iname := range p.globalConfig.Flags {
+			if name == iname {
+				return true
+			}
+		}
+	}
+	return false
 }

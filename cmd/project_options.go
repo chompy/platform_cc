@@ -28,7 +28,7 @@ import (
 
 var projectOptionsCmd = &cobra.Command{
 	Use:     "options",
-	Aliases: []string{"opt", "opts"},
+	Aliases: []string{"opt", "opts", "option"},
 	Short:   "Manage project options.",
 }
 
@@ -47,7 +47,7 @@ var projectOptionListCmd = &cobra.Command{
 				data[string(opt)] = map[string]interface{}{
 					"description": desc,
 					"default":     opt.DefaultValue(),
-					"value":       opt.Value(proj.Options),
+					"value":       proj.GetOption(opt),
 				}
 			}
 			out, err := json.MarshalIndent(
@@ -63,7 +63,7 @@ var projectOptionListCmd = &cobra.Command{
 		data := make([][]string, 0)
 		for opt, desc := range descs {
 			data = append(data, []string{
-				string(opt), desc, opt.DefaultValue(), opt.Value(proj.Options),
+				string(opt), desc, opt.DefaultValue(), proj.GetOption(opt),
 			})
 		}
 		drawTable(

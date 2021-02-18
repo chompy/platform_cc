@@ -53,7 +53,7 @@ var projectFlagListCmd = &cobra.Command{
 			for _, name := range sortKeys {
 				data[name] = map[string]interface{}{
 					"description": descs[name],
-					"enabled":     proj.Flags.IsOn(name),
+					"enabled":     proj.HasFlag(name),
 				}
 			}
 			out, err := json.MarshalIndent(
@@ -66,16 +66,18 @@ var projectFlagListCmd = &cobra.Command{
 			return
 		}
 		// table out
-		// TODO sort by keys
-
 		data := make([][]string, 0)
 		for _, name := range sortKeys {
+			statStr := "false"
+			if proj.HasFlag(name) {
+				statStr = "true"
+			}
 			data = append(data, []string{
-				name, descs[name], proj.Flags.GetValueName(name),
+				name, descs[name], statStr,
 			})
 		}
 		drawTable(
-			[]string{"Name", "Description", "Status"},
+			[]string{"Name", "Description", "Enabled"},
 			data,
 		)
 	},

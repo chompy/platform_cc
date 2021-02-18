@@ -83,10 +83,10 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if path == "/" {
 				hasDefaultPath = true
 			}
-			to := strings.ReplaceAll(route.To, "{default}", project.OptionDomainSuffix.Value(proj.Options))
+			to := strings.ReplaceAll(route.To, "{default}", proj.GetOption(project.OptionDomainSuffix))
 			redirects := make([]map[string]interface{}, 0)
 			for k, v := range route.Redirects.Paths {
-				redirectTo := strings.ReplaceAll(v.To, "{default}", project.OptionDomainSuffix.Value(proj.Options))
+				redirectTo := strings.ReplaceAll(v.To, "{default}", proj.GetOption(project.OptionDomainSuffix))
 				redirects = append(redirects, map[string]interface{}{
 					"path": k,
 					"to":   redirectTo,
@@ -97,7 +97,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if route.Upstream != "" {
 				var err error
 				upstreamHost, err = GetUpstreamHost(
-					proj, route.Upstream, proj.Flags.IsOn(project.EnableServiceRoutes),
+					proj, route.Upstream, proj.HasFlag(project.EnableServiceRoutes),
 				)
 				if err != nil {
 					return nil, tracerr.Wrap(err)
@@ -117,7 +117,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 		}
 		if !hasDefaultPath {
 			to := outHm["routes"].([]map[string]interface{})[0]["path"].(string)
-			to = strings.ReplaceAll(to, "{default}", project.OptionDomainSuffix.Value(proj.Options))
+			to = strings.ReplaceAll(to, "{default}", proj.GetOption(project.OptionDomainSuffix))
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{

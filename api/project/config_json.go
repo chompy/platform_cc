@@ -150,7 +150,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	case def.App:
 		{
 			name = d.(def.App).Name
-			if p.Flags.IsOn(EnableCron) {
+			if p.HasFlag(EnableCron) {
 				crons = d.(def.App).Crons
 			}
 			appType = d.(def.App).Type

@@ -353,7 +353,7 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 				destPath,
 				srcPath,
 			)
-			if p.Flags.IsOn(EnableMountVolume) {
+			if p.HasFlag(EnableMountVolume) {
 				out += fmt.Sprintf(
 					" && mount -o user_xattr --bind %s %s",
 					srcPath,

@@ -57,3 +57,17 @@ func ListOptionDescription() map[Option]string {
 		OptionDomainSuffix: "Domain name suffix for internal routes.",
 	}
 }
+
+// GetOption returns the given option value globally or local to the project.
+func (p *Project) GetOption(o Option) string {
+	if p.Options[o] != "" {
+		return p.Options[o]
+	}
+	if p.globalConfig != nil {
+		gopt := p.globalConfig.Options[string(o)]
+		if gopt != "" {
+			return gopt
+		}
+	}
+	return o.DefaultValue()
+}
