@@ -64,8 +64,6 @@ python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 # PERMISSIONS
 chown -R web:web /run
-chown -R web:web /mnt/data/_tmp
-chown -R web:web /tmp
 chmod -R 0777 /tmp
 chmod -R 0777 /mnt/data/_tmp
 mkdir -p /run/sshd
@@ -86,7 +84,6 @@ const appBuildCmd = `
 until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
-chown -R web:web /tmp
 chmod -R 0777 /tmp
 chmod -R 0777 /mnt/data/_tmp
 cat >/tmp/build.py <<EOF
@@ -111,10 +108,8 @@ if %s: builder.execute_composer()
 builder._execute_build_hook()
 EOF
 mkdir -p /tmp/cache
-chown -R web:web /tmp/cache
 chmod -R 0777 /tmp/cache
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
-chown -R web:web /tmp
 chmod -R 0777 /tmp
 chmod -R 0777 /mnt/data/_tmp
 touch /config/built
