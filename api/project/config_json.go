@@ -111,6 +111,8 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		"nameserver": "127.0.0.11",
 		"web_uid":    uid,
 		"web_gid":    gid,
+		"log_uid":    uid,
+		"log_gid":    gid,
 		"log_file":   "/dev/stdout",
 		"nginx": map[string]interface{}{
 			"headers_prefix":         "X-PLATFORM-",
