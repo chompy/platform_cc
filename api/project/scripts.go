@@ -28,8 +28,8 @@ umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
 # MOUNT TMP
-mkdir -p /mnt/data/_tmp
-mount -o user_xattr --bind /mnt/data/_tmp /tmp
+mkdir -p /mnt/data/.tmp
+mount -o user_xattr --bind /mnt/data/.tmp /tmp
 # CLEAN UP TMP
 rm -rf /tmp/cache
 rm -rf /tmp/sessions
@@ -64,8 +64,8 @@ python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 # PERMISSIONS
 chown -R web:web /run
-chmod -R 0777 /tmp
-chmod -R 0777 /mnt/data/_tmp
+chown -R web /tmp
+chmod -R 0755 /tmp
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
@@ -84,8 +84,8 @@ const appBuildCmd = `
 until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
-chmod -R 0777 /tmp
-chmod -R 0777 /mnt/data/_tmp
+chown -R web /tmp
+chmod -R 0755 /tmp
 cat >/tmp/build.py <<EOF
 from platformsh_gevent import patch ; patch()
 import os
@@ -108,10 +108,11 @@ if %s: builder.execute_composer()
 builder._execute_build_hook()
 EOF
 mkdir -p /tmp/cache
-chmod -R 0777 /tmp/cache
+chown -R web /tmp/cache
+chmod -R 0755 /tmp/cache
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
-chmod -R 0777 /tmp
-chmod -R 0777 /mnt/data/_tmp
+chown -R web /tmp
+chmod -R 0755 /tmp
 touch /config/built
 `
 
