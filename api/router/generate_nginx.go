@@ -97,7 +97,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if route.Upstream != "" {
 				var err error
 				upstreamHost, err = GetUpstreamHost(
-					proj, route.Upstream, proj.Flags.Has(project.EnableServiceRoutes),
+					proj, route.Upstream, proj.Flags.IsOn(project.EnableServiceRoutes),
 				)
 				if err != nil {
 					return nil, tracerr.Wrap(err)

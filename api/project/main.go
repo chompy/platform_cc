@@ -52,7 +52,7 @@ type Project struct {
 	Routes           []def.Route                  `json:"-"`
 	Services         []def.Service                `json:"-"`
 	Variables        map[string]map[string]string `json:"vars"`
-	Flags            Flag                         `json:"flags"`
+	Flags            Flags                        `json:"flags"`
 	Options          map[Option]string            `json:"options"`
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
@@ -98,7 +98,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	// read app yaml
 	apps := make([]def.App, 0)
 	if parseYaml {
-		appYamlFiles := scanPlatformAppYaml(path, o.Flags.Has(DisableYamlOverrides))
+		appYamlFiles := scanPlatformAppYaml(path, o.Flags.IsOn(DisableYamlOverrides))
 		if len(appYamlFiles) == 0 {
 			return nil, tracerr.Wrap(fmt.Errorf("could not locate app yaml file"))
 		}
@@ -119,7 +119,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 				serviceYamlPaths,
 				filepath.Join(path, fn),
 			)
-			if o.Flags.Has(DisableYamlOverrides) {
+			if o.Flags.IsOn(DisableYamlOverrides) {
 				break
 			}
 		}
@@ -286,7 +286,7 @@ func (p *Project) Start() error {
 		}
 		p.relationships = append(p.relationships, rels...)
 		// workers
-		if p.Flags.Has(EnableWorkers) {
+		if p.Flags.IsOn(EnableWorkers) {
 			for _, worker := range app.Workers {
 				wc := p.NewContainer(*worker)
 				wc.Config.NoCommit = p.noCommit
@@ -464,7 +464,7 @@ func (p *Project) getUID() (int, int) {
 func (p *Project) setAppFlags() {
 	for i := range p.Apps {
 		// disable opcache if flag not present
-		if !p.Flags.Has(EnablePHPOpcache) {
+		if !p.Flags.IsOn(EnablePHPOpcache) {
 			output.LogDebug("Disable opcache.", nil)
 			if p.Apps[i].Variables == nil {
 				p.Apps[i].Variables = make(map[string]map[string]interface{})

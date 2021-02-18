@@ -20,8 +20,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
 var projectFlagCmd = &cobra.Command{
@@ -37,15 +39,21 @@ var projectFlagListCmd = &cobra.Command{
 		proj, err := getProject(false)
 		handleError(err)
 		descs := proj.Flags.Descriptions()
-		flags := proj.Flags.List()
+		// sort flag names
+		sortKeys := make([]string, 0, len(descs))
+		for k := range descs {
+			sortKeys = append(sortKeys, k)
+		}
+		sort.Strings(sortKeys)
+
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
 			data := make(map[string]map[string]interface{})
-			for name, desc := range descs {
+			for _, name := range sortKeys {
 				data[name] = map[string]interface{}{
-					"description": desc,
-					"enabled":     proj.Flags.Has(flags[name]),
+					"description": descs[name],
+					"enabled":     proj.Flags.IsOn(name),
 				}
 			}
 			out, err := json.MarshalIndent(
@@ -59,67 +67,66 @@ var projectFlagListCmd = &cobra.Command{
 		}
 		// table out
 		// TODO sort by keys
+
 		data := make([][]string, 0)
-		for name, desc := range descs {
-			stateStr := "off"
-			if proj.Flags.Has(flags[name]) {
-				stateStr = "on"
-			}
+		for _, name := range sortKeys {
 			data = append(data, []string{
-				name, desc, stateStr,
+				name, descs[name], proj.Flags.GetValueName(name),
 			})
 		}
 		drawTable(
-			[]string{"Name", "Description", "Enabled"},
+			[]string{"Name", "Description", "Status"},
 			data,
 		)
 	},
 }
 
 var projectFlagSetCmd = &cobra.Command{
-	Use:   "set flag",
-	Short: "Set project flags.",
+	Use:   "set flag [--off] [--delete]",
+	Short: "Set project flag.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
 		handleError(err)
-		flags := proj.Flags.List()
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing flag argument"))
 		}
-		if flags[args[0]] == 0 {
+		if !proj.Flags.IsValidFlag(args[0]) {
 			handleError(fmt.Errorf("%s is not a valid flag", args[0]))
 		}
-		if !proj.Flags.Has(flags[args[0]]) {
-			proj.Flags.Add(flags[args[0]])
-			handleError(proj.Save())
+		value := project.FlagOn
+		if checkFlag(cmd, "delete") {
+			value = project.FlagUnset
+		} else if checkFlag(cmd, "off") {
+			value = project.FlagOff
 		}
+		proj.Flags.Set(args[0], value)
+		handleError(proj.Save())
 	},
 }
 
 var projectFlagDelCmd = &cobra.Command{
-	Use:     "remove flag",
-	Aliases: []string{"delete", "del"},
-	Short:   "Remove project flags.",
+	Use:     "unset flag",
+	Aliases: []string{"delete", "del", "remove", "rm", "unset"},
+	Short:   "Unset project flag, allowing global flag to declare value.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
 		handleError(err)
-		flags := proj.Flags.List()
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing flag argument"))
 		}
-		if flags[args[0]] == 0 {
+		if !proj.Flags.IsValidFlag(args[0]) {
 			handleError(fmt.Errorf("%s is not a valid flag", args[0]))
 		}
-		if proj.Flags.Has(flags[args[0]]) {
-			proj.Flags.Remove(flags[args[0]])
-			handleError(proj.Save())
-		}
+		proj.Flags.Set(args[0], project.FlagUnset)
+		handleError(proj.Save())
 	},
 }
 
 func init() {
 	projectFlagListCmd.Flags().Bool("json", false, "JSON output")
 	projectFlagCmd.AddCommand(projectFlagListCmd)
+	projectFlagSetCmd.Flags().Bool("off", false, "Explictly turns flag off, override global flags")
+	projectFlagSetCmd.Flags().Bool("delete", false, "Unset flag, allowing global flag to declare value")
 	projectFlagCmd.AddCommand(projectFlagSetCmd)
 	projectFlagCmd.AddCommand(projectFlagDelCmd)
 	projectCmd.AddCommand(projectFlagCmd)
