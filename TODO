@@ -1,12 +1,11 @@
 - ASAP
-    - Allow setting flags globally.
     - PSH mount handling improvments and bug fixes
-        - 'shared:files' should be root mount point and contain all other mounts
-        - Make mounts behave properly even when enable_mount_volumes disabled.
+        - Investigate...make mounts behave properly even when enable_mount_volumes disabled...possible?
 
 - QOL
     - Bash autocomplete for PCC commands.
     - 'pcc list' command to list all possible PCC commands and subcommands.
+    - 'router:reset' command to restart router and remove all currently loaded routes.
 
 - BACKBURNER
     - Router catch redirect loops.

@@ -452,10 +452,10 @@ func (p *Project) getUID() (int, int) {
 		uid, _ = strconv.Atoi(currentUser.Uid)
 		gid, _ = strconv.Atoi(currentUser.Gid)
 	}
-	if uid <= 102 {
+	if uid == 0 {
 		uid = 1000
 	}
-	if gid <= 102 {
+	if gid == 0 {
 		gid = 1000
 	}
 	return uid, gid
