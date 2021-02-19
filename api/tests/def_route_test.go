@@ -33,18 +33,14 @@ func TestRoutes(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to parse routes yaml, %s", err)
 	}
-	routes, err = def.ExpandRoutes(routes, internalDomainSuffix)
+	routes, err = def.AdjustRoutes(routes, internalDomainSuffix)
 	if err != nil {
 		t.Errorf("failed to expand routes, %s", err)
 	}
 	containsRoutes := []string{
-		"http://www.contextualcode.com/",
 		"http://www-contextualcode-com." + internalDomainSuffix + "/",
-		"http://cdn-backend.contextualcode.ccplatform.net/",
 		"http://cdn-backend-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
-		"http://health.contextualcode.ccplatform.net/",
 		"http://health-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
-		"http://contextualcode.com/",
 		"http://contextualcode-com." + internalDomainSuffix + "/",
 	}
 	for _, path := range containsRoutes {

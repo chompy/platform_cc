@@ -169,7 +169,7 @@ func ReplaceDefaultURL(to string, p *project.Project) string {
 		to,
 		"{default}",
 		fmt.Sprintf(
-			"%s.default",
+			"%s.localhost.ccplatform.net",
 			p.ID,
 		),
 	)
