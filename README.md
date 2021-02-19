@@ -183,8 +183,8 @@ Set the internal route domain, default is "pcc.localtest.me." Every route gets a
 pcc project:option:set mount_strategy [none|symlink|volume]
 ```
 Set the strategy for how Platform.CC will deal with mounts.
-- None (default)...do nothing, no mounts will be established. This will suffice in a lot of cases if you have no need for subdirectory mounts.
-- Symlink...create a mount directory in the root of the project and use symlinks to map the mounts to the destinations. This should create a mount structure similar to Platform.sh and will support mounting subdirectories, it could be destructive to your project directory if you previously had data in the mount directories.
+- None (default)...do nothing, no mounts will be established. This will suffice in a lot of cases if you have no need for recursive mounts.
+- Symlink...create a mount directory in the root of the project and use symlinks to map the mounts to the destinations. This should create a mount structure similar to Platform.sh and will support recursive mounts, it could be destructive to your project directory if you previously had data in the mount directories.
 - Volume...use a container volume as the mount directory and bind the destination directories to the container volume. This should function closest to how it would on Platform.sh but files in the mounted directories will not be accessible outside of the application container.
 
 Global Configuration

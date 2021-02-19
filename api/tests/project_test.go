@@ -191,7 +191,7 @@ func TestFlags(t *testing.T) {
 	}
 	p := project.Project{
 		Flags: project.Flags{
-			project.EnableMountVolume:    project.FlagOn,
+			project.EnablePHPOpcache:     project.FlagOn,
 			project.EnableOSXNFSMounts:   project.FlagOn,
 			project.EnableCron:           project.FlagOff,
 			project.EnableServiceRoutes:  project.FlagOff,
@@ -201,9 +201,9 @@ func TestFlags(t *testing.T) {
 	}
 	p.SetGlobalConfig(&gc)
 	assertEqual(
-		p.HasFlag(project.EnableMountVolume),
+		p.HasFlag(project.EnablePHPOpcache),
 		true,
-		"expected flag 'enable_mount_volumes' on",
+		"expected flag 'enable_php_opcache' on",
 		t,
 	)
 	assertEqual(
