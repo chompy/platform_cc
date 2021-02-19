@@ -23,7 +23,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
-	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
@@ -72,40 +71,34 @@ var routerDelCmd = &cobra.Command{
 
 var routerListCmd = &cobra.Command{
 	Use:   "list [--json]",
-	Short: "List routes for project.",
+	Short: "List all active routes.",
 	Run: func(cmd *cobra.Command, args []string) {
-		output.Enable = false
-		proj, err := getProject(true)
+		routes, err := router.ListActiveRoutes()
 		handleError(err)
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
-			routesOrig := def.RoutesToMap(proj.Routes)
-			routes := make(map[string]def.Route)
-			for k, v := range routesOrig {
-				v.OriginalURL = router.ReplaceDefaultURL(v.OriginalURL, proj)
-				routes[router.ReplaceDefaultURL(k, proj)] = v
-			}
-			routesJSON, err := json.MarshalIndent(routes, "", "  ")
+			routesJSON, err := json.MarshalIndent(def.RoutesToMap(routes), "", "  ")
 			handleError(err)
 			fmt.Println(string(routesJSON))
 			return
 		}
 		// table out
 		data := make([][]string, 0)
-		for _, route := range proj.Routes {
+		for _, route := range routes {
 			to := route.To
 			if route.Type == "upstream" {
 				to = route.Upstream
 			}
 			data = append(data, []string{
-				router.ReplaceDefaultURL(route.Path, proj),
+				route.Attributes["project_id"],
+				route.Path,
 				route.Type,
 				to,
 			})
 		}
 		drawTable(
-			[]string{"Path", "Type", "Upstream / To"},
+			[]string{"Project ID", "Path", "Type", "Upstream / To"},
 			data,
 		)
 	},

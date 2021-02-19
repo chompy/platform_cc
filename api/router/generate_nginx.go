@@ -66,11 +66,11 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 
 // GenerateTemplateVars generates variables to inject in nginx template.
 func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, error) {
-	hostMaps := MapHostRoutes(proj.Routes)
+	hostMaps := MapHostRoutes(RoutesReplaceDefault(proj.Routes, proj))
 	out := make([]map[string]interface{}, 0)
 	for _, hostMap := range hostMaps {
 		outHm := map[string]interface{}{
-			"host":   ReplaceDefaultURL(hostMap.Host, proj),
+			"host":   hostMap.Host,
 			"routes": make([]map[string]interface{}, 0),
 		}
 		hasDefaultPath := false
@@ -83,13 +83,11 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if path == "/" {
 				hasDefaultPath = true
 			}
-			to := ReplaceDefaultURL(route.To, proj)
 			redirects := make([]map[string]interface{}, 0)
 			for k, v := range route.Redirects.Paths {
-				redirectTo := ReplaceDefaultURL(v.To, proj)
 				redirects = append(redirects, map[string]interface{}{
 					"path": k,
-					"to":   redirectTo,
+					"to":   v.To,
 					"code": v.Code,
 				})
 			}
@@ -103,21 +101,20 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 					return nil, tracerr.Wrap(err)
 				}
 			}
-			route.OriginalURL = ReplaceDefaultURL(route.OriginalURL, proj)
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
 					"path":      path,
 					"type":      route.Type,
 					"upstream":  upstreamHost,
-					"to":        to,
+					"to":        route.To,
 					"redirects": redirects,
 					"route":     route,
 				},
 			)
 		}
 		if !hasDefaultPath {
-			to := ReplaceDefaultURL(
+			to := ReplaceDefault(
 				outHm["routes"].([]map[string]interface{})[0]["path"].(string),
 				proj,
 			)
@@ -161,22 +158,4 @@ func GenerateRouteListJSON(proj *project.Project) ([]byte, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	return json.Marshal(templateVars)
-}
-
-// ReplaceDefaultURL replace {default} in given URL with project id + domain suffix.
-func ReplaceDefaultURL(to string, p *project.Project) string {
-	out := strings.ReplaceAll(
-		to,
-		"{default}",
-		fmt.Sprintf(
-			"%s.localhost.ccplatform.net",
-			p.ID,
-		),
-	)
-	out = strings.ReplaceAll(
-		out,
-		"__PID__",
-		p.ID,
-	)
-	return out
 }

@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/router"
 )
@@ -193,6 +194,42 @@ var projectLogsCmd = &cobra.Command{
 	},
 }
 
+var projectRoutesCmd = &cobra.Command{
+	Use:     "routes [--json]",
+	Aliases: []string{"route", "rout", "ro"},
+	Short:   "List routes for project.",
+	Run: func(cmd *cobra.Command, args []string) {
+		output.Enable = false
+		proj, err := getProject(true)
+		handleError(err)
+		// json out
+		jsonFlag := cmd.Flags().Lookup("json")
+		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+			routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
+			handleError(err)
+			fmt.Println(string(routesJSON))
+			return
+		}
+		// table out
+		data := make([][]string, 0)
+		for _, route := range proj.Routes {
+			to := route.To
+			if route.Type == "upstream" {
+				to = route.Upstream
+			}
+			data = append(data, []string{
+				route.Path,
+				route.Type,
+				to,
+			})
+		}
+		drawTable(
+			[]string{"Path", "Type", "Upstream / To"},
+			data,
+		)
+	},
+}
+
 func init() {
 	projectStartCmd.Flags().Bool("rebuild", false, "force rebuild of app containers")
 	projectStartCmd.Flags().Bool("no-build", false, "skip building project")
@@ -207,6 +244,7 @@ func init() {
 	projectRestartCmd.Flags().Bool("no-router", false, "skip adding routes to router")
 	projectRestartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectRestartCmd.Flags().Bool("no-validate", false, "don't validate the project config files")
+	projectRoutesCmd.Flags().Bool("json", false, "JSON output")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)
@@ -216,5 +254,6 @@ func init() {
 	projectCmd.AddCommand(projectConfigJSONCmd)
 	projectCmd.AddCommand(projectStatusCmd)
 	projectCmd.AddCommand(projectLogsCmd)
+	projectCmd.AddCommand(projectRoutesCmd)
 	RootCmd.AddCommand(projectCmd)
 }
