@@ -26,6 +26,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -38,6 +39,7 @@ import (
 )
 
 const dockerCommitTagPrefix = "pcc.local/build:"
+const containerStopTimeout = 10
 
 // ContainerStart starts a Docker container.
 func (d Docker) ContainerStart(c Config) error {
@@ -396,22 +398,42 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			defer wg.Done()
 			// issue shutdown command to container, containers are set to be auto deleted
 			// once they exit
-			if err := d.ContainerCommand(
-				cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && nginx -s stop || true"}, nil,
-			); err != nil {
-				prog(i, output.ProgressMessageError)
-				output.LogError(err)
+			c := make(chan error, 1)
+			go func() {
+				c <- d.ContainerCommand(
+					cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && nginx -s stop || true"}, nil,
+				)
+			}()
+			select {
+			case err := <-c:
+				{
+					if err != nil {
+						prog(i, output.ProgressMessageError)
+						output.LogError(err)
+					}
+					prog(i, output.ProgressMessageDone)
+					return
+				}
+			case <-time.After(time.Second * containerStopTimeout):
+				{
+					output.LogDebug(
+						fmt.Sprintf("Delete container '%s' timed out after %d seconds, forcing delete.", cid, containerStopTimeout),
+						nil,
+					)
+					timeout := time.Second * containerStopTimeout
+					if err := d.client.ContainerStop(
+						context.Background(),
+						cid,
+						&timeout,
+					); err != nil {
+						prog(i, output.ProgressMessageError)
+						output.LogError(err)
+						return
+					}
+					prog(i, output.ProgressMessageDone)
+					return
+				}
 			}
-			// old way of deleting, possibly use this as a fallback?
-			/*if err := d.client.ContainerStop(
-				context.Background(),
-				cid,
-				&timeout,
-			); err != nil {
-				prog(i, output.ProgressMessageError)
-				output.LogError(err)
-			}*/
-			prog(i, output.ProgressMessageDone)
 		}(containers[i].ID, i)
 	}
 	wg.Wait()
