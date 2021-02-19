@@ -125,6 +125,9 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 			}
 		}
 	}
+	if name == "" {
+		return def.Service{}, fmt.Errorf("no %s service was found", strings.Join(filterType, ","))
+	}
 	return def.Service{}, fmt.Errorf("service '%s' not found", name)
 }
 

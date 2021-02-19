@@ -11,7 +11,7 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
-const containerDataDirectory = "/mnt/data"
+const containerMntPath = "/mnt"
 const symlinkMntPath = def.AppDir + "/.platform_cc_mnt"
 
 // GetDefinitionName returns the name of given definition.
@@ -125,7 +125,7 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 		}
 	}
 	out := map[string]string{
-		name: containerDataDirectory,
+		name: containerMntPath,
 	}
 	return out
 }
@@ -380,7 +380,7 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 					// build source path to mounted container volume
 					srcPath := strings.TrimRight(fmt.Sprintf(
 						"%s/%s",
-						containerDataDirectory,
+						containerMntPath,
 						strings.Trim(mount.SourcePath, "/"),
 					), "/")
 					srcPath = strings.ReplaceAll(
