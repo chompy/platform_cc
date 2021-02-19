@@ -43,7 +43,7 @@ func (o Option) DefaultValue() string {
 	switch o {
 	case OptionDomainSuffix:
 		{
-			return "pcc.localtest.me"
+			return "localhost.ccplatform.net"
 		}
 	case OptionMountStrategy:
 		{

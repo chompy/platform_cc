@@ -29,7 +29,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultPath = "__PID__.default"
+const defaultPath = "__PID__.localhost.ccplatform.net"
 
 // Route defines a route.
 type Route struct {
