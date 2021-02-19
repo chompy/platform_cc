@@ -2,16 +2,11 @@
     - PSH mount handling improvments and bug fixes
         - Investigate...make mounts behave properly even when enable_mount_volumes disabled...possible?
 
-- BUG
-    - router:list sigsegv when not in a project directory.
-
 - QOL
     - Bash autocomplete for PCC commands.
     - 'pcc list' command to list all possible PCC commands and subcommands.
     - 'router:reset' command to restart router and remove all currently loaded routes.
     - Update command to auto install the latest release.
-    - Move current router:list to project:routes.
-    - Make router:list show routes that are currently active.
 
 - BACKBURNER
     - Router catch redirect loops.
