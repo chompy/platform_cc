@@ -197,6 +197,9 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 // RoutesToMap converts route array in to map.
 func RoutesToMap(routes []Route) map[string]Route {
 	data := make(map[string]Route)
+	if routes == nil {
+		return data
+	}
 	for _, route := range routes {
 		data[route.Path] = route
 	}

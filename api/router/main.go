@@ -66,11 +66,15 @@ nginx -g "daemon off;"
 	}
 }
 
+func getContainerHandler() (container.Interface, error) {
+	// TODO make container handler configurable
+	return container.NewDocker()
+}
+
 // Start starts the router.
 func Start() error {
 	done := output.Duration("Start main router.")
-	// TODO make container handler configurable
-	d, err := container.NewDocker()
+	ch, err := getContainerHandler()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -84,16 +88,16 @@ func Start() error {
 
 	// get container config and pull image
 	containerConf := GetContainerConfig()
-	if err := d.ImagePull([]container.Config{containerConf}); err != nil {
+	if err := ch.ImagePull([]container.Config{containerConf}); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// start container
-	if err := d.ContainerStart(containerConf); err != nil {
+	if err := ch.ContainerStart(containerConf); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// upload index html
 	indexHTMLReader := bytes.NewReader([]byte(routeListHTML))
-	if err := d.ContainerUpload(
+	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
 		"/www/index.html",
 		indexHTMLReader,
@@ -102,7 +106,7 @@ func Start() error {
 	}
 	// upload nginx conf
 	nginxConfReader := bytes.NewReader([]byte(nginxBaseConf))
-	if err := d.ContainerUpload(
+	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
 		"/etc/nginx/nginx.conf",
 		nginxConfReader,
@@ -116,11 +120,11 @@ func Start() error {
 // Stop stops the router.
 func Stop() error {
 	done := output.Duration("Stop main router.")
-	d, err := container.NewDocker()
+	ch, err := getContainerHandler()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	if err := d.ProjectStop("router"); err != nil {
+	if err := ch.ProjectStop("router"); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -129,12 +133,12 @@ func Stop() error {
 
 // Reload issues reload command to nginx in router container.
 func Reload() error {
-	d, err := container.NewDocker()
+	ch, err := getContainerHandler()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	containerConf := GetContainerConfig()
-	return tracerr.Wrap(d.ContainerCommand(
+	return tracerr.Wrap(ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"nginx", "-s", "reload"},
@@ -147,7 +151,7 @@ func AddProjectRoutes(p *project.Project) error {
 	done := output.Duration(
 		fmt.Sprintf("Add routes for project '%s.'", p.ID),
 	)
-	d, err := container.NewDocker()
+	ch, err := getContainerHandler()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -159,7 +163,7 @@ func AddProjectRoutes(p *project.Project) error {
 	}
 	// upload to container
 	configReader := bytes.NewReader(routerNginxConf)
-	if err := d.ContainerUpload(
+	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
 		fmt.Sprintf("/routes/%s.conf", p.ID),
 		configReader,
@@ -175,7 +179,7 @@ func AddProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	routeJSONReader := bytes.NewReader(routeJSON)
-	if err := d.ContainerUpload(
+	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
 		fmt.Sprintf("/www/%s.json", p.ID),
 		routeJSONReader,
@@ -183,7 +187,7 @@ func AddProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	// add to project list
-	d.ContainerCommand(
+	ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", fmt.Sprintf("echo '%s' >> /www/projects.txt", p.ID)},
@@ -198,13 +202,13 @@ func DeleteProjectRoutes(p *project.Project) error {
 	done := output.Duration(
 		fmt.Sprintf("Delete routes for project '%s.'", p.ID),
 	)
-	d, err := container.NewDocker()
+	ch, err := getContainerHandler()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	containerConf := GetContainerConfig()
 	// delete config file
-	if err := d.ContainerCommand(
+	if err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
@@ -219,7 +223,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		return tracerr.Wrap(err)
 	}
 	// delete json file
-	if err := d.ContainerCommand(
+	if err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"rm", "-rf", fmt.Sprintf("/www/%s.json", p.ID)},

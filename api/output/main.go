@@ -113,7 +113,7 @@ func Duration(msg string) func() {
 // Error prints an error message to the terminal and then exists.
 func Error(err error) {
 	LogError(err)
-	if !Enable || err == nil {
+	if err == nil {
 		return
 	}
 	fmt.Println(colorError("\n\n== ERROR ==\n" + err.Error() + "\n\n"))
