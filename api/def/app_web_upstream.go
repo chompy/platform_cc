@@ -37,7 +37,7 @@ func (d *AppWebUpstream) SetDefaults() {
 func (d AppWebUpstream) Validate(root *App) []error {
 	o := make([]error, 0)
 	if err := validateMustContainOne(
-		[]string{"tcp", "udp"},
+		[]string{"tcp", "udp", "unix"},
 		d.SocketFamily,
 		"app.web.upstream.socket_family",
 	); err != nil {
