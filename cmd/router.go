@@ -73,10 +73,8 @@ var routerListCmd = &cobra.Command{
 	Use:   "list [--json]",
 	Short: "List all active routes.",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		routes, err := router.ListActiveRoutes()
 		handleError(err)
-
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
@@ -85,7 +83,6 @@ var routerListCmd = &cobra.Command{
 			fmt.Println(string(routesJSON))
 			return
 		}
-
 		// table out
 		data := make([][]string, 0)
 		for _, route := range routes {
