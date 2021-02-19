@@ -1,6 +1,4 @@
 - ASAP
-    - PSH mount handling improvments and bug fixes
-        - Investigate...make mounts behave properly even when enable_mount_volumes disabled...possible?
 
 - QOL
     - Bash autocomplete for PCC commands.

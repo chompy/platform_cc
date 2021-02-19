@@ -17,12 +17,25 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package project
 
+import "fmt"
+
 // Option defines a project option.
 type Option string
 
 const (
 	// OptionDomainSuffix sets the internal route domain suffix.
 	OptionDomainSuffix Option = "domain_suffix"
+	// OptionMountStrategy defines the strategy of dealing with mounts.
+	OptionMountStrategy Option = "mount_strategy"
+)
+
+const (
+	// MountStrategyNone defines mount strategy where no action is taken.
+	MountStrategyNone = "none"
+	// MountStrategySymlink defines mount strategy where symlinks are used.
+	MountStrategySymlink = "symlink"
+	// MountStrategyVolume defines mount strategy where a container volume is used.
+	MountStrategyVolume = "volume"
 )
 
 // DefaultValue returns the default value of the option.
@@ -31,6 +44,10 @@ func (o Option) DefaultValue() string {
 	case OptionDomainSuffix:
 		{
 			return "localhost.ccplatform.net"
+		}
+	case OptionMountStrategy:
+		{
+			return MountStrategyNone
 		}
 	}
 	return ""
@@ -44,10 +61,26 @@ func (o Option) Value(opts map[Option]string) string {
 	return o.DefaultValue()
 }
 
+// Validate returns error if given value is not a valid.
+func (o Option) Validate(v string) error {
+	switch o {
+	case OptionMountStrategy:
+		{
+			if v == MountStrategyNone || v == MountStrategySymlink || v == MountStrategyVolume {
+				return nil
+			}
+			return fmt.Errorf("mount strategy must be one of %s,%s,%s", MountStrategyNone, MountStrategySymlink, MountStrategyVolume)
+		}
+	}
+	return nil
+
+}
+
 // ListOptions list all available project options.
 func ListOptions() []Option {
 	return []Option{
 		OptionDomainSuffix,
+		OptionMountStrategy,
 	}
 }
 
@@ -55,6 +88,12 @@ func ListOptions() []Option {
 func ListOptionDescription() map[Option]string {
 	return map[Option]string{
 		OptionDomainSuffix: "Domain name suffix for internal routes.",
+		OptionMountStrategy: fmt.Sprintf(
+			"Defines which mount strategy to use. (%s,%s,%s).",
+			MountStrategyNone,
+			MountStrategySymlink,
+			MountStrategyVolume,
+		),
 	}
 }
 

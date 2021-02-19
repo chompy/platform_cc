@@ -157,9 +157,6 @@ Enables workers.
 ### enable_php_opcache
 Enables PHP Opcache.
 
-### enable_mount_volume
-Enables mount volumes. The default functionality is to ignore the mounts option in .platform.app.yaml and just mount the project root to /app. When this is enabled all the mount points defined in .platform.app.yaml will be mounted to a container volume.
-
 ### enable_osx_nfs_mounts
 Enables NFS mounts on OSX.
 
@@ -181,6 +178,14 @@ pcc project:options:set domain_suffix <value>
 ```
 Set the internal route domain, default is "pcc.localtest.me." Every route gets an internal route... example... www.example.com becomes www-example-com.pcc.localtest.me.
 
+### mount_strategy
+```
+pcc project:option:set mount_strategy [none|symlink|volume]
+```
+Set the strategy for how Platform.CC will deal with mounts.
+- None (default)...do nothing, no mounts will be established. This will suffice in a lot of cases if you have no need for subdirectory mounts.
+- Symlink...create a mount directory in the root of the project and use symlinks to map the mounts to the destinations. This should create a mount structure similar to Platform.sh and will support mounting subdirectories, it could be destructive to your project directory if you previously had data in the mount directories.
+- Volume...use a container volume as the mount directory and bind the destination directories to the container volume. This should function closest to how it would on Platform.sh but files in the mounted directories will not be accessible outside of the application container.
 
 Global Configuration
 --------------------

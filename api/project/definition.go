@@ -12,6 +12,7 @@ import (
 )
 
 const containerDataDirectory = "/mnt/data"
+const symlinkMntPath = def.AppDir + "/.platform_cc_mnt"
 
 // GetDefinitionName returns the name of given definition.
 func (p *Project) GetDefinitionName(d interface{}) string {
@@ -325,43 +326,79 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 		}
 	}
 	if mounts != nil {
-		out := ""
+		out := make([]string, 0)
 		for dest, mount := range mounts {
+			// build path to destination directory inside app root
 			destPath := fmt.Sprintf(
 				"%s/%s",
 				def.AppDir,
 				strings.Trim(dest, "/"),
 			)
-			srcPath := strings.TrimRight(fmt.Sprintf(
-				"%s/%s",
-				containerDataDirectory,
-				strings.Trim(mount.SourcePath, "/"),
-			), "/")
 			destPath = strings.TrimRight(strings.ReplaceAll(
 				destPath, ":", "_",
 			), "/")
-			srcPath = strings.ReplaceAll(
-				srcPath, ":", "_",
-			)
-			if out != "" {
-				out += " && "
-			}
-			out += fmt.Sprintf(
-				"mkdir -p %s && mkdir -p %s && chown -f web %s && chown -Rf web %s",
-				destPath,
-				srcPath,
-				destPath,
-				srcPath,
-			)
-			if p.HasFlag(EnableMountVolume) {
-				out += fmt.Sprintf(
-					" && mount -o user_xattr --bind %s %s",
-					srcPath,
-					destPath,
-				)
+			// handle mount depending on user selected strategy
+			switch p.GetOption(OptionMountStrategy) {
+			case MountStrategyNone:
+				{
+					// create dest directory if it doesn't exist, fix persmission
+					// the dest directory will not be mounted to anything, it'll just be part
+					// of the main /app directory which will be mounted to the user's host file system
+					out = append(out, fmt.Sprintf(
+						"mkdir -p %s && chown -Rf web %s",
+						destPath,
+						destPath,
+					))
+					break
+				}
+			case MountStrategySymlink:
+				{
+					// build source path inside app root under .platform_cc_mnt
+					srcPath := strings.TrimRight(fmt.Sprintf(
+						"%s/%s",
+						symlinkMntPath,
+						strings.Trim(mount.SourcePath, "/"),
+					), "/")
+					srcPath = strings.ReplaceAll(
+						srcPath, ":", "_",
+					)
+					// use symlink to link everything to main mount dir
+					// this will allow the use of mount subdirectories while allowing
+					// mount files to be accessable outside of the container
+					out = append(out, fmt.Sprintf(
+						"mkdir -p %s && chown -Rf web %s && rm -rf %s && ln -s -r %s %s",
+						srcPath,
+						srcPath,
+						destPath,
+						srcPath,
+						destPath,
+					))
+					break
+				}
+			case MountStrategyVolume:
+				{
+					// build source path to mounted container volume
+					srcPath := strings.TrimRight(fmt.Sprintf(
+						"%s/%s",
+						containerDataDirectory,
+						strings.Trim(mount.SourcePath, "/"),
+					), "/")
+					srcPath = strings.ReplaceAll(
+						srcPath, ":", "_",
+					)
+					// perform a bind mount between container volume and destination directory
+					out = append(out, fmt.Sprintf(
+						" && mkdir -p %s && chown -Rf web %s && mount -o user_xattr --bind %s %s",
+						destPath,
+						destPath,
+						srcPath,
+						destPath,
+					))
+					break
+				}
 			}
 		}
-		return out
+		return strings.Join(out, " && ")
 	}
 	return ""
 }

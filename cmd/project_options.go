@@ -83,11 +83,19 @@ var projectOptionSetCmd = &cobra.Command{
 			handleError(fmt.Errorf("missing option and/or value argument(s)"))
 			return
 		}
-		if proj.Options == nil {
-			proj.Options = make(map[project.Option]string)
+		// itterate possible options
+		for _, opt := range project.ListOptions() {
+			if string(opt) == args[0] {
+				if proj.Options == nil {
+					proj.Options = make(map[project.Option]string)
+				}
+				handleError(opt.Validate(args[1]))
+				proj.Options[opt] = args[1]
+				handleError(proj.Save())
+				return
+			}
 		}
-		proj.Options[project.Option(args[0])] = args[1]
-		handleError(proj.Save())
+		handleError(fmt.Errorf("'%s' is not a valid option", args[0]))
 	},
 }
 
@@ -102,11 +110,18 @@ var projectOptionDelCmd = &cobra.Command{
 			handleError(fmt.Errorf("missing option argument"))
 			return
 		}
-		if proj.Options == nil {
-			proj.Options = make(map[project.Option]string)
+		// itterate possible options
+		for _, opt := range project.ListOptions() {
+			if string(opt) == args[0] {
+				if proj.Options == nil {
+					proj.Options = make(map[project.Option]string)
+				}
+				proj.Options[opt] = ""
+				handleError(proj.Save())
+				return
+			}
 		}
-		proj.Options[project.Option(args[0])] = ""
-		handleError(proj.Save())
+		handleError(fmt.Errorf("'%s' is not a valid option", args[0]))
 	},
 }
 

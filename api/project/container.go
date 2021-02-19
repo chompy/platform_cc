@@ -28,6 +28,7 @@ type Container struct {
 	configJSON       []byte
 	buildCommand     string
 	mountCommand     string
+	mountStrategy    string
 }
 
 // NewContainer creates a new container.
@@ -54,6 +55,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 		configJSON:       configJSON,
 		buildCommand:     p.GetDefinitionBuildCommand(d),
 		mountCommand:     p.GetDefinitionMountCommand(d),
+		mountStrategy:    p.GetOption(OptionMountStrategy),
 	}
 	return o
 }
@@ -203,7 +205,7 @@ func (c Container) SetupMounts() error {
 		return nil
 	}
 	done := output.Duration(
-		fmt.Sprintf("Set up mounts for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+		fmt.Sprintf("Set up mounts for %s '%s' using '%s' strategy", c.Config.ObjectType.TypeName(), c.Name, c.mountStrategy),
 	)
 	// run command
 	if err := c.containerHandler.ContainerCommand(

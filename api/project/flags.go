@@ -37,7 +37,7 @@ const (
 	IntEnableServiceRoutes
 	// IntEnablePHPOpcache enables PHP opcache.
 	IntEnablePHPOpcache
-	// IntEnableMountVolume mounts Docker volume for Platform.sh mounts.
+	// IntEnableMountVolume mounts Docker volume for Platform.sh mounts (NO LONGER USED).
 	IntEnableMountVolume
 	// IntEnableOSXNFSMounts uses NFS for mounts on OSX.
 	IntEnableOSXNFSMounts
@@ -69,7 +69,6 @@ func (f FlagInt) List() map[string]FlagInt {
 		EnableWorkers:        IntEnableWorkers,
 		EnableServiceRoutes:  IntEnableServiceRoutes,
 		EnablePHPOpcache:     IntEnablePHPOpcache,
-		EnableMountVolume:    IntEnableMountVolume,
 		EnableOSXNFSMounts:   IntEnableOSXNFSMounts,
 		DisableYamlOverrides: IntDisableYamlOverrides,
 		DisableAutoCommit:    IntDisableAutoCommit,
@@ -97,8 +96,6 @@ const (
 	EnableServiceRoutes = "enable_service_routes"
 	// EnablePHPOpcache enables PHP opcache.
 	EnablePHPOpcache = "enable_php_opcache"
-	// EnableMountVolume mounts Docker volume for Platform.sh mounts.
-	EnableMountVolume = "enable_mount_volumes"
 	// EnableOSXNFSMounts uses NFS for mounts on OSX.
 	EnableOSXNFSMounts = "enable_osx_nfs_mounts"
 	// DisableYamlOverrides disables Platform.CC specific YAML override files.
@@ -140,7 +137,6 @@ func (f Flags) Descriptions() map[string]string {
 		EnableWorkers:        "Enables workers.",
 		EnableServiceRoutes:  "Enable routes to services like Varnish.",
 		EnablePHPOpcache:     "Enables PHP Opcache.",
-		EnableMountVolume:    "Enable mount volumes.",
 		EnableOSXNFSMounts:   "Enable NFS mounts on OSX.",
 		DisableYamlOverrides: "Disable Platform.CC specific YAML override files (.platform.app.pcc.yaml, services.pcc.yaml).",
 		DisableAutoCommit:    "Disable auto commit of application containers on start.",
