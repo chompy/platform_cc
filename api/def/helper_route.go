@@ -29,18 +29,19 @@ func replaceHTTPS(path string) string {
 }
 
 // convertRoutePathToInternal takes a route path and converts it to an internal url.
-func convertRoutePathToInternal(path string, domainSuffix string) (string, error) {
+func convertRoutePathToInternal(path string, domainSufix string) (string, error) {
 	parsedURL, err := url.Parse(path)
 	if err != nil {
 		return "", err
 	}
-	domainSuffix = strings.Trim(strings.Trim(domainSuffix, "."), "/")
-	subdomain := strings.TrimRight(strings.ReplaceAll(parsedURL.Hostname(), domainSuffix, ""), ".")
+	domainSufix = strings.Trim(strings.Trim(domainSufix, "."), "/")
 	return fmt.Sprintf(
 		"%s://%s.%s/%s",
 		parsedURL.Scheme,
-		strings.ReplaceAll(subdomain, ".", "-"),
-		domainSuffix,
+		strings.ReplaceAll(
+			parsedURL.Hostname(), ".", "-",
+		),
+		domainSufix,
 		strings.TrimLeft(parsedURL.Path, "/"),
 	), nil
 }

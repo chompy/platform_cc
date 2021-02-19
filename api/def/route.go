@@ -29,7 +29,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultPath = "__PID__.localhost.ccplatform.net"
+const defaultPath = "__PID__.default"
 
 // Route defines a route.
 type Route struct {
@@ -109,8 +109,8 @@ func ParseRoutesYamlFile(f string) ([]Route, error) {
 	return r, nil
 }
 
-// AdjustRoutes fixes routes: replaces . in subdomain, forces http, etc.
-func AdjustRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error) {
+// ExpandRoutes expands routes to include internal verisons and makes modifications for use with PCC.
+func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error) {
 	out := make([]Route, 0)
 	// make copy of routes
 	copyRoutes := make([]Route, 0)
@@ -167,21 +167,29 @@ func AdjustRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 		route.OriginalURL = route.Path
 		// - if redirect routes to internal then fix it up
 		if route.To != "" &&
-			redirectMatchesRoute(inRoutes, route.To) {
+			redirectMatchesRoute(copyRoutes, route.To) {
 			route.To = replaceHTTPS(route.To)
-			newTo, err := convertRoutePathToInternal(route.To, internalDomainSuffix)
-            if err == nil {
-                route.To = newTo
-            }
 		}
-        var err error
-        route.Path, err = convertRoutePathToInternal(route.Path, internalDomainSuffix)
-        if err != nil {
-            return nil, tracerr.Wrap(err)
-        }
-
 		r := route
 		out = append(out, r)
+		// internal route
+		route.Primary.DefaultValue = false
+		route.Primary.SetDefaults()
+		var err error
+		route.Path, err = convertRoutePathToInternal(route.Path, internalDomainSuffix)
+		if err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		// - if redirect routes to internal then fix it up
+		if route.To != "" &&
+			redirectMatchesRoute(copyRoutes, route.To) {
+			route.To, err = convertRoutePathToInternal(replaceHTTPS(route.To), internalDomainSuffix)
+			if err != nil {
+				return nil, tracerr.Wrap(err)
+			}
+		}
+		ri := route
+		out = append(out, ri)
 	}
 	return out, nil
 }

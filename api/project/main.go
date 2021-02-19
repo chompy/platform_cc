@@ -136,7 +136,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
-		o.Routes, err = def.AdjustRoutes(
+		o.Routes, err = def.ExpandRoutes(
 			o.Routes,
 			o.GetOption(OptionDomainSuffix),
 		)
