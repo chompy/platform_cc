@@ -20,7 +20,7 @@ package def
 // AppWeb defines how app is exposed to the web.
 type AppWeb struct {
 	Commands   AppWebCommands             `yaml:"commands" json:"commands"`
-	Upstream   AppWebUpstream             `yaml:"upstream" json:"-"`
+	Upstream   AppWebUpstream             `yaml:"upstream" json:"upstream"`
 	Locations  map[string]*AppWebLocation `yaml:"locations" json:"locations"`
 	MoveToRoot bool                       `json:"move_to_root"`
 }
