@@ -213,6 +213,7 @@ var projectRoutesCmd = &cobra.Command{
 		// table out
 		data := make([][]string, 0)
 		for _, route := range proj.Routes {
+			route = router.RouteReplaceDefault(route, proj)
 			to := route.To
 			if route.Type == "upstream" {
 				to = route.Upstream

@@ -282,7 +282,9 @@ pcc project:slot:copy 1 2
 Container Commit
 ----------------
 
-By default Platform.CC makes a commit of the application containers once the build hooks are completed. This saves time as the build hooks won't have to be ran on every start up. However, it does appear to cause some issues in a few cases. We have included ways to bypass this functionality both with the 'disable_auto_commit' flag and with the '--no-commit' option on the project:start command.
+By default Platform.CC makes a commit of the application containers once the build hooks are completed. This saves time as the build hooks won't have to be ran on every start up. However, it does appear to cause some issues in a few cases. We have included ways to bypass this functionality both with the 'disable_auto_commit' flag and with the `--no-commit` option on the project:start command.
+
+You can force a re-build and re-commit when you run `project:start` or `project:restart` with the `--rebuild` flag.
 
 
 Share Logs
