@@ -14,6 +14,22 @@ PCC_BIN_NAME="pcc"
 SEND_LOG_BIN_NAME="pcc_send_log"
 PSH_CLONE_BIN_NAME="pcc_psh_sync"
 
+# set dev version if -d flag set
+VERSION=""
+while getopts 'dh' flag; do
+    if [ "$flag" = "d" ]; then
+        VERSION="dev"
+    elif [ "$flag" = "h" ]; then
+        echo "Install or update Platform.CC."
+        echo ""
+        echo "Flags:"
+        echo "-h        Display help."
+        echo "-d        Install lastest development release."
+        exit 0
+    fi
+done
+
+# display intro/title
 echo ""
 printf "\e[33m================================\e[0m\n"
 echo " PLATFORM.CC BY CONTEXTUAL CODE"
@@ -29,13 +45,6 @@ progress_error() {
     exit 1
 }
 
-# set dev version if -d flag set
-VERSION=""
-while getopts 'd' flag; do
-    if [ "$flag" = "d" ]; then
-        VERSION="dev"
-    fi
-done
 
 # change install path for mac
 if [[ "$OSTYPE" == "darwin"* ]]; then
