@@ -180,6 +180,23 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 				envVars[k] = fmt.Sprintf("%d", v.(int))
 				break
 			}
+		case float32:
+			{
+				envVars[k] = fmt.Sprintf("%f", v.(float32))
+				break
+			}
+		case float64:
+			{
+				envVars[k] = fmt.Sprintf("%f", v.(float64))
+				break
+			}
+		case bool:
+			{
+				envVars[k] = ""
+				if v.(bool) {
+					envVars[k] = "true"
+				}
+			}
 		case string:
 			{
 				envVars[k] = v.(string)

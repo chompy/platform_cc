@@ -67,7 +67,7 @@ func (d GlobalConfig) Validate() []error {
 	if d.Variables["env"] != nil {
 		for k, v := range d.Variables["env"] {
 			switch v.(type) {
-			case string:
+			case string, int, float32, float64, bool:
 				{
 					break
 				}
@@ -75,7 +75,7 @@ func (d GlobalConfig) Validate() []error {
 				{
 					o = append(o, NewValidateError(
 						"app.variables.env."+k,
-						"should be a string",
+						"should be a scalar",
 					))
 					break
 				}
