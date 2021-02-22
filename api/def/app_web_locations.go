@@ -20,7 +20,7 @@ package def
 // AppWebLocation defines how the app should respond to a web request.
 type AppWebLocation struct {
 	Root             string                         `yaml:"root" json:"root"`
-	Passthru         string                         `yaml:"passthru" json:"passthru"`
+	Passthru         BoolString                     `yaml:"passthru" json:"passthru"`
 	Index            []string                       `yaml:"index" json:"index,omitempty"`
 	Expires          string                         `yaml:"expires" json:"expires"`
 	Scripts          Bool                           `yaml:"scripts" json:"scripts"`
@@ -32,8 +32,9 @@ type AppWebLocation struct {
 
 // SetDefaults sets the default values.
 func (d *AppWebLocation) SetDefaults() {
+	d.Passthru.SetDefaults()
 	d.Scripts.DefaultValue = false
-	if d.Passthru != "" && d.Passthru != "false" {
+	if d.Passthru.IsString() || d.Passthru.GetBool() {
 		d.Scripts.DefaultValue = true
 	}
 	if d.Expires == "" {
