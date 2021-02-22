@@ -401,7 +401,7 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			c := make(chan error, 1)
 			go func() {
 				c <- d.ContainerCommand(
-					cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && nginx -s stop || true"}, nil,
+					cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && rm -f /routes/* && nginx -s stop || true"}, nil,
 				)
 			}()
 			select {

@@ -60,7 +60,7 @@ EOF
 # INIT SERVICE
 until [ -f /run/config.json ]; do sleep 1; done
 rm -rf /etc/service/*
-python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 # PERMISSIONS
 chown -R web:web /run
@@ -153,7 +153,7 @@ RpcServer(
 EOF
 until [ -f /run/config.json ]; do sleep 1; done
 rm -rf /etc/service/*
-python /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 mkdir -p /run/sshd
 chown -R root:root /run/sshd

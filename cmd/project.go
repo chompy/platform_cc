@@ -99,6 +99,7 @@ var projectPurgeCmd = &cobra.Command{
 		proj, err := getProject(false)
 		handleError(err)
 		handleError(proj.Purge())
+		handleError(router.DeleteProjectRoutes(proj))
 	},
 }
 
