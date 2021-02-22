@@ -390,9 +390,6 @@ func (p *Project) Deploy() error {
 
 // Purge purges data related to the project.
 func (p *Project) Purge() error {
-	if err := p.Stop(); err != nil {
-		return tracerr.Wrap(err)
-	}
 	done := output.Duration(fmt.Sprintf("Purge project '%s.'", p.ID))
 	if err := p.containerHandler.ProjectPurge(p.ID); err != nil {
 		return tracerr.Wrap(err)

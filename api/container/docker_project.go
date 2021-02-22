@@ -51,6 +51,7 @@ func (d Docker) ProjectPurge(pid string) error {
 	if err := d.ProjectStop(pid); err != nil {
 		return tracerr.Wrap(err)
 	}
+	time.Sleep(time.Second)
 	// delete volumes
 	vols, err := d.listProjectVolumes(pid)
 	if err != nil {
@@ -59,6 +60,7 @@ func (d Docker) ProjectPurge(pid string) error {
 	if err := d.deleteVolumes(vols); err != nil {
 		return tracerr.Wrap(err)
 	}
+	time.Sleep(time.Second)
 	// delete images
 	images, err := d.listProjectImages(pid)
 	if err != nil {
