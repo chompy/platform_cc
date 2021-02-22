@@ -163,8 +163,6 @@ chmod -R -rwx /run//run/ssh/id
 rm -f /run/rsa_hostkey
 /etc/platform/boot
 sleep 5
-chown -R web /tmp
-chmod -R 0755 /tmp
 touch /tmp/.ready1
 exec init
 `
