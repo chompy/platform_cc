@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -80,7 +79,6 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 	// delete volumes
 	vols, err := d.listProjectSlotVolumes(pid, slot)
 	if err != nil {
-		log.Println(err)
 		return tracerr.Wrap(err)
 	}
 	if err := d.deleteVolumes(vols); err != nil {
