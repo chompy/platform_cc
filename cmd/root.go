@@ -18,24 +18,23 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
 // RootCmd is the top level command.
 var RootCmd = &cobra.Command{
 	Use:     "platform_cc",
 	Version: "",
-	Long: strings.TrimSpace(`
-================================
- PLATFORM.CC BY CONTEXTUAL CODE
-================================
-
-A tool for provisioning apps with Docker based on Platform.sh's .platform.app.yaml spec.
-
-`),
+	Run: func(cmd *cobra.Command, args []string) {
+		output.CommandIntro(cmd.Version)
+		fmt.Println("\nAvailable Commands:")
+		output.CommandList(cmd)
+	},
 }
 
 // Execute - run root command

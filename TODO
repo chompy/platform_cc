@@ -1,8 +1,8 @@
 - ASAP
+    - Fix :logs commands, doesn't seem to work unless -f flag applied.
 
 - QOL
     - Bash autocomplete for PCC commands.
-    - 'pcc list' command to list all possible PCC commands and subcommands.
     - 'router:reset' command to restart router and remove all currently loaded routes.
     - Update command to auto install the latest release.
 

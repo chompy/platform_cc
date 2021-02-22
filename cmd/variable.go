@@ -28,8 +28,8 @@ import (
 )
 
 var varCmd = &cobra.Command{
-	Use:     "var",
-	Aliases: []string{"variable", "vari"},
+	Use:     "variable",
+	Aliases: []string{"var"},
 	Short:   "Manage project variables.",
 }
 
