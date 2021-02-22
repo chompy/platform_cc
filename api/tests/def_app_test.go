@@ -34,7 +34,7 @@ func TestParseFile(t *testing.T) {
 	assertEqual(d.Type, "php:7.4", "unexpected type", t)
 	assertEqual(d.Build.Flavor, "none", "unexpected build.flavor", t)
 	// locations
-	assertEqual(d.Web.Locations["/"].Passthru, "/index.php", "unexpected web.locations./.passthru", t)
+	assertEqual(d.Web.Locations["/"].Passthru.GetString(), "/index.php", "unexpected web.locations./.passthru", t)
 	// mounts
 	assertEqual(d.Mounts["/test"].SourcePath, "test", "unexpected web.mounts./test.source_path", t)
 	assertEqual(d.Mounts["/test2"].Source, "service", "unexpected web.mounts./test2.source", t)
