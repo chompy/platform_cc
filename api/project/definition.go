@@ -405,7 +405,9 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 					)
 					// perform a bind mount between container volume and destination directory
 					out = append(out, fmt.Sprintf(
-						" && mkdir -p %s && chown -Rf web %s && mount -o user_xattr --bind %s %s",
+						"mkdir -p %s && chown -Rf web %s && mkdir -p %s && chown -Rf web %s && mount -o user_xattr --bind %s %s",
+						srcPath,
+						srcPath,
 						destPath,
 						destPath,
 						srcPath,
