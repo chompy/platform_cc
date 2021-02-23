@@ -130,9 +130,9 @@ if [[ $MOUNT_LIST ]]; then
     while IFS= read -r mount; do
         IFS=';' read -ra mount_split <<< "$mount"
         IFS=
-        dest="${mount_split[0]}"
-        src=$(echo "${mount_split[1]}" | sed "s/\:/_/")
-        MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app$dest/ /mnt/data/$src/ || true && "
+        dest=$(echo "${mount_split[0]}" | sed 's/^\///g' | sed 's/\/$//g')
+        src=$(echo "${mount_split[1]}" | sed "s/\:/_/" | sed 's/^\///g' | sed 's/\/$//g')
+        MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app/$dest/ /mnt/data/$src/ || true && "
     done <<< "$MOUNT_LIST"
     MOUNT_SYNC_CMD+="true"
     $PCC_PATH app:sh --root "$MOUNT_SYNC_CMD"
