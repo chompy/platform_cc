@@ -52,7 +52,7 @@ func CommandList(cmd *cobra.Command) {
 	}
 	for _, scmd := range cmd.Commands() {
 		if scmd.HasSubCommands() {
-			fmt.Print(colorSuccess(scmd.Name()))
+			fmt.Print(color(scmd.Name(), 94))
 			if len(scmd.Aliases) > 0 {
 				fmt.Print(color(" ["+strings.Join(scmd.Aliases, ",")+"]", 35))
 			}
