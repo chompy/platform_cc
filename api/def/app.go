@@ -37,7 +37,7 @@ type App struct {
 	Type          string                            `yaml:"type"`
 	Size          string                            `yaml:"size"`
 	Disk          int                               `yaml:"disk"`
-	Build         AppBuild                          `yaml:"build"`
+	Build         AppBuild                          `yaml:"build" json:"build"`
 	Variables     map[string]map[string]interface{} `yaml:"variables"`
 	Relationships map[string]string                 `yaml:"relationships"`
 	Web           AppWeb                            `yaml:"web"`

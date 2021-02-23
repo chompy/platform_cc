@@ -148,6 +148,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	runtime := def.AppRuntime{}
 	appWeb := &def.AppWeb{}
 	dependencies := def.AppDependencies{}
+	build := def.AppBuild{}
 	switch d.(type) {
 	case def.App:
 		{
@@ -164,6 +165,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 			appWeb = &appWebo
 			dependencies = d.(def.App).Dependencies
 			worker = nil
+			build = d.(def.App).Build
 			break
 		}
 	case def.AppWorker:
@@ -212,6 +214,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	}
 	return map[string]interface{}{
 		"name":                  name,
+		"build":                 build,
 		"crons":                 crons,
 		"enable_smtp":           "false",
 		"mounts":                mounts,

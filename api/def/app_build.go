@@ -19,14 +19,11 @@ package def
 
 // AppBuild defines what happens when building the app.
 type AppBuild struct {
-	Flavor string `yaml:"flavor"`
+	Flavor string `yaml:"flavor" json:"flavor,omitempty"`
 }
 
 // SetDefaults sets the default values.
 func (d *AppBuild) SetDefaults() {
-	if d.Flavor == "" {
-		d.Flavor = "none"
-	}
 }
 
 // Validate checks for errors.
@@ -36,7 +33,7 @@ func (d AppBuild) Validate(root *App) []error {
 	case "php":
 		{
 			if err := validateMustContainOne(
-				[]string{"composer", "drupal", "symfony", "default", "none", "update"},
+				[]string{"", "composer", "drupal", "symfony", "default", "none", "update"},
 				d.Flavor,
 				"app.build.flavor",
 			); err != nil {

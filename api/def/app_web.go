@@ -30,10 +30,11 @@ func (d *AppWeb) SetDefaults() {
 	d.Commands.SetDefaults()
 	d.Upstream.SetDefaults()
 	if d.Locations == nil || len(d.Locations) == 0 {
-		d.Locations = map[string]*AppWebLocation{
-			"/": &AppWebLocation{
-				Passthru: BoolString{boolVal: true, isSet: true},
-			},
+		d.Locations = make(map[string]*AppWebLocation)
+	}
+	if d.Locations["/"] == nil {
+		d.Locations["/"] = &AppWebLocation{
+			Passthru: BoolString{boolVal: true, isSet: true},
 		}
 	}
 	for i := range d.Locations {
