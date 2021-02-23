@@ -106,7 +106,11 @@ builder._generate_configuration()
 builder._drop_privileges()
 os.chdir(builder.source_dir)
 builder.install_global_dependencies()
-if %s: builder.execute_composer()
+buildFlavor="%s"
+if buildFlavor == "composer":
+	builder.execute_composer()
+else:
+	builder._build()
 builder._execute_build_hook()
 EOF
 mkdir -p /tmp/cache

@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"gitlab.com/contextualcode/platform_cc/api/container"
@@ -316,14 +315,11 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 			}
 			buildJSON, _ := json.Marshal(buildData)
 			buildB64 := base64.StdEncoding.EncodeToString(buildJSON)
-			// build flavor
-			buildFlavorComposer := strings.ToLower(d.(def.App).Build.Flavor) == "composer"
 			return fmt.Sprintf(
 				appBuildCmd,
-				strings.Title(strconv.FormatBool(buildFlavorComposer)),
+				strings.ToLower(d.(def.App).Build.Flavor),
 				buildB64,
 			)
-			//return "sleep 5"
 		}
 	}
 	return ""
