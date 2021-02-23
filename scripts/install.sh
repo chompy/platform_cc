@@ -6,13 +6,15 @@ realpath() {
 
 BASE_URL="https://platform-cc-releases.s3.amazonaws.com"
 VERSION_URL="$BASE_URL/version"
-SEND_LOG_URL="$BASE_URL/send_log.sh"
-PSH_CLONE_URL="$BASE_URL/platform_sh_clone.sh"
+DL_SCRIPTS=(
+    "$BASE_URL/send_log.sh|pcc_send_log|send-log"
+    "$BASE_URL/platform_sh_clone.sh|pcc_psh_sync|platform.sh-clone"
+    "$BASE_URL/uninstall.sh|pcc_uninstall|uninstall"
+    "$BASE_URL/install.sh|pcc_update|update"
+)
 INSTALL_PATH=~/.local/bin
 MAC_INSTALL_PATH=/usr/local/bin
 PCC_BIN_NAME="pcc"
-SEND_LOG_BIN_NAME="pcc_send_log"
-PSH_CLONE_BIN_NAME="pcc_psh_sync"
 
 # set dev version if -d flag set
 VERSION=""
@@ -62,25 +64,18 @@ if [ -z "$VERSION" ]; then
     printf "> Version \e[36m$VERSION\e[0m found.\n"
 fi
 
-# fetch send log script
-printf "> Fetch send log script..."
-mkdir -p $INSTALL_PATH
-curl -s --fail -o $INSTALL_PATH/$SEND_LOG_BIN_NAME "$SEND_LOG_URL"
-if [ "$?" != "0" ]; then
-    progress_error "Could not download send log script."
-fi
-chmod +x $INSTALL_PATH/$SEND_LOG_BIN_NAME
-progress_success
-
-# fetch psh clone script
-printf "> Fetch Platform.sh sync script..."
-mkdir -p $INSTALL_PATH
-curl -s --fail -o $INSTALL_PATH/$PSH_CLONE_BIN_NAME "$PSH_CLONE_URL"
-if [ "$?" != "0" ]; then
-    progress_error "Could not download Platform.sh clone script."
-fi
-chmod +x $INSTALL_PATH/$PSH_CLONE_BIN_NAME
-progress_success
+# itterate and install scripts
+for s in ${DL_SCRIPTS[@]}; do
+    IFS='|' read -ra DL_SCRIPT <<< "$s"
+    printf "> Fetch ${DL_SCRIPT[2]} script..."
+    mkdir -p $INSTALL_PATH
+    curl -s --fail -o "$INSTALL_PATH/${DL_SCRIPT[1]}" "${DL_SCRIPT[0]}"
+    if [ "$?" != "0" ]; then
+        progress_error "Could not download ${DL_SCRIPT[2]} script."
+    fi
+    chmod +x "$INSTALL_PATH/${DL_SCRIPT[1]}"
+    progress_success
+done
 
 # determine os
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
