@@ -112,9 +112,11 @@ EOF
 mkdir -p /tmp/cache
 chown -R web /tmp/cache
 chmod -R 0755 /tmp/cache
+chown -R web /app
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
 chown -R web /tmp
 chmod -R 0755 /tmp
+chown -R web /app
 touch /config/built
 `
 

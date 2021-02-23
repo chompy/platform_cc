@@ -153,12 +153,12 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	return o, nil
 }
 
-func scanPlatformAppYaml(path string, disableOverrides bool) [][]string {
+func scanPlatformAppYaml(topPath string, disableOverrides bool) [][]string {
 	o := make([][]string, 0)
 	appYamlPaths := make([]string, 0)
-	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+	filepath.Walk(topPath, func(path string, f os.FileInfo, err error) error {
 		// check sub directory
-		if f.IsDir() && f.Name() != "." {
+		if f.IsDir() && f.Name() != "." && path != topPath {
 			for _, appYamlFilename := range appYamlFilenames {
 				possiblePath := filepath.Join(path, appYamlFilename)
 				if _, err := os.Stat(possiblePath); !os.IsNotExist(err) {
