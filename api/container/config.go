@@ -21,18 +21,19 @@ import "fmt"
 
 // Config contains configuration for a Docker container.
 type Config struct {
-	ProjectID  string
-	Slot       int  // set the slot to use for mount volumes
-	NoCommit   bool // when true don't use committed app image
-	ObjectType ObjectContainerType
-	ObjectName string
-	Command    []string
-	Image      string
-	Volumes    map[string]string
-	Binds      map[string]string
-	Env        map[string]string
-	Ports      []string
-	WorkingDir string
+	ProjectID    string
+	Slot         int  // set the slot to use for mount volumes
+	NoCommit     bool // when true don't use committed app image
+	ObjectType   ObjectContainerType
+	ObjectName   string
+	Command      []string
+	Image        string
+	Volumes      map[string]string
+	Binds        map[string]string
+	Env          map[string]string
+	Ports        []string
+	WorkingDir   string
+	EnableOSXNFS bool
 }
 
 // GetContainerName return the name of the Docker container.

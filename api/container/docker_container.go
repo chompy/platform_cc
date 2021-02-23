@@ -73,15 +73,15 @@ func (d Docker) ContainerStart(c Config) error {
 			continue
 		}
 		// use nfs if macos
-		if isMacOS() {
+		if isMacOS() && c.EnableOSXNFS {
 			if err := d.createNFSVolume(
-				c.ProjectID, path.Base(v), k, c.ObjectType,
+				c.ProjectID, path.Base(k), k, c.ObjectType,
 			); err != nil {
 				return tracerr.Wrap(err)
 			}
 			mounts = append(mounts, mount.Mount{
 				Type:   mount.TypeVolume,
-				Source: getMountName(c.ProjectID, path.Base(v), c.ObjectType),
+				Source: getMountName(c.ProjectID, path.Base(k), c.ObjectType),
 				Target: v,
 			})
 			continue
