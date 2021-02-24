@@ -237,85 +237,50 @@ func (p *Project) Start() error {
 	if err := p.Pull(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// services
-	for _, service := range p.Services {
-		// skip if service requires relationships (start after apps start)
-		// this is needed by varnish
-		if len(service.Relationships) > 0 {
-			continue
+	// build list of services (apps, services, workers) that need to start
+	serviceList := make([]interface{}, 0)
+	for _, s := range p.Services {
+		serviceList = append(serviceList, s)
+	}
+	for _, a := range p.Apps {
+		serviceList = append(serviceList, a)
+		if p.HasFlag(EnableWorkers) {
+			for _, w := range a.Workers {
+				serviceList = append(serviceList, w)
+			}
 		}
+	}
+	// determine start order
+	var err error
+	serviceList, err = p.GetDefinitionStartOrder(serviceList)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// itterate and start
+	for _, service := range serviceList {
 		// start
 		c := p.NewContainer(service)
 		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		// open + process relationships
-		rels, err := c.Open()
-		if err != nil {
-			return tracerr.Wrap(err)
-		}
-		p.relationships = append(p.relationships, rels...)
-	}
-	// app
-	for _, app := range p.Apps {
-		// start
-		c := p.NewContainer(app)
-		c.Config.NoCommit = p.noCommit
-		if err := c.Start(); err != nil {
-			return tracerr.Wrap(err)
-		}
-		// setup mounts
-		if err := c.SetupMounts(); err != nil {
-			return tracerr.Wrap(err)
-		}
-		// build
-		if !p.noBuild && !c.HasBuild() {
-			if err := c.Build(); err != nil {
+		// application only
+		if c.Config.ObjectType == container.ObjectContainerApp {
+			// setup mounts
+			if err := c.SetupMounts(); err != nil {
 				return tracerr.Wrap(err)
 			}
-			if !p.noCommit {
-				if err := c.Commit(); err != nil {
+			// build
+			// TODO do workers need to be built too?
+			if !p.noBuild && !c.HasBuild() {
+				if err := c.Build(); err != nil {
 					return tracerr.Wrap(err)
+				}
+				if !p.noCommit {
+					if err := c.Commit(); err != nil {
+						return tracerr.Wrap(err)
+					}
 				}
 			}
-		}
-		// open + process relationships
-		rels, err := c.Open()
-		if err != nil {
-			return tracerr.Wrap(err)
-		}
-		p.relationships = append(p.relationships, rels...)
-		// workers
-		if p.HasFlag(EnableWorkers) {
-			for _, worker := range app.Workers {
-				wc := p.NewContainer(*worker)
-				wc.Config.NoCommit = p.noCommit
-				// start
-				if err := wc.Start(); err != nil {
-					return tracerr.Wrap(err)
-				}
-				// setup mounts
-				if err := wc.SetupMounts(); err != nil {
-					return tracerr.Wrap(err)
-				}
-				// open
-				_, err := wc.Open()
-				if err != nil {
-					return tracerr.Wrap(err)
-				}
-			}
-		}
-	}
-	// services with relationships (varnish, etc)
-	for _, service := range p.Services {
-		// skip if service has no relationships, it was already started
-		if len(service.Relationships) == 0 {
-			continue
-		}
-		// start
-		c := p.NewContainer(service)
-		if err := c.Start(); err != nil {
-			return tracerr.Wrap(err)
 		}
 		// open + process relationships
 		rels, err := c.Open()

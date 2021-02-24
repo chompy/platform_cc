@@ -315,6 +315,10 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 			}
 			buildJSON, _ := json.Marshal(buildData)
 			buildB64 := base64.StdEncoding.EncodeToString(buildJSON)
+			buildFlavor := strings.ToLower(d.(def.App).Build.Flavor)
+			if d.(def.App).GetTypeName() == "php" && (buildFlavor == "" || buildFlavor == "default") {
+				buildFlavor = "composer"
+			}
 			return fmt.Sprintf(
 				appBuildCmd,
 				strings.ToLower(d.(def.App).Build.Flavor),
@@ -416,4 +420,88 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 		return strings.Join(out, " && ")
 	}
 	return ""
+}
+
+// GetDefinitionStartOrder given list of definitions reorder them for optimal start order for relationships.
+func (p *Project) GetDefinitionStartOrder(defs []interface{}) ([]interface{}, error) {
+	getRelNames := func(d interface{}) []string {
+		rels := map[string]string{}
+		switch d.(type) {
+		case def.App:
+			{
+				rels = d.(def.App).Relationships
+				break
+			}
+		case def.AppWorker:
+			{
+				rels = d.(def.AppWorker).Relationships
+				break
+			}
+		case def.Service:
+			{
+				rels = d.(def.Service).Relationships
+				break
+			}
+		}
+		out := make([]string, 0)
+		for _, rel := range rels {
+			relSplit := strings.Split(rel, ":")
+			out = append(out, relSplit[0])
+		}
+		return out
+	}
+	nameList := make([]string, 0)
+	out := make([]interface{}, 0)
+	hasDef := func(def interface{}) bool {
+		name := p.GetDefinitionName(def)
+		for _, outDef := range out {
+			if p.GetDefinitionName(outDef) == name {
+				return true
+			}
+		}
+		return false
+	}
+	hasAllRels := func(rels []string) bool {
+		for _, rel := range rels {
+			has := false
+			for _, name := range nameList {
+				if rel == name {
+					has = true
+					break
+				}
+			}
+			if !has {
+				return false
+			}
+		}
+		return true
+	}
+	ittCount := 0
+	for len(out) < len(defs) {
+		ittCount++
+		for _, def := range defs {
+			if hasDef(def) {
+				continue
+			}
+			name := p.GetDefinitionName(def)
+			rels := getRelNames(def)
+			if len(rels) == 0 || hasAllRels(rels) {
+				out = append(out, def)
+				nameList = append(nameList, name)
+			}
+		}
+		// assume circular relationship if more than 100 itterations are needed
+		if ittCount > 100 {
+			invalidOut := make([]string, 0)
+			for _, def := range defs {
+				if hasDef(def) {
+					continue
+				}
+				invalidOut = append(invalidOut, p.GetDefinitionName(def))
+			}
+			return nil, fmt.Errorf("one or more relationships are invalid: %s", strings.Join(invalidOut, ","))
+		}
+
+	}
+	return out, nil
 }

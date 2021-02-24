@@ -31,6 +31,7 @@ var projectValidateCmd = &cobra.Command{
 		proj, err := getProject(true)
 		handleError(err)
 		count := 0
+		defs := make([]interface{}, 0)
 		for _, app := range proj.Apps {
 			done := output.Duration(
 				fmt.Sprintf("Validate app '%s.'", app.Name),
@@ -42,6 +43,7 @@ var projectValidateCmd = &cobra.Command{
 					output.ErrorText(err.Error())
 				}
 			}
+			defs = append(defs, app)
 			done()
 		}
 		for _, serv := range proj.Services {
@@ -55,6 +57,7 @@ var projectValidateCmd = &cobra.Command{
 					output.Info(err.Error())
 				}
 			}
+			defs = append(defs, serv)
 			done()
 		}
 		for _, route := range proj.Routes {
@@ -70,6 +73,16 @@ var projectValidateCmd = &cobra.Command{
 			}
 			done()
 		}
+		if len(defs) > 0 {
+			done := output.Duration("Check for invalid relationships.")
+			_, err := proj.GetDefinitionStartOrder(defs)
+			if err != nil {
+				count++
+				output.Info(err.Error())
+			}
+			done()
+		}
+
 		output.Info(fmt.Sprintf("Validation completed with %d errors(s).", count))
 	},
 }
