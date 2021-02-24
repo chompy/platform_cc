@@ -7,7 +7,7 @@ variables:
         TEST_ENV: 'yes'
 relationships:
     database: mysqldb:mysql
-    cache: memcached:memcached
+    cache: rediscache:redis
 web:
     locations:
         /:
