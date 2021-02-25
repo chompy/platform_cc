@@ -259,21 +259,16 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 			uid, gid := p.getUID()
 			buildData := map[string]interface{}{
 				"application": p.buildConfigAppJSON(d),
-				"source_dir":  def.AppDir,
-				"output_dir":  def.AppDir,
+				"source_dir":  def.AppDir + "/",
+				"output_dir":  def.AppDir + "/",
 				"cache_dir":   "/tmp/cache",
 				"uid":         uid,
 				"gid":         gid,
 			}
 			buildJSON, _ := json.Marshal(buildData)
 			buildB64 := base64.StdEncoding.EncodeToString(buildJSON)
-			buildFlavor := strings.ToLower(d.(def.App).Build.Flavor)
-			if d.(def.App).GetTypeName() == "php" && (buildFlavor == "" || buildFlavor == "default") {
-				buildFlavor = "composer"
-			}
 			return fmt.Sprintf(
 				appBuildCmd,
-				strings.ToLower(d.(def.App).Build.Flavor),
 				buildB64,
 			)
 		}

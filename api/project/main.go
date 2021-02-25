@@ -263,22 +263,24 @@ func (p *Project) Start() error {
 		if err := c.Start(); err != nil {
 			return tracerr.Wrap(err)
 		}
-		// application only
-		if c.Config.ObjectType == container.ObjectContainerApp {
-			// setup mounts
-			if err := c.SetupMounts(); err != nil {
-				return tracerr.Wrap(err)
-			}
-			// build
-			// TODO do workers need to be built too?
-			if !p.noBuild && !c.HasBuild() {
-				if err := c.Build(); err != nil {
-					return tracerr.Wrap(err)
-				}
-				if !p.noCommit {
-					if err := c.Commit(); err != nil {
+		// container type specific operations
+		switch c.Config.ObjectType {
+		case container.ObjectContainerApp, container.ObjectContainerWorker:
+			{
+				// build
+				if !p.noBuild && !c.HasBuild() {
+					if err := c.Build(); err != nil {
 						return tracerr.Wrap(err)
 					}
+					if !p.noCommit {
+						if err := c.Commit(); err != nil {
+							return tracerr.Wrap(err)
+						}
+					}
+				}
+				// setup mounts
+				if err := c.SetupMounts(); err != nil {
+					return tracerr.Wrap(err)
 				}
 			}
 		}

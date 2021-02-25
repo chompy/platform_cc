@@ -69,8 +69,8 @@ chmod -R 0755 /tmp
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
-chown -R root:root /run/ssh/id
-chmod -R -rwx /run//run/ssh/id
+chown -Rf root:root /run/ssh/id
+chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
 # BOOT
 /etc/platform/boot
@@ -88,6 +88,11 @@ until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
 chown -R web /tmp
 chmod -R 0755 /tmp
+# NOTE: we don't want the builder method move_source_directory to execute in PCC
+# TODO this could break in the future....
+if [ -f /etc/platform/flavor.d/composer.py ]; then
+	sed -i '20,25d' /etc/platform/flavor.d/composer.py
+fi
 cat >/tmp/build.py <<EOF
 from platformsh_gevent import patch ; patch()
 import os
@@ -106,12 +111,10 @@ builder._generate_configuration()
 builder._drop_privileges()
 os.chdir(builder.source_dir)
 builder.install_global_dependencies()
-buildFlavor="%s"
-if buildFlavor == "composer":
-	builder.execute_composer()
-else:
-	builder._build()
-builder._execute_build_hook()
+builder._build()
+if builder.execute_build_hook:
+	builder._execute_build_hook()
+	builder.prepare_mounts()
 EOF
 mkdir -p /tmp/cache
 chown -R web /tmp/cache
@@ -164,8 +167,8 @@ runsvdir -P /etc/service &> /tmp/runsvdir.log &
 mkdir -p /run/sshd
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
-chown -R root:root /run/ssh/id
-chmod -R -rwx /run//run/ssh/id
+chown -Rf root:root /run/ssh/id
+chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
 /etc/platform/boot
 sleep 5
