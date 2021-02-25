@@ -276,6 +276,17 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 	return ""
 }
 
+// GetDefinitionPostDeployCommand returns post deploy command for given definition.
+func (p *Project) GetDefinitionPostDeployCommand(d interface{}) string {
+	switch d.(type) {
+	case def.App:
+		{
+			return d.(def.App).Hooks.PostDeploy
+		}
+	}
+	return ""
+}
+
 // GetDefinitionMountCommand returns command to setup mounts for given definition.
 func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 	var mounts map[string]*def.AppMount

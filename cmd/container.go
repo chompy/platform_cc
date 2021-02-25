@@ -52,6 +52,27 @@ var containerAppDeployCmd = &cobra.Command{
 	},
 }
 
+var containerAppPostDeployCmd = &cobra.Command{
+	Use:     "post-deploy",
+	Aliases: []string{"postdeploy", "pd"},
+	Short:   "Run application post-deploy hook.",
+	Run: func(cmd *cobra.Command, args []string) {
+		proj, err := getProject(true)
+		handleError(err)
+		d, err := getDef(containerCmd, proj)
+		handleError(err)
+		switch d.(type) {
+		case def.App:
+			{
+				c := proj.NewContainer(d)
+				handleError(c.PostDeploy())
+				return
+			}
+		}
+		handleError(fmt.Errorf("can only run post-deploy hooks on applications"))
+	},
+}
+
 var containerShellCmd = &cobra.Command{
 	Use:     "shell [--root] [command]",
 	Aliases: []string{"sh"},
@@ -148,6 +169,7 @@ func init() {
 	containerCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	containerLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
 	containerCmd.AddCommand(containerAppDeployCmd)
+	containerCmd.AddCommand(containerAppPostDeployCmd)
 	containerCmd.AddCommand(containerShellCmd)
 	containerCmd.AddCommand(containerAppCommitCmd)
 	containerCmd.AddCommand(containerAppDeleteCommitCmd)

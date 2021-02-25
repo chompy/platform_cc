@@ -92,6 +92,17 @@ var projectDeployCmd = &cobra.Command{
 	},
 }
 
+var projectPostDeployCmd = &cobra.Command{
+	Use:     "post-deploy",
+	Aliases: []string{"postdeploy", "pd"},
+	Short:   "Run post-deploy hooks for project.",
+	Run: func(cmd *cobra.Command, args []string) {
+		proj, err := getProject(true)
+		handleError(err)
+		handleError(proj.PostDeploy())
+	},
+}
+
 var projectPurgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge a project.",
@@ -256,6 +267,7 @@ func init() {
 	projectCmd.AddCommand(projectRestartCmd)
 	projectCmd.AddCommand(projectPullCmd)
 	projectCmd.AddCommand(projectDeployCmd)
+	projectCmd.AddCommand(projectPostDeployCmd)
 	projectCmd.AddCommand(projectPurgeCmd)
 	projectCmd.AddCommand(projectConfigJSONCmd)
 	projectCmd.AddCommand(projectStatusCmd)

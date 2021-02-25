@@ -291,6 +291,13 @@ func (p *Project) Start() error {
 		}
 		p.relationships = append(p.relationships, rels...)
 	}
+	// post-deploy
+	for _, service := range serviceList {
+		c := p.NewContainer(service)
+		if err := c.PostDeploy(); err != nil {
+			return tracerr.Wrap(err)
+		}
+	}
 	done()
 	return nil
 }
@@ -348,6 +355,22 @@ func (p *Project) Deploy() error {
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		if err := c.Deploy(); err != nil {
+			return tracerr.Wrap(err)
+		}
+	}
+	done()
+	return nil
+}
+
+// PostDeploy runs post-deploy hooks for all applications in the project.
+func (p *Project) PostDeploy() error {
+	done := output.Duration(
+		fmt.Sprintf("Run post-deploy hooks for project '%s.'", p.ID),
+	)
+	// app
+	for _, app := range p.Apps {
+		c := p.NewContainer(app)
+		if err := c.PostDeploy(); err != nil {
 			return tracerr.Wrap(err)
 		}
 	}

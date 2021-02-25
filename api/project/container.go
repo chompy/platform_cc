@@ -20,15 +20,16 @@ import (
 
 // Container contains information needed to run a container.
 type Container struct {
-	Config           container.Config
-	Name             string
-	Definition       interface{}
-	Relationships    map[string][]map[string]interface{}
-	containerHandler container.Interface
-	configJSON       []byte
-	buildCommand     string
-	mountCommand     string
-	mountStrategy    string
+	Config            container.Config
+	Name              string
+	Definition        interface{}
+	Relationships     map[string][]map[string]interface{}
+	containerHandler  container.Interface
+	configJSON        []byte
+	buildCommand      string
+	mountCommand      string
+	mountStrategy     string
+	postDeployCommand string
 }
 
 // NewContainer creates a new container.
@@ -52,11 +53,12 @@ func (p *Project) NewContainer(d interface{}) Container {
 			WorkingDir:   def.AppDir,
 			EnableOSXNFS: p.Flags.IsOn(EnableOSXNFSMounts),
 		},
-		containerHandler: p.containerHandler,
-		configJSON:       configJSON,
-		buildCommand:     p.GetDefinitionBuildCommand(d),
-		mountCommand:     p.GetDefinitionMountCommand(d),
-		mountStrategy:    p.GetOption(OptionMountStrategy),
+		containerHandler:  p.containerHandler,
+		configJSON:        configJSON,
+		buildCommand:      p.GetDefinitionBuildCommand(d),
+		mountCommand:      p.GetDefinitionMountCommand(d),
+		mountStrategy:     p.GetOption(OptionMountStrategy),
+		postDeployCommand: p.GetDefinitionPostDeployCommand(d),
 	}
 	return o
 }
@@ -230,6 +232,26 @@ func (c Container) Deploy() error {
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", appDeployCmd},
+		os.Stdout,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	done()
+	return nil
+}
+
+// PostDeploy runs the post deploy hooks.
+func (c Container) PostDeploy() error {
+	if c.postDeployCommand == "" {
+		return nil
+	}
+	done := output.Duration(
+		fmt.Sprintf("Running post-deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
+	)
+	if err := c.containerHandler.ContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"bash", "--login", "-c", c.postDeployCommand},
 		os.Stdout,
 	); err != nil {
 		return tracerr.Wrap(err)
