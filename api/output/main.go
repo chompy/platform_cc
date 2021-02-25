@@ -32,6 +32,9 @@ const levelSpacer = "   "
 // Enable is a flag that enables terminal output.
 var Enable = false
 
+// ShowErrorTrace is a flag that enables error tracebacks.
+var ShowErrorTrace = false
+
 // Logging is a flag that enables writting to log file.
 var Logging = false
 
@@ -116,8 +119,17 @@ func Error(err error) {
 	if err == nil {
 		return
 	}
-	fmt.Println(colorError("\n\n== ERROR ==\n" + err.Error() + "\n\n"))
-	tracerr.PrintSourceColor(err)
+	if !ShowErrorTrace {
+		fmt.Println(colorError("\nERROR:\n" + err.Error() + "\n"))
+		os.Exit(1)
+	}
+	fmt.Println(colorError("\n=== ERROR ===\n"))
+	// is tty
+	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
+		tracerr.PrintSourceColor(err)
+		os.Exit(1)
+	}
+	tracerr.PrintSource(err)
 	os.Exit(1)
 }
 

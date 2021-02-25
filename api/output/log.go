@@ -74,7 +74,7 @@ func LogError(err error) {
 	if err == nil {
 		return
 	}
-	writeLogFile("[ERROR] " + err.Error())
+	writeLogFile("[ERROR] " + tracerr.SprintSource(err))
 }
 
 // LogRotate trims the log file.

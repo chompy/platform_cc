@@ -135,6 +135,7 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 
 // handleError handles an error.
 func handleError(err error) {
+	output.ShowErrorTrace = checkFlag(RootCmd, "verbose")
 	output.Error(err)
 }
 

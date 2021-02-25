@@ -28,7 +28,7 @@ import (
 
 // RootCmd is the top level command.
 var RootCmd = &cobra.Command{
-	Use:     "platform_cc",
+	Use:     "platform_cc [-v verbose]",
 	Version: "",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.CommandIntro(cmd.Version)
@@ -49,4 +49,8 @@ func Execute() error {
 	}
 	os.Args = args
 	return RootCmd.Execute()
+}
+
+func init() {
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "show backtrace for errors")
 }
