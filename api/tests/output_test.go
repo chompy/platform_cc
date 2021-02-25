@@ -8,16 +8,13 @@ import (
 
 // TestOutputProgress tests output progress messages.
 func TestOutputProgress(t *testing.T) {
-
 	msgs := []string{
 		"Test A",
 		"Test B",
 		"Test C",
 	}
 	output.Enable = true
-
 	prog := output.Progress(msgs)
-	prog(1, output.ProgressMessageDone)
-	prog(2, output.ProgressMessageError)
-
+	prog(1, output.ProgressMessageDone, nil, nil)
+	prog(2, output.ProgressMessageError, nil, nil)
 }
