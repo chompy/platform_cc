@@ -18,7 +18,9 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package container
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -28,8 +30,17 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
+type imagePullProgress struct {
+	Status string `json:"status"`
+	Detail struct {
+		Current int64 `json:"current"`
+		Total   int64 `json:"total"`
+	} `json:"progressDetail"`
+	ID string `json:"id"`
+}
+
 // imagePullSingle pulls the latest image for the given container.
-func (d Docker) imagePullSingle(c Config) error {
+func (d Docker) imagePullSingle(c Config, progress func(p imagePullProgress)) error {
 	done := output.Duration(
 		fmt.Sprintf("Pull Docker container image for '%s.'", c.GetContainerName()),
 	)
@@ -49,11 +60,18 @@ func (d Docker) imagePullSingle(c Config) error {
 		return tracerr.Wrap(err)
 	}
 	defer r.Close()
-	b := make([]byte, 1024)
 	for {
+		b := make([]byte, 2048)
 		n, _ := r.Read(b)
 		if n == 0 {
 			break
+		}
+		// report on progress
+		if progress != nil {
+			prog := imagePullProgress{}
+			if err := json.Unmarshal(bytes.Trim(b, "\x00"), &prog); err == nil {
+				progress(prog)
+			}
 		}
 	}
 	done()
@@ -88,11 +106,14 @@ func (d Docker) ImagePull(c []Config) error {
 			defer wg.Done()
 			defer func() { output.Enable = outputEnabled }()
 			output.Enable = false
-			if err := d.imagePullSingle(c); err != nil {
-				prog(i, output.ProgressMessageError)
+			imagePullProg := func(p imagePullProgress) {
+				prog(i, output.ProgressMessageWait, &p.Detail.Current, &p.Detail.Total)
+			}
+			if err := d.imagePullSingle(c, imagePullProg); err != nil {
+				prog(i, output.ProgressMessageError, nil, nil)
 				output.LogError(err)
 			}
-			prog(i, output.ProgressMessageDone)
+			prog(i, output.ProgressMessageDone, nil, nil)
 		}(i, c)
 	}
 	wg.Wait()
@@ -159,11 +180,11 @@ func (d Docker) deleteImages(images []types.ImageSummary) error {
 				name,
 				types.ImageRemoveOptions{Force: true},
 			); err != nil {
-				prog(i, output.ProgressMessageError)
+				prog(i, output.ProgressMessageError, nil, nil)
 				output.Warn(err.Error())
 				return
 			}
-			prog(i, output.ProgressMessageDone)
+			prog(i, output.ProgressMessageDone, nil, nil)
 		}(img.ID, i)
 	}
 	wg.Wait()

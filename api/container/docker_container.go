@@ -408,10 +408,10 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			case err := <-c:
 				{
 					if err != nil {
-						prog(i, output.ProgressMessageError)
+						prog(i, output.ProgressMessageError, nil, nil)
 						output.LogError(err)
 					}
-					prog(i, output.ProgressMessageDone)
+					prog(i, output.ProgressMessageDone, nil, nil)
 					return
 				}
 			case <-time.After(time.Second * containerStopTimeout):
@@ -426,11 +426,11 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 						cid,
 						&timeout,
 					); err != nil {
-						prog(i, output.ProgressMessageError)
+						prog(i, output.ProgressMessageError, nil, nil)
 						output.LogError(err)
 						return
 					}
-					prog(i, output.ProgressMessageDone)
+					prog(i, output.ProgressMessageDone, nil, nil)
 					return
 				}
 			}

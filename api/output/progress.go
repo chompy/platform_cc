@@ -90,41 +90,50 @@ func progressPadWidth(msgs []string, index int) int {
 	return padWidth
 }
 
-func progressPrint(msgs []string, states []ProgressMessageState, index int) {
+func progressPrint(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64, index int) {
 	msg := msgs[index]
 	state := states[index]
 	padWidth := progressPadWidth(msgs, index)
+	percentProg := ""
+	if cur[index] != nil && total[index] != nil {
+		if *total[index] > 0 {
+			percectProgNum := (float64(*cur[index]) / float64(*total[index])) * 100.0
+			percentProg = color(fmt.Sprintf(" %1.f%%     ", percectProgNum), 93)
+		}
+	}
 	// print
 	levelMsg(
 		msg + strings.Repeat(progressPadChar, padWidth) +
-			state.String(),
+			state.String() + percentProg,
 	)
 }
 
-func progressPrintAll(msgs []string, states []ProgressMessageState) {
+func progressPrintAll(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64) {
 	if !isTTY() {
 		return
 	}
 	for i := range msgs {
-		progressPrint(msgs, states, i)
+		progressPrint(msgs, states, cur, total, i)
 	}
 }
 
-func progressReprint(msgs []string, states []ProgressMessageState) {
+func progressReprint(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64) {
 	fmt.Printf("\033[%dA", len(msgs))
-	progressPrintAll(msgs, states)
+	progressPrintAll(msgs, states, cur, total)
 }
 
 // Progress prints progress messages with state and returns function that updates progress when called.
-func Progress(msgs []string) func(i int, s ProgressMessageState) {
+func Progress(msgs []string) func(i int, s ProgressMessageState, cur *int64, total *int64) {
 	states := make([]ProgressMessageState, len(msgs))
 	for i := range states {
 		states[i] = ProgressMessageWait
 	}
+	progCur := make([]*int64, len(msgs))
+	progTotal := make([]*int64, len(msgs))
 	startIndent := IndentLevel
-	progressPrintAll(msgs, states)
+	progressPrintAll(msgs, states, progCur, progTotal)
 	wg := sync.Mutex{}
-	return func(i int, s ProgressMessageState) {
+	return func(i int, s ProgressMessageState, cur *int64, total *int64) {
 		wg.Lock()
 		defer wg.Unlock()
 		if i < 0 || i >= len(msgs) {
@@ -133,11 +142,13 @@ func Progress(msgs []string) func(i int, s ProgressMessageState) {
 		currentIndent := IndentLevel
 		IndentLevel = startIndent
 		states[i] = s
+		progCur[i] = cur
+		progTotal[i] = total
 		if !isTTY() {
-			progressPrint(msgs, states, i)
+			progressPrint(msgs, states, progCur, progTotal, i)
 			return
 		}
-		progressReprint(msgs, states)
+		progressReprint(msgs, states, progCur, progTotal)
 		IndentLevel = currentIndent
 	}
 }

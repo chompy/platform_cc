@@ -118,11 +118,11 @@ func (d Docker) deleteVolumes(volList volume.VolumesListOKBody) error {
 				volName,
 				true,
 			); err != nil {
-				prog(i, output.ProgressMessageError)
+				prog(i, output.ProgressMessageError, nil, nil)
 				output.Warn(err.Error())
 				return
 			}
-			prog(i, output.ProgressMessageDone)
+			prog(i, output.ProgressMessageDone, nil, nil)
 		}(vol.Name, i)
 	}
 	wg.Wait()
