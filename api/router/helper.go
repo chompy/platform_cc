@@ -99,12 +99,12 @@ func ListActiveRoutes() ([]def.Route, error) {
 	// get project ids
 	projectIDs, err := ListActiveProjects()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return []def.Route{}, tracerr.Wrap(err)
 	}
 	// itterate project ids and get route data from container
 	ch, err := getContainerHandler()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return []def.Route{}, tracerr.Wrap(err)
 	}
 	containerConf := GetContainerConfig()
 	out := make([]def.Route, 0)
@@ -120,7 +120,7 @@ func ListActiveRoutes() ([]def.Route, error) {
 		}
 		data := make([]activeRouterData, 0)
 		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
-			return nil, tracerr.Wrap(err)
+			return []def.Route{}, nil
 		}
 		for _, ar := range data {
 			for _, route := range ar.Routes {

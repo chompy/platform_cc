@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/crypto/ssh/terminal"
+
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
@@ -138,22 +140,59 @@ func handleError(err error) {
 
 // drawTable draws an ASCII table to stdout.
 func drawTable(head []string, data [][]string) {
+	if len(data) == 0 {
+		println("=== NO DATA ===")
+		return
+	}
+	w, _, _ := terminal.GetSize(int(os.Stdin.Fd()))
+	if w == 0 {
+		w = 256
+	}
+	w -= (len(head) * 4)
 	truncateString := func(size int, value string) string {
 		if len(value) <= size {
 			return value
 		}
 		return value[0:size-3] + "..."
 	}
-	for i := range head {
-		head[i] = truncateString(32, head[i])
+	// calculate column widths
+	oColWidths := make([]int, len(data[0]))
+	for _, v := range data {
+		for i, sv := range v {
+			if len(sv) > oColWidths[i] {
+				oColWidths[i] = len(sv)
+			}
+		}
 	}
+	// calcualte max display width per colume
+	mColWidths := make([]int, len(oColWidths))
+	for i := range mColWidths {
+		mColWidths[i] = w / len(oColWidths)
+	}
+	for i := range mColWidths {
+		ni := i + 1
+		if ni >= len(mColWidths) {
+			ni = 0
+		}
+		if oColWidths[i] < mColWidths[i] {
+			diff := mColWidths[i] - oColWidths[i]
+			mColWidths[i] -= diff
+			mColWidths[ni] += diff
+		}
+	}
+	// truncate head cols
+	for i := range head {
+		head[i] = truncateString(mColWidths[i], head[i])
+	}
+	// truncate data cols
 	for i := range data {
 		for j := range data[i] {
-			data[i][j] = truncateString(127/len(data[i]), data[i][j])
+			data[i][j] = truncateString(mColWidths[j], data[i][j])
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(head)
+	table.SetAutoWrapText(true)
 	table.SetBorder(false)
 	table.AppendBulk(data)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
