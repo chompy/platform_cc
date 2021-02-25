@@ -112,7 +112,7 @@ var projectConfigJSONCmd = &cobra.Command{
 		handleError(err)
 		configJSON, err := proj.BuildConfigJSON(proj.Apps[0])
 		handleError(err)
-		fmt.Println(string(configJSON))
+		println(string(configJSON))
 	},
 }
 
@@ -129,7 +129,7 @@ var projectStatusCmd = &cobra.Command{
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
 			out, err := json.Marshal(status)
 			handleError(err)
-			fmt.Println(string(out))
+			println(string(out))
 			return
 		}
 		// table out
@@ -206,9 +206,13 @@ var projectRoutesCmd = &cobra.Command{
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
-			routesJSON, err := json.MarshalIndent(def.RoutesToMap(proj.Routes), "", "  ")
+			routes := proj.Routes
+			for i, v := range routes {
+				routes[i] = router.RouteReplaceDefault(v, proj)
+			}
+			routesJSON, err := json.MarshalIndent(def.RoutesToMap(routes), "", "  ")
 			handleError(err)
-			fmt.Println(string(routesJSON))
+			println(string(routesJSON))
 			return
 		}
 		// table out

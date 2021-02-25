@@ -19,7 +19,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -80,7 +79,7 @@ var routerListCmd = &cobra.Command{
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
 			routesJSON, err := json.MarshalIndent(def.RoutesToMap(routes), "", "  ")
 			handleError(err)
-			fmt.Println(string(routesJSON))
+			println(string(routesJSON))
 			return
 		}
 		// table out
