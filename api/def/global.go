@@ -38,9 +38,9 @@ const defaultSSHKeyPath = "~/.ssh/pccid"
 
 // GlobalConfig defines global PCC configuration.
 type GlobalConfig struct {
-	Variables map[string]map[string]interface{} `yaml:"variables"`
-	Flags     []string                          `yaml:"flags"`
-	Options   map[string]string                 `yaml:"options"`
+	Variables Variables         `yaml:"variables"`
+	Flags     []string          `yaml:"flags"`
+	Options   map[string]string `yaml:"options"`
 	Router    struct {
 		HTTP  uint16 `yaml:"http"`
 		HTTPS uint16 `yaml:"https"`
@@ -65,20 +65,34 @@ func (d *GlobalConfig) SetDefaults() {
 func (d GlobalConfig) Validate() []error {
 	o := make([]error, 0)
 	if d.Variables["env"] != nil {
-		for k, v := range d.Variables["env"] {
-			switch v.(type) {
-			case string, int, float32, float64, bool:
-				{
-					break
+		switch d.Variables["env"].(type) {
+		case map[string]interface{}:
+			{
+				for k, v := range d.Variables["env"].(map[string]interface{}) {
+					switch v.(type) {
+					case string, int, float32, float64, bool:
+						{
+							break
+						}
+					default:
+						{
+							o = append(o, NewValidateError(
+								"app.variables.env."+k,
+								"should be a scalar",
+							))
+							break
+						}
+					}
 				}
-			default:
-				{
-					o = append(o, NewValidateError(
-						"app.variables.env."+k,
-						"should be a scalar",
-					))
-					break
-				}
+				break
+			}
+		default:
+			{
+				o = append(o, NewValidateError(
+					"app.variables.env",
+					"should be a map",
+				))
+				break
 			}
 		}
 	}
@@ -114,7 +128,7 @@ func (d GlobalConfig) GetSSHKey() string {
 // ParseGlobalYaml parses the contents of a global configuration yaml file.
 func ParseGlobalYaml(d []byte) (*GlobalConfig, error) {
 	o := &GlobalConfig{
-		Variables: make(map[string]map[string]interface{}),
+		Variables: make(Variables),
 	}
 	err := yaml.Unmarshal(d, o)
 	o.SetDefaults()
@@ -124,7 +138,7 @@ func ParseGlobalYaml(d []byte) (*GlobalConfig, error) {
 // ParseGlobalYamlFile itterates list of possible global configuration yaml files and parse first one found.
 func ParseGlobalYamlFile() (*GlobalConfig, error) {
 	o := &GlobalConfig{
-		Variables: make(map[string]map[string]interface{}),
+		Variables: make(Variables),
 	}
 	for _, gcp := range globalConfigPaths {
 		d, err := ioutil.ReadFile(expandPath(gcp))

@@ -149,7 +149,7 @@ func drawTable(head []string, data [][]string) {
 	}
 	for i := range data {
 		for j := range data[i] {
-			data[i][j] = truncateString(256/len(data[i]), data[i][j])
+			data[i][j] = truncateString(127/len(data[i]), data[i][j])
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)

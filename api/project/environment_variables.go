@@ -39,7 +39,7 @@ func (p *Project) GetPlatformApplication(d interface{}) string {
 	disk := 0
 	relationships := map[string]string{}
 	mounts := map[string]*def.AppMount{}
-	variables := map[string]map[string]interface{}{}
+	variables := def.Variables{}
 	name := ""
 	cType := ""
 	runtime := def.AppRuntime{}

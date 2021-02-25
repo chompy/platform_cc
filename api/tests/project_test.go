@@ -51,21 +51,42 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 		t.Errorf("failed to load project, %s", e)
 	}
 	assertEqual(
-		p.Apps[0].Variables["env"]["TEST_ENV"],
+		p.Apps[0].Variables.GetString("env:TEST_ENV"),
 		"no",
 		"unexpected variables.env.TEST_ENV",
 		t,
 	)
 	assertEqual(
-		p.Apps[0].Variables["env"]["TEST_ENV_TWO"],
+		p.Apps[0].Variables.GetString("env:TEST_ENV_TWO"),
 		"hello world",
 		"unexpected variables.env.TEST_ENV_TWO",
 		t,
 	)
 	assertEqual(
-		p.Apps[0].Variables["env"]["TEST_THREE"],
+		p.Apps[0].Variables.GetString("env:TEST_THREE"),
 		"test123",
 		"unexpected variables.env.TEST_THREE",
+		t,
+	)
+	subMap := p.Apps[0].Variables.GetStringSubMap("env")
+	assertEqual(
+		subMap["TEST_ENV"],
+		"no",
+		"unexpected variables.env.TEST_ENV (sub map)",
+		t,
+	)
+	p.Variables.Set("php:memory_limit", "1024M")
+	assertEqual(
+		p.Variables.Get("php:memory_limit"),
+		"1024M",
+		"unexpected variables.env.TEST_ENV (sub map)",
+		t,
+	)
+	p.Variables.Delete("php:memory_limit")
+	assertEqual(
+		p.Variables.Get("php:memory_limit"),
+		nil,
+		"unexpected variables.env.TEST_ENV (sub map)",
 		t,
 	)
 	assertEqual(
@@ -123,7 +144,7 @@ func TestConfigJSON(t *testing.T) {
 
 func TestVariables(t *testing.T) {
 	p := project.Project{
-		Variables: make(map[string]map[string]string),
+		Variables: make(def.Variables),
 	}
 	env := "dev"
 	timeLimit := "30"

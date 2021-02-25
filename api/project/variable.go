@@ -19,7 +19,6 @@ package project
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -31,15 +30,7 @@ func (p *Project) VarSet(key string, value string) error {
 		fmt.Sprintf("Set var '%s.'", key),
 	)
 	output.LogDebug(fmt.Sprintf("Set var '%s.'", key), value)
-	keySplit := strings.Split(key, ":")
-	if len(keySplit) != 2 {
-		return tracerr.Wrap(fmt.Errorf("invalid variable key"))
-	}
-	if p.Variables[keySplit[0]] == nil {
-		p.Variables[keySplit[0]] = make(map[string]string)
-	}
-	p.Variables[keySplit[0]][keySplit[1]] = value
-	return nil
+	return tracerr.Wrap(p.Variables.Set(key, value))
 }
 
 // VarGet retrieves a project variable.
@@ -47,14 +38,7 @@ func (p *Project) VarGet(key string) (string, error) {
 	output.Info(
 		fmt.Sprintf("Get var '%s.'", key),
 	)
-	keySplit := strings.Split(key, ":")
-	if len(keySplit) != 2 {
-		return "", tracerr.Wrap(fmt.Errorf("invalid variable key"))
-	}
-	if p.Variables[keySplit[0]] == nil {
-		return "", nil
-	}
-	out := p.Variables[keySplit[0]][keySplit[1]]
+	out := p.Variables.GetString(key)
 	output.LogDebug(fmt.Sprintf("Get var '%s.'", key), out)
 	return out, nil
 }
@@ -64,13 +48,6 @@ func (p *Project) VarDelete(key string) error {
 	output.Info(
 		fmt.Sprintf("Delete var '%s.'", key),
 	)
-	keySplit := strings.Split(key, ":")
-	if len(keySplit) != 2 {
-		return tracerr.Wrap(fmt.Errorf("invalid variable key"))
-	}
-	if p.Variables[keySplit[0]] == nil {
-		return nil
-	}
-	delete(p.Variables[keySplit[0]], keySplit[1])
+	p.Variables.Delete(key)
 	return nil
 }

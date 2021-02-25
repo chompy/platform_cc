@@ -19,17 +19,17 @@ package def
 
 // AppWorker defines a worker.
 type AppWorker struct {
-	Name          string                            `json:"-"`
-	Path          string                            `json:"-"`
-	Type          string                            `json:"-"`
-	Runtime       AppRuntime                        `json:"-"`
-	Dependencies  AppDependencies                   `json:"-"`
-	Size          string                            `yaml:"size" json:"size"`
-	Disk          int                               `yaml:"disk" json:"disk"`
-	Mounts        map[string]*AppMount              `yaml:"mounts" json:"mounts"`
-	Relationships map[string]string                 `yaml:"relationships" json:"relationship"`
-	Variables     map[string]map[string]interface{} `yaml:"variables" json:"variables"`
-	Commands      AppWorkersCommands                `yaml:"commands" json:"commands"`
+	Name          string               `json:"-"`
+	Path          string               `json:"-"`
+	Type          string               `json:"-"`
+	Runtime       AppRuntime           `json:"-"`
+	Dependencies  AppDependencies      `json:"-"`
+	Size          string               `yaml:"size" json:"size"`
+	Disk          int                  `yaml:"disk" json:"disk"`
+	Mounts        map[string]*AppMount `yaml:"mounts" json:"mounts"`
+	Relationships map[string]string    `yaml:"relationships" json:"relationship"`
+	Variables     Variables            `yaml:"variables" json:"variables"`
+	Commands      AppWorkersCommands   `yaml:"commands" json:"commands"`
 }
 
 // SetDefaults sets the default values.

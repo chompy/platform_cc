@@ -33,20 +33,20 @@ const AppDir = "/app"
 // App defines an application.
 type App struct {
 	Path          string
-	Name          string                            `yaml:"name"`
-	Type          string                            `yaml:"type"`
-	Size          string                            `yaml:"size"`
-	Disk          int                               `yaml:"disk"`
-	Build         AppBuild                          `yaml:"build" json:"build"`
-	Variables     map[string]map[string]interface{} `yaml:"variables"`
-	Relationships map[string]string                 `yaml:"relationships"`
-	Web           AppWeb                            `yaml:"web"`
-	Mounts        map[string]*AppMount              `yaml:"mounts" json:"mounts"`
-	Hooks         AppHooks                          `yaml:"hooks" json:"hooks"`
-	Crons         map[string]*AppCron               `yaml:"crons" json:"crons"`
-	Dependencies  AppDependencies                   `yaml:"dependencies"`
-	Runtime       AppRuntime                        `yaml:"runtime"`
-	Workers       map[string]*AppWorker             `yaml:"workers" json:"workers"`
+	Name          string                `yaml:"name"`
+	Type          string                `yaml:"type"`
+	Size          string                `yaml:"size"`
+	Disk          int                   `yaml:"disk"`
+	Build         AppBuild              `yaml:"build" json:"build"`
+	Variables     Variables             `yaml:"variables"`
+	Relationships map[string]string     `yaml:"relationships"`
+	Web           AppWeb                `yaml:"web"`
+	Mounts        map[string]*AppMount  `yaml:"mounts" json:"mounts"`
+	Hooks         AppHooks              `yaml:"hooks" json:"hooks"`
+	Crons         map[string]*AppCron   `yaml:"crons" json:"crons"`
+	Dependencies  AppDependencies       `yaml:"dependencies"`
+	Runtime       AppRuntime            `yaml:"runtime"`
+	Workers       map[string]*AppWorker `yaml:"workers" json:"workers"`
 }
 
 // SetDefaults sets the default values.
@@ -117,20 +117,23 @@ func (d App) Validate() []error {
 	if e := d.Runtime.Validate(&d); len(e) > 0 {
 		o = append(o, e...)
 	}
-	if d.Variables["env"] != nil {
-		for k, v := range d.Variables["env"] {
-			switch v.(type) {
-			case string, int, float32, float64, bool:
-				{
-					break
-				}
-			default:
-				{
-					o = append(o, NewValidateError(
-						"app.variables.env."+k,
-						"should be a scalar",
-					))
-					break
+	for _, key := range []string{"env", "php"} {
+		val := d.Variables.GetSubMap(key)
+		if val != nil {
+			for sk, sv := range val {
+				switch sv.(type) {
+				case string, int, float32, float64, bool:
+					{
+						break
+					}
+				default:
+					{
+						o = append(o, NewValidateError(
+							fmt.Sprintf("app.variables.%s.%s", key, sk),
+							"should be a scalar",
+						))
+						break
+					}
 				}
 			}
 		}
@@ -168,7 +171,7 @@ func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 		Mounts:        make(map[string]*AppMount),
 		Workers:       make(map[string]*AppWorker),
 		Relationships: make(map[string]string),
-		Variables:     make(map[string]map[string]interface{}),
+		Variables:     make(Variables),
 	}
 	if err := mergeYamls(d, o); err != nil {
 		return &App{}, tracerr.Wrap(err)
@@ -185,9 +188,7 @@ func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 	// merge global variables
 	if global != nil {
 		output.LogDebug(fmt.Sprintf("Merge app '%s' variables with global variables.", o.Name), nil)
-		for k := range o.Variables {
-			mergeMaps(o.Variables[k], global.Variables[k])
-		}
+		o.Variables.Merge(global.Variables)
 	}
 	return o, nil
 }

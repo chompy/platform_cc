@@ -19,7 +19,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -63,7 +62,7 @@ var varGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(out)
+		println(out)
 		return nil
 	},
 }
@@ -92,46 +91,25 @@ var varListCmd = &cobra.Command{
 		output.Enable = false
 		proj, err := getProject(false)
 		handleError(err)
-
 		// global config
 		gc, err := def.ParseGlobalYamlFile()
 		handleError(err)
-
-		varList := make(map[string]map[string]string)
-
-		for k, v := range gc.Variables {
-			varList[k] = make(map[string]string)
-			for kk, vv := range v {
-				switch vv.(type) {
-				case string:
-					{
-						varList[k][kk] = vv.(string)
-						break
-					}
-				}
-			}
-		}
-
-		for k, v := range proj.Variables {
-			varList[k] = v
-		}
-
+		// build var list
+		varList := make(def.Variables)
+		varList.Merge(gc.Variables)
+		varList.Merge(proj.Variables)
 		// json out
 		jsonFlag := cmd.Flags().Lookup("json")
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
-			out, err := json.MarshalIndent(proj.Variables, "", "  ")
+			out, err := json.MarshalIndent(varList, "", "  ")
 			handleError(err)
-			fmt.Println(string(out))
+			println(string(out))
+			return
 		}
 		// table out
 		data := make([][]string, 0)
-		for key, vari := range proj.Variables {
-			for subKey, subVar := range vari {
-				data = append(data, []string{
-					fmt.Sprintf("%s.%s", key, subKey),
-					subVar,
-				})
-			}
+		for _, k := range varList.Keys() {
+			data = append(data, []string{k, varList.GetString(k)})
 		}
 		drawTable(
 			[]string{"Key", "Value"},

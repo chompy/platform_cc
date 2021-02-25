@@ -158,7 +158,7 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 	// get base environment vars
 	envVars := p.GetPlatformEnvironmentVariables(d)
 	// get variables
-	var vars map[string]map[string]interface{}
+	var vars def.Variables
 	switch d.(type) {
 	case def.App:
 		{
@@ -172,79 +172,31 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 		}
 	}
 	// append environment variables from .platform.app.yaml
-	for k, v := range vars["env"] {
-		switch v.(type) {
-		case int:
-			{
-				envVars[k] = fmt.Sprintf("%d", v.(int))
-				break
-			}
-		case float32:
-			{
-				envVars[k] = fmt.Sprintf("%f", v.(float32))
-				break
-			}
-		case float64:
-			{
-				envVars[k] = fmt.Sprintf("%f", v.(float64))
-				break
-			}
-		case bool:
-			{
-				envVars[k] = ""
-				if v.(bool) {
-					envVars[k] = "true"
-				}
-			}
-		case string:
-			{
-				envVars[k] = v.(string)
-				break
-			}
-		}
+	for k, v := range vars.GetStringSubMap("env") {
+		envVars[k] = v
 	}
 	// append environment variables from project (var:set command)
-	for k, v := range p.Variables["env"] {
+	for k, v := range p.Variables.GetStringSubMap("env") {
 		envVars[k] = v
 	}
 	return envVars
 }
 
-// GetDefinitionVariables returns variables for given definition.
+// GetDefinitionVariables returns flattened variables for given definition.
 func (p *Project) GetDefinitionVariables(d interface{}) map[string]interface{} {
-	out := make(map[string]interface{})
-	var vars map[string]map[string]interface{}
+	out := make(def.Variables)
+	out.Merge(p.globalConfig.Variables)
+	out.Merge(p.Variables)
 	switch d.(type) {
 	case def.App:
 		{
-			vars = d.(def.App).Variables
+			out.Merge(d.(def.App).Variables)
 			break
 		}
 	case def.AppWorker:
 		{
-			vars = d.(def.AppWorker).Variables
+			out.Merge(d.(def.AppWorker).Variables)
 			break
-		}
-	}
-	for varType, varVal := range vars {
-		for k, v := range varVal {
-			switch v.(type) {
-			case int:
-				{
-					out[fmt.Sprintf("%s:%s", strings.ToLower(varType), k)] = fmt.Sprintf("%d", v.(int))
-					break
-				}
-			case string:
-				{
-					out[fmt.Sprintf("%s:%s", strings.ToLower(varType), k)] = v.(string)
-					break
-				}
-			}
-		}
-	}
-	for varType, varVal := range p.Variables {
-		for k, v := range varVal {
-			out[fmt.Sprintf("%s:%s", strings.ToLower(varType), k)] = v
 		}
 	}
 	return out

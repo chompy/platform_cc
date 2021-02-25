@@ -46,14 +46,14 @@ const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // Project defines a platform.sh/cc project.
 type Project struct {
-	ID               string                       `json:"id"`
-	Path             string                       `json:"-"`
-	Apps             []def.App                    `json:"-"`
-	Routes           []def.Route                  `json:"-"`
-	Services         []def.Service                `json:"-"`
-	Variables        map[string]map[string]string `json:"vars"`
-	Flags            Flags                        `json:"flags"`   // local project flags
-	Options          map[Option]string            `json:"options"` // local project options
+	ID               string            `json:"id"`
+	Path             string            `json:"-"`
+	Apps             []def.App         `json:"-"`
+	Routes           []def.Route       `json:"-"`
+	Services         []def.Service     `json:"-"`
+	Variables        def.Variables     `json:"vars"`
+	Flags            Flags             `json:"flags"`   // local project flags
+	Options          map[Option]string `json:"options"` // local project options
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	globalConfig     *def.GlobalConfig
@@ -83,7 +83,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	o := &Project{
 		ID:               "",
 		Path:             path,
-		Variables:        make(map[string]map[string]string),
+		Variables:        make(map[string]interface{}),
 		Options:          make(map[Option]string),
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
@@ -428,23 +428,11 @@ func (p *Project) setAppFlags() {
 		// disable opcache if flag not present
 		if !p.HasFlag(EnablePHPOpcache) {
 			output.LogDebug("Disable opcache.", nil)
-			if p.Apps[i].Variables == nil {
-				p.Apps[i].Variables = make(map[string]map[string]interface{})
-			}
-			if p.Apps[i].Variables["php"] == nil {
-				p.Apps[i].Variables["php"] = make(map[string]interface{})
-			}
-			p.Apps[i].Variables["php"]["enable.opcache"] = "off"
-			p.Apps[i].Variables["php"]["opcache.enable"] = "off"
+			p.Apps[i].Variables.Set("php:enable.opcache", "off")
+			p.Apps[i].Variables.Set("php:opcache.enable", "off")
 			for j := range p.Apps[i].Workers {
-				if p.Apps[i].Workers[j].Variables == nil {
-					p.Apps[i].Workers[j].Variables = make(map[string]map[string]interface{})
-				}
-				if p.Apps[i].Workers[j].Variables["php"] == nil {
-					p.Apps[i].Workers[j].Variables["php"] = make(map[string]interface{})
-				}
-				p.Apps[i].Workers[j].Variables["php"]["enable.opcache"] = "off"
-				p.Apps[i].Workers[j].Variables["php"]["opcache.enable"] = "off"
+				p.Apps[i].Workers[j].Variables.Set("php:enable.opcache", "off")
+				p.Apps[i].Workers[j].Variables.Set("php:opcache.enable", "off")
 			}
 		}
 	}
