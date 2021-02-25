@@ -32,8 +32,8 @@ const levelSpacer = "   "
 // Enable is a flag that enables terminal output.
 var Enable = false
 
-// ShowErrorTrace is a flag that enables error tracebacks.
-var ShowErrorTrace = false
+// Verbose is a flag that enables more verbose output.
+var Verbose = false
 
 // Logging is a flag that enables writting to log file.
 var Logging = false
@@ -119,7 +119,7 @@ func Error(err error) {
 	if err == nil {
 		return
 	}
-	if !ShowErrorTrace {
+	if !Verbose {
 		fmt.Println(colorError("\nERROR:\n" + err.Error() + "\n"))
 		os.Exit(1)
 	}

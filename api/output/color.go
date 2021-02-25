@@ -25,6 +25,7 @@ const termColorSuccess = 32
 const termColorError = 31
 const termColorProgress = 34
 const termColorWarn = 33
+const termColorDebug = 35
 
 func color(msg string, color int) string {
 	if !isTTY() {

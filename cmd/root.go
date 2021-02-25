@@ -52,5 +52,5 @@ func Execute() error {
 }
 
 func init() {
-	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "show backtrace for errors")
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "show more verbose output")
 }

@@ -57,6 +57,9 @@ func LogDebug(msg string, data interface{}) {
 		logMsg += " " + string(dataJSON)
 	}
 	writeLogFile(logMsg)
+	if Verbose {
+		os.Stderr.Write([]byte(color(">> "+logMsg+"\n", termColorDebug)))
+	}
 }
 
 // LogInfo writes info to log file.
