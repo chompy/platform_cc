@@ -86,10 +86,10 @@ func (d App) Validate() []error {
 	); err != nil {
 		o = append(o, err)
 	}
-	if d.Disk < 256 {
+	if d.Disk < 128 {
 		o = append(o, NewValidateError(
 			"app.disk",
-			"should be 256 or higher",
+			"should be 128 or higher",
 		))
 	}
 	if e := d.Build.Validate(&d); len(e) > 0 {
