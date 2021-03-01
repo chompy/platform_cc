@@ -6,9 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"gitlab.com/contextualcode/platform_cc/api/container"
 
@@ -306,25 +307,43 @@ func (c Container) Log() error {
 // LogStdout dumps container log to stdout.
 func (c Container) LogStdout(follow bool) error {
 	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
-	go func() {
-		out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName(), follow)
-		if err != nil {
-			output.LogError(err)
-			return
+	// get log stream
+	out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName(), follow)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	defer out.Close()
+	var buf bytes.Buffer
+	// inline func, scan lines in buffer and output to stdout
+	scanLines := func() error {
+		scanner := bufio.NewScanner(&buf)
+		for scanner.Scan() {
+			output.ContainerLog(c.Config.GetContainerName(), scanner.Text())
 		}
-		scanner := bufio.NewScanner(out)
-		log.SetOutput(os.Stdout)
-		defer out.Close()
-		for {
-			for scanner.Scan() {
-				log.Printf("[%s] %s", c.Config.GetContainerName(), scanner.Text())
-			}
-			if err := scanner.Err(); err != nil {
-				log.Println(err)
-			}
+		if err := scanner.Err(); err != nil {
+			return tracerr.Wrap(err)
 		}
-	}()
-	return nil
+		return nil
+	}
+	// follow logs
+	if follow {
+		go func() {
+			for {
+				err := scanLines()
+				if err != nil {
+					output.LogError(err)
+					return
+				}
+				buf.Reset()
+			}
+		}()
+	}
+	// copy to buf
+	_, err = stdcopy.StdCopy(&buf, &buf, out)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	return tracerr.Wrap(scanLines())
 }
 
 // Commit commits the container.

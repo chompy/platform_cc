@@ -195,10 +195,18 @@ var projectLogsCmd = &cobra.Command{
 		followFlag := cmd.Flags().Lookup("follow")
 		hasFollow := followFlag != nil && followFlag.Value.String() != "false"
 		for _, app := range proj.Apps {
-			handleError(proj.NewContainer(app).LogStdout(hasFollow))
+			if hasFollow {
+				go proj.NewContainer(app).LogStdout(hasFollow)
+			} else {
+				handleError(proj.NewContainer(app).LogStdout(hasFollow))
+			}
 		}
 		for _, service := range proj.Services {
-			handleError(proj.NewContainer(service).LogStdout(hasFollow))
+			if hasFollow {
+				go proj.NewContainer(service).LogStdout(hasFollow)
+			} else {
+				handleError(proj.NewContainer(service).LogStdout(hasFollow))
+			}
 		}
 		if hasFollow {
 			select {}

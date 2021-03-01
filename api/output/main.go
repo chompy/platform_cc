@@ -140,3 +140,13 @@ func ErrorText(msg string) {
 	}
 	levelMsg(colorError(msg))
 }
+
+// ContainerLog prints container log line to stdout.
+func ContainerLog(name string, msg string) {
+	// is tty
+	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
+		os.Stdout.Write([]byte(colorSuccess(fmt.Sprintf("[%s] ", name)) + msg + "\n"))
+		return
+	}
+	os.Stdout.Write([]byte(fmt.Sprintf("[%s] ", name) + msg + "\n"))
+}
