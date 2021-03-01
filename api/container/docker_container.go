@@ -118,7 +118,7 @@ func (d Docker) ContainerStart(c Config) error {
 		ExposedPorts: exposedPorts,
 	}
 	cHostConfig := &container.HostConfig{
-		AutoRemove:   true,
+		AutoRemove:   false,
 		Privileged:   true,
 		Mounts:       mounts,
 		PortBindings: portBinding,
@@ -362,6 +362,7 @@ func (d Docker) listProjectContainers(pid string) ([]types.Container, error) {
 		context.Background(),
 		types.ContainerListOptions{
 			Filters: filterArgs,
+			All:     true,
 		},
 	)
 }
@@ -375,6 +376,7 @@ func (d Docker) listAllContainers() ([]types.Container, error) {
 		context.Background(),
 		types.ContainerListOptions{
 			Filters: filterArgs,
+			All:     true,
 		},
 	)
 }
@@ -407,12 +409,12 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			select {
 			case err := <-c:
 				{
-					if err != nil {
+					if err != nil && !strings.Contains(err.Error(), "not running") {
 						prog(i, output.ProgressMessageError, nil, nil)
 						output.LogError(err)
+						return
 					}
-					prog(i, output.ProgressMessageDone, nil, nil)
-					return
+					break
 				}
 			case <-time.After(time.Second * containerStopTimeout):
 				{
@@ -425,15 +427,27 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 						context.Background(),
 						cid,
 						&timeout,
-					); err != nil {
+					); err != nil && !strings.Contains(err.Error(), "not running") {
 						prog(i, output.ProgressMessageError, nil, nil)
 						output.LogError(err)
 						return
 					}
-					prog(i, output.ProgressMessageDone, nil, nil)
-					return
+					break
 				}
 			}
+			// remove container
+			if err := d.client.ContainerRemove(
+				context.Background(),
+				cid,
+				types.ContainerRemoveOptions{
+					Force: true,
+				},
+			); err != nil {
+				prog(i, output.ProgressMessageError, nil, nil)
+				output.LogError(err)
+				return
+			}
+			prog(i, output.ProgressMessageDone, nil, nil)
 		}(containers[i].ID, i)
 	}
 	wg.Wait()

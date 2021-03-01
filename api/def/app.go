@@ -184,6 +184,8 @@ func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 		w.Type = o.Type
 		w.Runtime = o.Runtime
 		w.Dependencies = o.Dependencies
+		w.Variables = make(Variables)
+		mergeMaps(w.Variables, o.Variables)
 	}
 	// merge global variables
 	if global != nil {
