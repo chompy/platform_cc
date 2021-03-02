@@ -154,10 +154,18 @@ func drawTable(head []string, data [][]string) {
 		if len(value) <= size {
 			return value
 		}
+		if size <= 4 {
+			return string(value[0]) + "..."
+		}
 		return value[0:size-3] + "..."
 	}
 	// calculate column widths
 	oColWidths := make([]int, len(data[0]))
+	for i, sv := range head {
+		if len(sv) > oColWidths[i] {
+			oColWidths[i] = len(sv)
+		}
+	}
 	for _, v := range data {
 		for i, sv := range v {
 			if len(sv) > oColWidths[i] {
@@ -165,7 +173,7 @@ func drawTable(head []string, data [][]string) {
 			}
 		}
 	}
-	// calcualte max display width per colume
+	// calculate max display width per colume
 	mColWidths := make([]int, len(oColWidths))
 	for i := range mColWidths {
 		mColWidths[i] = w / len(oColWidths)
@@ -203,7 +211,6 @@ func drawTable(head []string, data [][]string) {
 }
 
 func drawKeys() {
-
 	output.WriteStdout("[a] = application\t\t[s] = service\n")
 	output.WriteStdout("[w] = worker\t\t\t[r] = router\n")
 	output.WriteStdout("[c] = committed\n")

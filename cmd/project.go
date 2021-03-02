@@ -20,7 +20,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -171,7 +170,6 @@ var projectStatusCmd = &cobra.Command{
 				ipAddrStr,
 			})
 		}
-		log.Println(data)
 		output.WriteStdout("\n")
 		output.WriteStdout(fmt.Sprintf("ID\t\t%s\n", proj.ID))
 		output.WriteStdout(fmt.Sprintf("SLOT\t\t%s\n", slot))
