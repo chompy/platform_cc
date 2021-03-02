@@ -27,6 +27,7 @@ type Status struct {
 	ProjectID  string              `json:"project_id"`
 	Committed  bool                `json:"committed"`
 	Running    bool                `json:"running"`
+	State      string              `json:"state"`
 	IPAddress  string              `json:"ip_address"`
 	Slot       int                 `json:"slot"`
 }

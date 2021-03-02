@@ -95,6 +95,7 @@ func (d Docker) AllStatus() ([]Status, error) {
 			Committed:  d.hasCommit(c.Names[0]),
 			ProjectID:  config.ProjectID,
 			Running:    c.State == "running",
+			State:      c.State,
 			IPAddress:  ipAddress,
 			Slot:       slot,
 		}

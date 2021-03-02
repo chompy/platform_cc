@@ -99,12 +99,13 @@ var allStatusCmd = &cobra.Command{
 				s.ProjectID,
 				fmt.Sprintf("[%s] %s", string(s.ObjectType), s.Name),
 				serviceType,
+				s.State,
 				slot,
 				ipAddrStr,
 			})
 		}
 		drawTable(
-			[]string{"Project ID", "Name", "Type", "Slot", "IP Address"},
+			[]string{"Project ID", "Name", "Type", "State", "Slot", "IP Address"},
 			data,
 		)
 		drawKeys()

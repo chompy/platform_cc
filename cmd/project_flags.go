@@ -47,7 +47,6 @@ var projectFlagListCmd = &cobra.Command{
 			sortKeys = append(sortKeys, k)
 		}
 		sort.Strings(sortKeys)
-
 		// json out
 		if checkFlag(cmd, "json") {
 			data := make(map[string]map[string]interface{})

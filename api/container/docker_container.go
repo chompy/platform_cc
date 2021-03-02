@@ -208,7 +208,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		id,
 	)
 	if err != nil {
-		return Status{Running: false, Slot: 0}, tracerr.Wrap(err)
+		return Status{Running: false, Slot: 0, State: "stopped"}, tracerr.Wrap(err)
 	}
 	ipAddress := ""
 	for name, network := range data.NetworkSettings.Networks {
@@ -234,6 +234,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		Committed:  d.hasCommit(data.Name),
 		ProjectID:  config.ProjectID,
 		Running:    data.State.Running,
+		State:      data.State.Status,
 		IPAddress:  ipAddress,
 		Slot:       slot,
 	}, nil

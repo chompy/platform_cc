@@ -20,6 +20,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -148,10 +149,8 @@ var projectStatusCmd = &cobra.Command{
 		slot := "n/a"
 		activeCount := 0
 		for _, s := range status {
-			runningStr := "stopped"
 			ipAddrStr := "n/a"
 			if s.Running {
-				runningStr = "running"
 				activeCount++
 			}
 			if s.IPAddress != "" {
@@ -168,10 +167,11 @@ var projectStatusCmd = &cobra.Command{
 			data = append(data, []string{
 				fmt.Sprintf("[%s] %s", string(s.ObjectType), s.Name),
 				serviceType,
-				runningStr,
+				s.State,
 				ipAddrStr,
 			})
 		}
+		log.Println(data)
 		output.WriteStdout("\n")
 		output.WriteStdout(fmt.Sprintf("ID\t\t%s\n", proj.ID))
 		output.WriteStdout(fmt.Sprintf("SLOT\t\t%s\n", slot))
