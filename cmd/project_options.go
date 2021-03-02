@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"gitlab.com/contextualcode/platform_cc/api/project"
 
 	"github.com/spf13/cobra"
@@ -40,8 +42,7 @@ var projectOptionListCmd = &cobra.Command{
 		handleError(err)
 		descs := project.ListOptionDescription()
 		// json out
-		jsonFlag := cmd.Flags().Lookup("json")
-		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+		if checkFlag(cmd, "json") {
 			data := make(map[string]map[string]interface{})
 			for opt, desc := range descs {
 				data[string(opt)] = map[string]interface{}{
@@ -56,7 +57,7 @@ var projectOptionListCmd = &cobra.Command{
 				"  ",
 			)
 			handleError(err)
-			fmt.Println(string(out))
+			output.WriteStdout(string(out) + "\n")
 			return
 		}
 		// table out

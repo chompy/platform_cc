@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"time"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/router"
@@ -46,7 +48,7 @@ var allPurgeCmd = &cobra.Command{
 	Use:   "purge",
 	Short: "Purge all Platform.CC data.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("!!! WARNING: PURGING ALL PLATFORM.CC DATA IN 5 SECONDS !!!")
+		output.WriteStderr("!!! WARNING: PURGING ALL PLATFORM.CC DATA IN 5 SECONDS !!!\n")
 		time.Sleep(5 * time.Second)
 		containerHandler, err := getContainerHandler()
 		handleError(err)
@@ -65,11 +67,10 @@ var allStatusCmd = &cobra.Command{
 		stats, err := containerHandler.AllStatus()
 		handleError(err)
 		// json out
-		jsonFlag := cmd.Flags().Lookup("json")
-		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+		if checkFlag(cmd, "json") {
 			out, err := json.Marshal(stats)
 			handleError(err)
-			fmt.Println(string(out))
+			output.WriteStdout(string(out) + "\n")
 			return
 		}
 		// table out
@@ -107,7 +108,7 @@ var allStatusCmd = &cobra.Command{
 			data,
 		)
 		drawKeys()
-		println("")
+		output.WriteStdout("\n")
 	},
 }
 

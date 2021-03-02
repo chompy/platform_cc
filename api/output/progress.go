@@ -98,7 +98,7 @@ func progressPrint(msgs []string, states []ProgressMessageState, cur []*int64, t
 	if cur[index] != nil && total[index] != nil {
 		if *total[index] > 0 {
 			percectProgNum := (float64(*cur[index]) / float64(*total[index])) * 100.0
-			percentProg = color(fmt.Sprintf(" %1.f%%     ", percectProgNum), 93)
+			percentProg = Color(fmt.Sprintf(" %1.f%%     ", percectProgNum), 93)
 		}
 	}
 	// print
@@ -109,7 +109,7 @@ func progressPrint(msgs []string, states []ProgressMessageState, cur []*int64, t
 }
 
 func progressPrintAll(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64) {
-	if !isTTY() {
+	if !IsTTY() {
 		return
 	}
 	for i := range msgs {
@@ -118,7 +118,8 @@ func progressPrintAll(msgs []string, states []ProgressMessageState, cur []*int64
 }
 
 func progressReprint(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64) {
-	fmt.Printf("\033[%dA", len(msgs))
+
+	WriteStdout(fmt.Sprintf("\033[%dA", len(msgs)))
 	progressPrintAll(msgs, states, cur, total)
 }
 
@@ -144,7 +145,7 @@ func Progress(msgs []string) func(i int, s ProgressMessageState, cur *int64, tot
 		states[i] = s
 		progCur[i] = cur
 		progTotal[i] = total
-		if !isTTY() {
+		if !IsTTY() {
 			progressPrint(msgs, states, progCur, progTotal, i)
 			return
 		}

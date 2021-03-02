@@ -18,8 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -30,7 +28,7 @@ var ListCmd = &cobra.Command{
 	Version: "",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.CommandIntro(RootCmd.Version)
-		fmt.Println("\nAvailable Commands:")
+		output.WriteStdout("\nAvailable Commands:\n")
 		output.CommandList(RootCmd)
 	},
 }

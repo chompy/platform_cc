@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"time"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +46,7 @@ var projectSlotDelete = &cobra.Command{
 		handleError(err)
 		proj.SetSlot(slot)
 		if slot <= 1 {
-			fmt.Println("!!! WARNING: DELETING ALL DATA IN SLOT 1 IN 5 SECONDS !!!")
+			output.WriteStderr("!!! WARNING: DELETING ALL DATA IN SLOT 1 IN 5 SECONDS !!!\n")
 			time.Sleep(time.Second * 5)
 		}
 		handleError(proj.PurgeSlot())

@@ -18,7 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package output
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,10 +25,10 @@ import (
 
 // CommandIntro displays introduction information about Platform.CC
 func CommandIntro(version string) {
-	fmt.Println(colorSuccess(strings.Repeat("=", 32)))
-	fmt.Println(" PLATFORM.CC BY CONTEXTUAL CODE ")
-	fmt.Println(colorSuccess(strings.Repeat("=", 32)))
-	fmt.Println(color(" VERSION "+version, 35))
+	WriteStdout(colorSuccess(strings.Repeat("=", 32)) + "\n")
+	WriteStdout(" PLATFORM.CC BY CONTEXTUAL CODE \n")
+	WriteStdout(colorSuccess(strings.Repeat("=", 32)) + "\n")
+	WriteStdout(Color(" VERSION "+version, 35) + "\n")
 }
 
 // CommandList displays recursive list of available commands.
@@ -43,20 +42,20 @@ func CommandList(cmd *cobra.Command) {
 			return
 		}
 		name := "  " + prefix
-		fmt.Println(colorSuccess(name) + strings.Repeat(" ", 42-len(name)) + cmd.Short)
+		WriteStdout(colorSuccess(name) + strings.Repeat(" ", 42-len(name)) + cmd.Short + "\n")
 	}
 	for _, scmd := range cmd.Commands() {
 		if !scmd.HasSubCommands() {
-			fmt.Println(colorSuccess("  " + scmd.Name()))
+			WriteStdout(colorSuccess("  "+scmd.Name()) + "\n")
 		}
 	}
 	for _, scmd := range cmd.Commands() {
 		if scmd.HasSubCommands() {
-			fmt.Print(color(scmd.Name(), 94))
+			WriteStdout(Color(scmd.Name(), 94))
 			if len(scmd.Aliases) > 0 {
-				fmt.Print(color(" ["+strings.Join(scmd.Aliases, ",")+"]", 35))
+				WriteStdout(Color(" ["+strings.Join(scmd.Aliases, ",")+"]", 35))
 			}
-			fmt.Print("\n")
+			WriteStdout("\n")
 			ittListCmd(scmd, scmd.Name())
 		}
 	}

@@ -123,7 +123,7 @@ var projectConfigJSONCmd = &cobra.Command{
 		handleError(err)
 		configJSON, err := proj.BuildConfigJSON(proj.Apps[0])
 		handleError(err)
-		println(string(configJSON))
+		output.WriteStdout(string(configJSON) + "\n")
 	},
 }
 
@@ -140,7 +140,7 @@ var projectStatusCmd = &cobra.Command{
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
 			out, err := json.Marshal(status)
 			handleError(err)
-			println(string(out))
+			output.WriteStdout(string(out) + "\n")
 			return
 		}
 		// table out
@@ -172,16 +172,16 @@ var projectStatusCmd = &cobra.Command{
 				ipAddrStr,
 			})
 		}
-		println("")
-		println("ID\t\t", proj.ID)
-		println("SLOT\t\t", slot)
-		println("ACTIVE\t\t", fmt.Sprintf("%d/%d", activeCount, len(status)))
+		output.WriteStdout("\n")
+		output.WriteStdout(fmt.Sprintf("ID\t\t%s\n", proj.ID))
+		output.WriteStdout(fmt.Sprintf("SLOT\t\t%s\n", slot))
+		output.WriteStdout(fmt.Sprintf("ACTIVE\t\t%d/%d\n", activeCount, len(status)))
 		drawTable(
 			[]string{"Name", "Type", "Status", "IP Address"},
 			data,
 		)
 		drawKeys()
-		println("")
+		output.WriteStdout("\n")
 	},
 }
 
@@ -231,7 +231,7 @@ var projectRoutesCmd = &cobra.Command{
 			}
 			routesJSON, err := json.MarshalIndent(def.RoutesToMap(routes), "", "  ")
 			handleError(err)
-			println(string(routesJSON))
+			output.WriteStdout(string(routesJSON) + "\n")
 			return
 		}
 		// table out

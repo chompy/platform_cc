@@ -142,7 +142,7 @@ func handleError(err error) {
 // drawTable draws an ASCII table to stdout.
 func drawTable(head []string, data [][]string) {
 	if len(data) == 0 {
-		println("=== NO DATA ===")
+		output.WriteStdout("=== NO DATA ===\n")
 		return
 	}
 	w, _, _ := terminal.GetSize(int(os.Stdin.Fd()))
@@ -197,15 +197,16 @@ func drawTable(head []string, data [][]string) {
 	table.SetBorder(false)
 	table.AppendBulk(data)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	println("")
+	output.WriteStdout("\n")
 	table.Render()
-	println("")
+	output.WriteStdout("\n")
 }
 
 func drawKeys() {
-	println("[a] = application\t\t[s] = service")
-	println("[w] = worker\t\t\t[r] = router")
-	println("[c] = committed")
+
+	output.WriteStdout("[a] = application\t\t[s] = service\n")
+	output.WriteStdout("[w] = worker\t\t\t[r] = router\n")
+	output.WriteStdout("[c] = committed\n")
 }
 
 // getContainerHandler returns container handler.

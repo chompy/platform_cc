@@ -63,7 +63,7 @@ var varGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		println(out)
+		output.WriteStdout(out + "\n")
 		return nil
 	},
 }
@@ -96,18 +96,16 @@ var varListCmd = &cobra.Command{
 		gc, err := def.ParseGlobalYamlFile()
 		handleError(err)
 		// json out
-		jsonFlag := cmd.Flags().Lookup("json")
-		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+		if checkFlag(cmd, "json") {
 			// build var list
 			varList := make(def.Variables)
 			varList.Merge(gc.Variables)
 			varList.Merge(proj.Variables)
 			out, err := json.MarshalIndent(varList, "", "  ")
 			handleError(err)
-			println(string(out))
+			output.WriteStdout(string(out) + "\n")
 			return
 		}
-
 		varSources := make(map[string][]string)
 		varKeys := make([]string, 0)
 		for _, k := range gc.Variables.Keys() {
@@ -120,7 +118,6 @@ var varListCmd = &cobra.Command{
 			varKeys = append(varKeys, k)
 		}
 		sort.Strings(varKeys)
-
 		// table out
 		data := make([][]string, 0)
 		for _, k := range varKeys {

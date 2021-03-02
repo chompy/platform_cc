@@ -27,25 +27,26 @@ const termColorProgress = 34
 const termColorWarn = 33
 const termColorDebug = 35
 
-func color(msg string, color int) string {
-	if !isTTY() {
+// Color returns given message terminal color formatting.
+func Color(msg string, color int) string {
+	if !IsTTY() {
 		return msg
 	}
 	return fmt.Sprintf(termColorFormat, color) + msg + termColorReset
 }
 
 func colorSuccess(msg string) string {
-	return color(msg, termColorSuccess)
+	return Color(msg, termColorSuccess)
 }
 
 func colorError(msg string) string {
-	return color(msg, termColorError)
+	return Color(msg, termColorError)
 }
 
 func colorWarn(msg string) string {
-	return color(msg, termColorWarn)
+	return Color(msg, termColorWarn)
 }
 
 func colorProgress(msg string) string {
-	return color(msg, termColorProgress)
+	return Color(msg, termColorProgress)
 }

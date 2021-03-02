@@ -41,12 +41,23 @@ var Logging = false
 // IndentLevel is the current indentation level.
 var IndentLevel = 0
 
-func isTTY() bool {
+// IsTTY returns true if running with a TTY.
+func IsTTY() bool {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		return false
 	}
 	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+// WriteStdout writes a string to STDOUT.
+func WriteStdout(msg string) {
+	os.Stdout.WriteString(msg)
+}
+
+// WriteStderr writes a string to STDERR.
+func WriteStderr(msg string) {
+	os.Stderr.WriteString(msg)
 }
 
 func levelMsg(msg string) {
@@ -66,8 +77,8 @@ func levelMsg(msg string) {
 			break
 		}
 	}
-	os.Stderr.Write(
-		[]byte(strings.Repeat(levelSpacer, level) + msg + "\n"),
+	WriteStderr(
+		strings.Repeat(levelSpacer, level) + msg + "\n",
 	)
 }
 
@@ -120,10 +131,10 @@ func Error(err error) {
 		return
 	}
 	if !Verbose {
-		fmt.Println(colorError("\nERROR:\n" + err.Error() + "\n"))
+		WriteStdout(colorError("\nERROR:\n" + err.Error() + "\n"))
 		os.Exit(1)
 	}
-	fmt.Println(colorError("\n=== ERROR ===\n"))
+	WriteStdout(colorError("\n=== ERROR ===\n"))
 	// is tty
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
 		tracerr.PrintSourceColor(err)
@@ -143,10 +154,5 @@ func ErrorText(msg string) {
 
 // ContainerLog prints container log line to stdout.
 func ContainerLog(name string, msg string) {
-	// is tty
-	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
-		os.Stdout.Write([]byte(colorSuccess(fmt.Sprintf("[%s] ", name)) + msg + "\n"))
-		return
-	}
-	os.Stdout.Write([]byte(fmt.Sprintf("[%s] ", name) + msg + "\n"))
+	WriteStdout(colorSuccess(fmt.Sprintf("[%s] ", name)) + msg + "\n")
 }

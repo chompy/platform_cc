@@ -18,7 +18,6 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -32,7 +31,7 @@ var RootCmd = &cobra.Command{
 	Version: "",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.CommandIntro(cmd.Version)
-		fmt.Println("\nAvailable Commands:")
+		output.WriteStdout("\nAvailable Commands:\n")
 		output.CommandList(cmd)
 	},
 }

@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"sort"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
@@ -47,8 +49,7 @@ var projectFlagListCmd = &cobra.Command{
 		sort.Strings(sortKeys)
 
 		// json out
-		jsonFlag := cmd.Flags().Lookup("json")
-		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
+		if checkFlag(cmd, "json") {
 			data := make(map[string]map[string]interface{})
 			for _, name := range sortKeys {
 				data[name] = map[string]interface{}{
@@ -62,7 +63,7 @@ var projectFlagListCmd = &cobra.Command{
 				"  ",
 			)
 			handleError(err)
-			fmt.Println(string(out))
+			output.WriteStdout(string(out) + "\n")
 			return
 		}
 		// table out

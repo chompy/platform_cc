@@ -58,7 +58,7 @@ func LogDebug(msg string, data interface{}) {
 	}
 	writeLogFile(logMsg)
 	if Verbose {
-		os.Stderr.Write([]byte(color(">> "+logMsg+"\n", termColorDebug)))
+		os.Stderr.Write([]byte(Color(">> "+logMsg+"\n", termColorDebug)))
 	}
 }
 
