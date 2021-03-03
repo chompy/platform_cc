@@ -118,7 +118,6 @@ func progressPrintAll(msgs []string, states []ProgressMessageState, cur []*int64
 }
 
 func progressReprint(msgs []string, states []ProgressMessageState, cur []*int64, total []*int64) {
-
 	WriteStdout(fmt.Sprintf("\033[%dA", len(msgs)))
 	progressPrintAll(msgs, states, cur, total)
 }

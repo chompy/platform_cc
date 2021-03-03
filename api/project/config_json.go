@@ -60,11 +60,13 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		}
 	}
 	out := map[string]interface{}{
-		"primary_ip":   "127.0.0.1",
-		"features":     []string{},
-		"domainname":   fmt.Sprintf("%s.pcc.local", p.ID),
-		"host_ip":      "127.0.0.1",
-		"applications": appJsons,
+		"primary_ip":    "127.0.0.1",
+		"features":      []string{},
+		"domainname":    fmt.Sprintf("%s.pcc.local", p.ID),
+		"host_ip":       "127.0.0.1",
+		"all_node_ips":  []string{"127.0.0.1"},
+		"all_hostnames": []string{"localhost"},
+		"applications":  appJsons,
 		"configuration": map[string]interface{}{
 			"access": map[string]interface{}{
 				"ssh": []string{},

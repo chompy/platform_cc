@@ -35,7 +35,6 @@ type Container struct {
 
 // NewContainer creates a new container.
 func (p *Project) NewContainer(d interface{}) Container {
-	typeName := strings.Split(p.GetDefinitionType(d), ":")
 	configJSON, _ := p.BuildConfigJSON(d)
 	o := Container{
 		Name:          p.GetDefinitionName(d),
@@ -47,7 +46,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 			ObjectType:   p.GetDefinitionContainerType(d),
 			ObjectName:   p.GetDefinitionName(d),
 			Command:      p.GetDefinitionStartCommand(d),
-			Image:        fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1]),
+			Image:        p.GetDefinitionImage(d),
 			Volumes:      p.GetDefinitionVolumes(d),
 			Binds:        p.GetDefinitionBinds(d),
 			Env:          p.GetDefinitionEnvironmentVariables(d),
@@ -115,6 +114,11 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	}
 	relB64 := base64.StdEncoding.EncodeToString(relJSON)
 	d2()
+
+	if err := c.openEnableAuthentication(); err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+
 	// open service and retrieve relationships
 	d2 = output.Duration("Open service.")
 	var openOutput bytes.Buffer
@@ -127,6 +131,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+
 	d2()
 	// process output relationships
 	d2 = output.Duration("Build relationship.")
@@ -258,6 +263,48 @@ func (c Container) PostDeploy() error {
 		return tracerr.Wrap(err)
 	}
 	done()
+	return nil
+}
+
+// openEnableAuthentication enables authentication in the service.
+func (c Container) openEnableAuthentication() error {
+	switch c.Definition.(type) {
+	case def.Service:
+		{
+			// check that authentication is enabled
+			serviceConfig := c.Definition.(def.Service).Configuration
+			if !serviceConfig.IsAuthenticationEnabled() {
+				return nil
+			}
+			done := output.Duration("Enable authentication.")
+			// build state json
+			currentState := getDefaultServiceState()
+			currentState.Image = c.Config.Image
+			desiredState := getDefaultServiceState()
+			desiredState.Image = c.Config.Image
+			desiredState.Configuration = serviceConfig
+			containerStatus, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
+			if err != nil {
+				return tracerr.Wrap(err)
+			}
+			stateJSON, err := buildStateJSON(containerStatus.ID[0:12], currentState, desiredState)
+			if err != nil {
+				return tracerr.Wrap(err)
+			}
+			r := bytes.NewReader(stateJSON)
+			// issue service state update
+			if err := c.containerHandler.ContainerShell(
+				c.Config.GetContainerName(),
+				"root",
+				[]string{"bash", "--login", "-c", "/etc/platform/commands/on_service_state_update"},
+				r,
+			); err != nil {
+				return tracerr.Wrap(err)
+			}
+			done()
+			break
+		}
+	}
 	return nil
 }
 

@@ -170,6 +170,11 @@ chmod -R -rwx /run/sshd
 chown -Rf root:root /run/ssh/id
 chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
+# ELASTICSEARCH SPECIFIC HACK
+if [ -f /usr/share/elasticsearch/config/elasticsearch.yml.psh-tmpl ]; then
+	sed -i 's/_global_/_site_/g' /usr/share/elasticsearch/config/elasticsearch.yml.psh-tmpl
+fi
+# ===
 /etc/platform/boot
 sleep 5
 touch /tmp/.ready1

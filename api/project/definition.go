@@ -51,6 +51,12 @@ func (p *Project) GetDefinitionType(d interface{}) string {
 	return ""
 }
 
+// GetDefinitionImage returns the container image for the given definition.
+func (p *Project) GetDefinitionImage(d interface{}) string {
+	typeName := strings.Split(p.GetDefinitionType(d), ":")
+	return fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1])
+}
+
 // GetDefinitionHostName returns the host name for the container of the given definition.
 func (p *Project) GetDefinitionHostName(d interface{}) string {
 	dummyConfig := container.Config{

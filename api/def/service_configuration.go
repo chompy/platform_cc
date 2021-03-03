@@ -26,6 +26,33 @@ import (
 // ServiceConfiguration define service configuration.
 type ServiceConfiguration map[string]interface{}
 
+// IsAuthenticationEnabled returns true if 'authentication.enabled' is true.
+func (d ServiceConfiguration) IsAuthenticationEnabled() bool {
+	switch d["authentication"].(type) {
+	case map[string]interface{}:
+		{
+			enabledConf := d["authentication"].(map[string]interface{})["enabled"]
+			switch enabledConf.(type) {
+			case bool:
+				{
+					return enabledConf.(bool)
+				}
+			case int:
+				{
+					return enabledConf.(int) != 0
+				}
+			case string:
+				{
+					enabledStr := enabledConf.(string)
+					return enabledStr != "" && enabledStr != "0" && enabledStr != "no" && enabledStr != "false" && enabledStr != "off"
+				}
+			}
+			return false
+		}
+	}
+	return false
+}
+
 // UnmarshalYAML - parse yaml
 func (d *ServiceConfiguration) UnmarshalYAML(value *yaml.Node) error {
 	if value.Tag != "!!map" {
