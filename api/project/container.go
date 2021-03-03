@@ -29,6 +29,7 @@ type Container struct {
 	configJSON        []byte
 	buildCommand      string
 	mountCommand      string
+	patchCommand      string
 	mountStrategy     string
 	postDeployCommand string
 }
@@ -57,6 +58,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 		configJSON:        configJSON,
 		buildCommand:      p.GetDefinitionBuildCommand(d),
 		mountCommand:      p.GetDefinitionMountCommand(d),
+		patchCommand:      p.GetDefinitionPatch(d),
 		mountStrategy:     p.GetOption(OptionMountStrategy),
 		postDeployCommand: p.GetDefinitionPostDeployCommand(d),
 	}
@@ -82,6 +84,19 @@ func (c Container) Start() error {
 		return tracerr.Wrap(err)
 	}
 	d2()
+	// patch
+	if c.patchCommand != "" {
+		d2 = output.Duration("Patch container.")
+		if err := c.containerHandler.ContainerCommand(
+			c.Config.GetContainerName(),
+			"root",
+			[]string{"bash", "--login", "-c", c.patchCommand},
+			nil,
+		); err != nil {
+			return tracerr.Wrap(err)
+		}
+		d2()
+	}
 	done()
 	return c.Log()
 }
@@ -114,11 +129,10 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	}
 	relB64 := base64.StdEncoding.EncodeToString(relJSON)
 	d2()
-
+	// enable authentication it requested
 	if err := c.openEnableAuthentication(); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-
 	// open service and retrieve relationships
 	d2 = output.Duration("Open service.")
 	var openOutput bytes.Buffer
