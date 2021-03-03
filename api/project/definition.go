@@ -266,7 +266,7 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 			buildData := map[string]interface{}{
 				"application": p.buildConfigAppJSON(d),
 				"source_dir":  def.AppDir + "/",
-				"output_dir":  def.AppDir + "/",
+				"output_dir":  def.AppDir,
 				"cache_dir":   "/tmp/cache",
 				"uid":         uid,
 				"gid":         gid,
