@@ -46,6 +46,6 @@ func (d *Bool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalJSON implements json Marshaler interface.
-func (d *Bool) MarshalJSON() ([]byte, error) {
+func (d Bool) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Get())
 }

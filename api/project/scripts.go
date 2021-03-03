@@ -165,6 +165,7 @@ rm -rf /etc/service/*
 /usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 mkdir -p /run/sshd
+chown -R app:app /run
 chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
 chown -Rf root:root /run/ssh/id

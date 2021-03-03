@@ -8,48 +8,7 @@ import (
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
-	"gitlab.com/contextualcode/platform_cc/api/project"
 )
-
-// ReplaceDefault replaces {default} in given path with project id + domain suffix.
-func ReplaceDefault(path string, p *project.Project) string {
-	out := strings.ReplaceAll(
-		path,
-		"{default}",
-		fmt.Sprintf(
-			"%s.default",
-			p.ID,
-		),
-	)
-	out = strings.ReplaceAll(
-		out,
-		"__PID__",
-		p.ID,
-	)
-	return out
-}
-
-// RouteReplaceDefault replaces {default} values in all paths.
-func RouteReplaceDefault(r def.Route, p *project.Project) def.Route {
-	r.OriginalURL = ReplaceDefault(r.OriginalURL, p)
-	r.Path = ReplaceDefault(r.Path, p)
-	r.To = ReplaceDefault(r.To, p)
-	for i := range r.Redirects.Paths {
-		r.Redirects.Paths[i].To = ReplaceDefault(r.Redirects.Paths[i].To, p)
-	}
-	for k, v := range r.Attributes {
-		r.Attributes[k] = ReplaceDefault(v, p)
-	}
-	return r
-}
-
-// RoutesReplaceDefault replaces {default} values in all paths for multiple routes.
-func RoutesReplaceDefault(routes []def.Route, p *project.Project) []def.Route {
-	for i := range routes {
-		routes[i] = RouteReplaceDefault(routes[i], p)
-	}
-	return routes
-}
 
 // ListActiveProjects returns list of project ids of projects current loaded in to the router.
 func ListActiveProjects() ([]string, error) {

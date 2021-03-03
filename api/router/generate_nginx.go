@@ -66,7 +66,7 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 
 // GenerateTemplateVars generates variables to inject in nginx template.
 func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, error) {
-	hostMaps := MapHostRoutes(RoutesReplaceDefault(proj.Routes, proj))
+	hostMaps := MapHostRoutes(proj.RoutesReplaceDefault(proj.Routes))
 	out := make([]map[string]interface{}, 0)
 	for _, hostMap := range hostMaps {
 		outHm := map[string]interface{}{
@@ -114,9 +114,8 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			)
 		}
 		if !hasDefaultPath {
-			to := ReplaceDefault(
+			to := proj.ReplaceDefault(
 				outHm["routes"].([]map[string]interface{})[0]["path"].(string),
-				proj,
 			)
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),

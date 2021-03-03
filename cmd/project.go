@@ -225,7 +225,7 @@ var projectRoutesCmd = &cobra.Command{
 		if jsonFlag != nil && jsonFlag.Value.String() != "false" {
 			routes := proj.Routes
 			for i, v := range routes {
-				routes[i] = router.RouteReplaceDefault(v, proj)
+				routes[i] = proj.RouteReplaceDefault(v)
 			}
 			routesJSON, err := json.MarshalIndent(def.RoutesToMap(routes), "", "  ")
 			handleError(err)
@@ -235,7 +235,7 @@ var projectRoutesCmd = &cobra.Command{
 		// table out
 		data := make([][]string, 0)
 		for _, route := range proj.Routes {
-			route = router.RouteReplaceDefault(route, proj)
+			route = proj.RouteReplaceDefault(route)
 			to := route.To
 			if route.Type == "upstream" {
 				to = route.Upstream
