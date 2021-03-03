@@ -3,6 +3,7 @@
 # - vars
 SSH_URL="$1"
 PCC_PATH=~/.local/bin/pcc
+PLATFORM_BIN=~/.platformsh/bin/platform
 PRIVATE_SSH_KEY_PATH=~/.ssh/id_rsa
 RSYNC_PARAMS="-auve 'ssh -i /tmp/id_rsa' --include='*/' --include='*.jpg' --include='*.jpeg' --include='*.gif' --include='*.png' --include='*.webp' --exclude='*'"
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -12,10 +13,11 @@ fi
 # - fetch code
 GET_VARIABLES_CODE=$(cat <<END
 import sys
-import json
-vars = json.load(sys.stdin)
-for key in vars:
-    print("%s;%s" % (key, vars[key]))
+import csv
+r = csv.reader(sys.stdin)
+for i, row in enumerate(r):
+    if i == 0: continue
+    print("%s;%s" % (row[0], row[2]))
 END
 )
 GET_DATABASE_CODE=$(cat <<END
@@ -79,19 +81,30 @@ fi
 # - retreive data
 echo "> Fetch data."
 PLATFORM_RELATIONSHIPS=`ssh $SSH_URL 'echo $PLATFORM_RELATIONSHIPS | base64 -d'`
-PLATFORM_VARIABLES=`ssh $SSH_URL 'echo $PLATFORM_VARIABLES | base64 -d'`
 CONFIG_JSON=$(${PCC_PATH} project:configjson)
 
 # - set variables
 echo "> Set variables."
-VAR_LIST=$(get_variables "$PLATFORM_VARIABLES")
-if [[ $VAR_LIST ]]; then
-    while IFS= read -r var; do
-        IFS=';' read -ra var_split <<< "$var"
-        $PCC_PATH var:set "${var_split[0]}" "${var_split[1]}"
-    done <<< "$VAR_LIST"
+if [ -f "$PLATFORM_BIN" ]; then
+    PLATFORM_VAR_CSV=`platform variable:list --format csv`
+    VAR_LIST=$(get_variables "$PLATFORM_VAR_CSV")
+    if [[ $VAR_LIST ]]; then
+        while IFS= read -r var; do
+            IFS=';' read -ra var_split <<< "$var"
+            IFS=
+            key="${var_split[0]}"
+            val="${var_split[1]}"
+            if [[ "$key" = "env:"* ]]; then
+                subkey=${key:4}
+                val=$(ssh -n $SSH_URL "echo $\"\$$subkey\"")
+            fi
+            $PCC_PATH var:set "$key" "$val"
+        done <<< "$VAR_LIST"
+    else
+        echo "    No variables found"
+    fi
 else
-    echo "    No variables found"
+    echo "    Skipped. Platform CLI not found."
 fi
 
 # - start project
@@ -118,6 +131,7 @@ if [[ $DATABASE_LIST ]]; then
 else
     echo "    No databases found"
 fi
+
 # - upload ssh key to app
 SSH_ID_RSA=`cat $PRIVATE_SSH_KEY_PATH`
 $PCC_PATH app:sh "echo '$SSH_ID_RSA' > /tmp/id_rsa && chmod 0600 /tmp/id_rsa"
