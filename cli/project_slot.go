@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package cmd
+package cli
 
 import (
 	"fmt"

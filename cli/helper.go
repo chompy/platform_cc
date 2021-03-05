@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package cmd
+package cli
 
 import (
 	"fmt"
@@ -281,4 +281,12 @@ func projectStart(cmd *cobra.Command, p *project.Project, slot int) {
 		handleError(router.Start())
 		handleError(router.AddProjectRoutes(p))
 	}
+}
+
+// commandIntro displays introduction information about Platform.CC
+func commandIntro(version string) {
+	output.WriteStdout(output.Color(strings.Repeat("=", 32), 32) + "\n")
+	output.WriteStdout(" PLATFORM.CC BY CONTEXTUAL CODE \n")
+	output.WriteStdout(output.Color(strings.Repeat("=", 32), 32) + "\n")
+	output.WriteStdout(output.Color(" VERSION "+version, 35) + "\n")
 }

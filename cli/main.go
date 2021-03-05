@@ -15,24 +15,5 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package main
-
-import (
-	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gitlab.com/contextualcode/platform_cc/cli"
-)
-
-var version string
-
-func main() {
-	output.Enable = true
-	output.Logging = true
-	if err := output.LogRotate(); err != nil {
-		output.Warn("Error while trimming log, " + err.Error())
-	}
-	if version == "" {
-		version = "DEV"
-	}
-	cli.RootCmd.Version = version
-	cli.Execute()
-}
+// Package cli provides CLI access to the Platform.CC API.
+package cli

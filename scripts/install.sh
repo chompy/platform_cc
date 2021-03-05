@@ -15,6 +15,8 @@ DL_SCRIPTS=(
 INSTALL_PATH=~/.local/bin
 MAC_INSTALL_PATH=/usr/local/bin
 PCC_BIN_NAME="pcc"
+BASH_RC_PATH=~/.bashrc
+PCC_RC_PATH=~/.pcc.bashrc
 
 # set dev version if -d flag set
 VERSION=""
@@ -76,6 +78,18 @@ for s in ${DL_SCRIPTS[@]}; do
     chmod +x "$INSTALL_PATH/${DL_SCRIPT[1]}"
     progress_success
 done
+
+# bash completion
+if [ -f "$BASH_RC_PATH" ]; then
+printf "> Install Bash completion..."
+curl -s --fail -o "$PCC_RC_PATH" "$BASE_URL/.pcc.bashrc"
+if [ "$?" != "0" ]; then
+    progress_error "Could not download .pcc.bashrc."
+fi
+sed -i "s/source.*\.pcc.*//g" ~/.bashrc
+echo "source $PCC_RC_PATH" >> $BASH_RC_PATH
+progress_success
+fi
 
 # determine os
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then

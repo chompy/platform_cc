@@ -46,3 +46,6 @@ fi
 for f in ${PCC_FILES[@]}; do
     delete_file $f
 done
+
+# remove bash complete
+sed -i "s/source.*\.pcc.*//g" ~/.bashrc

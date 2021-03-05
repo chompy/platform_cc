@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package cmd
+package cli
 
 import (
 	"os"
@@ -30,9 +30,9 @@ var RootCmd = &cobra.Command{
 	Use:     "platform_cc [-v verbose]",
 	Version: "",
 	Run: func(cmd *cobra.Command, args []string) {
-		output.CommandIntro(cmd.Version)
+		commandIntro(cmd.Version)
 		output.WriteStdout("\nAvailable Commands:\n")
-		output.CommandList(cmd)
+		displayCommandList(cmd)
 	},
 }
 
