@@ -217,12 +217,17 @@ func TestStartProjectSlots(t *testing.T) {
 		"expected 5 container volumes + 1 global",
 		t,
 	)
-	assertEqual(
-		strings.HasSuffix(ch.Tracker.Volumes[1], "-2"),
-		true,
-		"expected volume to contain slot suffix (-2)",
-		t,
-	)
+	for _, volName := range ch.Tracker.Volumes {
+		if strings.Count(volName, "-") < 2 {
+			continue
+		}
+		assertEqual(
+			strings.HasSuffix(volName, "-2"),
+			true,
+			"expected volume to contain slot suffix (-2)",
+			t,
+		)
+	}
 	p.PurgeSlot()
 	assertEqual(
 		len(ch.Tracker.Volumes),
