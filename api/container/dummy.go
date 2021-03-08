@@ -76,10 +76,20 @@ func (d Dummy) ContainerStart(c Config) error {
 	defer d.Tracker.Sync.Unlock()
 	d.Tracker.Containers = append(d.Tracker.Containers, c.GetContainerName())
 	for k := range c.Volumes {
-		d.Tracker.Volumes = append(
-			d.Tracker.Volumes,
-			volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot),
-		)
+		hasVol := false
+		volName := volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot)
+		for kk := range d.Tracker.Volumes {
+			if d.Tracker.Volumes[kk] == volName {
+				hasVol = true
+				break
+			}
+		}
+		if !hasVol {
+			d.Tracker.Volumes = append(
+				d.Tracker.Volumes,
+				volName,
+			)
+		}
 	}
 	return nil
 }

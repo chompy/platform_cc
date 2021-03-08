@@ -102,8 +102,16 @@ func getMountName(pid string, name string, containerType ObjectContainerType) st
 	return fmt.Sprintf(containerNamingPrefix+"%s-%s", pid, string(containerType), name)
 }
 
+func volumeIsGlobal(name string) bool {
+	// TODO better way to determine?
+	return strings.Count(name, "-") < 2
+}
+
 // volumeBelongsToSlot return true if given volume belongs to given slot.
 func volumeBelongsToSlot(name string, slot int) bool {
+	if volumeIsGlobal(name) {
+		return false
+	}
 	if slot > 1 && strings.HasSuffix(name, fmt.Sprintf("-%d", slot)) {
 		return true
 	} else if slot <= 1 {
@@ -114,11 +122,17 @@ func volumeBelongsToSlot(name string, slot int) bool {
 
 // volumeStripSlot strips the slot from the volume name.
 func volumeStripSlot(name string) string {
+	if volumeIsGlobal(name) {
+		return name
+	}
 	return volumeSlotRegex.ReplaceAllString(name, "$1")
 }
 
 // volumeWithSlot return name of volume with given slot.
 func volumeWithSlot(name string, slot int) string {
+	if volumeIsGlobal(name) {
+		return name
+	}
 	if slot <= 1 {
 		return volumeStripSlot(name)
 	}

@@ -48,7 +48,7 @@ func TestStartStopProject(t *testing.T) {
 	// check number of volumes
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		len(p.Apps)+len(p.Services),
+		len(p.Apps)+len(p.Services)+1,
 		"wrong number of volumes",
 		t,
 	)
@@ -79,18 +79,27 @@ func TestStartStopProject(t *testing.T) {
 	// check number of volumes
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		len(p.Apps)+len(p.Services),
+		len(p.Apps)+len(p.Services)+1,
 		"wrong number of volumes",
 		t,
 	)
+	// ensure only global volume remains after project purge
 	p.Purge()
-	// ensure no volumes remain
+	assertEqual(
+		len(ch.Tracker.Volumes),
+		1,
+		"wrong number of volumes",
+		t,
+	)
+	// ensure no volume remains after global purge
+	ch.AllPurge()
 	assertEqual(
 		len(ch.Tracker.Volumes),
 		0,
 		"wrong number of volumes",
 		t,
 	)
+
 }
 
 func TestStartMultipleProjects(t *testing.T) {
@@ -126,7 +135,7 @@ func TestStartMultipleProjects(t *testing.T) {
 	// check number of volumes
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
+		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services)+1,
 		"wrong number of volumes",
 		t,
 	)
@@ -143,7 +152,7 @@ func TestStartMultipleProjects(t *testing.T) {
 	// check number of volumes
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
+		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services)+1,
 		"wrong number of volumes",
 		t,
 	)
@@ -158,7 +167,7 @@ func TestStartMultipleProjects(t *testing.T) {
 	)
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		0,
+		1,
 		"wrong number of volumes",
 		t,
 	)
@@ -174,7 +183,7 @@ func TestStartMultipleProjects(t *testing.T) {
 	)
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services),
+		len(p1.Apps)+len(p1.Services)+len(p2.Apps)+len(p2.Services)+1,
 		"wrong number of volumes",
 		t,
 	)
@@ -204,12 +213,12 @@ func TestStartProjectSlots(t *testing.T) {
 	p.Start()
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		5,
-		"expected five container volumes",
+		6,
+		"expected 5 container volumes + 1 global",
 		t,
 	)
 	assertEqual(
-		strings.Contains(ch.Tracker.Volumes[0], "-2"),
+		strings.HasSuffix(ch.Tracker.Volumes[1], "-2"),
 		true,
 		"expected volume to contain slot suffix (-2)",
 		t,
@@ -217,8 +226,8 @@ func TestStartProjectSlots(t *testing.T) {
 	p.PurgeSlot()
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		0,
-		"expected zero container volumes",
+		1,
+		"expected one (global) container volumes",
 		t,
 	)
 	// start project twice with slot 1 and slot 2
@@ -238,8 +247,8 @@ func TestStartProjectSlots(t *testing.T) {
 	// ensure number of volumes
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		10,
-		"expected 10 volumes",
+		11,
+		"expected 10 volumes + 1 global",
 		t,
 	)
 	// delete slot 2
@@ -247,8 +256,8 @@ func TestStartProjectSlots(t *testing.T) {
 	p.PurgeSlot()
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		5,
-		"expected five volumes",
+		6,
+		"expected five volumes + one global",
 		t,
 	)
 }
@@ -268,15 +277,15 @@ func TestSlotCopy(t *testing.T) {
 	p.SetSlot(1)
 	p.Start()
 	// record number of volumes
-	volBefore := len(ch.Tracker.Volumes)
+	volBefore := len(ch.Tracker.Volumes) - 1
 	// perform copy
 	destVol := 3
 	p.CopySlot(destVol)
 	// assert that number of volumes has doubled
 	assertEqual(
 		len(ch.Tracker.Volumes),
-		volBefore*2,
-		"expected number of volumes to double",
+		(volBefore*2)+1,
+		"expected number of volumes to double + global",
 		t,
 	)
 	// assert that new volumes have correct slot suffix
