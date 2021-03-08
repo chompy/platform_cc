@@ -95,6 +95,10 @@ func containerConfigFromName(name string) Config {
 
 // getMountName generates a mount name for given project id and container name.
 func getMountName(pid string, name string, containerType ObjectContainerType) string {
+	// name prefixed with underscore should be a global volume
+	if name != "" && name[0] == '_' {
+		return strings.TrimRight(fmt.Sprintf(containerNamingPrefix, name[1:]), "-")
+	}
 	return fmt.Sprintf(containerNamingPrefix+"%s-%s", pid, string(containerType), name)
 }
 

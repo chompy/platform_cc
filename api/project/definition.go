@@ -130,7 +130,8 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 		}
 	}
 	out := map[string]string{
-		name: containerMntPath,
+		name:      containerMntPath,
+		"_global": "/var/pcc_global",
 	}
 	return out
 }

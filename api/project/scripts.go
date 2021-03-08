@@ -30,8 +30,11 @@ mkdir -p /run/shared /run/rpc_pipefs/nfs
 # MOUNT TMP
 mkdir -p /mnt/data/.tmp
 mount -o user_xattr --bind /mnt/data/.tmp /tmp
+# MOUNT TMP/CACHE
+mkdir -p /var/pcc_global/cache
+mkdir -p /tmp/cache
+mount -o user_xattr --bind /var/pcc_global/cache/ /tmp/cache
 # CLEAN UP TMP
-rm -rf /tmp/cache
 rm -rf /tmp/sessions
 rm -rf /tmp/log
 rm -rf /tmp/nginx
@@ -116,7 +119,6 @@ if builder.execute_build_hook:
 	builder._execute_build_hook()
 	builder.prepare_mounts()
 EOF
-mkdir -p /tmp/cache
 chown -R web /tmp/cache
 chmod -R 0755 /tmp/cache
 chown -R web /app

@@ -17,6 +17,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
+import "strings"
+
 // AppWorker defines a worker.
 type AppWorker struct {
 	Name          string               `json:"-"`
@@ -57,4 +59,9 @@ func (d AppWorker) Validate(root *App) []error {
 		}
 	}
 	return o
+}
+
+// GetTypeName gets the type of app.
+func (d AppWorker) GetTypeName() string {
+	return strings.Split(d.Type, ":")[0]
 }
