@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -30,7 +32,17 @@ func ListActiveProjects() ([]string, error) {
 	for {
 		line, err := buf.ReadString('\n')
 		if line != "" {
-			projectIDs = append(projectIDs, strings.TrimSpace(line))
+			hasProjectID := false
+			pidToInsert := strings.TrimSpace(line)
+			for _, pid := range projectIDs {
+				if pid == pidToInsert {
+					hasProjectID = true
+					break
+				}
+			}
+			if !hasProjectID {
+				projectIDs = append(projectIDs, pidToInsert)
+			}
 		}
 		if err != nil {
 			if strings.Contains(err.Error(), "EOF") {
@@ -79,6 +91,7 @@ func ListActiveRoutes() ([]def.Route, error) {
 		}
 		data := make([]activeRouterData, 0)
 		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+			output.LogError(err)
 			return []def.Route{}, nil
 		}
 		for _, ar := range data {

@@ -17,7 +17,11 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/ztrue/tracerr"
+)
 
 // Bool defines a boolean that can contain a default value.
 type Bool struct {
@@ -41,6 +45,17 @@ func (d Bool) Get() bool {
 // UnmarshalYAML implements Unmarshaler interface.
 func (d *Bool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	unmarshal(&d.value)
+	d.isSet = true
+	return nil
+}
+
+// UnmarshalJSON implements json Unm,arshaler interface.
+func (d *Bool) UnmarshalJSON(data []byte) error {
+	value := false
+	if err := json.Unmarshal(data, &value); err != nil {
+		return tracerr.Wrap(err)
+	}
+	d.value = value
 	d.isSet = true
 	return nil
 }

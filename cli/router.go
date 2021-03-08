@@ -49,6 +49,16 @@ var routerStopCmd = &cobra.Command{
 	},
 }
 
+var routerResetCmd = &cobra.Command{
+	Use:     "reset",
+	Aliases: []string{"restart"},
+	Short:   "Remove all routes from the router.",
+	Run: func(cmd *cobra.Command, args []string) {
+		handleError(router.Stop())
+		handleError(router.Start())
+	},
+}
+
 var routerAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add project to router.",
@@ -108,6 +118,7 @@ func init() {
 	routerListCmd.Flags().Bool("json", false, "JSON output")
 	routerCmd.AddCommand(routerStartCmd)
 	routerCmd.AddCommand(routerStopCmd)
+	routerCmd.AddCommand(routerResetCmd)
 	routerCmd.AddCommand(routerAddCmd)
 	routerCmd.AddCommand(routerDelCmd)
 	routerCmd.AddCommand(routerListCmd)

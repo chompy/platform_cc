@@ -1,16 +1,8 @@
-- ASAP
-    - Fix :logs commands, doesn't seem to work unless -f flag applied.
-
 - QOL
-    - Bash autocomplete for PCC commands.
-    - 'router:reset' command to restart router and remove all currently loaded routes.
-    - Update command to auto install the latest release.
+    - Add service names and database names to autocomplete.
 
 - BACKBURNER
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Configure SSH key on per project basis, instead of just global.
     - Use SSH agent to forward private key in to application containers.
-
-- NEEDS MORE TESTING
-    - Platform.sh clone script.
