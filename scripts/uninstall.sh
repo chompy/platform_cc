@@ -49,3 +49,4 @@ done
 
 # remove bash complete
 sed -i "s/source.*\.pcc.*//g" ~/.bashrc
+rm -f ~/.pcc.bashrc

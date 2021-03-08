@@ -34,10 +34,16 @@ const lispPatch = `
 	sed -i 's/system_name = .*/system_name = asd\[0\]\[len\(builder\.output_dir\)\:-len(\"\.asd\"\)\]/g' /etc/platform/flavor.d/default.py
 `
 
+// ensureDirPatch is a command to fix the import of ensure_dir in platformsh/agent/service.py where it is missing.
+const ensureDirPatch = `
+	echo "from .util import ensure_dir"|cat - /usr/lib/python2.7/dist-packages/platformsh/agent/service.py > /tmp/out && mv /tmp/out /usr/lib/python2.7/dist-packages/platformsh/agent/service.py
+`
+
 // patchMap is a map of service types to their patch command.
 var patchMap = map[string]string{
 	"elasticsearch:*": elasticsearchPatch,
 	"lisp:*":          lispPatch,
+	"memcached:1.4":   ensureDirPatch,
 }
 
 // wildcardMatchCharacter is the character to use as the wildcard character.
