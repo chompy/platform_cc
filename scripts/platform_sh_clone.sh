@@ -5,7 +5,8 @@ SSH_URL="$1"
 PCC_PATH=~/.local/bin/pcc
 PLATFORM_BIN=~/.platformsh/bin/platform
 PRIVATE_SSH_KEY_PATH=~/.ssh/id_rsa
-RSYNC_PARAMS="-auve 'ssh -i /tmp/id_rsa' --include='*/' --include='*.jpg' --include='*.jpeg' --include='*.gif' --include='*.png' --include='*.webp' --exclude='*'"
+RSYNC_PARAMS="-auve 'ssh -i /tmp/id_rsa'"
+# --include='*/' --include='*.jpg' --include='*.jpeg' --include='*.gif' --include='*.png' --include='*.webp' --include='*.pdf' --exclude='*'
 if [[ "$OSTYPE" == "darwin"* ]]; then
     PCC_PATH=/usr/local/bin/pcc
 fi
@@ -98,7 +99,7 @@ if [ -f "$PLATFORM_BIN" ]; then
                 subkey=${key:4}
                 val=$(ssh -n $SSH_URL "echo $\"\$$subkey\"")
             fi
-            $PCC_PATH var:set "$key" "$val"
+            echo "$val" | $PCC_PATH var:set "$key"
         done <<< "$VAR_LIST"
     else
         echo "    No variables found"
@@ -140,13 +141,14 @@ $PCC_PATH app:sh "echo '$SSH_ID_RSA' > /tmp/id_rsa && chmod 0600 /tmp/id_rsa"
 echo "> Fetch mounts."
 MOUNT_LIST=$(get_mounts "$CONFIG_JSON")
 if [[ $MOUNT_LIST ]]; then
+    pcc project:option:set mount_strategy volume
     MOUNT_SYNC_CMD=""
     while IFS= read -r mount; do
         IFS=';' read -ra mount_split <<< "$mount"
         IFS=
         dest=$(echo "${mount_split[0]}" | sed 's/^\///g' | sed 's/\/$//g')
         src=$(echo "${mount_split[1]}" | sed "s/\:/_/" | sed 's/^\///g' | sed 's/\/$//g')
-        MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app/$dest/ /mnt/data/$src/ || true && "
+        MOUNT_SYNC_CMD+="rsync $RSYNC_PARAMS $SSH_URL:/app/$dest/ /mnt/$src/ || true && "
     done <<< "$MOUNT_LIST"
     MOUNT_SYNC_CMD+="true"
     $PCC_PATH app:sh --root "$MOUNT_SYNC_CMD"

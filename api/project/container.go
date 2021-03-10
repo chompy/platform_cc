@@ -228,7 +228,7 @@ func (c Container) SetupMounts() error {
 		return nil
 	}
 	done := output.Duration(
-		fmt.Sprintf("Set up mounts for %s '%s' using '%s' strategy", c.Config.ObjectType.TypeName(), c.Name, c.mountStrategy),
+		fmt.Sprintf("Set up mounts for %s '%s' using '%s' strategy.", c.Config.ObjectType.TypeName(), c.Name, c.mountStrategy),
 	)
 	// run command
 	if err := c.containerHandler.ContainerCommand(

@@ -19,6 +19,9 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"sort"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -37,15 +40,31 @@ var varSetCmd = &cobra.Command{
 	Use:     "set key value",
 	Aliases: []string{"s"},
 	Short:   "Set a variable.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
-		if err != nil {
-			return err
+		handleError(err)
+		if len(args) == 0 {
+			handleError(fmt.Errorf("missing variable key"))
 		}
-		if err := proj.VarSet(args[0], args[1]); err != nil {
-			return err
+		// fetch value
+		fi, _ := os.Stdin.Stat()
+		hasStdin := fi.Mode()&os.ModeDevice == 0
+		value := ""
+		if len(args) >= 2 {
+			value = args[1]
+		} else if hasStdin {
+			valueBytes, err := ioutil.ReadAll(os.Stdin)
+			handleError(err)
+			value = string(valueBytes)
 		}
-		return proj.Save()
+		if value == "" {
+			// delete empty var
+			handleError(proj.VarDelete(args[0]))
+		} else {
+			handleError(proj.VarSet(args[0], value))
+		}
+
+		handleError(proj.Save())
 	},
 }
 
@@ -53,18 +72,16 @@ var varGetCmd = &cobra.Command{
 	Use:     "get key",
 	Aliases: []string{"g"},
 	Short:   "Get a variable.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(false)
-		if err != nil {
-			return err
+		handleError(err)
+		if len(args) == 0 {
+			handleError(fmt.Errorf("missing variable key"))
 		}
 		out, err := proj.VarGet(args[0])
-		if err != nil {
-			return err
-		}
+		handleError(err)
 		output.WriteStdout(out + "\n")
-		return nil
 	},
 }
 
@@ -72,15 +89,11 @@ var varDelCmd = &cobra.Command{
 	Use:     "delete",
 	Aliases: []string{"del", "d"},
 	Short:   "Delete a variable.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(false)
-		if err != nil {
-			return err
-		}
-		if err := proj.VarDelete(args[0]); err != nil {
-			return err
-		}
-		return proj.Save()
+		handleError(err)
+		handleError(proj.VarDelete(args[0]))
+		handleError(proj.Save())
 	},
 }
 
