@@ -48,7 +48,7 @@ func TestParseFile(t *testing.T) {
 }
 
 func TestInvalidCron(t *testing.T) {
-	d, e := def.ParseAppYamls([][]byte{[]byte(`
+	_, e := def.ParseAppYamls([][]byte{[]byte(`
 name: test_app_cron
 type: php:7.4
 crons:
@@ -59,10 +59,10 @@ crons:
 	if e != nil {
 		t.Errorf("failed to parse app yaml, %s", e)
 	}
-	if e := d.Validate(); len(e) == 0 {
+	/*if e := d.Validate(); len(e) == 0 {
 		// TODO fix cron parser
 		//t.Error("expected cron parse error")
-	}
+	}*/
 }
 
 func TestInvalidMount(t *testing.T) {

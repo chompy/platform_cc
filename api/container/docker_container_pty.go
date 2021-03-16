@@ -28,12 +28,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
-// resizeShell resizes the given Docker process to match the current terminal.
+// resizeShell resizes the given Docker process to match the current term.
 func (d Docker) resizeShell(execID string) error {
-	w, h, err := terminal.GetSize(int(os.Stdin.Fd()))
+	w, h, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -51,12 +51,12 @@ func (d Docker) resizeShell(execID string) error {
 
 // handleResizeShell resizes the given Docker process anytime the current terminal is resized.
 func (d Docker) handleResizeShell(execID string) error {
-	cw, ch, err := terminal.GetSize(int(os.Stdin.Fd()))
+	cw, ch, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	for range time.Tick(time.Millisecond * 100) {
-		w, h, err := terminal.GetSize(int(os.Stdin.Fd()))
+		w, h, err := term.GetSize(int(os.Stdin.Fd()))
 		if err != nil {
 			return tracerr.Wrap(err)
 		}
@@ -101,6 +101,9 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 		id,
 		execConfig,
 	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
 	execConfig = types.ExecConfig{
 		User:         user,
 		Tty:          !hasStdin,
@@ -151,11 +154,11 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 	d.resizeShell(resp.ID)
 	go d.handleResizeShell(resp.ID)
 	// make raw
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	// read/write connection to stdin and stdout
 	go func() { io.Copy(hresp.Conn, stdin) }()
 	io.Copy(os.Stdout, hresp.Reader)

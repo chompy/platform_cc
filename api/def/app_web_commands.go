@@ -24,7 +24,7 @@ type AppWebCommands struct {
 
 // SetDefaults sets the default values.
 func (d *AppWebCommands) SetDefaults() {
-	return
+
 }
 
 // Validate checks for errors.

@@ -114,9 +114,7 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 	out := make([]Route, 0)
 	// make copy of routes
 	copyRoutes := make([]Route, 0)
-	for _, route := range inRoutes {
-		copyRoutes = append(copyRoutes, route)
-	}
+	copyRoutes = append(copyRoutes, inRoutes...)
 	// convienence functions
 	isRouteHTTPS := func(path string) bool {
 		return strings.HasPrefix(path, "https://")

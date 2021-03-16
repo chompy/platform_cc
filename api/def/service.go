@@ -46,7 +46,6 @@ func (d *Service) SetDefaults() {
 	if d.Configuration["application_size"] == nil {
 		d.Configuration["application_size"] = 0
 	}
-	return
 }
 
 // Validate checks for errors.

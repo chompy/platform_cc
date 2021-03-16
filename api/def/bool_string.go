@@ -53,17 +53,17 @@ func (d BoolString) GetBool() bool {
 func (d *BoolString) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var val interface{}
 	unmarshal(&val)
-	switch val.(type) {
+	switch val := val.(type) {
 	case bool:
 		{
-			d.boolVal = val.(bool)
+			d.boolVal = val
 			d.stringVal = ""
 			break
 		}
 	case string:
 		{
 			d.boolVal = false
-			d.stringVal = val.(string)
+			d.stringVal = val
 			break
 		}
 	}

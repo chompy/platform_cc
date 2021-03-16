@@ -107,14 +107,14 @@ func Duration(msg string) func() {
 	start := time.Now()
 	if !Enable {
 		return func() {
-			dur := time.Now().Sub(start)
+			dur := time.Since(start)
 			LogInfo(msg + fmt.Sprintf(" (%dms).", dur.Milliseconds()))
 		}
 	}
 	levelMsg(msg)
 	IndentLevel++
 	done := func() {
-		dur := time.Now().Sub(start)
+		dur := time.Since(start)
 		levelMsg(
 			colorSuccess(fmt.Sprintf("Done (%dms).", dur.Milliseconds())),
 		)

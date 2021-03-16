@@ -197,7 +197,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 	if _, err := io.Copy(mWriter, hresp.Reader); err != nil {
 		return tracerr.Wrap(err)
 	}
-	output.LogDebug("Container exec finished.", string(buf.Bytes()))
+	output.LogDebug("Container exec finished.", buf.String())
 	return nil
 }
 

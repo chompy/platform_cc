@@ -46,9 +46,6 @@ var patchMap = map[string]string{
 	"memcached:1.4":   ensureDirPatch,
 }
 
-// wildcardMatchCharacter is the character to use as the wildcard character.
-const wildcardMatchCharacter = "*"
-
 // WildcardCompare tests if original string matches test string with wildcard.
 func wildcardCompare(original string, test string) bool {
 	test = regexp.QuoteMeta(test)

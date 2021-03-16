@@ -59,15 +59,3 @@ func (d Docker) deleteNetwork() error {
 	done()
 	return nil
 }
-
-// getNetworkHostIP gets the host IP address for the given project's network.
-func (d Docker) getNetworkHostIP() (string, error) {
-	net, err := d.client.NetworkInspect(
-		context.Background(),
-		dockerNetworkName,
-	)
-	if err != nil {
-		return "", tracerr.Wrap(err)
-	}
-	return net.IPAM.Config[0].Gateway, nil
-}

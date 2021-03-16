@@ -26,7 +26,6 @@ type RoutesSsi struct {
 func (d *RoutesSsi) SetDefaults() {
 	d.Enabled.DefaultValue = false
 	d.Enabled.SetDefaults()
-	return
 }
 
 // Validate checks for errors.

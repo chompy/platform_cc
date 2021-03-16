@@ -40,7 +40,6 @@ var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
 var serviceYamlFilenames = []string{".platform/services.yaml", ".platform/services.pcc.yaml"}
 
 const routesYamlPath = ".platform/routes.yaml"
-const servicesYamlPath = ".platform/services.yaml"
 const projectJSONFilename = ".platform_cc.json"
 const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 

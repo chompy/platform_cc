@@ -64,32 +64,30 @@ func (p *Project) GetPlatformApplication(d interface{}) string {
 	hooks := def.AppHooks{}
 	crons := map[string]*def.AppCron{}
 	dependencies := def.AppDependencies{}
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			defApp := d.(def.App)
-			disk = defApp.Disk
-			relationships = defApp.Relationships
-			mounts = defApp.Mounts
-			variables = defApp.Variables
-			name = defApp.Name
-			cType = defApp.Type
-			runtime = defApp.Runtime
-			web = defApp.Web
-			hooks = defApp.Hooks
-			crons = defApp.Crons
-			dependencies = defApp.Dependencies
+			disk = d.Disk
+			relationships = d.Relationships
+			mounts = d.Mounts
+			variables = d.Variables
+			name = d.Name
+			cType = d.Type
+			runtime = d.Runtime
+			web = d.Web
+			hooks = d.Hooks
+			crons = d.Crons
+			dependencies = d.Dependencies
 			break
 		}
 	case def.AppWorker:
 		{
-			defAppWorker := d.(def.AppWorker)
-			disk = defAppWorker.Disk
-			relationships = defAppWorker.Relationships
-			mounts = defAppWorker.Mounts
-			variables = defAppWorker.Variables
-			name = defAppWorker.Name
-			cType = defAppWorker.Type
+			disk = d.Disk
+			relationships = d.Relationships
+			mounts = d.Mounts
+			variables = d.Variables
+			name = d.Name
+			cType = d.Type
 			break
 		}
 	}
@@ -138,20 +136,20 @@ func (p *Project) GetPlatformRelationships(d interface{}) string {
 // GetPlatformEnvironmentVariables returns a map of all PLATFORM_ environment variables.
 func (p *Project) GetPlatformEnvironmentVariables(d interface{}) map[string]string {
 	name := ""
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			name = d.(def.App).Name
+			name = d.Name
 			break
 		}
 	case def.AppWorker:
 		{
-			name = d.(def.AppWorker).Name
+			name = d.Name
 			break
 		}
 	case def.Service:
 		{
-			name = d.(def.Service).Name
+			name = d.Name
 			break
 		}
 	}

@@ -68,8 +68,6 @@ func (d *AppMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	d.Source = "local"
 	d.SourcePath = sourcePath
 	mountStringStripPrefix := "shared:files"
-	if strings.HasPrefix(d.SourcePath, mountStringStripPrefix) {
-		d.SourcePath = d.SourcePath[len(mountStringStripPrefix):]
-	}
+	d.SourcePath = strings.TrimPrefix(d.SourcePath, mountStringStripPrefix)
 	return nil
 }

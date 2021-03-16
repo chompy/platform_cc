@@ -31,10 +31,10 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	// get name + build app json
 	name := ""
 	appJsons := make([]map[string]interface{}, 0)
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			name = d.(def.App).Name
+			name = d.Name
 			// ensure this app is the first item in application json list
 			appJsons = append(appJsons, p.buildConfigAppJSON(d))
 			// build rest of application json
@@ -48,14 +48,14 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		}
 	case def.AppWorker:
 		{
-			name = d.(def.AppWorker).Name
+			name = d.Name
 			// put worker in application json list
 			appJsons = append(appJsons, p.buildConfigAppJSON(d))
 			break
 		}
 	case def.Service:
 		{
-			name = d.(def.Service).Name
+			name = d.Name
 			break
 		}
 	}
@@ -126,11 +126,11 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 		},
 		"workers": 2,
 	}
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.Service:
 		{
 			out["hosts"] = map[string]interface{}{}
-			out["configuration"] = d.(def.Service).Configuration
+			out["configuration"] = d.Configuration
 			break
 		}
 	}
@@ -151,33 +151,33 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	appWeb := &def.AppWeb{}
 	dependencies := def.AppDependencies{}
 	build := def.AppBuild{}
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			name = d.(def.App).Name
+			name = d.Name
 			if p.HasFlag(EnableCron) {
-				crons = d.(def.App).Crons
+				crons = d.Crons
 			}
-			appType = d.(def.App).Type
-			hooks = d.(def.App).Hooks
-			disk = d.(def.App).Disk
-			mounts = d.(def.App).Mounts
-			runtime = d.(def.App).Runtime
-			appWebo := d.(def.App).Web
+			appType = d.Type
+			hooks = d.Hooks
+			disk = d.Disk
+			mounts = d.Mounts
+			runtime = d.Runtime
+			appWebo := d.Web
 			appWeb = &appWebo
-			dependencies = d.(def.App).Dependencies
+			dependencies = d.Dependencies
 			worker = nil
-			build = d.(def.App).Build
+			build = d.Build
 			break
 		}
 	case def.AppWorker:
 		{
-			name = d.(def.AppWorker).Name
-			appType = d.(def.AppWorker).Type
-			disk = d.(def.AppWorker).Disk
-			mounts = d.(def.AppWorker).Mounts
-			runtime = d.(def.AppWorker).Runtime
-			workero := d.(def.AppWorker)
+			name = d.Name
+			appType = d.Type
+			disk = d.Disk
+			mounts = d.Mounts
+			runtime = d.Runtime
+			workero := d
 			worker = &workero
 			appWeb = nil
 			break

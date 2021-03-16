@@ -24,7 +24,6 @@ type AppWorkersCommands struct {
 
 // SetDefaults sets the default values.
 func (d *AppWorkersCommands) SetDefaults() {
-	return
 }
 
 // Validate checks for errors.

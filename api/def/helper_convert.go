@@ -21,29 +21,29 @@ import "fmt"
 
 // InterfaceToString returns conversion of given interface to string.
 func InterfaceToString(v interface{}) string {
-	switch v.(type) {
+	switch v := v.(type) {
 	case string:
 		{
-			return v.(string)
+			return v
 		}
 	case int:
 		{
-			return fmt.Sprintf("%d", v.(int))
+			return fmt.Sprintf("%d", v)
 		}
 	case bool:
 		{
-			if v.(bool) {
+			if v {
 				return "true"
 			}
 			return ""
 		}
 	case float32:
 		{
-			return fmt.Sprintf("%f", v.(float32))
+			return fmt.Sprintf("%f", v)
 		}
 	case float64:
 		{
-			return fmt.Sprintf("%f", v.(float64))
+			return fmt.Sprintf("%f", v)
 		}
 	default:
 		{

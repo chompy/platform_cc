@@ -119,24 +119,27 @@ func (d App) Validate() []error {
 	}
 	for _, key := range []string{"env", "php"} {
 		val := d.Variables.GetSubMap(key)
-		if val != nil {
-			for sk, sv := range val {
-				switch sv.(type) {
-				case string, int, float32, float64, bool:
-					{
-						break
-					}
-				default:
-					{
-						o = append(o, NewValidateError(
-							fmt.Sprintf("app.variables.%s.%s", key, sk),
-							"should be a scalar",
-						))
-						break
-					}
+		if val == nil {
+			continue
+		}
+
+		for sk, sv := range val {
+			switch sv.(type) {
+			case string, int, float32, float64, bool:
+				{
+					break
+				}
+			default:
+				{
+					o = append(o, NewValidateError(
+						fmt.Sprintf("app.variables.%s.%s", key, sk),
+						"should be a scalar",
+					))
+					break
 				}
 			}
 		}
+
 	}
 	return o
 }

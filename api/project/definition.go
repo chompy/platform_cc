@@ -15,18 +15,18 @@ const symlinkMntPath = def.AppDir + "/.platform_cc_mnt"
 
 // GetDefinitionName returns the name of given definition.
 func (p *Project) GetDefinitionName(d interface{}) string {
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			return d.(def.App).Name
+			return d.Name
 		}
 	case def.AppWorker:
 		{
-			return d.(def.AppWorker).Name
+			return d.Name
 		}
 	case def.Service:
 		{
-			return d.(def.Service).Name
+			return d.Name
 		}
 	}
 	return ""
@@ -34,18 +34,18 @@ func (p *Project) GetDefinitionName(d interface{}) string {
 
 // GetDefinitionType returns the service type for the given definition.
 func (p *Project) GetDefinitionType(d interface{}) string {
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			return d.(def.App).Type
+			return d.Type
 		}
 	case def.AppWorker:
 		{
-			return d.(def.AppWorker).Type
+			return d.Type
 		}
 	case def.Service:
 		{
-			return d.(def.Service).Type
+			return d.Type
 		}
 	}
 	return ""
@@ -112,20 +112,20 @@ func (p *Project) GetDefinitionContainerType(d interface{}) container.ObjectCont
 // GetDefinitionVolumes returns list of Docker volumes for given definition.
 func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 	name := ""
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			name = d.(def.App).Name
+			name = d.Name
 			break
 		}
 	case def.AppWorker:
 		{
-			name = d.(def.AppWorker).Name
+			name = d.Name
 			break
 		}
 	case def.Service:
 		{
-			name = d.(def.Service).Name
+			name = d.Name
 			break
 		}
 	}
@@ -139,15 +139,15 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 // GetDefinitionBinds returns list of Docker binds for given definition.
 func (p *Project) GetDefinitionBinds(d interface{}) map[string]string {
 	path := ""
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			path = d.(def.App).Path
+			path = d.Path
 			break
 		}
 	case def.AppWorker:
 		{
-			path = d.(def.AppWorker).Path
+			path = d.Path
 			break
 		}
 	case def.Service:
@@ -166,15 +166,15 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 	envVars := p.GetPlatformEnvironmentVariables(d)
 	// get variables
 	var vars def.Variables
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			vars = d.(def.App).Variables
+			vars = d.Variables
 			break
 		}
 	case def.AppWorker:
 		{
-			vars = d.(def.AppWorker).Variables
+			vars = d.Variables
 			break
 		}
 	}
@@ -192,40 +192,40 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 // GetDefinitionVariables returns flattened variables for given definition.
 func (p *Project) GetDefinitionVariables(d interface{}) map[string]interface{} {
 	out := make(def.Variables)
-	out.Merge(p.globalConfig.Variables)
-	out.Merge(p.Variables)
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			out.Merge(d.(def.App).Variables)
+			out.Merge(d.Variables)
 			break
 		}
 	case def.AppWorker:
 		{
-			out.Merge(d.(def.AppWorker).Variables)
+			out.Merge(d.Variables)
 			break
 		}
 	}
+	out.Merge(p.globalConfig.Variables)
+	out.Merge(p.Variables)
 	return out
 }
 
 // GetDefinitionRelationships returns relationships for given definition.
 func (p *Project) GetDefinitionRelationships(d interface{}) map[string][]map[string]interface{} {
 	var rels map[string]string
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			rels = d.(def.App).Relationships
+			rels = d.Relationships
 			break
 		}
 	case def.AppWorker:
 		{
-			rels = d.(def.AppWorker).Relationships
+			rels = d.Relationships
 			break
 		}
 	case def.Service:
 		{
-			rels = d.(def.Service).Relationships
+			rels = d.Relationships
 			break
 		}
 	}
@@ -244,14 +244,14 @@ func (p *Project) GetDefinitionRelationships(d interface{}) map[string][]map[str
 
 // GetDefinitionEmptyRelationship returns a relationship template/empty for given definition.
 func GetDefinitionEmptyRelationship(d interface{}) map[string]interface{} {
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			return d.(def.App).GetEmptyRelationship()
+			return d.GetEmptyRelationship()
 		}
 	case def.Service:
 		{
-			return d.(def.Service).GetEmptyRelationship()
+			return d.GetEmptyRelationship()
 		}
 	}
 	return map[string]interface{}{}
@@ -285,10 +285,10 @@ func (p *Project) GetDefinitionBuildCommand(d interface{}) string {
 
 // GetDefinitionPostDeployCommand returns post deploy command for given definition.
 func (p *Project) GetDefinitionPostDeployCommand(d interface{}) string {
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			return d.(def.App).Hooks.PostDeploy
+			return d.Hooks.PostDeploy
 		}
 	}
 	return ""
@@ -297,14 +297,14 @@ func (p *Project) GetDefinitionPostDeployCommand(d interface{}) string {
 // GetDefinitionMountCommand returns command to setup mounts for given definition.
 func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 	var mounts map[string]*def.AppMount
-	switch d.(type) {
+	switch d := d.(type) {
 	case def.App:
 		{
-			mounts = d.(def.App).Mounts
+			mounts = d.Mounts
 		}
 	case def.AppWorker:
 		{
-			mounts = d.(def.AppWorker).Mounts
+			mounts = d.Mounts
 		}
 	}
 	if mounts != nil {
@@ -391,20 +391,20 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 func (p *Project) GetDefinitionStartOrder(defs []interface{}) ([]interface{}, error) {
 	getRelNames := func(d interface{}) []string {
 		rels := map[string]string{}
-		switch d.(type) {
+		switch d := d.(type) {
 		case def.App:
 			{
-				rels = d.(def.App).Relationships
+				rels = d.Relationships
 				break
 			}
 		case def.AppWorker:
 			{
-				rels = d.(def.AppWorker).Relationships
+				rels = d.Relationships
 				break
 			}
 		case def.Service:
 			{
-				rels = d.(def.Service).Relationships
+				rels = d.Relationships
 				break
 			}
 		}

@@ -27,7 +27,7 @@ type AppDependencies struct {
 
 // SetDefaults sets the default values.
 func (d *AppDependencies) SetDefaults() {
-	return
+
 }
 
 // Validate checks for errors.

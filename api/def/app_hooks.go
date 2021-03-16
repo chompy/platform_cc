@@ -26,7 +26,7 @@ type AppHooks struct {
 
 // SetDefaults sets the default values.
 func (d *AppHooks) SetDefaults() {
-	return
+
 }
 
 // Validate checks for errors.

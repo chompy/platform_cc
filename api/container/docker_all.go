@@ -53,6 +53,10 @@ func (d Docker) AllPurge() error {
 	if err := d.deleteImages(imgList); err != nil {
 		return tracerr.Wrap(err)
 	}
+	// delete network
+	if err := d.deleteNetwork(); err != nil {
+		return tracerr.Wrap(err)
+	}
 	return nil
 }
 

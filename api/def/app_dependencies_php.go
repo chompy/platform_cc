@@ -25,7 +25,7 @@ type AppDependenciesPhp struct {
 
 // SetDefaults sets the default values.
 func (d *AppDependenciesPhp) SetDefaults() {
-	return
+
 }
 
 // Validate checks for errors.

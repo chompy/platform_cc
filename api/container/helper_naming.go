@@ -26,14 +26,13 @@ import (
 
 // formatings
 const containerNamingPrefix = "pcc-%s-"
-const containerVolumeNameFormat = containerNamingPrefix + "v-%s"
 const containerNameFormat = containerNamingPrefix + "%s-%s"
 const containerNetworkNameFormat = containerNamingPrefix + "n"
 
 // regex
 var containerNameRegex = regexp.MustCompile("pcc-(.*)-(.*)-(.*)")
 var volumeSlotRegex = regexp.MustCompile("(.*)-([0-9]{1,})")
-var imageRegex = regexp.MustCompile("docker\\.registry\\.platform\\.sh\\/(.*)-(.*)")
+var imageRegex = regexp.MustCompile(`docker\.registry\.platform\.sh\/(.*)-(.*)`)
 
 // ObjectContainerType defines the type of container.
 type ObjectContainerType byte

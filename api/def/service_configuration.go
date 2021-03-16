@@ -32,19 +32,18 @@ func (d ServiceConfiguration) IsAuthenticationEnabled() bool {
 	case map[string]interface{}:
 		{
 			enabledConf := d["authentication"].(map[string]interface{})["enabled"]
-			switch enabledConf.(type) {
+			switch v := enabledConf.(type) {
 			case bool:
 				{
-					return enabledConf.(bool)
+					return v
 				}
 			case int:
 				{
-					return enabledConf.(int) != 0
+					return v != 0
 				}
 			case string:
 				{
-					enabledStr := enabledConf.(string)
-					return enabledStr != "" && enabledStr != "0" && enabledStr != "no" && enabledStr != "false" && enabledStr != "off"
+					return enabledConf != "" && enabledConf != "0" && enabledConf != "no" && enabledConf != "false" && enabledConf != "off"
 				}
 			}
 			return false

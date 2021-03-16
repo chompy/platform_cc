@@ -101,11 +101,11 @@ func (v Variables) Keys() []string {
 
 func (v *Variables) unmarshalRawMap(data map[string]interface{}) error {
 	for k, iv := range data {
-		switch iv.(type) {
+		switch iv := iv.(type) {
 		case map[string]interface{}:
 			{
 				// handle old multi-level map
-				for sk, sv := range iv.(map[string]interface{}) {
+				for sk, sv := range iv {
 					fullKey := fmt.Sprintf("%s:%s", k, sk)
 					if err := v.Set(fullKey, sv); err != nil {
 						return tracerr.Wrap(err)

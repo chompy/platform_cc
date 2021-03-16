@@ -194,7 +194,7 @@ func (c Container) HasBuild() bool {
 		output.LogError(err)
 		return false
 	}
-	return strings.TrimSpace(string(buf.Bytes())) == "YES"
+	return strings.TrimSpace(buf.String()) == "YES"
 }
 
 // Build runs the build hooks.

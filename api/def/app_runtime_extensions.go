@@ -25,7 +25,7 @@ type AppRuntimeExtension struct {
 
 // SetDefaults sets the default values.
 func (d *AppRuntimeExtension) SetDefaults() {
-	return
+
 }
 
 // Validate checks for errors.
