@@ -52,7 +52,7 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 			// TODO use relationship to determine port
 			port := 80
 			switch serv.GetTypeName() {
-			case "varnish":
+			case "varnish", "solr":
 				{
 					port = 8080
 					break
