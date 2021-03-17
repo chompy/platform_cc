@@ -19,6 +19,7 @@ package project
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -29,6 +30,7 @@ func (p *Project) VarSet(key string, value string) error {
 	output.Info(
 		fmt.Sprintf("Set var '%s.'", key),
 	)
+	value = strings.TrimSpace(value)
 	output.LogDebug(fmt.Sprintf("Set var '%s.'", key), value)
 	return tracerr.Wrap(p.Variables.Set(key, value))
 }

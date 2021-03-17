@@ -21,6 +21,14 @@ for i, row in enumerate(r):
     print("%s;%s" % (row[0], row[2]))
 END
 )
+GET_VARIABLES_JSON_CODE=$(cat <<END
+import sys
+import json
+vars = json.load(sys.stdin)
+for key in vars:
+    print("%s;%s" % (key, vars[key]))
+END
+)
 GET_DATABASE_CODE=$(cat <<END
 import sys
 import json
@@ -53,6 +61,9 @@ display_error() {
 get_variables() {
     echo "$1" | python3 -c "$GET_VARIABLES_CODE"
 }
+get_variables_json() {
+    echo "$1" | python3 -c "$GET_VARIABLES_JSON_CODE"
+}
 get_databases() {
     echo "$1" | python3 -c "$GET_DATABASE_CODE"
 }
@@ -82,6 +93,7 @@ fi
 # - retreive data
 echo "> Fetch data."
 PLATFORM_RELATIONSHIPS=`ssh $SSH_URL 'echo $PLATFORM_RELATIONSHIPS | base64 -d'`
+PLATFORM_VARIABLES=`ssh $SSH_URL 'echo $PLATFORM_VARIABLES | base64 -d'`
 CONFIG_JSON=$(${PCC_PATH} project:configjson)
 
 # - set variables
@@ -89,7 +101,8 @@ echo "> Set variables."
 if [ -f "$PLATFORM_BIN" ]; then
     PLATFORM_VAR_CSV=`platform variable:list --format csv`
     VAR_LIST=$(get_variables "$PLATFORM_VAR_CSV")
-    if [[ $VAR_LIST ]]; then
+    VAR_LIST_ENV=$(get_variables_json "$PLATFORM_VARIABLES")
+    if [[ $VAR_LIST || $VAR_LIST_ENV ]]; then
         while IFS= read -r var; do
             IFS=';' read -ra var_split <<< "$var"
             IFS=
@@ -101,6 +114,17 @@ if [ -f "$PLATFORM_BIN" ]; then
             fi
             echo "$val" | $PCC_PATH var:set "$key"
         done <<< "$VAR_LIST"
+        while IFS= read -r var; do
+            IFS=';' read -ra var_split <<< "$var"
+            IFS=
+            key="${var_split[0]}"
+            val="${var_split[1]}"
+            if [[ "$key" = "env:"* ]]; then
+                subkey=${key:4}
+                val=$(ssh -n $SSH_URL "echo $\"\$$subkey\"")
+            fi
+            echo "$val" | $PCC_PATH var:set "$key"
+        done <<< "$VAR_LIST_ENV"
     else
         echo "    No variables found"
     fi

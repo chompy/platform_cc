@@ -122,7 +122,6 @@ func (d App) Validate() []error {
 		if val == nil {
 			continue
 		}
-
 		for sk, sv := range val {
 			switch sv.(type) {
 			case string, int, float32, float64, bool:
@@ -139,7 +138,6 @@ func (d App) Validate() []error {
 				}
 			}
 		}
-
 	}
 	return o
 }
