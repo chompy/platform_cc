@@ -47,7 +47,7 @@ func TestGenerateNginx(t *testing.T) {
 		t,
 	)
 	assertEqual(
-		strings.Contains(stringConf, "server_name contextualcode-com.localhost."),
+		strings.Contains(stringConf, "server_name contextualcode-com.platform.cc"),
 		true,
 		"expected contextualcode-com route",
 		t,
