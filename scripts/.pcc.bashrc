@@ -2,6 +2,6 @@
 _platformcc_completions()
 {
     cmd=$(printf " %s" "${COMP_WORDS[@]:1}")
-    COMPREPLY=($(pcc _ac $cmd))
+    COMPREPLY+=($(pcc _ac "$cmd"))
 }
 complete -F _platformcc_completions pcc

@@ -206,37 +206,6 @@ var ListCmd = &cobra.Command{
 	},
 }
 
-// AutoCompleteListCmd list every possible command for Bash auto-complete.
-var AutoCompleteListCmd = &cobra.Command{
-	Hidden: true,
-	Use:    "_ac",
-	Run: func(cmd *cobra.Command, args []string) {
-		output.Enable = false
-		output.Logging = false
-		argString := ""
-		for _, arg := range args {
-			arg = strings.Trim(strings.TrimSpace(arg), ":")
-			if arg == "" {
-				continue
-			}
-			argString += arg + ":"
-		}
-		argString = strings.TrimSpace(argString)
-		argString = strings.Trim(argString, ":")
-		data := flatCommandListFilter(RootCmd, argString)
-		out := make([]string, 0)
-		for _, fcmd := range data {
-			out = append(out, fcmd.Command.Name())
-		}
-		if len(out) == 1 && out[0] == args[len(args)-1] {
-			return
-		}
-
-		output.WriteStdout(strings.Join(out, " "))
-	},
-}
-
 func init() {
 	RootCmd.AddCommand(ListCmd)
-	RootCmd.AddCommand(AutoCompleteListCmd)
 }
