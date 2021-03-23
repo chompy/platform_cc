@@ -55,7 +55,7 @@ func TestServices(t *testing.T) {
 				)
 				break
 			}
-		case "rediscache":
+		case "redis-cache":
 			{
 				assertEqual(
 					service.Type,
@@ -71,7 +71,7 @@ func TestServices(t *testing.T) {
 				)
 				break
 			}
-		case "redissession":
+		case "redis-session":
 			{
 				assertEqual(
 					service.Type,
@@ -87,7 +87,7 @@ func TestServices(t *testing.T) {
 				)
 				break
 			}
-		case "solrsearch":
+		case "solr-search":
 			{
 				assertEqual(
 					service.Type,

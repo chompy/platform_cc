@@ -10,14 +10,14 @@ mysqldb:
                 privileges:
                     main: admin
 
-rediscache:
+redis-cache:
     type: 'redis:3.2'
 
-redissession:
+redis-session:
     type: redis-persistent:3.2
     disk: 1024
 
-solrsearch:
+solr-search:
     type: solr:6.6
     disk: 4096
     size: L

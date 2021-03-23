@@ -30,7 +30,7 @@ const containerNameFormat = containerNamingPrefix + "%s-%s"
 const containerNetworkNameFormat = containerNamingPrefix + "n"
 
 // regex
-var containerNameRegex = regexp.MustCompile("pcc-(.*)-(.*)-(.*)")
+var containerNameRegex = regexp.MustCompile("pcc-([a-z0-9]*)-([a-z])-(.*)")
 var volumeSlotRegex = regexp.MustCompile("(.*)-([0-9]{1,})")
 var imageRegex = regexp.MustCompile(`docker\.registry\.platform\.sh\/(.*)-(.*)`)
 
@@ -88,7 +88,7 @@ func containerConfigFromName(name string) Config {
 	return Config{
 		ProjectID:  r[1],
 		ObjectType: ObjectContainerType(r[2][0]),
-		ObjectName: r[3],
+		ObjectName: strings.Join(r[3:], "-"),
 	}
 }
 

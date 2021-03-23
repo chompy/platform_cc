@@ -220,6 +220,9 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 	slot := 1
 	for _, m := range data.Mounts {
 		if m.Type == mount.TypeVolume {
+			if volumeIsGlobal(m.Name) {
+				continue
+			}
 			slot = volumeGetSlot(m.Name)
 			break
 		}
