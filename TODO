@@ -7,10 +7,6 @@
 - MAINTAINENCE
     - Look for all TODO comments and work on them.
 
-- BUGS
-    - Auto complete doesn't allow auto complete of file paths i.e. `mysql:sql < /path/to/<tab>`
-
-
 - BACKBURNER
     - Move tests out of dedicated test package in to their related packages for code coverage.
     - Router catch redirect loops.
