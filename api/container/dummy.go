@@ -60,8 +60,6 @@ func (d Dummy) hasContainer(id string) bool {
 }
 
 func (d Dummy) hasVolume(id string) bool {
-	d.Tracker.Sync.Lock()
-	defer d.Tracker.Sync.Unlock()
 	for _, v := range d.Tracker.Volumes {
 		if v == id {
 			return true
@@ -76,15 +74,8 @@ func (d Dummy) ContainerStart(c Config) error {
 	defer d.Tracker.Sync.Unlock()
 	d.Tracker.Containers = append(d.Tracker.Containers, c.GetContainerName())
 	for k := range c.Volumes {
-		hasVol := false
 		volName := volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot)
-		for kk := range d.Tracker.Volumes {
-			if d.Tracker.Volumes[kk] == volName {
-				hasVol = true
-				break
-			}
-		}
-		if !hasVol {
+		if !d.hasVolume(volName) {
 			d.Tracker.Volumes = append(
 				d.Tracker.Volumes,
 				volName,

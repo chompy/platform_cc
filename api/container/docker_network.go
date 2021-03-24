@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -53,7 +52,7 @@ func (d Docker) deleteNetwork() error {
 		context.Background(),
 		dockerNetworkName,
 	)
-	if !client.IsErrNetworkNotFound(err) {
+	if !strings.Contains(err.Error(), "not found") {
 		return tracerr.Wrap(err)
 	}
 	done()
