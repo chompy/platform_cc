@@ -129,7 +129,7 @@ const routeListHTML = `
 <body>
     <div id="container">
         <h1>Routes</h1>
-        <div id="inject"></div>
+        <div id="inject">Loading...</div>
     </div>
     <script type="text/javascript">
         function fetchFile(name, callback) {
@@ -181,14 +181,17 @@ const routeListHTML = `
             e.appendChild(t);
             document.getElementById("inject").appendChild(e);
         }
-
         fetchFile("projects.txt", function(data) {
             data = data.split("\n");
             let processed = [];
+            document.getElementById("inject").innerHTML = "No routes found.";
             for (let i in data) {
                 let fileName = data[i];
                 if (!fileName || processed.indexOf(fileName) > -1) {
                     continue;
+                }
+                if (processed.length == 0) {
+                    document.getElementById("inject").innerHTML = "";
                 }
                 fetchFile(fileName + ".json", function(data) {
                     addProject(fileName, JSON.parse(data));

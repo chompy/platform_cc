@@ -167,7 +167,7 @@ var containerLogsCmd = &cobra.Command{
 func init() {
 	containerShellCmd.PersistentFlags().Bool("root", false, "shell as root")
 	containerLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
-	containerCmd.PersistentFlags().StringP("service", "s", "", "name of service/application")
+	containerCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
 	containerCmd.AddCommand(containerAppDeployCmd)
 	containerCmd.AddCommand(containerAppPostDeployCmd)
 	containerCmd.AddCommand(containerShellCmd)

@@ -113,6 +113,15 @@ func Start() error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
+	if err := ch.ContainerCommand(
+		containerConf.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", "touch /www/projects.txt"},
+		nil,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+
 	done()
 	return nil
 }
@@ -222,11 +231,11 @@ func DeleteProjectRoutes(p *project.Project) error {
 	if err := Reload(); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// delete json file
+	// delete json file and remove project id from projects.txt
 	if err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
-		[]string{"rm", "-rf", fmt.Sprintf("/www/%s.json", p.ID)},
+		[]string{"sh", "-c", fmt.Sprintf("rm -rf /www/%s.json && sed -i \"/%s/d\" /www/projects.txt", p.ID, p.ID)},
 		nil,
 	); err != nil {
 		if !strings.Contains(err.Error(), "No such container") {
