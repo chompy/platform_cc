@@ -27,7 +27,7 @@ import (
 )
 
 var containerCmd = &cobra.Command{
-	Use:     "container [-n name]",
+	Use:     "container [-s service]",
 	Aliases: []string{"cont", "c", "application", "app"},
 	Short:   "Manage individual containers for applications, services, and workers.",
 }
@@ -166,8 +166,8 @@ var containerLogsCmd = &cobra.Command{
 
 func init() {
 	containerShellCmd.PersistentFlags().Bool("root", false, "shell as root")
-	containerCmd.PersistentFlags().StringP("name", "n", "", "name of application")
 	containerLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
+	containerCmd.PersistentFlags().StringP("service", "s", "", "name of service/application")
 	containerCmd.AddCommand(containerAppDeployCmd)
 	containerCmd.AddCommand(containerAppPostDeployCmd)
 	containerCmd.AddCommand(containerShellCmd)

@@ -138,13 +138,8 @@ func listServicesFilter(name string) []string {
 
 // handleServiceFlag outputs list of available services based on given command's flag.
 func handleServiceFlag(cmd *cobra.Command, args []string) {
-	hasFlag := false
-	fv := ""
 	cmd.ParseFlags(args)
-	hasFlag, fv = getFlagValue(cmd, "name", args)
-	if !hasFlag {
-		hasFlag, fv = getFlagValue(cmd, "service", args)
-	}
+	hasFlag, fv := getFlagValue(cmd, "service", args)
 	if hasFlag {
 		output.WriteStdout(strings.Join(listServicesFilter(fv), " "))
 	}
@@ -187,10 +182,8 @@ func listDatabasesFilter(name string) []string {
 
 // handleDatabaseFlag outputs list of databases based on database flag.
 func handleDatabaseFlag(cmd *cobra.Command, args []string) {
-	hasFlag := false
-	fv := ""
 	cmd.ParseFlags(args)
-	hasFlag, fv = getFlagValue(cmd, "database", args)
+	hasFlag, fv := getFlagValue(cmd, "database", args)
 	if hasFlag {
 		output.WriteStdout(strings.Join(listDatabasesFilter(fv), " "))
 	}
@@ -234,18 +227,7 @@ var AutoCompleteListCmd = &cobra.Command{
 				return
 			} else if findCmd.Parent() == mariadbCmd {
 				handleServiceFlag(mariadbCmd, args)
-				switch findCmd {
-				case mariadbShellCmd:
-					{
-						handleDatabaseFlag(mariadbShellCmd, args)
-						break
-					}
-				case mariadbDumpCmd:
-					{
-						output.WriteStdout(strings.Join(listDatabasesFilter(args[len(args)-1]), " "))
-						break
-					}
-				}
+				handleDatabaseFlag(mariadbCmd, args)
 				return
 			}
 		}

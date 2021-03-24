@@ -26,23 +26,24 @@ import (
 var mariadbTypeNames = []string{"mysql", "mariadb"}
 
 var mariadbCmd = &cobra.Command{
-	Use:     "mariadb [-n name]",
+	Use:     "mariadb [-s service] [-d database]",
 	Aliases: []string{"mysql", "db"},
 	Short:   "Manage MariaDB/MySQL.",
 }
 
 var mariadbDumpCmd = &cobra.Command{
-	Use:   "dump database",
+	Use:   "dump",
 	Short: "Make a database dump.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			handleError(fmt.Errorf("missing database argument"))
-		}
 		proj, err := getProject(true)
 		handleError(err)
 		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		handleError(err)
 		c := proj.NewContainer(service)
+		db := mariadbCmd.PersistentFlags().Lookup("database").Value.String()
+		if db == "" {
+			handleError(fmt.Errorf("must provide a database to dump"))
+		}
 		handleError(c.Shell(
 			"root",
 			[]string{
@@ -50,7 +51,7 @@ var mariadbDumpCmd = &cobra.Command{
 				"-c",
 				fmt.Sprintf(
 					"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
-					args[0],
+					db,
 				),
 			},
 		))
@@ -58,7 +59,7 @@ var mariadbDumpCmd = &cobra.Command{
 }
 
 var mariadbShellCmd = &cobra.Command{
-	Use:     "shell [-d database]",
+	Use:     "shell",
 	Aliases: []string{"sh", "sql"},
 	Short:   "Shell in to database.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -67,7 +68,7 @@ var mariadbShellCmd = &cobra.Command{
 		service, err := getService(mariadbCmd, proj, mariadbTypeNames)
 		handleError(err)
 		shellCmd := "mysql --password=$(cat /mnt/data/.mysql-password)"
-		db := cmd.PersistentFlags().Lookup("database").Value.String()
+		db := mariadbCmd.PersistentFlags().Lookup("database").Value.String()
 		if db != "" {
 			shellCmd += fmt.Sprintf(" -D%s", db)
 		}
@@ -82,7 +83,7 @@ var mariadbShellCmd = &cobra.Command{
 }
 
 func init() {
-	mariadbShellCmd.PersistentFlags().StringP("database", "d", "", "name of database")
+	mariadbCmd.PersistentFlags().StringP("database", "d", "", "name of database")
 	mariadbCmd.PersistentFlags().StringP("service", "s", "", "name of service")
 	mariadbCmd.AddCommand(mariadbDumpCmd)
 	mariadbCmd.AddCommand(mariadbShellCmd)

@@ -54,7 +54,7 @@ func getProject(parseYaml bool) (*project.Project, error) {
 
 // getDef returns the definition for the current command.
 func getDef(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
-	name := cmd.PersistentFlags().Lookup("name").Value.String()
+	name := cmd.PersistentFlags().Lookup("service").Value.String()
 	if name == "" {
 		name = proj.Apps[0].Name
 	}
