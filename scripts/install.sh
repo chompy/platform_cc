@@ -4,7 +4,7 @@ realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
-BASE_URL="https://platform-cc-releases.s3.amazonaws.com"
+BASE_URL="https://platform.cc/releases"
 VERSION_URL="$BASE_URL/version"
 DL_SCRIPTS=(
     "$BASE_URL/send_log.sh|pcc_send_log|send-log"
@@ -58,7 +58,7 @@ fi
 # fetch current version
 if [ -z "$VERSION" ]; then
     printf "> Fetch current version number..."
-    VERSION=`curl -s --fail $VERSION_URL`
+    VERSION=`curl -s -L --fail $VERSION_URL`
     if [ -z "$VERSION" ]; then
         progress_error "Could not determine latest version."
     fi
@@ -71,7 +71,7 @@ for s in ${DL_SCRIPTS[@]}; do
     IFS='|' read -ra DL_SCRIPT <<< "$s"
     printf "> Fetch ${DL_SCRIPT[2]} script..."
     mkdir -p $INSTALL_PATH
-    curl -s --fail -o "$INSTALL_PATH/${DL_SCRIPT[1]}" "${DL_SCRIPT[0]}"
+    curl -s -L --fail -o "$INSTALL_PATH/${DL_SCRIPT[1]}" "${DL_SCRIPT[0]}"
     if [ "$?" != "0" ]; then
         progress_error "Could not download ${DL_SCRIPT[2]} script."
     fi
@@ -82,7 +82,7 @@ done
 # bash completion
 if [ -f "$BASH_RC_PATH" ]; then
 printf "> Install Bash completion..."
-curl -s --fail -o "$PCC_RC_PATH" "$BASE_URL/.pcc.bashrc"
+curl -s -L --fail -o "$PCC_RC_PATH" "$BASE_URL/.pcc.bashrc"
 if [ "$?" != "0" ]; then
     progress_error "Could not download .pcc.bashrc."
 fi
@@ -104,7 +104,7 @@ fi
 # create local install
 printf "> Download version \e[36m$VERSION\e[0m..."
 rm -f $INSTALL_PATH/$PCC_BIN_NAME
-curl -s --fail -o $INSTALL_PATH/$PCC_BIN_NAME $BASE_URL
+curl -s -L --fail -o $INSTALL_PATH/$PCC_BIN_NAME $BASE_URL
 if [ "$?" != "0" ]; then
     progress_error "Could not download version \e[36m$VERSION\e[0m."
 fi

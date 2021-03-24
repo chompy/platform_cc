@@ -13,7 +13,7 @@ Requirements / Installation
 
 Run the following in a Bash shell...
 ```
-curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin
+curl -L -s https://platform.cc/releases/install.sh | bash /dev/stdin
 ```
 
 After that use the `pcc` command to run Platform.CC.
@@ -22,7 +22,7 @@ After that use the `pcc` command to run Platform.CC.
 
 You can also install the latest development build with...
 ```
-curl -s https://platform-cc-releases.s3.amazonaws.com/install.sh | bash /dev/stdin -d
+curl -L -s https://platform.cc/releases/install.sh | bash /dev/stdin -d
 ```
 
 
