@@ -124,36 +124,6 @@ func flatCommandList(cmd *cobra.Command) []flatCommand {
 	return out
 }
 
-func flatCommandListFilter(cmd *cobra.Command, name string) []flatCommand {
-	if !cmd.HasSubCommands() {
-		return []flatCommand{}
-	}
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return flatCommandList(cmd)
-	}
-	args := strings.Split(name, ":")
-	for _, scmd := range cmd.Commands() {
-		fc := flatCommand{Command: scmd}
-		if !scmd.HasSubCommands() || !fc.IsMatch(args[0]) {
-			continue
-		}
-		return flatCommandListFilter(scmd, strings.Join(args[1:], ":"))
-	}
-	if len(args) > 1 {
-		return []flatCommand{}
-	}
-	out := make([]flatCommand, 0)
-	for _, scmd := range cmd.Commands() {
-		fc := flatCommand{Command: scmd}
-		if !fc.PrefixMatch(args[0]) {
-			continue
-		}
-		out = append(out, fc)
-	}
-	return out
-}
-
 // displayCommandList prints a list of commands to the terminal.
 func displayCommandList(cmd *cobra.Command) {
 	cmdList := flatCommandList(cmd)

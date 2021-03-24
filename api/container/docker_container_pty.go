@@ -55,20 +55,32 @@ func (d Docker) handleResizeShell(execID string) error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	for range time.Tick(time.Millisecond * 100) {
-		w, h, err := term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			return tracerr.Wrap(err)
-		}
-		if cw != w || ch != h {
-			if err := d.resizeShell(execID); err != nil {
-				return tracerr.Wrap(err)
+	ticker := time.NewTicker(time.Millisecond * 100)
+	defer ticker.Stop()
+	done := make(chan bool)
+	for {
+		select {
+		case <-done:
+			{
+				return nil
 			}
-			cw = w
-			ch = h
+		case <-ticker.C:
+			{
+				w, h, err := term.GetSize(int(os.Stdin.Fd()))
+				if err != nil {
+					return tracerr.Wrap(err)
+				}
+				if cw != w || ch != h {
+					if err := d.resizeShell(execID); err != nil {
+						return tracerr.Wrap(err)
+					}
+					cw = w
+					ch = h
+				}
+			}
 		}
 	}
-	return nil
+
 }
 
 // ContainerShell creates an interactive shell in given container.
