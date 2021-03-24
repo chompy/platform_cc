@@ -80,7 +80,6 @@ func (d Docker) handleResizeShell(execID string) error {
 			}
 		}
 	}
-
 }
 
 // ContainerShell creates an interactive shell in given container.

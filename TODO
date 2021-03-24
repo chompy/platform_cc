@@ -1,7 +1,6 @@
 - QOL
     - app:copy command.
     - routes.pcc.yaml.
-    - Create database command that works with services beyond MySQL/MariaDB.
 
 - MAINTAINENCE
     - Look for all TODO comments and work on them.

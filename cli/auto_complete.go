@@ -225,9 +225,9 @@ var AutoCompleteListCmd = &cobra.Command{
 			if findCmd.Parent() == containerCmd {
 				handleServiceFlag(containerCmd, args)
 				return
-			} else if findCmd.Parent() == mariadbCmd {
-				handleServiceFlag(mariadbCmd, args)
-				handleDatabaseFlag(mariadbCmd, args)
+			} else if findCmd.Parent() == databaseCmd {
+				handleServiceFlag(databaseCmd, args)
+				handleDatabaseFlag(databaseCmd, args)
 				return
 			}
 		}
