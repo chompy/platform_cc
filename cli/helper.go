@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -145,7 +145,7 @@ func drawTable(head []string, data [][]string) {
 		output.WriteStdout("=== NO DATA ===\n")
 		return
 	}
-	w, _, _ := terminal.GetSize(int(os.Stdin.Fd()))
+	w, _, _ := term.GetSize(int(os.Stdin.Fd()))
 	if w == 0 {
 		w = 256
 	}

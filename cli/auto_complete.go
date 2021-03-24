@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.com/contextualcode/platform_cc/api/output"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
 // listCommandAliases returns a list of every possible command combination with aliases.
@@ -44,6 +45,7 @@ func listCommandAliases(cmd *cobra.Command) []string {
 	return out
 }
 
+// filterListCommandAliases returns a list of every possible command combination with given filter.
 func filterListCommandAliases(cmd *cobra.Command, filter string) []string {
 	allCommands := listCommandAliases(cmd)
 	filterArgSplit := strings.Split(filter, ":")
@@ -75,6 +77,125 @@ func filterListCommandAliases(cmd *cobra.Command, filter string) []string {
 	return out
 }
 
+// listServices returns list of all service names with all possible filter prefixes.
+func listServices() []string {
+	out := make([]string, 0)
+	p, err := getProject(true)
+	if err != nil {
+		return []string{}
+	}
+	for _, d := range p.Services {
+		out = append(out, d.Name)
+		for _, prefix := range servicePrefix {
+			out = append(out, prefix+d.Name)
+		}
+	}
+	for _, d := range p.Apps {
+		out = append(out, d.Name)
+		for _, prefix := range appPrefix {
+			out = append(out, prefix+d.Name)
+		}
+		if p.HasFlag(project.EnableWorkers) {
+			for _, w := range d.Workers {
+				out = append(out, d.Name)
+				for _, prefix := range workerPrefix {
+					out = append(out, prefix+w.Name)
+				}
+			}
+		}
+	}
+	return out
+}
+
+func getFlagValue(cmd *cobra.Command, name string, args []string) (bool, string) {
+	cmd.ParseFlags(args)
+	flag := cmd.Flag(name)
+	if flag == nil {
+		return false, ""
+	}
+	if flag.Value.String() != "" {
+		return true, flag.Value.String()
+	}
+	if args[len(args)-1] == "-"+flag.Shorthand || args[len(args)-1] == "--"+flag.Name {
+		return true, ""
+	}
+	return false, ""
+}
+
+// listServicesFilter returns list of services filtered by given value.
+func listServicesFilter(name string) []string {
+	allServices := listServices()
+	out := make([]string, 0)
+	for _, service := range allServices {
+		if name == service {
+			return []string{}
+		} else if strings.HasPrefix(service, name) {
+			out = append(out, service)
+		}
+	}
+	return out
+}
+
+// handleServiceFlag outputs list of available services based on given command's flag.
+func handleServiceFlag(cmd *cobra.Command, args []string) {
+	hasFlag := false
+	fv := ""
+	cmd.ParseFlags(args)
+	hasFlag, fv = getFlagValue(cmd, "name", args)
+	if !hasFlag {
+		hasFlag, fv = getFlagValue(cmd, "service", args)
+	}
+	if hasFlag {
+		output.WriteStdout(strings.Join(listServicesFilter(fv), " "))
+	}
+}
+
+// listDatabases returns list of all mysql databases.
+func listDatabases() []string {
+	p, err := getProject(true)
+	if err != nil {
+		return []string{}
+	}
+	out := make([]string, 0)
+	for _, d := range p.Services {
+		switch d.GetTypeName() {
+		case "mysql", "mariadb":
+			{
+				for _, name := range d.Configuration["schemas"].([]interface{}) {
+					out = append(out, name.(string))
+				}
+				break
+			}
+		}
+	}
+	return out
+}
+
+// listDatabasesFilter returns list of databases filtered by given value.
+func listDatabasesFilter(name string) []string {
+	allDatabases := listDatabases()
+	out := make([]string, 0)
+	for _, database := range allDatabases {
+		if database == name {
+			return []string{}
+		} else if strings.HasPrefix(database, name) {
+			out = append(out, database)
+		}
+	}
+	return out
+}
+
+// handleDatabaseFlag outputs list of databases based on database flag.
+func handleDatabaseFlag(cmd *cobra.Command, args []string) {
+	hasFlag := false
+	fv := ""
+	cmd.ParseFlags(args)
+	hasFlag, fv = getFlagValue(cmd, "database", args)
+	if hasFlag {
+		output.WriteStdout(strings.Join(listDatabasesFilter(fv), " "))
+	}
+}
+
 // AutoCompleteListCmd list every possible command for Bash auto-complete.
 var AutoCompleteListCmd = &cobra.Command{
 	Hidden: true,
@@ -92,10 +213,41 @@ var AutoCompleteListCmd = &cobra.Command{
 			argStr = strings.TrimSuffix(argStr, ":")
 			args = strings.Split(argStr, " ")
 		}
-		// only perform command auto complete if arg count is one or less
 		if len(args) <= 1 {
-			out := filterListCommandAliases(RootCmd, args[0])
+			// provide list of matching commands when a partial or no command is entered
+			argStr := ""
+			if len(args) > 0 {
+				argStr = args[0]
+			}
+			out := filterListCommandAliases(RootCmd, argStr)
 			output.WriteStdout(strings.Join(out, " "))
+		} else if len(args) > 1 {
+			// otherwise provide auto complete for command flags
+			// locate the command entered
+			findCmd, _, err := RootCmd.Find(strings.Split(args[0], ":"))
+			if err != nil {
+				return
+			}
+			// display list of services to container commands
+			if findCmd.Parent() == containerCmd {
+				handleServiceFlag(containerCmd, args)
+				return
+			} else if findCmd.Parent() == mariadbCmd {
+				handleServiceFlag(mariadbCmd, args)
+				switch findCmd {
+				case mariadbShellCmd:
+					{
+						handleDatabaseFlag(mariadbShellCmd, args)
+						break
+					}
+				case mariadbDumpCmd:
+					{
+						output.WriteStdout(strings.Join(listDatabasesFilter(args[len(args)-1]), " "))
+						break
+					}
+				}
+				return
+			}
 		}
 	},
 }

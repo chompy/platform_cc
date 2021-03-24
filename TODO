@@ -1,13 +1,13 @@
 - QOL
-    - Add service names and database names to autocomplete.
     - app:copy command.
     - routes.pcc.yaml.
-    - Smarter auto complete
+    - Create database command that works with services beyond MySQL/MariaDB.
 
 - MAINTAINENCE
     - Look for all TODO comments and work on them.
 
 - BACKBURNER
+    - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)
     - Move tests out of dedicated test package in to their related packages for code coverage.
     - Router catch redirect loops.
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.

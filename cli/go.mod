@@ -21,6 +21,5 @@ require (
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/project v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/router v0.0.1
-	gitlab.com/contextualcode/platform_cc/cmd v0.0.0-20210303212337-fc25da2c0f60 // indirect
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
 )
