@@ -74,7 +74,7 @@ var containerAppPostDeployCmd = &cobra.Command{
 }
 
 var containerShellCmd = &cobra.Command{
-	Use:     "shell [--root] [command]",
+	Use:     "shell [--root] command",
 	Aliases: []string{"sh"},
 	Short:   "Shell in to a container.",
 	Run: func(cmd *cobra.Command, args []string) {

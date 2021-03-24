@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cli
 
 import (
+	"sort"
 	"strings"
 
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -25,143 +26,78 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const listDescSpacing = 42
 const termColorCommand = 32
 const termColorTopLevelCommand = 94
 const termColorCommandAlias = 35
 
-type flatCommand struct {
-	Command *cobra.Command
-	Level   int
-}
-
-func (f flatCommand) Prefix() []string {
-	cmdItt := f.Command
-	prefix := make([]string, 0)
-	for {
-		cmdItt = cmdItt.Parent()
-		if !cmdItt.HasParent() {
-			break
-		}
-		prefix = append(prefix, cmdItt.Name())
-	}
-	return prefix
-}
-
-func (f flatCommand) ParentCommand() *cobra.Command {
-	cmdItt := f.Command
-	outCmd := cmdItt
-	for {
-		cmdItt = cmdItt.Parent()
-		if !cmdItt.HasParent() {
-			break
-		}
-		outCmd = cmdItt
-	}
-	return outCmd
-}
-
-func (f flatCommand) IsMatch(name string) bool {
-	if name == f.Command.Name() {
-		return true
-	}
-	for _, alias := range f.Command.Aliases {
-		if alias == name {
-			return true
-		}
-	}
-	return false
-}
-
-func (f flatCommand) PrefixMatch(prefix string) bool {
-	if strings.HasPrefix(f.Command.Name(), prefix) {
-		return true
-	}
-	for _, alias := range f.Command.Aliases {
-		if strings.HasPrefix(alias, prefix) {
-			return true
-		}
-	}
-	return false
-}
-
-// flatCommandList returns the entire command tree flattened in to a single list.
-func flatCommandList(cmd *cobra.Command) []flatCommand {
-	out := make([]flatCommand, 0)
-	var ittListCmd func(cmd *cobra.Command, level int)
-	ittListCmd = func(cmd *cobra.Command, level int) {
-		if cmd.Hidden {
-			return
-		}
-		if cmd.HasSubCommands() {
-			for _, scmd := range cmd.Commands() {
-				ittListCmd(scmd, level+1)
-			}
-			return
-		}
-		if level > 1 {
-			out = append(
-				out,
-				flatCommand{
-					Command: cmd,
-					Level:   level,
-				},
-			)
-		}
-	}
-	for _, scmd := range cmd.Commands() {
-		if scmd.HasSubCommands() || scmd.Hidden {
+// listCommands returns a list of every command.
+func listCommands(cmd *cobra.Command) []string {
+	out := make([]string, 0)
+	for _, child := range cmd.Commands() {
+		if child.Hidden {
 			continue
 		}
-		out = append(
-			out,
-			flatCommand{
-				Command: scmd,
-				Level:   2,
-			},
-		)
+		if !child.HasSubCommands() {
+			out = append(out, child.Name())
+			continue
+		}
+		for _, childChildCmd := range listCommands(child) {
+			out = append(out, child.Name()+":"+childChildCmd)
+		}
 	}
-	ittListCmd(cmd, 0)
+	sort.Strings(out)
 	return out
 }
 
 // displayCommandList prints a list of commands to the terminal.
 func displayCommandList(cmd *cobra.Command) {
-	cmdList := flatCommandList(cmd)
+	cmdList := listCommands(cmd)
 	topLevelCmdName := ""
-	for _, flatCmd := range cmdList {
-		prevTopLevelCmdName := topLevelCmdName
-		tabLength := 42
-		topCmd := flatCmd.ParentCommand()
-		topLevelCmdName = topCmd.Name()
-		topLevelAliases := topCmd.Aliases
-		// display top level command with aliases
-		if prevTopLevelCmdName != topLevelCmdName && flatCmd.Command != topCmd {
+	// helper function to write command details to term
+	printCommand := func(name string) {
+		currentCmd, _, err := cmd.Find(strings.Split(name, ":"))
+		if err != nil {
+			return
+		}
+		tabLength := listDescSpacing
+		tabLength -= len(name)
+		output.WriteStdout(
+			strings.Repeat(" ", 2) +
+				output.Color(name, termColorCommand) +
+				strings.Repeat(" ", tabLength) + currentCmd.Short + "\n",
+		)
+	}
+	// top level commands
+	for _, name := range cmdList {
+		if !strings.Contains(name, ":") {
+			printCommand(name)
+		}
+	}
+	// child commands
+	for _, name := range cmdList {
+		if !strings.Contains(name, ":") {
+			continue
+		}
+		// display top level command to categorize sub commands
+		currentTopLevelCmd := strings.Split(name, ":")[0]
+		if currentTopLevelCmd != topLevelCmdName {
+			topLevelCmdName = currentTopLevelCmd
+			topLevelCmd, _, err := cmd.Find(strings.Split(topLevelCmdName, ":"))
+			if err != nil {
+				continue
+			}
 			output.WriteStdout(
 				output.Color(topLevelCmdName, termColorTopLevelCommand),
 			)
-			if len(topLevelAliases) > 0 {
+			if len(topLevelCmd.Aliases) > 0 {
 				output.WriteStdout(output.Color(
-					" ["+strings.Join(topLevelAliases, ",")+"]", termColorCommandAlias,
+					" ["+strings.Join(topLevelCmd.Aliases, ",")+"]", termColorCommandAlias,
 				))
 			}
 			output.WriteStdout("\n")
 		}
-		// tab over sub commands
-		if flatCmd.Level > 1 {
-			tabLength -= 2
-			output.WriteStdout("  ")
-		}
-		// display sub command name
-		printName := strings.Join(flatCmd.Prefix(), ":")
-		if printName != "" {
-			printName += ":"
-		}
-		printName += flatCmd.Command.Name()
-		tabLength -= len(printName)
-		output.WriteStdout(
-			output.Color(printName, termColorCommand) +
-				strings.Repeat(" ", tabLength) + flatCmd.Command.Short + "\n",
-		)
+		printCommand(name)
 	}
 }
 
@@ -169,6 +105,7 @@ func displayCommandList(cmd *cobra.Command) {
 var ListCmd = &cobra.Command{
 	Use:     "list",
 	Version: "",
+	Short:   "Show this list.",
 	Run: func(cmd *cobra.Command, args []string) {
 		commandIntro(RootCmd.Version)
 		output.WriteStdout("\nAvailable Commands:\n")
