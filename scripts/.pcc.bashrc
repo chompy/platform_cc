@@ -5,3 +5,4 @@ _platformcc_completions()
     COMPREPLY+=($(pcc _ac "$cmd"))
 }
 complete -o default -F _platformcc_completions pcc
+export PATH=~/.pcc:$PATH

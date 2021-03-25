@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-INSTALL_PATH=~/.local/bin
-MAC_INSTALL_PATH=/usr/local/bin
-
-# change install path for mac
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    INSTALL_PATH="$MAC_INSTALL_PATH"
-fi
+INSTALL_PATH=~/.pcc
 
 # copy scripts
 cp $SCRIPTPATH/platform_sh_clone.sh $INSTALL_PATH/pcc_psh_sync

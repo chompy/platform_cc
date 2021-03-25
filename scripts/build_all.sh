@@ -60,6 +60,6 @@ if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
         upload "$ROOTPATH/scripts/install.sh" "install.sh"
         upload "$ROOTPATH/scripts/uninstall.sh" "uninstall.sh"
         upload "$ROOTPATH/scripts/platform_sh_clone.sh" "platform_sh_clone.sh"
-        upload "$ROOTPATH/scripts/.pcc.bashrc" ".pcc.bashrc"
+        upload "$ROOTPATH/scripts/_completions" "_completions"
     fi
 fi

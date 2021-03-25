@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-INSTALL_PATH=~/.local/bin
-MAC_INSTALL_PATH=/usr/local/bin
-PCC_FILES=("pcc" "pcc_send_log" "pcc_psh_sync" "pcc_update", "pcc_uninstall")
+INSTALL_PATH=~/.pcc
+OLD_BIN_PATHS=(~/.local/bin /usr/local/bin)
+OLD_PCC_FILES=("pcc" "pcc_send_log" "pcc_psh_sync" "pcc_update" "pcc_uninstall")
 
 progress_success() {
     printf "\e[32mDONE\e[0m\n"
@@ -18,35 +18,49 @@ progress_error() {
     printf "\n\e[31mERROR:\e[0m\n$1\n\n"
     exit 1
 }
-delete_file() {
-    printf "> Remove '$1'..."
-    if [[ ! -f $INSTALL_PATH/$1 ]]; then
-        progress_not_found
-    else
-        set -e
-        rm -f $INSTALL_PATH/$1
-        if [[ "$?" = "0" ]]; then
-            progress_success
-        else
-            progress_failed
+delete_old_file() {
+    for s in ${OLD_BIN_PATHS[@]}; do
+        if [ -L $s/$1 ] || [ -f $s/$1 ]; then
+            printf "> Remove '$1'..."
+            set -e
+            rm -f $s/$1
+            if [[ ! "$?" = "0" ]]; then
+                progress_failed 
+            else          
+                progress_success
+            fi
         fi
-    fi
+    done
 }
 
 # warn user
 echo "UNINSTALLING PLATFORM.CC IN 5 SECONDS..."
 sleep 5
 
-# change install path for mac
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    INSTALL_PATH="$MAC_INSTALL_PATH"
+# remove main installation directory
+if [ -d $INSTALL_PATH ]; then
+    printf "> Remove main directory..."
+    set -e
+    rm -r $INSTALL_PATH
+    if [[ ! "$?" = "0" ]]; then
+        progress_failed
+        echo "ERROR: Failed to remove main directory."      
+        exit 1
+    fi
+    progress_success
 fi
 
-# do
-for f in ${PCC_FILES[@]}; do
-    delete_file $f
+# delete old files
+for f in ${OLD_PCC_FILES[@]}; do    
+    delete_old_file $f
 done
 
 # remove bash complete
-sed -i "s/source.*\.pcc.*//g" ~/.bashrc
-rm -f ~/.pcc.bashrc
+printf "> Remove PATH and bash completion..."
+if [ -f ~/.bashrc ]; then
+    sed -i "s/source.*\.pcc.*//g" ~/.bashrc
+fi
+if [ -f ~/.bash_profile ]; then
+    sed -i "s/source.*\.pcc.*//g" ~/.bash_profile
+fi
+progress_success

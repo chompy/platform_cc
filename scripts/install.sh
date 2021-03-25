@@ -12,11 +12,9 @@ DL_SCRIPTS=(
     "$BASE_URL/uninstall.sh|pcc_uninstall|uninstall"
     "$BASE_URL/install.sh|pcc_update|update"
 )
-INSTALL_PATH=~/.local/bin
-MAC_INSTALL_PATH=/usr/local/bin
+INSTALL_PATH=~/.pcc
 PCC_BIN_NAME="pcc"
-BASH_RC_PATH=~/.bashrc
-PCC_RC_PATH=~/.pcc.bashrc
+BASH_INIT_PATHS=(~/.bashrc ~/.bash_profile)
 
 # set dev version if -d flag set
 VERSION=""
@@ -49,12 +47,6 @@ progress_error() {
     exit 1
 }
 
-
-# change install path for mac
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    INSTALL_PATH="$MAC_INSTALL_PATH"
-fi
-
 # fetch current version
 if [ -z "$VERSION" ]; then
     printf "> Fetch current version number..."
@@ -66,12 +58,15 @@ if [ -z "$VERSION" ]; then
     printf "> Version \e[36m$VERSION\e[0m found.\n"
 fi
 
+# make install dir
+mkdir -p $INSTALL_PATH
+
 # itterate and install scripts
 for s in ${DL_SCRIPTS[@]}; do
     IFS='|' read -ra DL_SCRIPT <<< "$s"
     printf "> Fetch ${DL_SCRIPT[2]} script..."
     mkdir -p $INSTALL_PATH
-    curl -s -L --fail -o "$INSTALL_PATH/${DL_SCRIPT[1]}" "${DL_SCRIPT[0]}"
+    curl -s -L --fail -o $INSTALL_PATH/${DL_SCRIPT[1]} "${DL_SCRIPT[0]}"
     if [ "$?" != "0" ]; then
         progress_error "Could not download ${DL_SCRIPT[2]} script."
     fi
@@ -80,23 +75,25 @@ for s in ${DL_SCRIPTS[@]}; do
 done
 
 # bash completion
-if [ -f "$BASH_RC_PATH" ]; then
-printf "> Install Bash completion..."
-curl -s -L --fail -o "$PCC_RC_PATH" "$BASE_URL/.pcc.bashrc"
+printf "> Add PATH and bash completion..."
+curl -s -L --fail -o $INSTALL_PATH/.pcc.bashrc "$BASE_URL/.pcc.bashrc"
 if [ "$?" != "0" ]; then
-    progress_error "Could not download .pcc.bashrc."
+    progress_error "Could not download bashrc script."
 fi
-sed -i "s/source.*\.pcc.*//g" ~/.bashrc
-echo "source $PCC_RC_PATH" >> $BASH_RC_PATH
+for b in ${BASH_INIT_PATHS[@]}; do
+    if [ -f $b ]; then
+        sed -i "s/source.*\.pcc.*//g" $b
+        printf "source $INSTALL_PATH/.pcc.bashrc" >> $b
+        source $INSTALL_PATH/.pcc.bashrc
+    fi
+done
 progress_success
-fi
 
 # determine os
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     BASE_URL="$BASE_URL/$VERSION/linux_amd64"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     BASE_URL="$BASE_URL/$VERSION/darwin_amd64"
-    INSTALL_PATH="$MAC_INSTALL_PATH"
 else
     BASE_URL="$BASE_URL/$VERSION/windows_amd64"
 fi
