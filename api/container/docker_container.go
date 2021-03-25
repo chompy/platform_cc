@@ -44,9 +44,27 @@ const containerStopTimeout = 10
 // ContainerStart starts a Docker container.
 func (d Docker) ContainerStart(c Config) error {
 	// ensure not already running
-	if status, _ := d.ContainerStatus(c.GetContainerName()); status.Running {
+	status, _ := d.ContainerStatus(c.GetContainerName())
+	if status.Running {
 		return nil
 	}
+	// remove stoped container
+	if status.HasContainer {
+		output.LogDebug(
+			fmt.Sprintf("Delete old stopped container for %s.", c.GetContainerName()),
+			map[string]interface{}{"status": status, "config": c},
+		)
+		if err := d.client.ContainerRemove(
+			context.Background(),
+			c.GetContainerName(),
+			types.ContainerRemoveOptions{
+				Force: true,
+			},
+		); err != nil {
+			return tracerr.Wrap(err)
+		}
+	}
+	// log start
 	done := output.Duration(
 		fmt.Sprintf(
 			"Start Docker container for %s '%s.'",
@@ -208,7 +226,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		id,
 	)
 	if err != nil {
-		return Status{Running: false, Slot: 0, State: "stopped"}, tracerr.Wrap(err)
+		return Status{Running: false, Slot: 0, State: "stopped", HasContainer: false}, tracerr.Wrap(err)
 	}
 	ipAddress := ""
 	for name, network := range data.NetworkSettings.Networks {
@@ -229,17 +247,18 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 	}
 	config := containerConfigFromName(data.Name)
 	return Status{
-		ID:         data.ID,
-		Name:       config.ObjectName,
-		ObjectType: config.ObjectType,
-		Image:      data.Image,
-		Type:       d.serviceTypeFromImage(data.Image),
-		Committed:  d.hasCommit(data.Name),
-		ProjectID:  config.ProjectID,
-		Running:    data.State.Running,
-		State:      data.State.Status,
-		IPAddress:  ipAddress,
-		Slot:       slot,
+		ID:           data.ID,
+		Name:         config.ObjectName,
+		ObjectType:   config.ObjectType,
+		Image:        data.Image,
+		Type:         d.serviceTypeFromImage(data.Image),
+		Committed:    d.hasCommit(data.Name),
+		ProjectID:    config.ProjectID,
+		Running:      data.State.Running,
+		State:        data.State.Status,
+		IPAddress:    ipAddress,
+		Slot:         slot,
+		HasContainer: true,
 	}, nil
 }
 

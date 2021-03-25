@@ -2,13 +2,7 @@
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 PCC_BIN_NAME="pcc"
-INSTALL_PATH=~/.local/bin
-MAC_INSTALL_PATH=/usr/local/bin
-
-# change install path for mac
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    INSTALL_PATH="$MAC_INSTALL_PATH"
-fi
+INSTALL_PATH=~/.pcc
 
 # build
 cd $SCRIPTPATH/..
