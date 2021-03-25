@@ -22,4 +22,5 @@ lint_code:
 unit_tests:
   stage: test
   script:
-    - cd api/tests/ && go test -race -short ./...
+    - bash ./scripts/run_tests.sh
+
