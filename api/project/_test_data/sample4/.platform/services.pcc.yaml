@@ -1,0 +1,5 @@
+mysqldb:
+    _disable: true
+
+rediscache_two:
+    type: 'redis:3.2'

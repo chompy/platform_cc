@@ -15,38 +15,38 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package tests
+package router
 
 import (
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/project"
-	"gitlab.com/contextualcode/platform_cc/api/router"
 )
 
 // TestGenerateNginx tests the generation of nginx config.
 func TestGenerateNginx(t *testing.T) {
 	proj, err := project.LoadFromPath(
-		filepath.Join("data", "sample1"),
+		filepath.Join("_test_data", "sample1"),
 		true,
 	)
 	if err != nil {
 		t.Error(err)
 	}
-	out, err := router.GenerateNginxConfig(proj)
+	out, err := GenerateNginxConfig(proj)
 	if err != nil {
 		t.Error(err)
 	}
 	stringConf := string(out)
-	assertEqual(
+	def.AssertEqual(
 		strings.Contains(stringConf, "return 301 /test"),
 		true,
 		"expected test.contextualcode.com /test/ redirect",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		strings.Contains(stringConf, "server_name contextualcode-com.platform.cc"),
 		true,
 		"expected contextualcode-com route",

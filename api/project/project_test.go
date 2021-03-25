@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package tests
+package project
 
 import (
 	"path"
@@ -25,17 +25,16 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/def"
 
 	"github.com/ztrue/tracerr"
-	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
 func TestFromPath(t *testing.T) {
-	projectPath := path.Join("data", "sample2")
-	p, e := project.LoadFromPath(projectPath, true)
+	projectPath := path.Join("_test_data", "sample2")
+	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
 		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Name,
 		"test_app2",
 		"unspected app.type",
@@ -44,58 +43,58 @@ func TestFromPath(t *testing.T) {
 }
 
 func TestFromPathWithPCCAppYaml(t *testing.T) {
-	projectPath := path.Join("data", "sample4")
-	p, e := project.LoadFromPath(projectPath, true)
+	projectPath := path.Join("_test_data", "sample4")
+	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
 		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Variables.GetString("env:TEST_ENV"),
 		"no",
 		"unexpected variables.env.TEST_ENV",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Variables.GetString("env:TEST_ENV_TWO"),
 		"hello world",
 		"unexpected variables.env.TEST_ENV_TWO",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Variables.GetString("env:TEST_THREE"),
 		"test123",
 		"unexpected variables.env.TEST_THREE",
 		t,
 	)
 	subMap := p.Apps[0].Variables.GetStringSubMap("env")
-	assertEqual(
+	def.AssertEqual(
 		subMap["TEST_ENV"],
 		"no",
 		"unexpected variables.env.TEST_ENV (sub map)",
 		t,
 	)
 	p.Variables.Set("php:memory_limit", "1024M")
-	assertEqual(
+	def.AssertEqual(
 		p.Variables.Get("php:memory_limit"),
 		"1024M",
 		"unexpected variables.env.TEST_ENV (sub map)",
 		t,
 	)
 	p.Variables.Delete("php:memory_limit")
-	assertEqual(
+	def.AssertEqual(
 		p.Variables.Get("php:memory_limit"),
 		nil,
 		"unexpected variables.env.TEST_ENV (sub map)",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Type,
 		"php:7.4",
 		"unexpected app.type",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		len(p.Apps[0].Runtime.Extensions),
 		3,
 		"unexpected app.runtime.extensions length",
@@ -103,19 +102,19 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 	)
 	// also test service override
 	// three services defined but mysqldb disabled in services.pcc.yaml override
-	assertEqual(
+	def.AssertEqual(
 		len(p.Services),
 		2,
 		"unexpected number of services",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		p.Services[0].Type,
 		"redis:3.2",
 		"unspected service type",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		p.Services[1].Type,
 		"redis:3.2",
 		"unspected service type",
@@ -124,8 +123,8 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 }
 
 func TestConfigJSON(t *testing.T) {
-	projectPath := path.Join("data", "sample2")
-	p, e := project.LoadFromPath(projectPath, true)
+	projectPath := path.Join("_test_data", "sample2")
+	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
 		t.Errorf("failed to load project, %s", e)
 	}
@@ -143,7 +142,7 @@ func TestConfigJSON(t *testing.T) {
 }
 
 func TestVariables(t *testing.T) {
-	p := project.Project{
+	p := Project{
 		Variables: make(def.Variables),
 	}
 	env := "dev"
@@ -162,17 +161,17 @@ func TestVariables(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assertEqual(v, env, "env:ENVIRONMENT unexpected value", t)
+	def.AssertEqual(v, env, "env:ENVIRONMENT unexpected value", t)
 	v, err = p.VarGet("php:set_time_limit")
 	if err != nil {
 		t.Error(err)
 	}
-	assertEqual(v, timeLimit, "php:set_time_limit unexpected value", t)
+	def.AssertEqual(v, timeLimit, "php:set_time_limit unexpected value", t)
 	v, err = p.VarGet("secret:api_secret")
 	if err != nil {
 		t.Error(err)
 	}
-	assertEqual(v, apiSecret, "secret:api_secret unexpected value", t)
+	def.AssertEqual(v, apiSecret, "secret:api_secret unexpected value", t)
 	if err := p.VarDelete("secret:api_secret"); err != nil {
 		t.Error(err)
 	}
@@ -180,23 +179,23 @@ func TestVariables(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assertEqual(v, "", "secret:api_secret unexpected value", t)
+	def.AssertEqual(v, "", "secret:api_secret unexpected value", t)
 }
 
 func TestYAMLFunction(t *testing.T) {
-	projectPath := path.Join("data", "sample5")
-	p, e := project.LoadFromPath(projectPath, true)
+	projectPath := path.Join("_test_data", "sample5")
+	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
 		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
-	assertEqual(
+	def.AssertEqual(
 		p.Apps[0].Name,
 		"test_app",
 		"unspected app.type",
 		t,
 	)
-	assertEqual(
+	def.AssertEqual(
 		strings.Contains(p.Apps[0].Hooks.Build, "TEST!"),
 		true,
 		"incorrect build hook",
@@ -207,58 +206,58 @@ func TestYAMLFunction(t *testing.T) {
 func TestFlags(t *testing.T) {
 	gc := def.GlobalConfig{
 		Flags: []string{
-			project.EnableOSXNFSMounts, project.EnableServiceRoutes, project.DisableYamlOverrides, project.DisableAutoCommit,
+			EnableOSXNFSMounts, EnableServiceRoutes, DisableYamlOverrides, DisableAutoCommit,
 		},
 	}
-	p := project.Project{
-		Flags: project.Flags{
-			project.EnablePHPOpcache:     project.FlagOn,
-			project.EnableOSXNFSMounts:   project.FlagOn,
-			project.EnableCron:           project.FlagOff,
-			project.EnableServiceRoutes:  project.FlagOff,
-			project.EnableWorkers:        project.FlagUnset,
-			project.DisableYamlOverrides: project.FlagUnset,
+	p := Project{
+		Flags: Flags{
+			EnablePHPOpcache:     FlagOn,
+			EnableOSXNFSMounts:   FlagOn,
+			EnableCron:           FlagOff,
+			EnableServiceRoutes:  FlagOff,
+			EnableWorkers:        FlagUnset,
+			DisableYamlOverrides: FlagUnset,
 		},
 	}
 	p.SetGlobalConfig(&gc)
-	assertEqual(
-		p.HasFlag(project.EnablePHPOpcache),
+	def.AssertEqual(
+		p.HasFlag(EnablePHPOpcache),
 		true,
 		"expected flag 'enable_php_opcache' on",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.EnableOSXNFSMounts),
+	def.AssertEqual(
+		p.HasFlag(EnableOSXNFSMounts),
 		true,
 		"expected flag 'enable_osx_nfs_mounts' on",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.EnableCron),
+	def.AssertEqual(
+		p.HasFlag(EnableCron),
 		false,
 		"expected flag 'enable_cron' off",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.EnableServiceRoutes),
+	def.AssertEqual(
+		p.HasFlag(EnableServiceRoutes),
 		false,
 		"expected flag 'enable_service_routes' off",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.EnableWorkers),
+	def.AssertEqual(
+		p.HasFlag(EnableWorkers),
 		false,
 		"expected flag 'enable_workers' off",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.DisableYamlOverrides),
+	def.AssertEqual(
+		p.HasFlag(DisableYamlOverrides),
 		true,
 		"expected flag 'disable_yaml_overrides' on",
 		t,
 	)
-	assertEqual(
-		p.HasFlag(project.DisableAutoCommit),
+	def.AssertEqual(
+		p.HasFlag(DisableAutoCommit),
 		true,
 		"expected flag 'disable_auto_commit' on",
 		t,

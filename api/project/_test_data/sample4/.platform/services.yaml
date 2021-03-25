@@ -1,0 +1,14 @@
+mysqldb:
+    type: mysql:10.0
+    disk: 512
+    configuration:
+        schemas:
+            - main
+        endpoints:
+            mysql:
+                default_schema: main
+                privileges:
+                    main: admin
+
+rediscache:
+    type: 'redis:3.2'

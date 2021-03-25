@@ -1,0 +1,5 @@
+export COMPOSER_HOME="$PLATFORM_APP_DIR/.global"
+export PYTHONUSERBASE="$PLATFORM_APP_DIR/.global"
+export GEM_PATH="$PLATFORM_APP_DIR/.global:$PLATFORM_APP_DIR"
+export NPM_CONFIG_PREFIX="$PLATFORM_APP_DIR/.global"
+export PATH="$PLATFORM_APP_DIR/.global/bin:$PLATFORM_APP_DIR/.global/vendor/bin:$PATH"

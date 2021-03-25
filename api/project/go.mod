@@ -15,4 +15,5 @@ require (
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
+	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 // indirect
 )
