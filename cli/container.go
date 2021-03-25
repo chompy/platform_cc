@@ -19,6 +19,9 @@ package cli
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -38,7 +41,7 @@ var containerAppDeployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		switch d.(type) {
 		case def.App:
@@ -59,7 +62,7 @@ var containerAppPostDeployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		switch d.(type) {
 		case def.App:
@@ -80,7 +83,7 @@ var containerShellCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		user := "root"
 		switch d.(type) {
@@ -111,7 +114,7 @@ var containerAppCommitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		switch d.(type) {
 		case def.App:
@@ -132,7 +135,7 @@ var containerAppDeleteCommitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		switch d.(type) {
 		case def.App:
@@ -155,12 +158,88 @@ var containerLogsCmd = &cobra.Command{
 		handleError(err)
 		followFlag := cmd.Flags().Lookup("follow")
 		hasFollow := followFlag != nil && followFlag.Value.String() != "false"
-		d, err := getDef(containerCmd, proj)
+		d, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
 		handleError(proj.NewContainer(d).LogStdout(hasFollow))
 		if hasFollow {
 			select {}
 		}
+	},
+}
+
+var containerCopyCmd = &cobra.Command{
+	Use:     "copy source destination",
+	Aliases: []string{"cp"},
+	Short:   "Copy file to and from container.",
+	Run: func(cmd *cobra.Command, args []string) {
+		// ensure two args provided
+		if len(args) != 2 {
+			handleError(fmt.Errorf("unexpected number of arguements"))
+		}
+		// fetch project
+		proj, err := getProject(true)
+		handleError(err)
+
+		// log output
+		done := output.Duration(fmt.Sprintf("Copy %s to %s.", args[0], args[1]))
+
+		// determine path local vs container
+		parsePath := func(path string) (string, string) {
+			pSplit := strings.Split(path, ":")
+			if len(pSplit) == 1 {
+				// local file
+				return "", path
+			}
+			// container apth
+			return pSplit[0], strings.Join(pSplit[1:], ":")
+		}
+
+		// source
+		srcService, srcPath := parsePath(args[0])
+		var srcReader *os.File
+		if srcService == "" {
+			// local
+			var err error
+			srcReader, err = os.Open(srcPath)
+			handleError(err)
+			defer srcReader.Close()
+		} else {
+			// container
+			def, err := getDef(srcService, proj)
+			handleError(err)
+			cont := proj.NewContainer(def)
+			srcReader, err = ioutil.TempFile(os.TempDir(), "pcc-cp-")
+			handleError(err)
+			defer func() {
+				name := srcReader.Name()
+				srcReader.Close()
+				os.Remove(name)
+			}()
+			handleError(cont.Download(srcPath, srcReader))
+			srcReader.Seek(0, 0)
+		}
+		if srcReader == nil {
+			handleError(fmt.Errorf("invalid source reader"))
+		}
+
+		// dest
+		destService, destPath := parsePath(args[1])
+		if destService == "" {
+			// local
+			dstWriter, err := os.Create(destPath)
+			handleError(err)
+			defer dstWriter.Close()
+			_, err = io.Copy(dstWriter, srcReader)
+			handleError(err)
+
+		} else {
+			// container
+			def, err := getDef(destService, proj)
+			handleError(err)
+			cont := proj.NewContainer(def)
+			handleError(cont.Upload(destPath, srcReader))
+		}
+		done()
 	},
 }
 
@@ -174,5 +253,6 @@ func init() {
 	containerCmd.AddCommand(containerAppCommitCmd)
 	containerCmd.AddCommand(containerAppDeleteCommitCmd)
 	containerCmd.AddCommand(containerLogsCmd)
+	containerCmd.AddCommand(containerCopyCmd)
 	RootCmd.AddCommand(containerCmd)
 }

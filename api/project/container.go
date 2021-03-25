@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -76,8 +77,7 @@ func (c Container) Start() error {
 	}
 	// upload config.json
 	d2 := output.Duration("Upload config.json.")
-	if err := c.containerHandler.ContainerUpload(
-		c.Config.GetContainerName(),
+	if err := c.Upload(
 		"/run/config.json",
 		bytes.NewReader(c.configJSON),
 	); err != nil {
@@ -415,4 +415,23 @@ func (c Container) Commit() error {
 // DeleteCommit deletes the commit image.
 func (c Container) DeleteCommit() error {
 	return tracerr.Wrap(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
+}
+
+// Upload uploads given reader to container as a file at given path.
+func (c Container) Upload(path string, reader io.Reader) error {
+	return tracerr.Wrap(c.containerHandler.ContainerUpload(
+		c.Config.GetContainerName(),
+		path,
+		reader,
+	))
+}
+
+// Download downloads given container path to given writer.
+func (c Container) Download(path string, writer io.Writer) error {
+	return tracerr.Wrap(c.containerHandler.ContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"cat", path},
+		writer,
+	))
 }

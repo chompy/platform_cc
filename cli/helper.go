@@ -52,12 +52,9 @@ func getProject(parseYaml bool) (*project.Project, error) {
 	return proj, err
 }
 
-// getDef returns the definition for the current command.
-func getDef(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
-	name := cmd.PersistentFlags().Lookup("service").Value.String()
-	if name == "" {
-		name = proj.Apps[0].Name
-	}
+// getDef returns the best matching definition.
+func getDef(name string, proj *project.Project) (interface{}, error) {
+
 	// find via app prefix
 	for _, prefix := range appPrefix {
 		if strings.HasPrefix(name, prefix) {
@@ -115,6 +112,15 @@ func getDef(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
 		}
 	}
 	return nil, tracerr.Errorf("could not find definition for %s", name)
+}
+
+// getDefFromCommand returns the definition for the current command.
+func getDefFromCommand(cmd *cobra.Command, proj *project.Project) (interface{}, error) {
+	name := cmd.PersistentFlags().Lookup("service").Value.String()
+	if name == "" {
+		name = proj.Apps[0].Name
+	}
+	return getDef(name, proj)
 }
 
 // getService fetches a service definition.
