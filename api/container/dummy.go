@@ -33,12 +33,33 @@ type DummyContainer struct {
 	Committed      bool
 	Running        bool
 	CommandHistory []string
+	Uploads        []string
+}
+
+// CommandHistoryIndex returns command history index of command that contains given string.
+func (d DummyContainer) CommandHistoryIndex(v string) int {
+	for i, cmd := range d.CommandHistory {
+		if strings.Contains(cmd, v) {
+			return i
+		}
+	}
+	return -1
+}
+
+// HasUpload returns true if upload was run at given path.
+func (d DummyContainer) HasUpload(path string) bool {
+	for _, upload := range d.Uploads {
+		if upload == path {
+			return true
+		}
+	}
+	return false
 }
 
 // DummyTracker track the status of the dummy container environment.
 type DummyTracker struct {
 	Volumes    []string
-	Containers []DummyContainer
+	Containers []*DummyContainer
 	Sync       sync.Mutex
 }
 
@@ -52,23 +73,25 @@ func NewDummy() Dummy {
 	return Dummy{
 		Tracker: &DummyTracker{
 			Volumes:    make([]string, 0),
-			Containers: make([]DummyContainer, 0),
+			Containers: make([]*DummyContainer, 0),
 		},
 	}
 }
 
-func (d Dummy) getContainer(id string) *DummyContainer {
+// GetContainer returns the dummy container for given ID.
+func (d Dummy) GetContainer(id string) *DummyContainer {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
 	for i, c := range d.Tracker.Containers {
 		if c.ID == id {
-			return &d.Tracker.Containers[i]
+			return d.Tracker.Containers[i]
 		}
 	}
 	return nil
 }
 
-func (d Dummy) hasVolume(id string) bool {
+// HasVolume returns true if given volume exists.
+func (d Dummy) HasVolume(id string) bool {
 	for _, v := range d.Tracker.Volumes {
 		if v == id {
 			return true
@@ -81,15 +104,17 @@ func (d Dummy) hasVolume(id string) bool {
 func (d Dummy) ContainerStart(c Config) error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	d.Tracker.Containers = append(d.Tracker.Containers, DummyContainer{
-		ID:        c.GetContainerName(),
-		Config:    c,
-		Committed: false,
-		Running:   true,
+	d.Tracker.Containers = append(d.Tracker.Containers, &DummyContainer{
+		ID:             c.GetContainerName(),
+		Config:         c,
+		Committed:      false,
+		Running:        true,
+		CommandHistory: make([]string, 0),
+		Uploads:        make([]string, 0),
 	})
 	for k := range c.Volumes {
 		volName := volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot)
-		if !d.hasVolume(volName) {
+		if !d.HasVolume(volName) {
 			d.Tracker.Volumes = append(
 				d.Tracker.Volumes,
 				volName,
@@ -101,7 +126,7 @@ func (d Dummy) ContainerStart(c Config) error {
 
 // ContainerCommand runs dummy command.
 func (d Dummy) ContainerCommand(id string, user string, cmd []string, out io.Writer) error {
-	c := d.getContainer(id)
+	c := d.GetContainer(id)
 	if c == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
@@ -118,7 +143,7 @@ func (d Dummy) ContainerShell(id string, user string, cmd []string, stdin io.Rea
 
 // ContainerStatus gets dummy status.
 func (d Dummy) ContainerStatus(id string) (Status, error) {
-	c := d.getContainer(id)
+	c := d.GetContainer(id)
 	if c == nil {
 		return Status{
 			Running: false,
@@ -141,15 +166,19 @@ func (d Dummy) ContainerStatus(id string) (Status, error) {
 
 // ContainerUpload uploads to dummy container.
 func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
-	if d.getContainer(id) == nil {
+	c := d.GetContainer(id)
+	if c == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	c.Uploads = append(c.Uploads, path)
 	return nil
 }
 
 // ContainerLog returns dummy logs.
 func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
-	if d.getContainer(id) == nil {
+	if d.GetContainer(id) == nil {
 		return nil, fmt.Errorf("container %s not running", id)
 	}
 	return ioutil.NopCloser(bytes.NewReader([]byte("hello world"))), nil
@@ -157,7 +186,7 @@ func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 
 // ContainerCommit commits dummy container.
 func (d Dummy) ContainerCommit(id string) error {
-	if d.getContainer(id) == nil {
+	if d.GetContainer(id) == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
 	return nil
@@ -165,7 +194,7 @@ func (d Dummy) ContainerCommit(id string) error {
 
 // ContainerDeleteCommit deletes dummy commit.
 func (d Dummy) ContainerDeleteCommit(id string) error {
-	if d.getContainer(id) == nil {
+	if d.GetContainer(id) == nil {
 		return fmt.Errorf("container %s is running", id)
 	}
 	return nil
@@ -180,7 +209,7 @@ func (d Dummy) ImagePull(c []Config) error {
 func (d Dummy) ProjectStop(pid string) error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	containers := make([]DummyContainer, 0)
+	containers := make([]*DummyContainer, 0)
 	for _, c := range d.Tracker.Containers {
 		if c.Config.ProjectID != pid {
 			containers = append(containers, c)
@@ -242,7 +271,7 @@ func (d Dummy) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
 func (d Dummy) AllStop() error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	d.Tracker.Containers = make([]DummyContainer, 0)
+	d.Tracker.Containers = make([]*DummyContainer, 0)
 	return nil
 }
 

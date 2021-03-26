@@ -1,8 +1,11 @@
-- QOL
-    - routes.pcc.yaml.
-
-- MAINTAINENCE
-    - Look for all TODO comments and work on them.
+- FEATURES
+    - (Re)Implement the PSH sync script in Go as a subcommand. Expand it's functionality.
+    - Import/Export service data.
+    - Implement version update functionality in Go as a subcommand.
+    - Build APT and Brew packages.
+    - Router HTTPS support. / https://github.com/jsha/minica
+    - Search parent directories for project root if not found in CWD.
+    - Parse routes.pcc.yaml in addition to routes.yaml to make PCC specific routes possible.
 
 - BACKBURNER
     - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)
@@ -10,3 +13,6 @@
     - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Configure SSH key on per project basis, instead of just global.
     - Use SSH agent to forward private key in to application containers.
+    - More tests, increase code coverage.
+    - Look for all TODO comments and work on them.
+    - Build Windows installer.

@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package project
 
 import (
+	"bytes"
 	"fmt"
 	"path"
 	"strings"
@@ -389,4 +390,20 @@ func TestAllStatus(t *testing.T) {
 		}
 	}
 	// TODO more checks?
+}
+
+func TestUpload(t *testing.T) {
+	ch := container.NewDummy()
+	path := path.Join("_test_data", "sample1")
+	p, e := LoadFromPath(path, true)
+	if e != nil {
+		tracerr.PrintSourceColor(e)
+		t.Errorf("failed to load project, %s", e)
+	}
+	p.SetContainerHandler(ch)
+	p.Start()
+	cont := p.NewContainer(p.Apps[0])
+	cont.Upload("/tmp/test.txt", bytes.NewReader([]byte{}))
+	dc := ch.GetContainer(cont.Config.GetContainerName())
+	def.AssertEqual(dc.HasUpload("/tmp/test.txt"), true, "expected upload", t)
 }
