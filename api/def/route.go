@@ -115,19 +115,6 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 	// make copy of routes
 	copyRoutes := make([]Route, 0)
 	copyRoutes = append(copyRoutes, inRoutes...)
-	// convienence functions
-	isRouteHTTPS := func(path string) bool {
-		return strings.HasPrefix(path, "https://")
-	}
-	hasDuplicateHTTPSRoute := func(routes []Route, path string) bool {
-		for _, route := range routes {
-			if path != route.Path &&
-				replaceHTTPS(route.Path) == replaceHTTPS(path) {
-				return true
-			}
-		}
-		return false
-	}
 	redirectMatchesRoute := func(routes []Route, to string) bool {
 		for _, route := range routes {
 			url, err := url.Parse(route.Path)
@@ -144,30 +131,18 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 		}
 		return false
 	}
-	// PCC won't support https route, rename to http
 	// internal routes will replace periods(.) with hyphens (-)
-	// to create urls structures as followed...
-	// example-com.pcc.local
+	// to create urls structures as follows...
+	// example-com.platform.cc
 	for _, route := range copyRoutes {
 		// ignore if route doesn't start with http
 		if !strings.HasPrefix(route.Path, "http") {
 			continue
 		}
-		// if route is not https and the same route with https
-		// exists then ignore this one
-		if !isRouteHTTPS(route.Path) && hasDuplicateHTTPSRoute(copyRoutes, route.Path) {
-			continue
-		}
 		// original route
 		route.Primary.DefaultValue = true
 		route.SetDefaults()
-		route.Path = replaceHTTPS(route.Path)
 		route.OriginalURL = route.Path
-		// - if redirect routes to internal then fix it up
-		if route.To != "" &&
-			redirectMatchesRoute(copyRoutes, route.To) {
-			route.To = replaceHTTPS(route.To)
-		}
 		r := route
 		out = append(out, r)
 		// internal route
@@ -181,7 +156,7 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 		// - if redirect routes to internal then fix it up
 		if route.To != "" &&
 			redirectMatchesRoute(copyRoutes, route.To) {
-			route.To, err = convertRoutePathToInternal(replaceHTTPS(route.To), internalDomainSuffix)
+			route.To, err = convertRoutePathToInternal(route.To, internalDomainSuffix)
 			if err != nil {
 				return nil, tracerr.Wrap(err)
 			}

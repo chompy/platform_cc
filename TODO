@@ -3,9 +3,9 @@
     - Import/Export service data.
     - Implement version update functionality in Go as a subcommand.
     - Build APT and Brew packages.
-    - Router HTTPS support. / https://github.com/jsha/minica
     - Search parent directories for project root if not found in CWD.
     - Parse routes.pcc.yaml in addition to routes.yaml to make PCC specific routes possible.
+    - all:purge by default leaves global volumes, with option to delete everything.
 
 - BACKBURNER
     - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)

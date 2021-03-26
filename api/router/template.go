@@ -63,8 +63,8 @@ http {
         server_name default;
         listen 80 default;
         listen 443 ssl;
-        ssl_certificate /etc/nginx/ssl/server.crt;
-        ssl_certificate_key /etc/nginx/ssl/server.key;
+        ssl_certificate /var/ssl/localhost/cert.pem;
+        ssl_certificate_key /var/ssl/localhost/key.pem;
         root /www;
         location / {
             index index.html;
@@ -81,8 +81,8 @@ server {
     server_name {{ .host }};
     listen 80;
     listen 443 ssl;
-    ssl_certificate /etc/nginx/ssl/server.crt;
-    ssl_certificate_key /etc/nginx/ssl/server.key;
+    ssl_certificate /var/ssl/localhost/cert.pem;
+    ssl_certificate_key /var/ssl/localhost/key.pem;
     client_max_body_size 200M;
     {{ range .routes }}
 	{{ if eq .type "upstream" }}

@@ -96,7 +96,7 @@ func ListActiveRoutes() ([]def.Route, error) {
 		}
 		for _, ar := range data {
 			for _, route := range ar.Routes {
-				route.Route.Path = fmt.Sprintf("http://%s%s", ar.Host, route.Path)
+				route.Route.Path = fmt.Sprintf("https://%s%s", ar.Host, route.Path)
 				route.Route.Attributes = map[string]string{
 					"host":          ar.Host,
 					"upstream_host": route.Upstream,

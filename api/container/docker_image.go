@@ -112,6 +112,7 @@ func (d Docker) ImagePull(c []Config) error {
 			if err := d.imagePullSingle(c, imagePullProg); err != nil {
 				prog(i, output.ProgressMessageError, nil, nil)
 				output.LogError(err)
+				return
 			}
 			prog(i, output.ProgressMessageDone, nil, nil)
 		}(i, c)

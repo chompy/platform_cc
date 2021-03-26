@@ -37,27 +37,33 @@ var HTTPPort = uint16(80)
 // HTTPSPort is the port to accept HTTPS requests on.
 var HTTPSPort = uint16(443)
 
+// sslDomains is a list of domains to certain SSL certificates for (using minica https://github.com/jsha/minica).
+var sslDomains = []string{"localhost", "*." + strings.TrimLeft(project.OptionDomainSuffix.DefaultValue(), ".")}
+
 // GetContainerConfig gets container configuration for the router.
 func GetContainerConfig() container.Config {
-	routerCmd := `
+	// add global domain suffix to list of ssl certifs
+	globalConfig, _ := def.ParseGlobalYamlFile()
+	if globalConfig != nil && globalConfig.Options[string(project.OptionDomainSuffix)] != "" {
+		sslDomains = append(sslDomains, "*."+strings.TrimLeft(globalConfig.Options[string(project.OptionDomainSuffix)], "."))
+	}
+	routerCmd := fmt.Sprintf(`
 mkdir /www
-apk add openssl
-mkdir /etc/nginx/ssl
-cd /etc/nginx/ssl
-openssl genrsa -des3 -passout "pass:^nx/{Dm[[k3b]ATf" -out server.pass.key 2048
-openssl rsa -passin "pass:^nx/{Dm[[k3b]ATf" -in server.pass.key -out server.key
-rm server.pass.key
-openssl req -new -key server.key -out server.csr \
-	-subj "/C=US/ST=Florida/L=Tallahassee/O=ContextualCode/OU=Developers/CN=dev.local"
-openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+if [ ! -f /var/ssl/minica.pem ]; then
+	cd /var/ssl
+	~/go/bin/minica -domains "%s"
+fi
 nginx -g "daemon off;"
-`
+`, strings.Join(sslDomains, ","))
 	return container.Config{
 		ProjectID:  "_",
 		ObjectName: "router",
 		ObjectType: container.ObjectContainerRouter,
 		Command:    []string{"sh", "-c", routerCmd},
-		Image:      "docker.io/library/nginx:1.19-alpine",
+		Volumes: map[string]string{
+			"pcc_router": "/var/ssl",
+		},
+		Image:      "docker.io/contextualcode/platform_cc_router:latest",
 		WorkingDir: "/routes",
 		Ports: []string{
 			fmt.Sprintf("%d:80/tcp", HTTPPort),
@@ -116,12 +122,11 @@ func Start() error {
 	if err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
-		[]string{"sh", "-c", "touch /www/projects.txt"},
+		[]string{"sh", "-c", "touch /www/projects.txt && nginx -s reload"},
 		nil,
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	done()
 	return nil
 }
@@ -153,6 +158,40 @@ func Reload() error {
 		[]string{"nginx", "-s", "reload"},
 		nil,
 	))
+}
+
+// ClearCertificates deletes all certificates files generates by minica.
+func ClearCertificates() error {
+	ch, err := getContainerHandler()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	containerConf := GetContainerConfig()
+	return tracerr.Wrap(ch.ContainerCommand(
+		containerConf.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", "rm -rf /var/ssl/*"},
+		nil,
+	))
+}
+
+// DumpCertificateCA returns the CA certificate.
+func DumpCertificateCA() ([]byte, error) {
+	ch, err := getContainerHandler()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	containerConf := GetContainerConfig()
+	var buf bytes.Buffer
+	if err := ch.ContainerCommand(
+		containerConf.GetContainerName(),
+		"root",
+		[]string{"sh", "-c", "cat /var/ssl/minica.pem && cat /var/ssl/minica-key.pem"},
+		&buf,
+	); err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return buf.Bytes(), nil
 }
 
 // AddProjectRoutes adds given project's routes to router.
@@ -195,7 +234,7 @@ func AddProjectRoutes(p *project.Project) error {
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// add to project list
+	// add to project list + make ssl certifs
 	ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",

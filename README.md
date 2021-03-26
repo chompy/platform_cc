@@ -106,6 +106,10 @@ This assumes that you have a project ready to go with all the appropiate configu
 
     This runs the deploy hooks defined in .platform.app.yaml.
 
+5) Open in web browser.
+
+    Visit http://localhost in your browser for a list of routes.
+
 
 Supported Languages
 -------------------
@@ -118,6 +122,15 @@ Supported Services
 
 Platform.CC should support all services that are supported by Platform.sh. Please see https://docs.platform.sh/ for a list of services.
 
+
+Valid SSL Certificates
+----------------------
+
+The main router generates a certficate CA that you can have your browser trust to get valid SSL certificates. To get the CA certificate you can run...
+
+```
+pcc router:certificates:dump
+```
 
 Flags
 -----

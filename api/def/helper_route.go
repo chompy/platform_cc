@@ -23,11 +23,6 @@ import (
 	"strings"
 )
 
-// replaceHTTPS replaces https:// with http:// in given string.
-func replaceHTTPS(path string) string {
-	return strings.ReplaceAll(path, "https://", "http://")
-}
-
 // convertRoutePathToInternal takes a route path and converts it to an internal url.
 func convertRoutePathToInternal(path string, domainSufix string) (string, error) {
 	parsedURL, err := url.Parse(path)
