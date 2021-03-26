@@ -25,7 +25,7 @@ import (
 type Interface interface {
 	ContainerStart(c Config) error
 	ContainerCommand(id string, user string, cmd []string, out io.Writer) error
-	ContainerShell(id string, user string, command []string, stdin io.Reader) error
+	ContainerShell(id string, user string, cmd []string, stdin io.Reader) error
 	ContainerStatus(id string) (Status, error)
 	ContainerUpload(id string, path string, r io.Reader) error
 	ContainerLog(id string, follow bool) (io.ReadCloser, error)

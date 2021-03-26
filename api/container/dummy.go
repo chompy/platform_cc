@@ -28,10 +28,11 @@ import (
 
 // DummyContainer is a dummy container.
 type DummyContainer struct {
-	ID        string
-	Config    Config
-	Committed bool
-	Running   bool
+	ID             string
+	Config         Config
+	Committed      bool
+	Running        bool
+	CommandHistory []string
 }
 
 // DummyTracker track the status of the dummy container environment.
@@ -56,15 +57,15 @@ func NewDummy() Dummy {
 	}
 }
 
-func (d Dummy) hasContainer(id string) bool {
+func (d Dummy) getContainer(id string) *DummyContainer {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	for _, c := range d.Tracker.Containers {
+	for i, c := range d.Tracker.Containers {
 		if c.ID == id {
-			return true
+			return &d.Tracker.Containers[i]
 		}
 	}
-	return false
+	return nil
 }
 
 func (d Dummy) hasVolume(id string) bool {
@@ -100,35 +101,47 @@ func (d Dummy) ContainerStart(c Config) error {
 
 // ContainerCommand runs dummy command.
 func (d Dummy) ContainerCommand(id string, user string, cmd []string, out io.Writer) error {
-	if !d.hasContainer(id) {
+	c := d.getContainer(id)
+	if c == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	c.CommandHistory = append(c.CommandHistory, strings.Join(cmd, " "))
 	return nil
 }
 
 // ContainerShell runs dummy shell.
-func (d Dummy) ContainerShell(id string, user string, command []string, stdin io.Reader) error {
-	if !d.hasContainer(id) {
-		return fmt.Errorf("container %s not running", id)
-	}
-	return nil
+func (d Dummy) ContainerShell(id string, user string, cmd []string, stdin io.Reader) error {
+	return d.ContainerCommand(id, user, cmd, nil)
 }
 
 // ContainerStatus gets dummy status.
 func (d Dummy) ContainerStatus(id string) (Status, error) {
-	config := containerConfigFromName(id)
+	c := d.getContainer(id)
+	if c == nil {
+		return Status{
+			Running: false,
+		}, nil
+	}
 	return Status{
-		Running:    d.hasContainer(id),
-		IPAddress:  "1.1.1.1",
-		Name:       config.ObjectName,
-		ObjectType: config.ObjectType,
-		ProjectID:  config.ProjectID,
+		ID:           c.ID,
+		Name:         c.Config.ObjectName,
+		ObjectType:   c.Config.ObjectType,
+		ProjectID:    c.Config.ProjectID,
+		Running:      c.Running,
+		Committed:    c.Committed,
+		IPAddress:    "1.1.1.1",
+		HasContainer: true,
+		Slot:         c.Config.Slot,
+		Image:        c.Config.Image,
+		State:        "running",
 	}, nil
 }
 
 // ContainerUpload uploads to dummy container.
 func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
-	if !d.hasContainer(id) {
+	if d.getContainer(id) == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
 	return nil
@@ -136,7 +149,7 @@ func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
 
 // ContainerLog returns dummy logs.
 func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
-	if !d.hasContainer(id) {
+	if d.getContainer(id) == nil {
 		return nil, fmt.Errorf("container %s not running", id)
 	}
 	return ioutil.NopCloser(bytes.NewReader([]byte("hello world"))), nil
@@ -144,7 +157,7 @@ func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 
 // ContainerCommit commits dummy container.
 func (d Dummy) ContainerCommit(id string) error {
-	if !d.hasContainer(id) {
+	if d.getContainer(id) == nil {
 		return fmt.Errorf("container %s not running", id)
 	}
 	return nil
@@ -152,7 +165,7 @@ func (d Dummy) ContainerCommit(id string) error {
 
 // ContainerDeleteCommit deletes dummy commit.
 func (d Dummy) ContainerDeleteCommit(id string) error {
-	if d.hasContainer(id) {
+	if d.getContainer(id) == nil {
 		return fmt.Errorf("container %s is running", id)
 	}
 	return nil
@@ -245,19 +258,8 @@ func (d Dummy) AllPurge() error {
 func (d Dummy) AllStatus() ([]Status, error) {
 	out := make([]Status, 0)
 	for _, c := range d.Tracker.Containers {
-		out = append(out, Status{
-			ID:           c.ID,
-			Name:         c.Config.ObjectName,
-			ObjectType:   c.Config.ObjectType,
-			ProjectID:    c.Config.ProjectID,
-			Running:      c.Running,
-			Committed:    c.Committed,
-			IPAddress:    "1.1.1.1",
-			HasContainer: true,
-			Slot:         c.Config.Slot,
-			Image:        c.Config.Image,
-			State:        "running",
-		})
+		status, _ := d.ContainerStatus(c.ID)
+		out = append(out, status)
 	}
 	return out, nil
 }

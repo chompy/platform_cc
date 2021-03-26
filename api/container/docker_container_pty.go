@@ -83,7 +83,7 @@ func (d Docker) handleResizeShell(execID string) error {
 }
 
 // ContainerShell creates an interactive shell in given container.
-func (d Docker) ContainerShell(id string, user string, command []string, stdin io.Reader) error {
+func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Reader) error {
 	// ensure container is running
 	if status, _ := d.ContainerStatus(id); !status.Running {
 		return tracerr.Errorf("container %s is not running", id)
@@ -102,7 +102,7 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 		AttachStdin:  true,
 		AttachStderr: true,
 		AttachStdout: true,
-		Cmd:          command,
+		Cmd:          cmd,
 	}
 	output.LogDebug(
 		fmt.Sprintf("Docker open shell. (Container ID %s)", id), execConfig,
@@ -121,7 +121,7 @@ func (d Docker) ContainerShell(id string, user string, command []string, stdin i
 		AttachStdin:  true,
 		AttachStderr: true,
 		AttachStdout: true,
-		Cmd:          command,
+		Cmd:          cmd,
 	}
 	output.LogDebug(
 		fmt.Sprintf("Docker container attach. (Exec ID %s)", resp.ID), execConfig,
