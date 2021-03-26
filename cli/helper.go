@@ -54,7 +54,6 @@ func getProject(parseYaml bool) (*project.Project, error) {
 
 // getDef returns the best matching definition.
 func getDef(name string, proj *project.Project) (interface{}, error) {
-
 	// find via app prefix
 	for _, prefix := range appPrefix {
 		if strings.HasPrefix(name, prefix) {

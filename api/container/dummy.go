@@ -26,10 +26,18 @@ import (
 	"sync"
 )
 
-// DummyTracker trackes
+// DummyContainer is a dummy container.
+type DummyContainer struct {
+	ID        string
+	Config    Config
+	Committed bool
+	Running   bool
+}
+
+// DummyTracker track the status of the dummy container environment.
 type DummyTracker struct {
 	Volumes    []string
-	Containers []string
+	Containers []DummyContainer
 	Sync       sync.Mutex
 }
 
@@ -43,7 +51,7 @@ func NewDummy() Dummy {
 	return Dummy{
 		Tracker: &DummyTracker{
 			Volumes:    make([]string, 0),
-			Containers: make([]string, 0),
+			Containers: make([]DummyContainer, 0),
 		},
 	}
 }
@@ -52,7 +60,7 @@ func (d Dummy) hasContainer(id string) bool {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
 	for _, c := range d.Tracker.Containers {
-		if c == id {
+		if c.ID == id {
 			return true
 		}
 	}
@@ -72,7 +80,12 @@ func (d Dummy) hasVolume(id string) bool {
 func (d Dummy) ContainerStart(c Config) error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	d.Tracker.Containers = append(d.Tracker.Containers, c.GetContainerName())
+	d.Tracker.Containers = append(d.Tracker.Containers, DummyContainer{
+		ID:        c.GetContainerName(),
+		Config:    c,
+		Committed: false,
+		Running:   true,
+	})
 	for k := range c.Volumes {
 		volName := volumeWithSlot(getMountName(c.ProjectID, k, c.ObjectType), c.Slot)
 		if !d.hasVolume(volName) {
@@ -154,9 +167,9 @@ func (d Dummy) ImagePull(c []Config) error {
 func (d Dummy) ProjectStop(pid string) error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	containers := make([]string, 0)
+	containers := make([]DummyContainer, 0)
 	for _, c := range d.Tracker.Containers {
-		if !strings.Contains(c, pid) {
+		if c.Config.ProjectID != pid {
 			containers = append(containers, c)
 		}
 	}
@@ -216,7 +229,7 @@ func (d Dummy) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
 func (d Dummy) AllStop() error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	d.Tracker.Containers = make([]string, 0)
+	d.Tracker.Containers = make([]DummyContainer, 0)
 	return nil
 }
 
@@ -232,14 +245,18 @@ func (d Dummy) AllPurge() error {
 func (d Dummy) AllStatus() ([]Status, error) {
 	out := make([]Status, 0)
 	for _, c := range d.Tracker.Containers {
-		config := containerConfigFromName(c)
 		out = append(out, Status{
-			ID:         c,
-			Name:       config.ObjectName,
-			ObjectType: config.ObjectType,
-			ProjectID:  config.ProjectID,
-			Running:    true,
-			IPAddress:  "1.1.1.1",
+			ID:           c.ID,
+			Name:         c.Config.ObjectName,
+			ObjectType:   c.Config.ObjectType,
+			ProjectID:    c.Config.ProjectID,
+			Running:      c.Running,
+			Committed:    c.Committed,
+			IPAddress:    "1.1.1.1",
+			HasContainer: true,
+			Slot:         c.Config.Slot,
+			Image:        c.Config.Image,
+			State:        "running",
 		})
 	}
 	return out, nil
