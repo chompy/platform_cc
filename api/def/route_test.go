@@ -36,14 +36,14 @@ func TestRoutes(t *testing.T) {
 		t.Errorf("failed to expand routes, %s", err)
 	}
 	containsRoutes := []string{
-		"http://www.contextualcode.com/",
-		"http://www-contextualcode-com." + internalDomainSuffix + "/",
-		"http://cdn-backend.contextualcode.ccplatform.net/",
-		"http://cdn-backend-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
+		"https://www.contextualcode.com/",
+		"https://www-contextualcode-com." + internalDomainSuffix + "/",
+		"https://cdn-backend.contextualcode.ccplatform.net/",
+		"https://cdn-backend-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
 		"http://health.contextualcode.ccplatform.net/",
 		"http://health-contextualcode-ccplatform-net." + internalDomainSuffix + "/",
-		"http://contextualcode.com/",
-		"http://contextualcode-com." + internalDomainSuffix + "/",
+		"https://contextualcode.com/",
+		"https://contextualcode-com." + internalDomainSuffix + "/",
 	}
 	for _, path := range containsRoutes {
 		hasRoute := false
