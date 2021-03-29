@@ -34,6 +34,7 @@ import (
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
+	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 )
 
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
@@ -45,14 +46,15 @@ const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // Project defines a platform.sh/cc project.
 type Project struct {
-	ID               string            `json:"id"`
-	Path             string            `json:"-"`
-	Apps             []def.App         `json:"-"`
-	Routes           []def.Route       `json:"-"`
-	Services         []def.Service     `json:"-"`
-	Variables        def.Variables     `json:"vars"`
-	Flags            Flags             `json:"flags"`   // local project flags
-	Options          map[Option]string `json:"options"` // local project options
+	ID               string             `json:"id"`
+	Path             string             `json:"-"`
+	Apps             []def.App          `json:"-"`
+	Routes           []def.Route        `json:"-"`
+	Services         []def.Service      `json:"-"`
+	PlatformSH       platformsh.Project `json:"-"`
+	Variables        def.Variables      `json:"vars"`
+	Flags            Flags              `json:"flags"`   // local project flags
+	Options          map[Option]string  `json:"options"` // local project options
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	globalConfig     *def.GlobalConfig
@@ -64,9 +66,15 @@ type Project struct {
 // LoadFromPath loads a project from its path.
 func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	done := output.Duration(
-		fmt.Sprintf("Load project at '%s.'", path),
+		fmt.Sprintf("Search for project at '%s.'", path),
 	)
-	var err error
+	// look for a valid psh project path (.git repo with remote pointed at platform.sh)
+	psh, err := platformsh.LoadProjectFromPath(path)
+	if err == nil {
+		path = psh.LocalPath
+	} else {
+		output.LogDebug("Platform.sh project not found.", err)
+	}
 	// global config
 	gc, err := def.ParseGlobalYamlFile()
 	if err != nil {
@@ -84,6 +92,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Path:             path,
 		Variables:        make(map[string]interface{}),
 		Options:          make(map[Option]string),
+		PlatformSH:       psh,
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
 		slot:             1,
@@ -91,7 +100,11 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	}
 	o.Load()
 	if o.ID == "" {
-		o.ID = generateProjectID()
+		if psh.ID != "" {
+			o.ID = psh.ID
+		} else {
+			o.ID = generateProjectID()
+		}
 		o.Save()
 	}
 	// read app yaml
@@ -151,6 +164,40 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	output.Info(fmt.Sprintf("Loaded project '%s.'", o.ID))
 	return o, nil
 }
+
+/*func findPath(cwd string) string {
+	pathSplit := strings.Split(cwd, string(os.PathSeparator))
+	for i := range pathSplit {
+		strings.Join(pathSplit[0:i], string(os.PathSeparator))
+	}
+}
+
+func isValidPath(path string) bool {
+
+	// find app yaml
+	hasAppYaml := false
+	filepath.Walk(path, func(currentPath string, f os.FileInfo, err error) error {
+		if f.IsDir() && f.Name() != "." && currentPath != path {
+			if _, err := os.Stat(filepath.Join(currentPath, appYamlFilenames[0])); err == nil {
+				hasAppYaml = true
+			}
+			return filepath.SkipDir
+		}
+		if f.Name() == appYamlFilenames[0] {
+			hasAppYaml = true
+		}
+		return nil
+	})
+	return hasAppYaml
+
+	/*if _, err := os.Stat(filepath.Join(path, routesYamlPath)); err != nil {
+
+	}
+	if _, err := os.Stat(filepath.Join(path, serviceYamlFilenames[0])); err != nil {
+
+	}
+
+}*/
 
 func scanPlatformAppYaml(topPath string, disableOverrides bool) [][]string {
 	o := make([][]string, 0)

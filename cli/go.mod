@@ -12,6 +12,8 @@ replace gitlab.com/contextualcode/platform_cc/api/router => ../api/router
 
 replace gitlab.com/contextualcode/platform_cc/api/container => ../api/container
 
+replace gitlab.com/contextualcode/platform_cc/api/platformsh => ../api/platformsh
+
 require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v1.1.3

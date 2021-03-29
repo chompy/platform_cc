@@ -14,7 +14,7 @@ replace gitlab.com/contextualcode/platform_cc/api/router => ./api/router
 
 replace gitlab.com/contextualcode/platform_cc/cli => ./cli
 
-replace gitlab.com/contextualcode/platform_cc/api/tests => ./api/tests
+replace gitlab.com/contextualcode/platform_cc/api/platformsh => ./api/platformsh
 
 require (
 	github.com/stamblerre/gocode v1.0.0 // indirect
