@@ -10,6 +10,8 @@ replace gitlab.com/contextualcode/platform_cc/api/output => ../output
 
 replace gitlab.com/contextualcode/platform_cc/api/container => ../container
 
+replace gitlab.com/contextualcode/platform_cc/api/platformsh => ../platformsh
+
 require (
 	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
