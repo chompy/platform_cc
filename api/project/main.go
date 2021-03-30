@@ -68,7 +68,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	done := output.Duration(
 		fmt.Sprintf("Search for project at '%s.'", path),
 	)
-	// look for a valid psh project path (.git repo with remote pointed at platform.sh)
+	// look for a psh project path (git repo with remote pointed at platform.sh)
 	psh, err := platformsh.LoadProjectFromPath(path)
 	if err == nil {
 		path = psh.LocalPath
@@ -164,40 +164,6 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	output.Info(fmt.Sprintf("Loaded project '%s.'", o.ID))
 	return o, nil
 }
-
-/*func findPath(cwd string) string {
-	pathSplit := strings.Split(cwd, string(os.PathSeparator))
-	for i := range pathSplit {
-		strings.Join(pathSplit[0:i], string(os.PathSeparator))
-	}
-}
-
-func isValidPath(path string) bool {
-
-	// find app yaml
-	hasAppYaml := false
-	filepath.Walk(path, func(currentPath string, f os.FileInfo, err error) error {
-		if f.IsDir() && f.Name() != "." && currentPath != path {
-			if _, err := os.Stat(filepath.Join(currentPath, appYamlFilenames[0])); err == nil {
-				hasAppYaml = true
-			}
-			return filepath.SkipDir
-		}
-		if f.Name() == appYamlFilenames[0] {
-			hasAppYaml = true
-		}
-		return nil
-	})
-	return hasAppYaml
-
-	/*if _, err := os.Stat(filepath.Join(path, routesYamlPath)); err != nil {
-
-	}
-	if _, err := os.Stat(filepath.Join(path, serviceYamlFilenames[0])); err != nil {
-
-	}
-
-}*/
 
 func scanPlatformAppYaml(topPath string, disableOverrides bool) [][]string {
 	o := make([][]string, 0)

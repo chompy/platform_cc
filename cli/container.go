@@ -22,6 +22,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -225,6 +226,14 @@ var containerCopyCmd = &cobra.Command{
 		// dest
 		destService, destPath := parsePath(args[1])
 		if destService == "" {
+
+			// if dest path is a directory then use source filename as dest filename
+			stat, err := os.Stat(destPath)
+			handleError(err)
+			if stat.IsDir() {
+				destPath = filepath.Join(destPath, filepath.Base(srcPath))
+			}
+
 			// local
 			dstWriter, err := os.Create(destPath)
 			handleError(err)
