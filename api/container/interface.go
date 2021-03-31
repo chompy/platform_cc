@@ -28,6 +28,7 @@ type Interface interface {
 	ContainerShell(id string, user string, cmd []string, stdin io.Reader) error
 	ContainerStatus(id string) (Status, error)
 	ContainerUpload(id string, path string, r io.Reader) error
+	ContainerDownload(id string, path string, w io.Writer) error
 	ContainerLog(id string, follow bool) (io.ReadCloser, error)
 	ContainerCommit(id string) error
 	ContainerDeleteCommit(id string) error

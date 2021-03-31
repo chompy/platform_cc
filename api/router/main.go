@@ -19,6 +19,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package router
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
 	"strings"
@@ -101,30 +102,44 @@ func Start() error {
 	if err := ch.ContainerStart(containerConf); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// upload index html
-	indexHTMLReader := bytes.NewReader([]byte(routeListHTML))
+	// prepare tar
+	var buf bytes.Buffer
+	tarball := tar.NewWriter(&buf)
+	// add index html
+	if err := tarball.WriteHeader(&tar.Header{
+		Name: "/www/index.html",
+		Size: int64(len(routeListHTML)),
+		Mode: 0644,
+	}); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if _, err := tarball.Write([]byte(routeListHTML)); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// add nginx conf
+	if err := tarball.WriteHeader(&tar.Header{
+		Name: "/etc/nginx/nginx.conf",
+		Size: int64(len(nginxBaseConf)),
+		Mode: 0644,
+	}); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if _, err := tarball.Write([]byte(nginxBaseConf)); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := tarball.Close(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// upload
 	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
-		"/www/index.html",
-		indexHTMLReader,
+		"/",
+		&buf,
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
-	// upload nginx conf
-	nginxConfReader := bytes.NewReader([]byte(nginxBaseConf))
-	if err := ch.ContainerUpload(
-		containerConf.GetContainerName(),
-		"/etc/nginx/nginx.conf",
-		nginxConfReader,
-	); err != nil {
-		return tracerr.Wrap(err)
-	}
-	if err := ch.ContainerCommand(
-		containerConf.GetContainerName(),
-		"root",
-		[]string{"sh", "-c", "touch /www/projects.txt && nginx -s reload"},
-		nil,
-	); err != nil {
+	// reload nginx
+	if err := Reload(); err != nil {
 		return tracerr.Wrap(err)
 	}
 	done()
@@ -209,28 +224,39 @@ func AddProjectRoutes(p *project.Project) error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	// upload to container
-	configReader := bytes.NewReader(routerNginxConf)
-	if err := ch.ContainerUpload(
-		containerConf.GetContainerName(),
-		fmt.Sprintf("/routes/%s.conf", p.ID),
-		configReader,
-	); err != nil {
+	// create tar
+	var buf bytes.Buffer
+	tarball := tar.NewWriter(&buf)
+	// add nginx conf
+	tarball.WriteHeader(&tar.Header{
+		Name: fmt.Sprintf("/routes/%s.conf", p.ID),
+		Size: int64(len(routerNginxConf)),
+		Mode: 0644,
+	})
+	if _, err := tarball.Write(routerNginxConf); err != nil {
 		return tracerr.Wrap(err)
 	}
-	if err := Reload(); err != nil {
-		return tracerr.Wrap(err)
-	}
-	// generate and upload route list json
+	// add route list json
 	routeJSON, err := GenerateRouteListJSON(p)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	routeJSONReader := bytes.NewReader(routeJSON)
+	tarball.WriteHeader(&tar.Header{
+		Name: fmt.Sprintf("/www/%s.json", p.ID),
+		Size: int64(len(routeJSON)),
+		Mode: 0644,
+	})
+	if _, err := tarball.Write(routeJSON); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := tarball.Close(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// upload to container
 	if err := ch.ContainerUpload(
 		containerConf.GetContainerName(),
-		fmt.Sprintf("/www/%s.json", p.ID),
-		routeJSONReader,
+		"/",
+		&buf,
 	); err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -241,6 +267,10 @@ func AddProjectRoutes(p *project.Project) error {
 		[]string{"sh", "-c", fmt.Sprintf("echo '%s' >> /www/projects.txt", p.ID)},
 		nil,
 	)
+	// reload
+	if err := Reload(); err != nil {
+		return tracerr.Wrap(err)
+	}
 	done()
 	return nil
 }
@@ -281,6 +311,10 @@ func DeleteProjectRoutes(p *project.Project) error {
 			return tracerr.Wrap(err)
 		}
 		return nil
+	}
+	// reload
+	if err := Reload(); err != nil {
+		return tracerr.Wrap(err)
 	}
 	done()
 	return nil

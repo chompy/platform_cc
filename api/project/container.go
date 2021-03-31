@@ -1,6 +1,7 @@
 package project
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"encoding/base64"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -417,8 +419,46 @@ func (c Container) DeleteCommit() error {
 	return tracerr.Wrap(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
 }
 
-// Upload uploads given reader to container as a file at given path.
-func (c Container) Upload(path string, reader io.Reader) error {
+// Upload uploads given reader to container as a single file at given path.
+func (c Container) Upload(path string, reader io.ReadSeeker) error {
+	// get size
+	size, err := reader.Seek(0, io.SeekEnd)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	_, err = reader.Seek(0, io.SeekStart)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// build tar
+	var buf bytes.Buffer
+	tarball := tar.NewWriter(&buf)
+	header := &tar.Header{
+		Name:  filepath.Base(path),
+		Mode:  0664,
+		Uname: "root",
+		Size:  size,
+	}
+	if err := tarball.WriteHeader(header); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if _, err := io.Copy(tarball, reader); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := tarball.Close(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := tarball.Close(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// upload
+	return tracerr.Wrap(c.UploadMulti(
+		filepath.Dir(path), &buf,
+	))
+}
+
+// UploadMulti uploads given tarball reader to container.
+func (c Container) UploadMulti(path string, reader io.Reader) error {
 	return tracerr.Wrap(c.containerHandler.ContainerUpload(
 		c.Config.GetContainerName(),
 		path,
@@ -428,10 +468,29 @@ func (c Container) Upload(path string, reader io.Reader) error {
 
 // Download downloads given container path to given writer.
 func (c Container) Download(path string, writer io.Writer) error {
-	return tracerr.Wrap(c.containerHandler.ContainerCommand(
+	// download
+	var buf bytes.Buffer
+	if err := c.DownloadMulti(path, &buf); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// untar file
+	tarball := tar.NewReader(&buf)
+	header, err := tarball.Next()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// copy to writer
+	if _, err := io.CopyN(writer, tarball, header.Size); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
+}
+
+// DownloadMulti downloads container path and writes to given writer as tarball.
+func (c Container) DownloadMulti(path string, writer io.Writer) error {
+	return tracerr.Wrap(c.containerHandler.ContainerDownload(
 		c.Config.GetContainerName(),
-		"root",
-		[]string{"cat", path},
+		path,
 		writer,
 	))
 }

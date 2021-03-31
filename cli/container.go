@@ -226,14 +226,11 @@ var containerCopyCmd = &cobra.Command{
 		// dest
 		destService, destPath := parsePath(args[1])
 		if destService == "" {
-
 			// if dest path is a directory then use source filename as dest filename
 			stat, err := os.Stat(destPath)
-			handleError(err)
-			if stat.IsDir() {
+			if err == nil && stat.IsDir() {
 				destPath = filepath.Join(destPath, filepath.Base(srcPath))
 			}
-
 			// local
 			dstWriter, err := os.Create(destPath)
 			handleError(err)
@@ -252,6 +249,62 @@ var containerCopyCmd = &cobra.Command{
 	},
 }
 
+var containerExportCmd = &cobra.Command{
+	Use:   "export path",
+	Short: "Export /mnt directory.",
+	Run: func(cmd *cobra.Command, args []string) {
+		// fetch project
+		proj, err := getProject(true)
+		handleError(err)
+		// get def
+		def, err := getDefFromCommand(containerCmd, proj)
+		handleError(err)
+		// export
+		done := output.Duration(fmt.Sprintf("Exporting %s.", proj.GetDefinitionName(def)))
+		cont := proj.NewContainer(def)
+		// find writer
+		var out io.Writer
+		out = os.Stdout
+		if len(args) > 0 && args[0] != "-" {
+			out, err = os.Create(args[0])
+			defer out.(*os.File).Close()
+			handleError(err)
+		}
+		handleError(cont.DownloadMulti(
+			"/mnt/", out,
+		))
+		done()
+	},
+}
+
+var containerImportCmd = &cobra.Command{
+	Use:   "import path",
+	Short: "Import container /mnt directory.",
+	Run: func(cmd *cobra.Command, args []string) {
+		// fetch project
+		proj, err := getProject(true)
+		handleError(err)
+		// get def
+		def, err := getDefFromCommand(containerCmd, proj)
+		handleError(err)
+		// export
+		done := output.Duration(fmt.Sprintf("Importing %s.", proj.GetDefinitionName(def)))
+		cont := proj.NewContainer(def)
+		// find reader
+		var in io.Reader
+		in = os.Stdin
+		if len(args) > 0 && args[0] != "-" {
+			in, err = os.Open(args[0])
+			defer in.(*os.File).Close()
+			handleError(err)
+		}
+		handleError(cont.UploadMulti(
+			"/", in,
+		))
+		done()
+	},
+}
+
 func init() {
 	containerShellCmd.PersistentFlags().Bool("root", false, "shell as root")
 	containerLogsCmd.Flags().BoolP("follow", "f", false, "follow logs")
@@ -263,5 +316,7 @@ func init() {
 	containerCmd.AddCommand(containerAppDeleteCommitCmd)
 	containerCmd.AddCommand(containerLogsCmd)
 	containerCmd.AddCommand(containerCopyCmd)
+	containerCmd.AddCommand(containerExportCmd)
+	containerCmd.AddCommand(containerImportCmd)
 	RootCmd.AddCommand(containerCmd)
 }

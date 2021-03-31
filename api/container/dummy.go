@@ -176,6 +176,23 @@ func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
 	return nil
 }
 
+// ContainerUpload uploads to dummy container.
+func (d Dummy) ContainerDownload(id string, path string, w io.Writer) error {
+	c := d.GetContainer(id)
+	if c == nil {
+		return fmt.Errorf("container %s not running", id)
+	}
+	d.Tracker.Sync.Lock()
+	defer d.Tracker.Sync.Unlock()
+	for _, cpath := range c.Uploads {
+		if path == cpath {
+			w.Write([]byte(path))
+			return nil
+		}
+	}
+	return fmt.Errorf("file not found")
+}
+
 // ContainerLog returns dummy logs.
 func (d Dummy) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 	if d.GetContainer(id) == nil {

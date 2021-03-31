@@ -19,7 +19,6 @@ package container
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -262,9 +261,8 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 	}, nil
 }
 
-// ContainerUpload uploads a file to a Docker container.
+// ContainerUpload uploads one or more files to a Docker container from a tarball reader.
 func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
-	// log debug
 	output.LogDebug(
 		"Upload to container.",
 		map[string]interface{}{
@@ -272,21 +270,38 @@ func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
 			"path":         path,
 		},
 	)
-	// gzip data stream
-	var buf bytes.Buffer
-	zw := gzip.NewWriter(&buf)
-	if _, err := io.Copy(zw, r); err != nil {
-		return tracerr.Wrap(err)
-	}
-	if err := zw.Close(); err != nil {
-		return tracerr.Wrap(err)
-	}
-	// push file to container via stdin
-	return d.ContainerShell(
-		id, "root",
-		[]string{"sh", "-c", fmt.Sprintf("cat | gunzip > %s", path)},
-		&buf,
+	return tracerr.Wrap(d.client.CopyToContainer(
+		context.Background(),
+		id,
+		path,
+		r,
+		types.CopyToContainerOptions{},
+	))
+}
+
+// ContainerDownload downloads one or more files from container and write to writer as tarball.
+func (d Docker) ContainerDownload(id string, path string, w io.Writer) error {
+	output.LogDebug(
+		"Download from container.",
+		map[string]interface{}{
+			"container_id": id,
+			"path":         path,
+		},
 	)
+	// get tar from container
+	r, _, err := d.client.CopyFromContainer(
+		context.Background(),
+		id,
+		path,
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// copy tar to writer
+	if _, err := io.Copy(w, r); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
 }
 
 // ContainerLog returns a reader containing log data for a Docker container.
