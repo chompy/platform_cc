@@ -52,7 +52,7 @@ func (d Docker) deleteNetwork() error {
 		context.Background(),
 		dockerNetworkName,
 	)
-	if !strings.Contains(err.Error(), "not found") {
+	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return tracerr.Wrap(err)
 	}
 	done()

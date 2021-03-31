@@ -46,8 +46,9 @@ func (d Docker) AllPurge(deleteGlobalVolumes bool) error {
 	if !deleteGlobalVolumes {
 		for i := range volList.Volumes {
 			if volumeIsGlobal(volList.Volumes[i].Name) {
+				// assume there is only one global volume
 				volList.Volumes = append(volList.Volumes[:i], volList.Volumes[i+1:]...)
-				i--
+				break
 			}
 		}
 	}
