@@ -50,6 +50,8 @@ func GetContainerConfig() container.Config {
 	}
 	routerCmd := fmt.Sprintf(`
 mkdir /www
+mkdir /var/pcc_global/ssl
+ln -s /var/pcc_global/ssl /var/ssl
 if [ ! -f /var/ssl/minica.pem ]; then
 	cd /var/ssl
 	~/go/bin/minica -domains "%s"
@@ -62,7 +64,7 @@ nginx -g "daemon off;"
 		ObjectType: container.ObjectContainerRouter,
 		Command:    []string{"sh", "-c", routerCmd},
 		Volumes: map[string]string{
-			"pcc_router": "/var/ssl",
+			"_global": "/var/pcc_global",
 		},
 		Image:      "docker.io/contextualcode/platform_cc_router:latest",
 		WorkingDir: "/routes",
@@ -297,6 +299,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		}
 		return nil
 	}
+	// reload nginx
 	if err := Reload(); err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -311,10 +314,6 @@ func DeleteProjectRoutes(p *project.Project) error {
 			return tracerr.Wrap(err)
 		}
 		return nil
-	}
-	// reload
-	if err := Reload(); err != nil {
-		return tracerr.Wrap(err)
 	}
 	done()
 	return nil

@@ -45,14 +45,16 @@ var allStopCmd = &cobra.Command{
 }
 
 var allPurgeCmd = &cobra.Command{
-	Use:   "purge",
+	Use:   "purge [--global]",
 	Short: "Purge all Platform.CC data.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.WriteStderr("!!! WARNING: PURGING ALL PLATFORM.CC DATA IN 5 SECONDS !!!\n")
 		time.Sleep(5 * time.Second)
 		containerHandler, err := getContainerHandler()
 		handleError(err)
-		handleError(containerHandler.AllPurge())
+		handleError(containerHandler.AllPurge(
+			checkFlag(cmd, "global"),
+		))
 	},
 }
 
@@ -115,6 +117,7 @@ var allStatusCmd = &cobra.Command{
 
 func init() {
 	allCmd.AddCommand(allStopCmd)
+	allPurgeCmd.Flags().Bool("global", false, "JSON output")
 	allCmd.AddCommand(allPurgeCmd)
 	allStatusCmd.Flags().Bool("json", false, "JSON output")
 	allCmd.AddCommand(allStatusCmd)

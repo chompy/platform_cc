@@ -93,7 +93,7 @@ func TestStartStopProject(t *testing.T) {
 		t,
 	)
 	// ensure no volume remains after global purge
-	ch.AllPurge()
+	ch.AllPurge(true)
 	def.AssertEqual(
 		len(ch.Tracker.Volumes),
 		0,
@@ -189,7 +189,14 @@ func TestStartMultipleProjects(t *testing.T) {
 		t,
 	)
 	// test all purge
-	ch.AllPurge()
+	ch.AllPurge(false)
+	def.AssertEqual(
+		len(ch.Tracker.Volumes),
+		1,
+		"wrong number of volumes",
+		t,
+	)
+	ch.AllPurge(true)
 	def.AssertEqual(
 		len(ch.Tracker.Volumes),
 		0,

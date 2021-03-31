@@ -32,7 +32,7 @@ func (d Docker) AllStop() error {
 }
 
 // AllPurge deletes all Platform.CC Docker resources.
-func (d Docker) AllPurge() error {
+func (d Docker) AllPurge(deleteGlobalVolumes bool) error {
 	// stop
 	if err := d.AllStop(); err != nil {
 		return tracerr.Wrap(err)
@@ -41,6 +41,15 @@ func (d Docker) AllPurge() error {
 	volList, err := d.listAllVolumes()
 	if err != nil {
 		return tracerr.Wrap(err)
+	}
+	// remove global volumes from deletion list if not flagged for deletion
+	if !deleteGlobalVolumes {
+		for i := range volList.Volumes {
+			if volumeIsGlobal(volList.Volumes[i].Name) {
+				volList.Volumes = append(volList.Volumes[:i], volList.Volumes[i+1:]...)
+				i--
+			}
+		}
 	}
 	if err := d.deleteVolumes(volList); err != nil {
 		return tracerr.Wrap(err)

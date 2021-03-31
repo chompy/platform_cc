@@ -293,10 +293,18 @@ func (d Dummy) AllStop() error {
 }
 
 // AllPurge purges dummy resources.
-func (d Dummy) AllPurge() error {
+func (d Dummy) AllPurge(deleteGlobalVolumes bool) error {
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
-	d.Tracker.Volumes = make([]string, 0)
+	newVolList := make([]string, 0)
+	if !deleteGlobalVolumes {
+		for _, name := range d.Tracker.Volumes {
+			if volumeIsGlobal(name) {
+				newVolList = append(newVolList, name)
+			}
+		}
+	}
+	d.Tracker.Volumes = newVolList
 	return nil
 }
 
