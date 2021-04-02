@@ -2,7 +2,7 @@
 
 # - vars
 SSH_URL="$1"
-PCC_PATH=~/.local/bin/pcc
+PCC_PATH=~/.pcc/pcc
 PLATFORM_BIN=~/.platformsh/bin/platform
 PRIVATE_SSH_KEY_PATH=~/.ssh/id_rsa
 RSYNC_PARAMS="-auve 'ssh -i /tmp/id_rsa'"
