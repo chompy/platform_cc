@@ -30,7 +30,7 @@ type Project struct {
 	Host         string
 	ID           string
 	Title        string
-	Environments []string
+	Environments []ApiEnvironment
 }
 
 // LoadProjectFromPath returns information about a Platform.sh from a path.

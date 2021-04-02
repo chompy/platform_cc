@@ -30,6 +30,7 @@ import (
 )
 
 var globalConfigPaths = []string{
+	"~/.pcc/config.yaml",
 	"~/.config/platform_cc.yaml",
 	"~/platform_cc.yaml",
 }
@@ -49,6 +50,9 @@ type GlobalConfig struct {
 		KeyPath string `yaml:"key_path"`
 		Key     string `yaml:"key"`
 	} `yaml:"ssh"`
+	PlatformSH struct {
+		APIToken string `yaml:"api_token"`
+	} `yaml:"platform_sh"`
 }
 
 // SetDefaults sets the default values.

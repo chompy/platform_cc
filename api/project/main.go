@@ -46,18 +46,18 @@ const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // Project defines a platform.sh/cc project.
 type Project struct {
-	ID               string             `json:"id"`
-	Path             string             `json:"-"`
-	Apps             []def.App          `json:"-"`
-	Routes           []def.Route        `json:"-"`
-	Services         []def.Service      `json:"-"`
-	PlatformSH       platformsh.Project `json:"-"`
-	Variables        def.Variables      `json:"vars"`
-	Flags            Flags              `json:"flags"`   // local project flags
-	Options          map[Option]string  `json:"options"` // local project options
+	ID               string            `json:"id"`
+	Path             string            `json:"-"`
+	Apps             []def.App         `json:"-"`
+	Routes           []def.Route       `json:"-"`
+	Services         []def.Service     `json:"-"`
+	Variables        def.Variables     `json:"vars"`
+	Flags            Flags             `json:"flags"`   // local project flags
+	Options          map[Option]string `json:"options"` // local project options
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	globalConfig     *def.GlobalConfig
+	platformSH       platformsh.Project
 	slot             int  // set volume slot
 	noCommit         bool // flag that signifies apps should not be committed
 	noBuild          bool // flag that signifies apps should not be built on start up
@@ -92,7 +92,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Path:             path,
 		Variables:        make(map[string]interface{}),
 		Options:          make(map[Option]string),
-		PlatformSH:       psh,
+		platformSH:       psh,
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
 		slot:             1,
@@ -528,4 +528,16 @@ func (p *Project) Validate() []error {
 	}
 	done()
 	return out
+}
+
+// GetPlatformSHProject return object containing details about the Platform.sh project.
+func (p *Project) GetPlatformSHProject() (*platformsh.Project, error) {
+	if p.platformSH.ID == "" {
+		return nil, tracerr.Errorf("platform.sh project not found")
+	}
+	pshApi := platformsh.NewAPI(p.globalConfig)
+	if err := pshApi.PopulateProject(&p.platformSH); err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return &p.platformSH, nil
 }
