@@ -26,25 +26,27 @@ import (
 
 // Project contains information about a Platform.sh project.
 type Project struct {
-	LocalPath    string
-	Host         string
-	ID           string
-	Title        string
-	Environments []ApiEnvironment
+	LocalPath      string
+	Host           string
+	ID             string
+	Title          string
+	Environments   []Environment
+	apiToken       string
+	apiAccessToken string
 }
 
 // LoadProjectFromPath returns information about a Platform.sh from a path.
-func LoadProjectFromPath(path string) (Project, error) {
+func LoadProjectFromPath(path string) (*Project, error) {
 	path, err := FindRoot(path)
 	if err != nil {
-		return Project{}, tracerr.Wrap(err)
+		return nil, tracerr.Wrap(err)
 	}
 	pid, host, err := parseProjectGit(path)
 	if err != nil {
-		return Project{}, tracerr.Wrap(err)
+		return nil, tracerr.Wrap(err)
 	}
 	output.Info(fmt.Sprintf("Found Platform.sh project '%s.'", pid))
-	return Project{
+	return &Project{
 		LocalPath: path,
 		Host:      host,
 		ID:        pid,

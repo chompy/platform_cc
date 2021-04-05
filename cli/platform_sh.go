@@ -18,9 +18,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cli
 
 import (
-	"log"
+	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/spf13/cobra"
+	"github.com/ztrue/tracerr"
 )
 
 var platformShCmd = &cobra.Command{
@@ -29,18 +30,52 @@ var platformShCmd = &cobra.Command{
 	Short:   "Manage Platform.sh options.",
 }
 
-var platformShTestCmd = &cobra.Command{
-	Use: "test",
+var platformShSshCmd = &cobra.Command{
+	Use: "ssh environment [-s service]",
 	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(false)
+		if len(args) < 1 {
+			handleError(tracerr.Errorf("environment not provided"))
+		}
+		// fetch project
+		proj, err := getProject(true)
 		handleError(err)
-		psh, err := proj.GetPlatformSHProject()
+		if proj.PlatformSH == nil || proj.PlatformSH.ID == "" {
+			handleError(tracerr.Errorf("platform.sh project not found"))
+		}
+		// get def
+		def, err := getDefFromCommand(containerCmd, proj)
 		handleError(err)
-		log.Println(psh.ID)
+		// fetch environments
+		handleError(proj.PlatformSH.FetchEnvironments())
+		// get psh environment
+		env := proj.PlatformSH.GetEnvironment(args[0])
+		if env == nil {
+			handleError(tracerr.Errorf("cannot find environment %s", args[0]))
+		}
+		// fetch ssh url
+		output.WriteStdout(
+			proj.PlatformSH.SSHUrl(env, proj.GetDefinitionName(def)),
+		)
+	},
+}
+
+var platformShSyncCmd = &cobra.Command{
+	Use: "sync environment [--skip-variables] [--skip-mounts] [--skip-services]",
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			handleError(tracerr.Errorf("environment not provided"))
+		}
+		proj, err := getProject(true)
+		handleError(err)
+		if !checkFlag(cmd, "skip-variables") {
+			handleError(proj.PlatformSHSyncVariables(args[0]))
+		}
 	},
 }
 
 func init() {
-	platformShCmd.AddCommand(platformShTestCmd)
+	platformShCmd.AddCommand(platformShSshCmd)
+	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")
+	platformShCmd.AddCommand(platformShSyncCmd)
 	RootCmd.AddCommand(platformShCmd)
 }

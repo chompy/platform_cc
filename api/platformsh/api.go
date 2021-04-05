@@ -24,39 +24,33 @@ import (
 	"net/http"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/ztrue/tracerr"
-	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
 const platformshAccessTokenUrl = "https://accounts.platform.sh/oauth2/token"
 const platformshApiUrl = "https://api.platform.sh/"
 
-// API handles connection to PlatformSH API.
-type API struct {
-	APIToken    string
-	AccessToken string
+// SetAPIToken sets the platform.sh API token.
+func (p *Project) SetAPIToken(value string) {
+	p.apiToken = value
 }
 
-// NewAPI returns new API.
-func NewAPI(globalConfig *def.GlobalConfig) API {
-	apiToken := ""
-	if globalConfig != nil {
-		apiToken = globalConfig.PlatformSH.APIToken
-	}
-	return API{
-		APIToken: apiToken,
-	}
-}
-
-func (p *API) getAccessToken() error {
-	if p.AccessToken != "" {
+// getAccessToken fetches the access token from the platform.sh.
+func (p *Project) getAccessToken() error {
+	if p.apiAccessToken != "" {
 		return nil
+	}
+	if p.apiToken == "" {
+		return tracerr.Errorf("platform.sh api token not set")
 	}
 	data := map[string]string{
 		"client_id":  "platform-api-user",
 		"grant_type": "api_token",
-		"api_token":  p.APIToken,
+		"api_token":  p.apiToken,
 	}
+	output.LogDebug("Send request for access token to Platform.sh API.", data)
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -77,75 +71,96 @@ func (p *API) getAccessToken() error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	output.LogDebug("Recieved access token response from Platform.sh API.", respDataRaw)
 	respData := map[string]interface{}{}
 	if err := json.Unmarshal(respDataRaw, &respData); err != nil {
 		return tracerr.Wrap(err)
 	}
 	if respData["access_token"] != nil {
-		p.AccessToken = respData["access_token"].(string)
+		p.apiAccessToken = respData["access_token"].(string)
 	}
 	return nil
 }
 
-func (p *API) request(endpoint string, post map[string]interface{}, respData interface{}) error {
+// check performs a check to ensure we're dealing with a valid platform.sh project.
+func (p *Project) check() error {
+	if p.ID == "" {
+		return tracerr.Errorf("platform.sh project id not found")
+	}
+	return nil
+}
 
+// request performs a platform.sh API request.
+func (p *Project) request(endpoint string, post map[string]interface{}, respData interface{}) error {
 	if err := p.getAccessToken(); err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	// build post data
+	method := "GET"
 	rawPost := []byte{}
 	if post != nil {
+		method = "POST"
 		var err error
 		rawPost, err = json.Marshal(post)
 		if err != nil {
 			return tracerr.Wrap(err)
 		}
 	}
-
 	// create request
+	fullURL := platformshApiUrl + strings.TrimLeft(endpoint, "/")
 	req, err := http.NewRequest(
-		"GET",
-		platformshApiUrl+strings.TrimLeft(endpoint, "/"),
+		method,
+		fullURL,
 		bytes.NewReader(rawPost),
 	)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+p.AccessToken)
-
+	req.Header.Set("Authorization", "Bearer "+p.apiAccessToken)
+	output.LogDebug("Created Platform.sh API request.", map[string]interface{}{
+		"method":    method,
+		"endpoint":  endpoint,
+		"url":       fullURL,
+		"post_data": post,
+	})
 	// send request
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	// process response
 	defer resp.Body.Close()
 	rawResp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	err = json.Unmarshal(rawResp, respData)
-	return tracerr.Wrap(err)
+	output.LogDebug("Recieved Platform.sh API response.", rawResp)
+	if respData != nil {
+		return tracerr.Wrap(json.Unmarshal(rawResp, respData))
+	}
+	return nil
 }
 
-// PopulateProjectEnvironments populates environment list for given Platform.sh project.
-func (p *API) PopulateProjectEnvironments(project *Project) error {
-	if err := p.request("/projects/"+project.ID+"/environments", nil, &project.Environments); err != nil {
+// FetchEnvironments populates environments list.
+func (p *Project) FetchEnvironments() error {
+	if err := p.check(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := p.request("/projects/"+p.ID+"/environments", nil, &p.Environments); err != nil {
 		return tracerr.Wrap(err)
 	}
 	return nil
 }
 
-// PopulateProject populates given Platform.sh project with data from API.
-func (p *API) PopulateProject(project *Project) error {
-
-	if err := p.PopulateProjectEnvironments(project); err != nil {
+// Fetch populates project with API data.
+func (p *Project) Fetch() error {
+	if err := p.check(); err != nil {
 		return tracerr.Wrap(err)
 	}
-
+	if err := p.FetchEnvironments(); err != nil {
+		return tracerr.Wrap(err)
+	}
 	return nil
 }

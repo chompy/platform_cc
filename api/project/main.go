@@ -57,7 +57,7 @@ type Project struct {
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	globalConfig     *def.GlobalConfig
-	platformSH       platformsh.Project
+	PlatformSH       *platformsh.Project
 	slot             int  // set volume slot
 	noCommit         bool // flag that signifies apps should not be committed
 	noBuild          bool // flag that signifies apps should not be built on start up
@@ -80,6 +80,9 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+	if psh != nil {
+		psh.SetAPIToken(gc.PlatformSH.APIToken)
+	}
 	// build project
 	path, _ = filepath.Abs(path)
 	// TODO allow container handler to be configured
@@ -92,7 +95,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		Path:             path,
 		Variables:        make(map[string]interface{}),
 		Options:          make(map[Option]string),
-		platformSH:       psh,
+		PlatformSH:       psh,
 		containerHandler: containerHandler,
 		relationships:    make([]map[string]interface{}, 0),
 		slot:             1,
@@ -100,7 +103,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	}
 	o.Load()
 	if o.ID == "" {
-		if psh.ID != "" {
+		if psh != nil && psh.ID != "" {
 			o.ID = psh.ID
 		} else {
 			o.ID = generateProjectID()
@@ -528,16 +531,4 @@ func (p *Project) Validate() []error {
 	}
 	done()
 	return out
-}
-
-// GetPlatformSHProject return object containing details about the Platform.sh project.
-func (p *Project) GetPlatformSHProject() (*platformsh.Project, error) {
-	if p.platformSH.ID == "" {
-		return nil, tracerr.Errorf("platform.sh project not found")
-	}
-	pshApi := platformsh.NewAPI(p.globalConfig)
-	if err := pshApi.PopulateProject(&p.platformSH); err != nil {
-		return nil, tracerr.Wrap(err)
-	}
-	return &p.platformSH, nil
 }
