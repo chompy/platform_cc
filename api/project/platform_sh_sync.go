@@ -203,11 +203,14 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 						os.Remove(dbPath)
 					}()
 					cont := p.NewContainer(service)
+					if err := cont.Upload("/mnt/data/db.sql.gz", dbOpen); err != nil {
+						return tracerr.Wrap(err)
+					}
 					if err := cont.containerHandler.ContainerShell(
 						cont.Config.GetContainerName(),
 						"root",
-						[]string{"sh", "-c", fmt.Sprintf("gunzip | %s", strings.Join(p.GetDatabaseShellCommand(service, db), " "))},
-						dbOpen,
+						[]string{"sh", "-c", fmt.Sprintf("zcat /mnt/data/db.sql.gz | %s && rm /mnt/data/db.sql.gz", p.GetDatabaseShellCommand(service, db))},
+						nil,
 					); err != nil {
 						return tracerr.Wrap(err)
 					}

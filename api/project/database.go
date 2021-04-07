@@ -55,7 +55,7 @@ func MatchDatabaseTypeName(name string) int {
 }
 
 // GetDatabaseShellCommand returns the command to access the database shell for given definition.
-func (p *Project) GetDatabaseShellCommand(d interface{}, database string) []string {
+func (p *Project) GetDatabaseShellCommand(d interface{}, database string) string {
 	switch d.(type) {
 	case def.Service:
 		{
@@ -67,7 +67,7 @@ func (p *Project) GetDatabaseShellCommand(d interface{}, database string) []stri
 					if database != "" {
 						shellCmd += fmt.Sprintf(" -D%s", database)
 					}
-					return []string{"sh", "-c", shellCmd}
+					return shellCmd
 				}
 			case databasePostgres:
 				{
@@ -75,16 +75,16 @@ func (p *Project) GetDatabaseShellCommand(d interface{}, database string) []stri
 					if database != "" {
 						shellCmd += fmt.Sprintf(" --dbname=\"%s\"", database)
 					}
-					return []string{"sh", "-c", shellCmd}
+					return shellCmd
 				}
 			}
 		}
 	}
-	return []string{""}
+	return ""
 }
 
 // GetDatabaseDumpCommand returns the command to dump a database for given definition.
-func (p *Project) GetDatabaseDumpCommand(d interface{}, database string) []string {
+func (p *Project) GetDatabaseDumpCommand(d interface{}, database string) string {
 	switch d.(type) {
 	case def.Service:
 		{
@@ -96,7 +96,7 @@ func (p *Project) GetDatabaseDumpCommand(d interface{}, database string) []strin
 						"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
 						database,
 					)
-					return []string{"sh", "-c", shellCmd}
+					return shellCmd
 				}
 			case databasePostgres:
 				{
@@ -104,12 +104,12 @@ func (p *Project) GetDatabaseDumpCommand(d interface{}, database string) []strin
 						"PGPASSWORD=main pg_dump -U main -h 127.0.0.1 %s",
 						database,
 					)
-					return []string{"sh", "-c", shellCmd}
+					return shellCmd
 				}
 			}
 		}
 	}
-	return []string{""}
+	return ""
 }
 
 // GetPlatformSHDatabaseDumpCommand returns the command to dump a database from Platform.sh for given definition.

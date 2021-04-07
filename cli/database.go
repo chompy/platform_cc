@@ -45,7 +45,7 @@ var databaseDumpCmd = &cobra.Command{
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			proj.GetDatabaseDumpCommand(service, database),
+			[]string{"sh", "-c", proj.GetDatabaseDumpCommand(service, database)},
 		))
 	},
 }
@@ -63,7 +63,7 @@ var databaseShellCmd = &cobra.Command{
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			proj.GetDatabaseShellCommand(service, database),
+			[]string{"sh", "-c", proj.GetDatabaseShellCommand(service, database)},
 		))
 	},
 }
