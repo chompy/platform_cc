@@ -15,6 +15,10 @@ DL_SCRIPTS=(
 INSTALL_PATH=~/.pcc
 PCC_BIN_NAME="pcc"
 BASH_INIT_PATHS=(~/.bashrc ~/.bash_profile)
+SED_ARGS="-i"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    SED_ARGS="-i .bak"
+fi
 
 # set dev version if -d flag set
 VERSION=""
@@ -82,7 +86,7 @@ if [ "$?" != "0" ]; then
 fi
 for b in ${BASH_INIT_PATHS[@]}; do
     if [ -f $b ]; then
-        sed -i "s/source.*\.pcc.*//g" $b
+        sed $SED_ARGS "s/source.*\.pcc.*//g" $b
         printf "source $INSTALL_PATH/.pcc.bashrc" >> $b
         source $INSTALL_PATH/.pcc.bashrc
     fi
