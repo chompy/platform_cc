@@ -69,6 +69,14 @@ func hasSSHKey() bool {
 	return !os.IsNotExist(err)
 }
 
+// PrivateKey returns the private key.
+func PrivateKey() ([]byte, error) {
+	if !hasSSHKey() {
+		return nil, tracerr.Errorf("private key not found")
+	}
+	return ioutil.ReadFile(expandPath(privateKeyPath))
+}
+
 // storeSSHKey generates a new ssh key, sends it to platform.sh, and stores the private key locally.
 func (p *Project) storeSSHKey() error {
 	// generate keys

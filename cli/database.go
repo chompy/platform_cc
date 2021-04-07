@@ -21,36 +21,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 )
-
-const (
-	databaseMySQL    int = 1
-	databasePostgres int = 2
-)
-
-var databaseTypeNames = map[int][]string{
-	databaseMySQL:    []string{"mysql", "mariadb"},
-	databasePostgres: []string{"postgresql"},
-}
-
-func getDatabaseTypeNames() []string {
-	out := make([]string, 0)
-	for _, v := range databaseTypeNames {
-		out = append(out, v...)
-	}
-	return out
-}
-
-func matchDatabaseTypeName(name string) int {
-	for k, v := range databaseTypeNames {
-		for _, vv := range v {
-			if vv == name {
-				return k
-			}
-		}
-	}
-	return 0
-}
 
 var databaseCmd = &cobra.Command{
 	Use:     "database [-s service] [-d database]",
@@ -64,36 +36,16 @@ var databaseDumpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		service, err := getService(databaseCmd, proj, getDatabaseTypeNames())
+		service, err := getService(databaseCmd, proj, project.GetDatabaseTypeNames())
 		handleError(err)
 		database := databaseCmd.PersistentFlags().Lookup("database").Value.String()
 		if database == "" {
 			handleError(fmt.Errorf("must provide a database to dump"))
 		}
-		shellCmd := "true"
-		switch matchDatabaseTypeName(service.GetTypeName()) {
-		case databaseMySQL:
-			{
-				shellCmd = fmt.Sprintf(
-					"mysqldump --password=$(cat /mnt/data/.mysql-password) %s",
-					database,
-				)
-				break
-			}
-		case databasePostgres:
-			{
-				shellCmd = fmt.Sprintf(
-					"PGPASSWORD=main pg_dump -U main -h 127.0.0.1 %s",
-					database,
-				)
-			}
-		}
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			[]string{
-				"sh", "-c", shellCmd,
-			},
+			proj.GetDatabaseDumpCommand(service, database),
 		))
 	},
 }
@@ -105,33 +57,13 @@ var databaseShellCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		service, err := getService(databaseCmd, proj, getDatabaseTypeNames())
+		service, err := getService(databaseCmd, proj, project.GetDatabaseTypeNames())
 		handleError(err)
-		shellCmd := "true"
 		database := databaseCmd.PersistentFlags().Lookup("database").Value.String()
-		switch matchDatabaseTypeName(service.GetTypeName()) {
-		case databaseMySQL:
-			{
-				shellCmd = "mysql --password=$(cat /mnt/data/.mysql-password)"
-				if database != "" {
-					shellCmd += fmt.Sprintf(" -D%s", database)
-				}
-				break
-			}
-		case databasePostgres:
-			{
-				shellCmd = "PGPASSWORD=main psql -U main -h 127.0.0.1"
-				if database != "" {
-					shellCmd += fmt.Sprintf(" --dbname=\"%s\"", database)
-				}
-			}
-		}
 		c := proj.NewContainer(service)
 		handleError(c.Shell(
 			"root",
-			[]string{
-				"sh", "-c", shellCmd,
-			},
+			proj.GetDatabaseShellCommand(service, database),
 		))
 	},
 }

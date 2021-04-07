@@ -18,31 +18,42 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package project
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
+	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 )
 
-// PlatformSHSyncVariables syncs the given platform.sh environment's variables to the local project.
-func (p *Project) PlatformSHSyncVariables(envName string) error {
+func (p *Project) platformSHSyncPreflight(envName string) error {
 	if p.PlatformSH == nil || p.PlatformSH.ID == "" {
 		return tracerr.Errorf("platform.sh project not found")
 	}
 	if len(p.Apps) < 1 {
 		return tracerr.Errorf("project should have at least one application")
 	}
-	// fetch environment
-	if err := p.PlatformSH.Fetch(); err != nil {
+	if err := p.PlatformSH.FetchEnvironments(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
+}
+
+// PlatformSHSyncVariables syncs the given platform.sh environment's variables to the local project.
+func (p *Project) PlatformSHSyncVariables(envName string) error {
+
+	done := output.Duration(fmt.Sprintf("Sync variables from Platform.sh '%s' environment.", envName))
+
+	if err := p.platformSHSyncPreflight(envName); err != nil {
 		return tracerr.Wrap(err)
 	}
 	env := p.PlatformSH.GetEnvironment(envName)
 	if env == nil {
 		return tracerr.Errorf("environment '%s' not found", envName)
 	}
-	// fetch variables
-	done := output.Duration("Fetch variables.")
 	vars, err := p.PlatformSH.Variables(env)
 	if err != nil {
 		return tracerr.Wrap(err)
@@ -69,13 +80,146 @@ func (p *Project) PlatformSHSyncVariables(envName string) error {
 	return nil
 }
 
-// PlatformSHSync syncs the given platform.sh environment to the current local project.
-func (p *Project) PlatformSHSync(envName string) error {
+// PlatformSHSyncMounts syncs the given platform.sh environment's mounts to the local project.
+func (p *Project) PlatformSHSyncMounts(envName string) error {
 
-	done := output.Duration(fmt.Sprintf("Sync %s environment.", envName))
+	done := output.Duration(fmt.Sprintf("Sync mounts from Platform.sh '%s' environment.", envName))
 
-	p.PlatformSHSyncVariables(envName)
+	// get psh environment
+	if err := p.platformSHSyncPreflight(envName); err != nil {
+		return tracerr.Wrap(err)
+	}
+	env := p.PlatformSH.GetEnvironment(envName)
+	if env == nil {
+		return tracerr.Errorf("environment '%s' not found", envName)
+	}
+
+	// get private key
+	privKey, err := platformsh.PrivateKey()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	privKeyReader := bytes.NewReader(privKey)
+
+	// set volume mount strategy to ensure mount sync works
+	p.Options[OptionMountStrategy] = MountStrategyVolume
+	if err := p.Save(); err != nil {
+		return tracerr.Wrap(err)
+	}
+
+	// itterate apps to sync mounts
+	for _, app := range p.Apps {
+		sshURL := p.PlatformSH.SSHUrl(env, app.Name)
+		cont := p.NewContainer(app)
+		if err := cont.Upload("/mnt/priv.key", privKeyReader); err != nil {
+			return tracerr.Wrap(err)
+		}
+		for dest := range app.Mounts {
+			done2 := output.Duration(fmt.Sprintf("%s:%s", app.Name, dest))
+			if err := cont.Shell(
+				"root",
+				[]string{"sh", "-c",
+					fmt.Sprintf(
+						`chmod 0600 /mnt/priv.key && rsync -avzh -e "ssh -i /mnt/priv.key" %s:/app/%s /app/%s`,
+						sshURL,
+						strings.TrimLeft(dest, "/"),
+						strings.TrimLeft(dest, "/"),
+					),
+				},
+			); err != nil {
+				return tracerr.Wrap(err)
+			}
+			done2()
+		}
+		cont.Shell("root", []string{"rm", "/mnt/priv.key"})
+		// TODO workers
+	}
+	done()
+	return nil
+}
+
+// PlatformSHSyncDatabases syncs the given platform.sh environment's databases to the local project.
+func (p *Project) PlatformSHSyncDatabases(envName string) error {
+
+	done := output.Duration(fmt.Sprintf("Sync databases from Platform.sh '%s' environment.", envName))
+
+	// get psh environment
+	if err := p.platformSHSyncPreflight(envName); err != nil {
+		return tracerr.Wrap(err)
+	}
+	env := p.PlatformSH.GetEnvironment(envName)
+	if env == nil {
+		return tracerr.Errorf("environment '%s' not found", envName)
+	}
+
+	// fetch relationships for dump passwords
+	relationships, err := p.PlatformSH.PlatformRelationships(env, p.Apps[0].Name)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+
+	// itterate services to find database services
+	for _, service := range p.Services {
+		for _, dbType := range GetDatabaseTypeNames() {
+			if dbType == service.GetTypeName() {
+				// itterate databases
+				for _, dbIf := range service.Configuration["schemas"].([]interface{}) {
+					db := dbIf.(string)
+					done2 := output.Duration(fmt.Sprintf("%s:%s", service.Name, db))
+					// create dump
+					done3 := output.Duration("Create dump.")
+					if _, err := p.PlatformSH.SSHCommand(
+						env, p.Apps[0].Name,
+						p.GetPlatformSHDatabaseDumpCommand(service, db, relationships)+" | gzip > /tmp/db.sql.gz",
+					); err != nil {
+						return tracerr.Wrap(err)
+					}
+					done3()
+					// download dump
+					done3 = output.Duration("Download dump.")
+					dbPath, err := p.PlatformSH.SSHDownload(
+						env, p.Apps[0].Name,
+						"/tmp/db.sql.gz",
+					)
+					if err != nil {
+						return tracerr.Wrap(err)
+					}
+					// delete remote dump
+					if _, err := p.PlatformSH.SSHCommand(
+						env, p.Apps[0].Name,
+						"rm /tmp/db.sql.gz",
+					); err != nil {
+						return tracerr.Wrap(err)
+					}
+					done3()
+					// import dump
+					done3 = output.Duration("Import dump.")
+					dbOpen, err := os.Open(dbPath)
+					if err != nil {
+						return tracerr.Wrap(err)
+					}
+					defer func() {
+						dbOpen.Close()
+						os.Remove(dbPath)
+					}()
+					cont := p.NewContainer(service)
+					if err := cont.containerHandler.ContainerShell(
+						cont.Config.GetContainerName(),
+						"root",
+						[]string{"sh", "-c", fmt.Sprintf("gunzip | %s", strings.Join(p.GetDatabaseShellCommand(service, db), " "))},
+						dbOpen,
+					); err != nil {
+						return tracerr.Wrap(err)
+					}
+					done3()
+					done2()
+				}
+				break
+			}
+		}
+	}
 
 	done()
 	return nil
+
 }

@@ -43,7 +43,7 @@ var platformShSshCmd = &cobra.Command{
 			handleError(tracerr.Errorf("platform.sh project not found"))
 		}
 		// get def
-		def, err := getDefFromCommand(containerCmd, proj)
+		def, err := getDefFromCommand(cmd, proj)
 		handleError(err)
 		// fetch environments
 		handleError(proj.PlatformSH.FetchEnvironments())
@@ -60,7 +60,7 @@ var platformShSshCmd = &cobra.Command{
 }
 
 var platformShSyncCmd = &cobra.Command{
-	Use: "sync environment [--skip-variables] [--skip-mounts] [--skip-services]",
+	Use: "sync environment [--skip-variables] [--skip-mounts] [--skip-databases]",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			handleError(tracerr.Errorf("environment not provided"))
@@ -70,12 +70,28 @@ var platformShSyncCmd = &cobra.Command{
 		if !checkFlag(cmd, "skip-variables") {
 			handleError(proj.PlatformSHSyncVariables(args[0]))
 		}
+		if !checkFlag(cmd, "skip-mounts") || !checkFlag(cmd, "skip-databases") {
+			handleError(proj.Start())
+		}
+		if !checkFlag(cmd, "skip-mounts") {
+			handleError(proj.PlatformSHSyncMounts(args[0]))
+		}
+		if !checkFlag(cmd, "skip-databases") {
+			handleError(proj.PlatformSHSyncDatabases(args[0]))
+		}
+		if !checkFlag(cmd, "skip-mounts") || !checkFlag(cmd, "skip-databases") {
+			handleError(proj.Stop())
+			handleError(proj.Start())
+		}
 	},
 }
 
 func init() {
+	platformShSshCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
 	platformShCmd.AddCommand(platformShSshCmd)
 	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")
+	platformShSyncCmd.Flags().Bool("skip-mounts", false, "Skip mount sync.")
+	platformShSyncCmd.Flags().Bool("skip-databases", false, "Skip database sync.")
 	platformShCmd.AddCommand(platformShSyncCmd)
 	RootCmd.AddCommand(platformShCmd)
 }

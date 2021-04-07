@@ -145,6 +145,9 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 
 // FetchEnvironments populates environments list.
 func (p *Project) FetchEnvironments() error {
+	if len(p.Environments) > 0 {
+		return nil
+	}
 	if err := p.check(); err != nil {
 		return tracerr.Wrap(err)
 	}
