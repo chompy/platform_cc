@@ -13,7 +13,6 @@ replace gitlab.com/contextualcode/platform_cc/api/platformsh => ../platformsh
 require (
 	github.com/docker/docker v1.13.1
 	github.com/martinlindhe/base36 v1.1.0
-	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec // indirect
 	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1
