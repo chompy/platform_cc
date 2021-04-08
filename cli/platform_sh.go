@@ -89,7 +89,6 @@ var platformShSyncCmd = &cobra.Command{
 		}
 		if !checkFlag(cmd, "skip-mounts") || !checkFlag(cmd, "skip-databases") {
 			handleError(proj.Stop())
-			handleError(proj.Start())
 		}
 	},
 }
