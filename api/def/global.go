@@ -50,9 +50,6 @@ type GlobalConfig struct {
 		KeyPath string `yaml:"key_path"`
 		Key     string `yaml:"key"`
 	} `yaml:"ssh"`
-	PlatformSH struct {
-		APIToken string `yaml:"api_token"`
-	} `yaml:"platform_sh"`
 }
 
 // SetDefaults sets the default values.

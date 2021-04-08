@@ -1,5 +1,5 @@
 - FEATURES
-    - (Re)Implement the PSH sync script in Go as a subcommand. Expand it's functionality.
+    - platformsh:login command
     - Implement version update functionality in Go as a subcommand.
     - Build APT and Brew packages.
     - Parse routes.pcc.yaml in addition to routes.yaml to make PCC specific routes possible.

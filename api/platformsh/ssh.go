@@ -37,7 +37,7 @@ import (
 )
 
 const privateKeyPath = "~/.pcc/psh.key"
-const sshKeyTitle = "Platform.CC V2"
+const sshKeyTitle = "Platform.CC V2 (%s)"
 const sshWaitCheckIntveral = 30
 const sshWaitRetryCount = 10
 
@@ -90,11 +90,15 @@ func (p *Project) storeSSHKey() error {
 	// upload public key to platform.sh
 	done = output.Duration("Upload public key to Platform.sh.")
 	res := make(map[string]interface{})
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "-"
+	}
 	if err := p.request(
 		"ssh_keys",
 		map[string]interface{}{
 			"value": pubKey,
-			"title": sshKeyTitle,
+			"title": fmt.Sprintf(sshKeyTitle, hostname),
 		},
 		&res,
 	); err != nil {

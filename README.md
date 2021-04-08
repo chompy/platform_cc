@@ -29,21 +29,22 @@ curl -L -s https://platform.cc/releases/install.sh | bash /dev/stdin -d
 Quick Start
 -----------
 
-### Platform.sh Cloner / Syncer
+### Platform.sh Sync
 
-A shell script is included that allows syncing a Platform.sh environment to a local Platform.CC environment. To use it you need the SSH URL to your Platform.sh environment and the current user should have permission to access the environment over SSH.
+If you wish to copy an environment from Platform.sh you can use the `platformsh:sync` command. To use this command you must first obtain a Platform.sh API token. You can do this by using the `platformsh:login` command.
 
-```
-pcc_psh_sync <ssh_url>
-```
+Steps...
 
-This script does not clone the repository. Make sure you do that prior and run the script inside the root directory of the project.
+1) Run `pcc platformsh:login` and follow the instructions.
+2) From the project root directory run `pcc platformsh:sync`. This will take some time.
 
-This script will sync the following...
+This command will sync the following...
 
-- Mount directories (Rsync).
-- Variables.
-- MySQL databases.
+- Mount directories (Rsync). (Skipped with `--skip-mounts`.)
+- Variables. (Skipped with `--skip-variables`.)
+- MySQL/Postgres databases. (Skipped with `--skip-databases`.)
+
+On first sync Platform.CC will generate a new SSH key, it can take some time for Platform.sh to accept the new key.
 
 ### Local Project
 
@@ -66,7 +67,7 @@ This assumes that you have a project ready to go with all the appropiate configu
 
     Composer auth example...
     ```
-    $ pcc var:set 'env:COMPOSER_AUTH' " `cat ~/.composer/auth.json | tr -d '\n\r '` "
+    $ pcc var:set 'env:COMPOSER_AUTH' "$(cat ~/.composer/auth.json | tr -d '\n\r ')"
     ```
 
 2) Start in the root directory of the project.

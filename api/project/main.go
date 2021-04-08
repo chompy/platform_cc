@@ -80,9 +80,6 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-	if psh != nil {
-		psh.SetAPIToken(gc.PlatformSH.APIToken)
-	}
 	// build project
 	path, _ = filepath.Abs(path)
 	// TODO allow container handler to be configured

@@ -26,13 +26,11 @@ import (
 
 // Project contains information about a Platform.sh project.
 type Project struct {
-	LocalPath      string
-	Host           string
-	ID             string
-	Title          string
-	Environments   []Environment
-	apiToken       string
-	apiAccessToken string
+	LocalPath    string
+	Host         string
+	ID           string
+	Title        string
+	Environments []Environment
 }
 
 // LoadProjectFromPath returns information about a Platform.sh from a path.

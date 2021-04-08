@@ -19,6 +19,7 @@ package cli
 
 import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
+	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
@@ -28,6 +29,13 @@ var platformShCmd = &cobra.Command{
 	Use:     "platform-sh",
 	Aliases: []string{"platform_sh", "platformsh", "psh"},
 	Short:   "Manage Platform.sh options.",
+}
+
+var platformShLoginCmd = &cobra.Command{
+	Use: "login",
+	Run: func(cmd *cobra.Command, args []string) {
+		handleError(platformsh.APILogin())
+	},
 }
 
 var platformShSshCmd = &cobra.Command{
@@ -88,6 +96,7 @@ var platformShSyncCmd = &cobra.Command{
 
 func init() {
 	platformShSshCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
+	platformShCmd.AddCommand(platformShLoginCmd)
 	platformShCmd.AddCommand(platformShSshCmd)
 	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")
 	platformShSyncCmd.Flags().Bool("skip-mounts", false, "Skip mount sync.")
