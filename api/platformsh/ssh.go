@@ -158,7 +158,7 @@ func (p *Project) openSSH(env *Environment, service string) (*goph.Client, error
 		return nil, tracerr.Wrap(err)
 	}
 	// open ssh connection
-	client, err := goph.New(
+	client, err := goph.NewUnknown(
 		p.SSHUser(env, service),
 		env.EdgeHostname,
 		auth,
