@@ -95,7 +95,7 @@ func APILogin() error {
 
 	// start server
 	httpMux := http.NewServeMux()
-	httpServer := http.Server{Addr: fmt.Sprintf(":%d", apiOauthPort), Handler: httpMux}
+	httpServer := http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", apiOauthPort), Handler: httpMux}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	httpMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -250,7 +250,10 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	output.LogDebug("Recieved Platform.sh API response.", rawResp)
+	output.LogDebug("Recieved Platform.sh API response.", string(rawResp))
+	if resp.StatusCode != 200 {
+		return tracerr.Errorf("platform.sh api returned status code %d", resp.StatusCode)
+	}
 	if respData != nil {
 		return tracerr.Wrap(json.Unmarshal(rawResp, respData))
 	}
