@@ -1,7 +1,5 @@
 - FEATURES
-    - platformsh:login command
-    - Implement version update functionality in Go as a subcommand.
-    - Build APT and Brew packages.
+    - Implement version update functionality in Go as a subcommand.  
     - Parse routes.pcc.yaml in addition to routes.yaml to make PCC specific routes possible.
 
 - BACKBURNER
@@ -12,4 +10,5 @@
     - Use SSH agent to forward private key in to application containers.
     - More tests, increase code coverage.
     - Look for all TODO comments and work on them.
+    - Build APT and Brew packages.
     - Build Windows installer.

@@ -20,6 +20,7 @@ package cli
 import (
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/platformsh"
+	"gitlab.com/contextualcode/platform_cc/api/project"
 
 	"github.com/spf13/cobra"
 	"github.com/ztrue/tracerr"
@@ -34,7 +35,7 @@ var platformShCmd = &cobra.Command{
 var platformShLoginCmd = &cobra.Command{
 	Use: "login",
 	Run: func(cmd *cobra.Command, args []string) {
-		handleError(platformsh.APILogin())
+		handleError(platformsh.Login())
 	},
 }
 
@@ -75,6 +76,12 @@ var platformShSyncCmd = &cobra.Command{
 		}
 		proj, err := getProject(true)
 		handleError(err)
+
+		// set mount strat to volume
+		output.Info("Set mount strategy to volume.")
+		proj.Options[project.OptionMountStrategy] = project.MountStrategyVolume
+		handleError(proj.Save())
+
 		if !checkFlag(cmd, "skip-variables") {
 			handleError(proj.PlatformSHSyncVariables(args[0]))
 		}
