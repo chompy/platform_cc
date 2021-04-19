@@ -102,6 +102,8 @@ const (
 	DisableYamlOverrides = "disable_yaml_overrides"
 	// DisableAutoCommit disables automatic commit of application container.
 	DisableAutoCommit = "disable_auto_commit"
+	// DisableSharedGlobalVolume disables the shared global volume.
+	DisableSharedGlobalVolume = "disable_shared_global_volume"
 )
 
 // UnmarshalJSON implements Unmarshaler interface.
@@ -133,13 +135,14 @@ func (f *Flags) UnmarshalJSON(data []byte) error {
 // Descriptions returns a mapping of flag name to its description.
 func (f Flags) Descriptions() map[string]string {
 	return map[string]string{
-		EnableCron:           "Enables cron jobs.",
-		EnableWorkers:        "Enables workers.",
-		EnableServiceRoutes:  "Enable routes to services like Varnish.",
-		EnablePHPOpcache:     "Enables PHP Opcache.",
-		EnableOSXNFSMounts:   "Enable NFS mounts on OSX.",
-		DisableYamlOverrides: "Disable Platform.CC specific YAML override files (.platform.app.pcc.yaml, services.pcc.yaml).",
-		DisableAutoCommit:    "Disable auto commit of application containers on start.",
+		EnableCron:                "Enables cron jobs.",
+		EnableWorkers:             "Enables workers.",
+		EnableServiceRoutes:       "Enable routes to services like Varnish.",
+		EnablePHPOpcache:          "Enables PHP Opcache.",
+		EnableOSXNFSMounts:        "Enable NFS mounts on OSX.",
+		DisableYamlOverrides:      "Disable Platform.CC specific YAML override files (.platform.app.pcc.yaml, services.pcc.yaml).",
+		DisableAutoCommit:         "Disable auto commit of application containers on start.",
+		DisableSharedGlobalVolume: "Disable the shared global volume.",
 	}
 }
 

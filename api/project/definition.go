@@ -147,8 +147,10 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 		}
 	}
 	out := map[string]string{
-		name:      containerMntPath,
-		"_global": "/var/pcc_global",
+		name: containerMntPath,
+	}
+	if !p.HasFlag(DisableSharedGlobalVolume) {
+		out["_global"] = "/var/pcc_global"
 	}
 	return out
 }
