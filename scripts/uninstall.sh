@@ -3,6 +3,11 @@
 INSTALL_PATH=~/.pcc
 OLD_BIN_PATHS=(~/.local/bin /usr/local/bin)
 OLD_PCC_FILES=("pcc" "pcc_send_log" "pcc_psh_sync" "pcc_update" "pcc_uninstall")
+BASH_INIT_PATHS=(~/.bashrc ~/.bash_profile ~/.zshrc)
+SED_ARGS="-i"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    SED_ARGS="-i .bak"
+fi
 
 progress_success() {
     printf "\e[32mDONE\e[0m\n"
@@ -52,15 +57,14 @@ fi
 
 # delete old files
 for f in ${OLD_PCC_FILES[@]}; do    
-    delete_old_file $f
+    delete_old_file $f   
 done
 
 # remove bash complete
 printf "> Remove PATH and bash completion..."
-if [ -f ~/.bashrc ]; then
-    sed -i "s/source.*\.pcc.*//g" ~/.bashrc
-fi
-if [ -f ~/.bash_profile ]; then
-    sed -i "s/source.*\.pcc.*//g" ~/.bash_profile
-fi
+for b in ${BASH_INIT_PATHS[@]}; do
+    if [ -f $b ]; then
+        sed $SED_ARGS "s/source.*\.pcc.*//g" $b
+    fi
+done
 progress_success

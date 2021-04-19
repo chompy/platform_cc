@@ -13,7 +13,7 @@ DL_SCRIPTS=(
 )
 INSTALL_PATH=~/.pcc
 PCC_BIN_NAME="pcc"
-BASH_INIT_PATHS=(~/.bashrc ~/.bash_profile)
+BASH_INIT_PATHS=(~/.bashrc ~/.bash_profile ~/.zshrc)
 SED_ARGS="-i"
 if [[ "$OSTYPE" == "darwin"* ]]; then
     SED_ARGS="-i .bak"
