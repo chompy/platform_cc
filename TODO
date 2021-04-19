@@ -4,8 +4,6 @@
 
 - BACKBURNER
     - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)
-    - Router catch redirect loops.
-    - Check if .platform.app.yaml relationships actually match entries in .platform/services.yaml.
     - Configure SSH key on per project basis, instead of just global.
     - Use SSH agent to forward private key in to application containers.
     - More tests, increase code coverage.

@@ -78,7 +78,7 @@ func (d GlobalConfig) Validate() []error {
 					default:
 						{
 							o = append(o, NewValidateError(
-								"app.variables.env."+k,
+								"global.variables.env."+k,
 								"should be a scalar",
 							))
 							break
@@ -90,7 +90,7 @@ func (d GlobalConfig) Validate() []error {
 		default:
 			{
 				o = append(o, NewValidateError(
-					"app.variables.env",
+					"global.variables.env",
 					"should be a map",
 				))
 				break

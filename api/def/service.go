@@ -53,7 +53,7 @@ func (d Service) Validate() []error {
 	o := make([]error, 0)
 	if d.Type == "" {
 		o = append(o, NewValidateError(
-			"services[].type",
+			fmt.Sprintf("services.%s.type", d.Name),
 			"must be defined",
 		))
 	}

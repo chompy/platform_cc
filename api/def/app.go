@@ -82,13 +82,13 @@ func (d App) Validate() []error {
 	if err := validateMustContainOne(
 		[]string{"php", "golang", "dotnet", "elixir", "java", "lisp", "nodejs", "python", "ruby"},
 		d.GetTypeName(),
-		"app.type",
+		fmt.Sprintf("app.%s.type", d.Name),
 	); err != nil {
 		o = append(o, err)
 	}
 	if d.Disk < 128 {
 		o = append(o, NewValidateError(
-			"app.disk",
+			fmt.Sprintf("app.%s.disk", d.Name),
 			"should be 128 or higher",
 		))
 	}
@@ -131,7 +131,7 @@ func (d App) Validate() []error {
 			default:
 				{
 					o = append(o, NewValidateError(
-						fmt.Sprintf("app.variables.%s.%s", key, sk),
+						fmt.Sprintf("app.%s.variables.%s.%s", d.Name, key, sk),
 						"should be a scalar",
 					))
 					break

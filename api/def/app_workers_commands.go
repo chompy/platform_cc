@@ -17,6 +17,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
+import "fmt"
+
 // AppWorkersCommands defines command(s) to launch the app worker.
 type AppWorkersCommands struct {
 	Start string `yaml:"start" json:"start"`
@@ -30,7 +32,7 @@ func (d *AppWorkersCommands) SetDefaults() {
 func (d AppWorkersCommands) Validate(root *App) []error {
 	if d.Start == "" {
 		return []error{
-			NewValidateError("app.workers[].commands.start", "must not be empty"),
+			NewValidateError(fmt.Sprintf("app.%s.workers[].commands.start", root.Name), "must not be empty"),
 		}
 	}
 	return []error{}

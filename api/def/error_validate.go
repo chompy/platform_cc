@@ -35,7 +35,7 @@ type ValidateError struct {
 
 func (d *ValidateError) Error() string {
 	if d.msg != "" {
-		return fmt.Sprintf("validation error at '%s', %s", d.key, d.msg)
+		return fmt.Sprintf("%s: %s", d.key, d.msg)
 	}
-	return fmt.Sprintf("validation error at '%s'", d.key)
+	return d.key
 }

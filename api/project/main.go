@@ -519,6 +519,22 @@ func (p *Project) Validate() []error {
 	out := make([]error, 0)
 	for _, app := range p.Apps {
 		out = append(out, app.Validate()...)
+		for _, rel := range app.Relationships {
+			hasRel := false
+			relSplit := strings.Split(rel, ":")
+			for _, serv := range p.Services {
+				if relSplit[0] == serv.Name {
+					hasRel = true
+					break
+				}
+			}
+			if !hasRel {
+				out = append(out, def.NewValidateError(
+					fmt.Sprintf("app.%s.relationships", app.Name),
+					fmt.Sprintf("service %s is not defined", relSplit[0]),
+				))
+			}
+		}
 	}
 	for _, serv := range p.Services {
 		out = append(out, serv.Validate()...)

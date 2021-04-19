@@ -56,10 +56,9 @@ func MatchDatabaseTypeName(name string) int {
 
 // GetDatabaseShellCommand returns the command to access the database shell for given definition.
 func (p *Project) GetDatabaseShellCommand(d interface{}, database string) string {
-	switch d.(type) {
+	switch service := d.(type) {
 	case def.Service:
 		{
-			service := d.(def.Service)
 			switch MatchDatabaseTypeName(service.GetTypeName()) {
 			case databaseMySQL:
 				{
@@ -85,10 +84,9 @@ func (p *Project) GetDatabaseShellCommand(d interface{}, database string) string
 
 // GetDatabaseDumpCommand returns the command to dump a database for given definition.
 func (p *Project) GetDatabaseDumpCommand(d interface{}, database string) string {
-	switch d.(type) {
+	switch service := d.(type) {
 	case def.Service:
 		{
-			service := d.(def.Service)
 			switch MatchDatabaseTypeName(service.GetTypeName()) {
 			case databaseMySQL:
 				{
