@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -35,7 +34,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const oauthTokenStore = "~/.pcc/psh_oauth.dat"
+const oauthTokenStore = "~/.config/platformcc/platformsh_api.dat"
 const oauthPort = 31698
 const oauthClientId = "platform-cli"
 const oauthAuthURL = "https://auth.api.platform.sh/oauth2/authorize"
@@ -159,7 +158,6 @@ func Login() error {
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	log.Println(code)
 	// exchange code for token
 	tok, err := conf.Exchange(
 		ctx,

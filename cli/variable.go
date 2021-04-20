@@ -24,6 +24,7 @@ import (
 	"os"
 	"sort"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
@@ -31,7 +32,7 @@ import (
 )
 
 var varCmd = &cobra.Command{
-	Use:     "variable",
+	Use:     "variable [-g global]",
 	Aliases: []string{"var"},
 	Short:   "Manage project variables.",
 }
@@ -41,8 +42,7 @@ var varSetCmd = &cobra.Command{
 	Aliases: []string{"s"},
 	Short:   "Set a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(false)
-		handleError(err)
+
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing variable key"))
 		}
@@ -57,13 +57,29 @@ var varSetCmd = &cobra.Command{
 			handleError(err)
 			value = string(valueBytes)
 		}
+		// use global variable
+		if checkFlag(varCmd, "global") {
+			gc, err := config.Load()
+			handleError(err)
+			if value == "" {
+				// delete empty var
+				gc.Variables.Delete(args[0])
+			} else {
+				handleError(gc.Variables.Set(args[0], value))
+			}
+			output.Info(fmt.Sprintf("Set global variable '%s.'", args[0]))
+			handleError(config.Save(gc))
+			return
+		}
+		// use project variable
+		proj, err := getProject(false)
+		handleError(err)
 		if value == "" {
 			// delete empty var
 			handleError(proj.VarDelete(args[0]))
 		} else {
 			handleError(proj.VarSet(args[0], value))
 		}
-
 		handleError(proj.Save())
 	},
 }
@@ -74,13 +90,26 @@ var varGetCmd = &cobra.Command{
 	Short:   "Get a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
-		proj, err := getProject(false)
-		handleError(err)
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing variable key"))
 		}
+		// use global variable only
+		if checkFlag(varCmd, "global") {
+			gc, err := config.Load()
+			handleError(err)
+			output.WriteStdout(gc.Variables.GetString(args[0]) + "\n")
+			return
+		}
+		// use project variable (global if project var not set)
+		proj, err := getProject(false)
+		handleError(err)
 		out, err := proj.VarGet(args[0])
 		handleError(err)
+		if out == "" {
+			gc, err := config.Load()
+			handleError(err)
+			out = gc.Variables.GetString(args[0])
+		}
 		output.WriteStdout(out + "\n")
 	},
 }
@@ -90,6 +119,19 @@ var varDelCmd = &cobra.Command{
 	Aliases: []string{"del", "d"},
 	Short:   "Delete a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			handleError(fmt.Errorf("missing variable key"))
+		}
+		// use global variable only
+		if checkFlag(varCmd, "global") {
+			gc, err := config.Load()
+			handleError(err)
+			output.Info(fmt.Sprintf("Delete global variable '%s.'", args[0]))
+			gc.Variables.Delete(args[0])
+			handleError(config.Save(gc))
+			return
+		}
+		// use project var
 		proj, err := getProject(false)
 		handleError(err)
 		handleError(proj.VarDelete(args[0]))
@@ -106,7 +148,7 @@ var varListCmd = &cobra.Command{
 		proj, err := getProject(false)
 		handleError(err)
 		// global config
-		gc, err := def.ParseGlobalYamlFile()
+		gc, err := config.Load()
 		handleError(err)
 		// json out
 		if checkFlag(cmd, "json") {
@@ -144,6 +186,7 @@ var varListCmd = &cobra.Command{
 }
 
 func init() {
+	varCmd.PersistentFlags().BoolP("global", "g", false, "Use global variable.")
 	varListCmd.Flags().Bool("json", false, "JSON output")
 	varCmd.AddCommand(varSetCmd)
 	varCmd.AddCommand(varGetCmd)

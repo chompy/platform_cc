@@ -204,11 +204,6 @@ func TestYAMLFunction(t *testing.T) {
 }
 
 func TestFlags(t *testing.T) {
-	gc := def.GlobalConfig{
-		Flags: []string{
-			EnableOSXNFSMounts, EnableServiceRoutes, DisableYamlOverrides, DisableAutoCommit,
-		},
-	}
 	p := Project{
 		Flags: Flags{
 			EnablePHPOpcache:     FlagOn,
@@ -219,7 +214,13 @@ func TestFlags(t *testing.T) {
 			DisableYamlOverrides: FlagUnset,
 		},
 	}
-	p.SetGlobalConfig(&gc)
+	p.SetGlobalConfig(
+		def.GlobalConfig{
+			Flags: []string{
+				EnableOSXNFSMounts, EnableServiceRoutes, DisableYamlOverrides, DisableAutoCommit,
+			},
+		},
+	)
 	def.AssertEqual(
 		p.HasFlag(EnablePHPOpcache),
 		true,

@@ -16,6 +16,8 @@ replace gitlab.com/contextualcode/platform_cc/cli => ./cli
 
 replace gitlab.com/contextualcode/platform_cc/api/platformsh => ./api/platformsh
 
+replace gitlab.com/contextualcode/platform_cc/api/config => ./api/config
+
 require (
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/cli v0.0.1

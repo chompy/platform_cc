@@ -31,6 +31,7 @@ import (
 
 	"github.com/martinlindhe/base36"
 	"github.com/ztrue/tracerr"
+	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -56,7 +57,7 @@ type Project struct {
 	Options          map[Option]string `json:"options"` // local project options
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
-	globalConfig     *def.GlobalConfig
+	globalConfig     def.GlobalConfig
 	PlatformSH       *platformsh.Project
 	slot             int  // set volume slot
 	noCommit         bool // flag that signifies apps should not be committed
@@ -76,7 +77,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		output.LogDebug("Platform.sh project not found.", err)
 	}
 	// global config
-	gc, err := def.ParseGlobalYamlFile()
+	gc, err := config.Load()
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
@@ -115,7 +116,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 			return nil, tracerr.Wrap(fmt.Errorf("could not locate app yaml file"))
 		}
 		for _, appYamlFileList := range appYamlFiles {
-			app, err := def.ParseAppYamlFiles(appYamlFileList, gc)
+			app, err := def.ParseAppYamlFiles(appYamlFileList, &gc)
 			if err != nil {
 				return nil, tracerr.Wrap(err)
 			}
@@ -481,7 +482,7 @@ func (p *Project) SetContainerHandler(c container.Interface) {
 }
 
 // SetGlobalConfig sets the global config, used for testing.
-func (p *Project) SetGlobalConfig(gc *def.GlobalConfig) {
+func (p *Project) SetGlobalConfig(gc def.GlobalConfig) {
 	p.globalConfig = gc
 }
 

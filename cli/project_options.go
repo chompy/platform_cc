@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"gitlab.com/contextualcode/platform_cc/api/project"
@@ -29,7 +30,7 @@ import (
 )
 
 var projectOptionsCmd = &cobra.Command{
-	Use:     "options",
+	Use:     "options [-g global]",
 	Aliases: []string{"opt", "opts", "option"},
 	Short:   "Manage project options.",
 }
@@ -47,6 +48,7 @@ var projectOptionListCmd = &cobra.Command{
 			for opt, desc := range descs {
 				data[string(opt)] = map[string]interface{}{
 					"description": desc,
+					"source":      proj.OptionSource(opt),
 					"default":     opt.DefaultValue(),
 					"value":       proj.GetOption(opt),
 				}
@@ -64,11 +66,11 @@ var projectOptionListCmd = &cobra.Command{
 		data := make([][]string, 0)
 		for opt, desc := range descs {
 			data = append(data, []string{
-				string(opt), desc, opt.DefaultValue(), proj.GetOption(opt),
+				string(opt), desc, proj.OptionSource(opt), opt.DefaultValue(), proj.GetOption(opt),
 			})
 		}
 		drawTable(
-			[]string{"Name", "Description", "Default", "Value"},
+			[]string{"Name", "Description", "Source", "Default", "Value"},
 			data,
 		)
 	},
@@ -78,8 +80,6 @@ var projectOptionSetCmd = &cobra.Command{
 	Use:   "set option value",
 	Short: "Set project option.",
 	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(false)
-		handleError(err)
 		if len(args) < 2 {
 			handleError(fmt.Errorf("missing option and/or value argument(s)"))
 			return
@@ -87,10 +87,23 @@ var projectOptionSetCmd = &cobra.Command{
 		// itterate possible options
 		for _, opt := range project.ListOptions() {
 			if string(opt) == args[0] {
+				handleError(opt.Validate(args[1]))
+				// global
+				if checkFlag(projectOptionsCmd, "global") {
+					gc, err := config.Load()
+					handleError(err)
+					output.Info(fmt.Sprintf("Set global option '%s.'", string(opt)))
+					gc.Options[string(opt)] = args[1]
+					handleError(config.Save(gc))
+					return
+				}
+				// local
+				proj, err := getProject(false)
+				handleError(err)
+				output.Info(fmt.Sprintf("Set option '%s.'", string(opt)))
 				if proj.Options == nil {
 					proj.Options = make(map[project.Option]string)
 				}
-				handleError(opt.Validate(args[1]))
 				proj.Options[opt] = args[1]
 				handleError(proj.Save())
 				return
@@ -105,8 +118,6 @@ var projectOptionDelCmd = &cobra.Command{
 	Aliases: []string{"del", "delete", "remove"},
 	Short:   "Reset project option to default.",
 	Run: func(cmd *cobra.Command, args []string) {
-		proj, err := getProject(false)
-		handleError(err)
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing option argument"))
 			return
@@ -114,6 +125,19 @@ var projectOptionDelCmd = &cobra.Command{
 		// itterate possible options
 		for _, opt := range project.ListOptions() {
 			if string(opt) == args[0] {
+				// global
+				if checkFlag(projectOptionsCmd, "global") {
+					gc, err := config.Load()
+					handleError(err)
+					output.Info(fmt.Sprintf("Delete global option '%s.'", string(opt)))
+					gc.Options[string(opt)] = ""
+					handleError(config.Save(gc))
+					return
+				}
+				// local
+				proj, err := getProject(false)
+				handleError(err)
+				output.Info(fmt.Sprintf("Delete option '%s.'", string(opt)))
 				if proj.Options == nil {
 					proj.Options = make(map[project.Option]string)
 				}
@@ -127,6 +151,7 @@ var projectOptionDelCmd = &cobra.Command{
 }
 
 func init() {
+	projectOptionsCmd.PersistentFlags().BoolP("global", "g", false, "Use global options.")
 	projectOptionListCmd.Flags().Bool("json", false, "JSON output")
 	projectOptionsCmd.AddCommand(projectOptionListCmd)
 	projectOptionsCmd.AddCommand(projectOptionSetCmd)

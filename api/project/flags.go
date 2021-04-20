@@ -106,6 +106,12 @@ const (
 	DisableSharedGlobalVolume = "disable_shared_global_volume"
 )
 
+const (
+	FlagSourceLocal  = "project"
+	FlagSourceGlobal = "global"
+	FlagSourceNone   = "unset"
+)
+
 // UnmarshalJSON implements Unmarshaler interface.
 func (f *Flags) UnmarshalJSON(data []byte) error {
 	// unmarshal as int (old flag set)
@@ -222,17 +228,30 @@ func (f Flags) GetValueName(name string) string {
 
 // HasFlag returns true if given flag is on globally or locally to the project.
 func (p *Project) HasFlag(name string) bool {
-	// check project flag
+	// check local project flag
 	if p.Flags.IsSet(name) {
 		return p.Flags.IsOn(name)
 	}
 	// check global flag
-	if p.globalConfig != nil {
-		for _, iname := range p.globalConfig.Flags {
-			if name == iname {
-				return true
-			}
+	for _, iname := range p.globalConfig.Flags {
+		if name == iname {
+			return true
 		}
 	}
 	return false
+}
+
+// Source returns the source of the given flag.
+func (p *Project) FlagSource(name string) string {
+	// check local project flag
+	if p.Flags.IsSet(name) {
+		return FlagSourceLocal
+	}
+	// check global flag
+	for _, iname := range p.globalConfig.Flags {
+		if name == iname {
+			return FlagSourceGlobal
+		}
+	}
+	return FlagSourceNone
 }

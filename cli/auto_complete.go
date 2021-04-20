@@ -116,7 +116,7 @@ func getFlagValue(cmd *cobra.Command, name string, args []string) (bool, string)
 	if flag.Value.String() != "" {
 		return true, flag.Value.String()
 	}
-	if args[len(args)-1] == "-"+flag.Shorthand || args[len(args)-1] == "--"+flag.Name {
+	if len(args) > 0 && (args[len(args)-1] == "-"+flag.Shorthand || args[len(args)-1] == "--"+flag.Name) {
 		return true, ""
 	}
 	return false, ""

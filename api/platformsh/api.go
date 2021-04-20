@@ -86,7 +86,7 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 		return tracerr.Wrap(err)
 	}
 	output.LogDebug("Recieved Platform.sh API response.", string(rawResp))
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return tracerr.Errorf("platform.sh api returned status code %d", resp.StatusCode)
 	}
 	if respData != nil {

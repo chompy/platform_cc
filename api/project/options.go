@@ -38,6 +38,15 @@ const (
 	MountStrategyVolume = "volume"
 )
 
+const (
+	// OptionSourceLocal defines option source as local to current project.
+	OptionSourceLocal = "local"
+	// OptionSourceGlobal defines option source as global to the user.
+	OptionSourceGlobal = "global"
+	// OptionSourceNone defines option source as not set.
+	OptionSourceNone = "unset"
+)
+
 // DefaultValue returns the default value of the option.
 func (o Option) DefaultValue() string {
 	switch o {
@@ -102,11 +111,21 @@ func (p *Project) GetOption(o Option) string {
 	if p.Options[o] != "" {
 		return p.Options[o]
 	}
-	if p.globalConfig != nil {
-		gopt := p.globalConfig.Options[string(o)]
-		if gopt != "" {
-			return gopt
-		}
+	gopt := p.globalConfig.Options[string(o)]
+	if gopt != "" {
+		return gopt
 	}
 	return o.DefaultValue()
+}
+
+// OptionSource returns the source of given option.
+func (p *Project) OptionSource(o Option) string {
+	if p.Options[o] != "" {
+		return OptionSourceLocal
+	}
+	gopt := p.globalConfig.Options[string(o)]
+	if gopt != "" {
+		return OptionSourceGlobal
+	}
+	return OptionSourceNone
 }

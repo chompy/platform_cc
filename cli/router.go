@@ -19,7 +19,10 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/spf13/cobra"
@@ -31,6 +34,31 @@ var routerCmd = &cobra.Command{
 	Use:     "router",
 	Aliases: []string{"r"},
 	Short:   "Manage router.",
+}
+
+var routerSetPortCmd = &cobra.Command{
+	Use:     "setports [--http] [--https]",
+	Aliases: []string{"ports", "port"},
+	Short:   "Set ports to be used by router.",
+	Run: func(cmd *cobra.Command, args []string) {
+		_, httpPort := getFlagValue(cmd, "http", args)
+		_, httpsPort := getFlagValue(cmd, "https", args)
+		gc, err := config.Load()
+		handleError(err)
+		if httpPort != "" {
+			output.Info(fmt.Sprintf("Set router HTTP port to '%s.'", httpPort))
+			httpPortInt, err := strconv.Atoi(httpPort)
+			handleError(err)
+			gc.Router.PortHTTP = uint16(httpPortInt)
+		}
+		if httpsPort != "" {
+			output.Info(fmt.Sprintf("Set router HTTPS port to '%s.'", httpsPort))
+			httpsPortInt, err := strconv.Atoi(httpsPort)
+			handleError(err)
+			gc.Router.PortHTTPS = uint16(httpsPortInt)
+		}
+		handleError(config.Save(gc))
+	},
 }
 
 var routerStartCmd = &cobra.Command{
@@ -115,7 +143,10 @@ var routerListCmd = &cobra.Command{
 }
 
 func init() {
+	routerSetPortCmd.Flags().Uint16("http", router.HTTPPort, "Set HTTP port.")
+	routerSetPortCmd.Flags().Uint16("https", router.HTTPSPort, "Set HTTPS port.")
 	routerListCmd.Flags().Bool("json", false, "JSON output")
+	routerCmd.AddCommand(routerSetPortCmd)
 	routerCmd.AddCommand(routerStartCmd)
 	routerCmd.AddCommand(routerStopCmd)
 	routerCmd.AddCommand(routerResetCmd)

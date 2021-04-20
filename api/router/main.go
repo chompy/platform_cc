@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/api/def"
+	"gitlab.com/contextualcode/platform_cc/api/config"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/container"
@@ -44,8 +44,8 @@ var sslDomains = []string{"localhost", "*." + strings.TrimLeft(project.OptionDom
 // GetContainerConfig gets container configuration for the router.
 func GetContainerConfig() container.Config {
 	// add global domain suffix to list of ssl certifs
-	globalConfig, _ := def.ParseGlobalYamlFile()
-	if globalConfig != nil && globalConfig.Options[string(project.OptionDomainSuffix)] != "" {
+	globalConfig, _ := config.Load()
+	if globalConfig.Options[string(project.OptionDomainSuffix)] != "" {
 		sslDomains = append(sslDomains, "*."+strings.TrimLeft(globalConfig.Options[string(project.OptionDomainSuffix)], "."))
 	}
 	routerCmd := fmt.Sprintf(`
@@ -88,13 +88,12 @@ func Start() error {
 		return tracerr.Wrap(err)
 	}
 	// load global config
-	gc, err := def.ParseGlobalYamlFile()
+	gc, err := config.Load()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	HTTPPort = gc.Router.HTTP
-	HTTPSPort = gc.Router.HTTPS
-
+	HTTPPort = gc.Router.PortHTTP
+	HTTPSPort = gc.Router.PortHTTPS
 	// get container config and pull image
 	containerConf := GetContainerConfig()
 	if err := ch.ImagePull([]container.Config{containerConf}); err != nil {

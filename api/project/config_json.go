@@ -20,6 +20,9 @@ package project
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
+	"gitlab.com/contextualcode/platform_cc/api/config"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -59,6 +62,11 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			break
 		}
 	}
+	privKey, err := config.PrivateKey()
+	if os.IsNotExist(err) {
+		config.GenerateSSH()
+		privKey, _ = config.PrivateKey()
+	}
 	out := map[string]interface{}{
 		"primary_ip":    "127.0.0.1",
 		"features":      []string{},
@@ -81,7 +89,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			},
 			"project_info": map[string]interface{}{
 				"name":    p.ID,
-				"ssh_key": p.globalConfig.GetSSHKey(),
+				"ssh_key": privKey,
 				"settings": map[string]interface{}{
 					"systemd":          false,
 					"variables_prefix": "PLATFORM_",
@@ -214,6 +222,11 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	if worker != nil {
 		configuration["worker"] = worker
 	}
+	privKey, err := config.PrivateKey()
+	if os.IsNotExist(err) {
+		config.GenerateSSH()
+		privKey, _ = config.PrivateKey()
+	}
 	return map[string]interface{}{
 		"name":                  name,
 		"build":                 build,
@@ -225,7 +238,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 		"dependencies":          dependencies,
 		"configuration":         configuration,
 		"project_info": map[string]interface{}{
-			"ssh_key": p.globalConfig.GetSSHKey(),
+			"ssh_key": privKey,
 		},
 	}
 }

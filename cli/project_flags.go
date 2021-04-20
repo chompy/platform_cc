@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sort"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ import (
 )
 
 var projectFlagCmd = &cobra.Command{
-	Use:     "flag",
+	Use:     "flag [-g global]",
 	Aliases: []string{"flags"},
 	Short:   "Manage project flags.",
 }
@@ -53,6 +54,7 @@ var projectFlagListCmd = &cobra.Command{
 			for _, name := range sortKeys {
 				data[name] = map[string]interface{}{
 					"description": descs[name],
+					"source":      proj.FlagSource(name),
 					"enabled":     proj.HasFlag(name),
 				}
 			}
@@ -73,11 +75,11 @@ var projectFlagListCmd = &cobra.Command{
 				statStr = "true"
 			}
 			data = append(data, []string{
-				name, descs[name], statStr,
+				name, descs[name], proj.FlagSource(name), statStr,
 			})
 		}
 		drawTable(
-			[]string{"Name", "Description", "Enabled"},
+			[]string{"Name", "Description", "Source", "Enabled"},
 			data,
 		)
 	},
@@ -87,6 +89,7 @@ var projectFlagSetCmd = &cobra.Command{
 	Use:   "set flag [--off] [--delete]",
 	Short: "Set project flag.",
 	Run: func(cmd *cobra.Command, args []string) {
+		// validate
 		proj, err := getProject(false)
 		handleError(err)
 		if len(args) == 0 {
@@ -95,12 +98,46 @@ var projectFlagSetCmd = &cobra.Command{
 		if !proj.Flags.IsValidFlag(args[0]) {
 			handleError(fmt.Errorf("%s is not a valid flag", args[0]))
 		}
+		// set global
+		if checkFlag(projectFlagCmd, "global") {
+			gc, err := config.Load()
+			handleError(err)
+			// off/delete do the same thing, remove flag
+			if checkFlag(cmd, "delete") || checkFlag(cmd, "off") {
+				output.Info(fmt.Sprintf("Set global flag '%s' to unset.", args[0]))
+				out := make([]string, 0)
+				for _, flag := range gc.Flags {
+					if flag == args[0] {
+						continue
+					}
+					out = append(out, flag)
+				}
+				gc.Flags = out
+				handleError(config.Save(gc))
+				return
+			}
+			// check already set
+			output.Info(fmt.Sprintf("Set global flag '%s' to on.", args[0]))
+			for _, flag := range gc.Flags {
+				if flag == args[0] {
+					return
+				}
+			}
+			gc.Flags = append(gc.Flags, args[0])
+			handleError(config.Save(gc))
+			return
+		}
+		// set local
 		value := project.FlagOn
+		valueStr := "on"
 		if checkFlag(cmd, "delete") {
 			value = project.FlagUnset
+			valueStr = "unset"
 		} else if checkFlag(cmd, "off") {
 			value = project.FlagOff
+			valueStr = "off"
 		}
+		output.Info(fmt.Sprintf("Set flag '%s' to %s.", args[0], valueStr))
 		proj.Flags.Set(args[0], value)
 		handleError(proj.Save())
 	},
@@ -119,12 +156,31 @@ var projectFlagDelCmd = &cobra.Command{
 		if !proj.Flags.IsValidFlag(args[0]) {
 			handleError(fmt.Errorf("%s is not a valid flag", args[0]))
 		}
+		// global
+		if checkFlag(projectFlagCmd, "global") {
+			gc, err := config.Load()
+			handleError(err)
+			output.Info(fmt.Sprintf("Set global flag '%s' to unset.", args[0]))
+			out := make([]string, 0)
+			for _, flag := range gc.Flags {
+				if flag == args[0] {
+					continue
+				}
+				out = append(out, flag)
+			}
+			gc.Flags = out
+			handleError(config.Save(gc))
+			return
+		}
+		// local
+		output.Info(fmt.Sprintf("Set flag '%s' to unset.", args[0]))
 		proj.Flags.Set(args[0], project.FlagUnset)
 		handleError(proj.Save())
 	},
 }
 
 func init() {
+	projectFlagCmd.PersistentFlags().BoolP("global", "g", false, "Use global flag.")
 	projectFlagListCmd.Flags().Bool("json", false, "JSON output")
 	projectFlagCmd.AddCommand(projectFlagListCmd)
 	projectFlagSetCmd.Flags().Bool("off", false, "Explictly turns flag off, override global flags")

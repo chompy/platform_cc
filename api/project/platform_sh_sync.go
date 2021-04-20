@@ -23,10 +23,11 @@ import (
 	"os"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
+
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
-	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 )
 
 func (p *Project) platformSHSyncPreflight(envName string) error {
@@ -95,7 +96,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 	}
 
 	// get private key
-	privKey, err := platformsh.PrivateKey()
+	privKey, err := config.PrivateKey()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}

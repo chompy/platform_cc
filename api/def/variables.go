@@ -100,6 +100,7 @@ func (v Variables) Keys() []string {
 }
 
 func (v *Variables) unmarshalRawMap(data map[string]interface{}) error {
+	*v = make(Variables)
 	for k, iv := range data {
 		switch iv := iv.(type) {
 		case map[string]interface{}:
