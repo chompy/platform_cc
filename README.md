@@ -133,31 +133,37 @@ The main router generates a certficate CA that you can have your browser trust t
 pcc router:certificates:dump
 ```
 
-Flags
------
+Flags, Options, and Variables
+-----------------------------
 
-Flags enables or disable functionality on a per project basis. Some functionality is disabled by default (such as workers and cron jobs) and can be re-enabled with flags.
-
-Flags can be set with the following command...
+You can set various flags, options, and project variables through the command line. Doing so will set the value for the current project. If you use the `--global` (`-g`) option then the value will be set globally for all projects.
 
 ```
-pcc project:flag:set <FLAG_NAME>
+pcc project:flag:set <NAME>                 # set flag
+pcc project:flag:set --unset <NAME>         # unset flag
+pcc project:flag:set --off <NAME>           # turn flag off (override global)
+pcc project:flag:set -g <NAME>              # set global flag
+pcc project:flag:set -g --unset <NAME>      # unset global flag
+pcc project:flag:list                       # list all flags
+
+pcc project:option:set <NAME> <VALUE>       # set option
+pcc project:option:set -g <NAME> <VALUE>    # set global option
+pcc project:option:reset <NAME>             # unset option
+pcc project:option:list                     # list all options
+
+pcc variable:set <NAME> <VALUE>             # set a project variable
+pcc variable:set -g <NAME> <VALUE>          # set a global project variable
+pcc variable:get <NAME>                     # get a project variable
+pcc variable:delete <NAME>                  # delete a project variable
+pcc variable:delete -g <NAME>               # delete a global project variable
+pcc variable:list                           # list all project variables
 ```
 
-...and unset with the following...
+## Flags
 
-```
-pcc project:flag:set --unset <FLAG_NAME>
-```
+Flags enables or disable functionality. Some functionality is disabled by default (such as workers and cron jobs) and can be re-enabled with flags.
 
-Additionally you can explictly turn off a flag so that a globally set flag (see the Global Configuration section on how to set global flags) does not override it with...
-
-```
-pcc project:flag:set --off <FLAG_NAME>
-```
-
-
-Lists of available flags...
+### **Lists of available flags...**
 
 ### enable_cron
 Enable cron jobs for the current project.
@@ -181,88 +187,31 @@ Disables Platform.CC specific YAML overrides (.platform.app.pcc.yaml and service
 Disables the auto commit of application containers when a project is started.
 
 
-Options
--------
+## Options
 
 Options are like flags except that they are specific values and not just on or off.
 
 ### domain_suffix
-```
-pcc project:options:set domain_suffix <value>
-```
 Set the internal route domain, default is "pcc.localtest.me." Every route gets an internal route... example... www.example.com becomes www-example-com.pcc.localtest.me.
 
-### mount_strategy
-```
-pcc project:option:set mount_strategy [none|symlink|volume]
-```
+### mount_strategy [none|symlink|volume]
 Set the strategy for how Platform.CC will deal with mounts.
 - None (default)...do nothing, no mounts will be established. This will suffice in a lot of cases if you have no need for recursive mounts.
 - Symlink...create a mount directory in the root of the project and use symlinks to map the mounts to the destinations. This should create a mount structure similar to Platform.sh and will support recursive mounts, it could be destructive to your project directory if you previously had data in the mount directories.
 - Volume...use a container volume as the mount directory and bind the destination directories to the container volume. This should function closest to how it would on Platform.sh but files in the mounted directories will not be accessible outside of the application container.
 
-Global Configuration
---------------------
 
-You can create global configuration file that allows setting configuration that applies to all projects. Platform.CC looks for the global configuration file in the following locations...
+## SSH
 
-```
-~/.config/platform_cc.yaml
-~/platform_cc.yaml
-```
+Platform.cc generates its own SSH keypair on first load. This is used inside application containers and to perform syncs with Platform.sh.
 
-### Variables
+You can find the Platform.cc generated key in... 
 
-You can configure project variables that get applied to all project.
+### Private
+`~/.config/platformcc/id_rsa`
 
-Example...
-```
-variables:
-    env:
-        COMPOSER_AUTH: '{"github-oauth":{"github.com":"SECRET_KEY_HERE"}'
-```
-
-### Router
-
-You can configure the ports used by the router.
-
-Example...
-```
-router:
-    http: 80
-    https: 443
-```
-
-### SSH
-
-You can set the SSH key used inside the application containers. By default Platform.CC looks for a SSH key in ~/.ssh/pccid, if this file exists it'll use the contents as your SSH key inside all application containers. If you specify a different path in the global configuration then it'll be used instead.
-
-Example...
-```
-ssh:
-    key_path: "~/.ssh/id_rsa"
-```
-
-### Flags
-
-You can set flags globally. See the Flags section for a list of available flags.
-
-Example...
-```
-flags:
-  - enable_cron
-  - enable_workers
-```
-
-### Options
-
-You can set options globally. See the Options section for a list of available options.
-
-Example...
-```
-options:
-  domain_suffix: pcc.example.com
-```
+### Public
+`~/.config/platformcc/id_rsa.pub`
 
 
 Platform.CC Specific Configurations
