@@ -33,6 +33,7 @@ type Environment struct {
 	Status       string `json:"status"`
 	MachineName  string `json:"machine_name"`
 	EdgeHostname string `json:"edge_hostname"`
+	hasSSH       bool
 }
 
 // GetEnvironment returns environment matching given name.

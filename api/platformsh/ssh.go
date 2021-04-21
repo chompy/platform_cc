@@ -19,7 +19,6 @@ package platformsh
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -86,7 +85,6 @@ func (p *Project) waitForSSH(env *Environment, service string) error {
 	i := 0
 	for i = 0; i < sshWaitRetryCount; i++ {
 		time.Sleep(time.Second * sshWaitCheckIntveral)
-		log.Println("CHECK")
 		if _, err := p.SSHCommand(env, service, "true"); err == nil {
 			break
 		}
@@ -123,10 +121,11 @@ func (p *Project) openSSH(env *Environment, service string) (*goph.Client, error
 	)
 	if err != nil {
 		// handshake failed, upload ssh key to platform.sh api
-		if strings.Contains(err.Error(), "handshake failed") {
+		if strings.Contains(err.Error(), "handshake failed") && !env.hasSSH {
 			if err := p.storeSSHKey(); err != nil {
 				return nil, tracerr.Wrap(err)
 			}
+			env.hasSSH = true
 			if err := p.waitForSSH(env, service); err != nil {
 				return nil, tracerr.Wrap(err)
 			}

@@ -12,8 +12,12 @@ while getopts 'd' flag; do
     fi
 done
 
-DEB_PATH="$SCRIPTPATH/../build/$VERSION/platform_cc.deb"
+# create build path and define deb path
+DEB_PATH="$SCRIPTPATH/../build/$VERSION/platform_cc_$VERSION.deb"
 mkdir -p `dirname $DEB_PATH`
+
+# update version in control
+sed -i "s/Version: .*/Version: $VERSION/g" $SCRIPTPATH/../pkg/deb/DEBIAN/control
 
 # build
 cd $SCRIPTPATH/..
