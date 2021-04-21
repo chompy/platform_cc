@@ -12,7 +12,7 @@ while getopts 'd' flag; do
     fi
 done
 
-DEB_PATH="$SCRIPTPATH/../build/$VERSION/platform_cc.deb"
+DEB_PATH="$SCRIPTPATH/../build/$VERSION/platform_cc_$VERSION.deb"
 mkdir -p `dirname $DEB_PATH`
 
 # build
