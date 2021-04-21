@@ -27,14 +27,18 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"gitlab.com/contextualcode/platform_cc/api/config"
 
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/oauth2"
 )
 
-const oauthTokenStore = "~/.config/platformcc/platformsh_api.dat"
+const oauthTokenStore = "psh_api_token"
 const oauthPort = 31698
 const oauthClientId = "platform-cli"
 const oauthAuthURL = "https://auth.api.platform.sh/oauth2/authorize"
@@ -74,14 +78,18 @@ func saveToken(t *oauth2.Token) error {
 		return tracerr.Wrap(err)
 	}
 	return tracerr.Wrap(ioutil.WriteFile(
-		expandPath(oauthTokenStore), out, 0644,
+		filepath.Join(config.Path(), oauthTokenStore),
+		out, 0644,
 	))
 }
 
 func loadToken() (*oauth2.Token, error) {
 	t := &oauth2.Token{}
-	rawData, err := ioutil.ReadFile(expandPath(oauthTokenStore))
+	rawData, err := ioutil.ReadFile(filepath.Join(config.Path(), oauthTokenStore))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, tracerr.Errorf("platform.sh api token not found, please use the platformsh:login command to generate it")
+		}
 		return nil, tracerr.Wrap(err)
 	}
 	if err := json.Unmarshal(rawData, t); err != nil {

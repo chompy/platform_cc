@@ -31,7 +31,7 @@ import (
 	"github.com/ztrue/tracerr"
 )
 
-const platformshApiUrl = "https://api.platform.sh/"
+const apiURL = "https://api.platform.sh/"
 
 // check performs a check to ensure we're dealing with a valid platform.sh project.
 func (p *Project) check() error {
@@ -55,7 +55,7 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 		}
 	}
 	// create request
-	fullURL := platformshApiUrl + strings.TrimLeft(endpoint, "/")
+	fullURL := p.apiURL + strings.TrimLeft(endpoint, "/")
 	req, err := http.NewRequest(
 		method,
 		fullURL,

@@ -23,8 +23,6 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/api/config"
-
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -95,12 +93,12 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 		return tracerr.Errorf("environment '%s' not found", envName)
 	}
 
-	// get private key
-	privKey, err := config.PrivateKey()
+	// get ssh cert
+	sshCert, err := p.PlatformSH.SSHCertficiate()
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	privKeyReader := bytes.NewReader(privKey)
+	certReader := bytes.NewReader(sshCert)
 
 	// set volume mount strategy to ensure mount sync works
 	p.Options[OptionMountStrategy] = MountStrategyVolume
@@ -112,7 +110,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 	for _, app := range p.Apps {
 		sshURL := p.PlatformSH.SSHUrl(env, app.Name)
 		cont := p.NewContainer(app)
-		if err := cont.Upload("/mnt/priv.key", privKeyReader); err != nil {
+		if err := cont.Upload("/mnt/priv.cert", certReader); err != nil {
 			return tracerr.Wrap(err)
 		}
 		for dest := range app.Mounts {
@@ -121,7 +119,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 				"root",
 				[]string{"sh", "-c",
 					fmt.Sprintf(
-						`chmod 0600 /mnt/priv.key && rsync -avzh -e "ssh -i /mnt/priv.key" %s:/app/%s /app/%s`,
+						`chmod 0600 /mnt/priv.cert && rsync -avzh -e "ssh -i /mnt/priv.cert" %s:/app/%s /app/%s`,
 						sshURL,
 						strings.TrimLeft(dest, "/"),
 						strings.TrimLeft(dest, "/"),
@@ -132,7 +130,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 			}
 			done2()
 		}
-		cont.Shell("root", []string{"rm", "/mnt/priv.key"})
+		cont.Shell("root", []string{"rm", "/mnt/priv.cert"})
 		// TODO workers
 	}
 	done()

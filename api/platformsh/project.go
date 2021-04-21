@@ -31,6 +31,7 @@ type Project struct {
 	ID           string
 	Title        string
 	Environments []Environment
+	apiURL       string
 }
 
 // LoadProjectFromPath returns information about a Platform.sh from a path.
@@ -48,5 +49,6 @@ func LoadProjectFromPath(path string) (*Project, error) {
 		LocalPath: path,
 		Host:      host,
 		ID:        pid,
+		apiURL:    apiURL,
 	}, nil
 }

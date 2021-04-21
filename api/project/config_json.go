@@ -20,8 +20,8 @@ package project
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
+	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/config"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -62,10 +62,10 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			break
 		}
 	}
+	// get private key
 	privKey, err := config.PrivateKey()
-	if os.IsNotExist(err) {
-		config.GenerateSSH()
-		privKey, _ = config.PrivateKey()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
 	}
 	out := map[string]interface{}{
 		"primary_ip":    "127.0.0.1",
@@ -222,11 +222,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 	if worker != nil {
 		configuration["worker"] = worker
 	}
-	privKey, err := config.PrivateKey()
-	if os.IsNotExist(err) {
-		config.GenerateSSH()
-		privKey, _ = config.PrivateKey()
-	}
+	privKey, _ := config.PrivateKey()
 	return map[string]interface{}{
 		"name":                  name,
 		"build":                 build,

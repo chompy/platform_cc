@@ -23,16 +23,16 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"io/ioutil"
+	"os"
 	"strings"
 
-	"github.com/melbahja/goph"
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/crypto/ssh"
 )
 
-const privateKeyPath = "id_rsa"
-const publicKeyPath = "id_rsa.pub"
+const privateKeyPath = "pcc_ssh_private"
+const publicKeyPath = "pcc_ssh_public"
 
 // generateSSHKeyPair generates a public and private key pair.
 func generateSSHKeyPair() (string, string, error) {
@@ -87,22 +87,38 @@ func GenerateSSH() error {
 	return nil
 }
 
+func loadKey(path string) ([]byte, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		// generate if not exist
+		if os.IsNotExist(err) {
+			if err := GenerateSSH(); err != nil {
+				return nil, tracerr.Wrap(err)
+			}
+		}
+		data, err = ioutil.ReadFile(path)
+	}
+	return data, tracerr.Wrap(err)
+}
+
 // PrivateKey returns the private key.
 func PrivateKey() ([]byte, error) {
-	return ioutil.ReadFile(pathTo(privateKeyPath))
+	return loadKey(pathTo(privateKeyPath))
 }
 
 // PrivateKeyPath returns path to the private key.
 func PrivateKeyPath() string {
+	// generate if not exist
+	_, err := os.Stat(pathTo(privateKeyPath))
+	if os.IsNotExist(err) {
+		if err := GenerateSSH(); err != nil {
+			return ""
+		}
+	}
 	return pathTo(privateKeyPath)
 }
 
 // PublicKey returns the public key.
 func PublicKey() ([]byte, error) {
-	return ioutil.ReadFile(pathTo(publicKeyPath))
-}
-
-// KeyAuth returns goph auth for private key.
-func KeyAuth() (goph.Auth, error) {
-	return goph.Key(pathTo(privateKeyPath), "")
+	return loadKey(pathTo(publicKeyPath))
 }

@@ -44,7 +44,6 @@ type Environment struct {
 			HREF string `json:"href"`
 		} `json:"public-url"`
 	} `json:"_links"`
-	hasSSH bool
 }
 
 // GetEnvironment returns environment matching given name.

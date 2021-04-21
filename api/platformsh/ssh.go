@@ -18,139 +18,220 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package platformsh
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"gitlab.com/contextualcode/platform_cc/api/output"
+
 	"github.com/helloyi/go-sshclient"
+
+	"github.com/pkg/sftp"
+
+	"golang.org/x/crypto/ssh"
+
 	"golang.org/x/term"
 
 	"gitlab.com/contextualcode/platform_cc/api/config"
-	"gitlab.com/contextualcode/platform_cc/api/output"
 
-	"github.com/melbahja/goph"
 	"github.com/ztrue/tracerr"
 )
 
-const sshKeyTitle = "Platform.CC V2 (%s)"
-const sshWaitCheckIntveral = 30
-const sshWaitRetryCount = 20
+const sshAPIURL = "https://ssh.api.platform.sh/"
+const sshCertificateFile = "psh_ssh_cert"
 
-// storeSSHKey generates a new ssh key, sends it to platform.sh, and stores the private key locally.
-func (p *Project) storeSSHKey() error {
-	// load public key, generate if not exist
+// sshCertificate defines ssh certificate storage for Platform.sh.
+type sshCertificate []byte
+
+func (k sshCertificate) data() (map[string]interface{}, error) {
+	// parse cert
+	key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(k))
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	// read raw data
+	data := key.Marshal()
+	pos := 0
+	// read function
+	readUint32 := func() uint32 {
+		if len(data)-pos < 4 {
+			return 0
+		}
+		dataString := data[pos : pos+4]
+		pos += 4
+		return binary.BigEndian.Uint32(dataString)
+	}
+	readUint64 := func() uint64 {
+		if len(data)-pos < 8 {
+			return 0
+		}
+		dataString := data[pos : pos+8]
+		pos += 8
+		return binary.BigEndian.Uint64(dataString)
+	}
+	readString := func() string {
+		length := int(readUint32())
+		if length == 0 || len(data)-pos < length {
+			return ""
+		}
+		output := string(data[pos : pos+length])
+		pos += length
+		return output
+	}
+	out := map[string]interface{}{
+		"type": key.Type,
+	}
+	readString() // ignore key type
+	readString() // ignore nonce
+	if key.Type() == "ssh-ed25519-cert-v01@openssh.com" {
+		readString() //ignore ED25519 public key
+	} else {
+		readString() // ignore RSA exponent
+		readString() // ignore RSA modulus
+	}
+	readUint64() // ignore serial number
+	readUint32() // ignore certificate type
+	out["keyId"] = readString()
+	readString() // ignore valid principals
+	out["validAfter"] = readUint64()
+	out["validBefore"] = readUint64()
+	return out, nil
+}
+
+// valid returns true if given ssh private key is still valid.
+func (k sshCertificate) valid() bool {
+	data, err := k.data()
+	if err != nil {
+		return false
+	}
+	validBefore := time.Unix(int64(data["validBefore"].(uint64)), 0)
+	return !validBefore.IsZero() && time.Now().Before(validBefore)
+}
+
+// save stores the ssh private key.
+func (k sshCertificate) save() error {
+	return tracerr.Wrap(ioutil.WriteFile(
+		filepath.Join(config.Path(), sshCertificateFile),
+		k,
+		0600,
+	))
+}
+
+// fetchSSHCertficiate retrieves a SSH certificate from the Platform.sh API.
+func (p *Project) fetchSSHCertficiate() error {
+	p.apiURL = sshAPIURL
+	defer func() {
+		p.apiURL = apiURL
+	}()
+	// fetch pcc ssh public key
 	pubKey, err := config.PublicKey()
 	if err != nil {
-		if os.IsNotExist(err) {
-			if err := config.GenerateSSH(); err != nil {
-				return tracerr.Wrap(err)
-			}
-			pubKey, err = config.PublicKey()
-			if err != nil {
-				return tracerr.Wrap(err)
-			}
-		} else {
-			return tracerr.Wrap(err)
-		}
-	}
-	// upload public key to platform.sh
-	done := output.Duration("Upload public key to Platform.sh.")
-	res := make(map[string]interface{})
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "-"
-	}
-	if err := p.request(
-		"ssh_keys",
-		map[string]interface{}{
-			"value": string(pubKey),
-			"title": fmt.Sprintf(sshKeyTitle, hostname),
-		},
-		&res,
-	); err != nil {
-		// if error returns 'fingerprint already in use' then ssh key was previously uploaded
-		// and this should not be treated as an error
-		if res["title"] != nil && strings.Contains(res["title"].(string), "is already in use") {
-			done()
-			return nil
-		}
 		return tracerr.Wrap(err)
 	}
-	if res["value"] == nil || res["title"] == nil {
-		return tracerr.Errorf("recieved malformed response when sending ssh key")
+	// make api request
+	resp := make(map[string]interface{})
+	if err := p.request(
+		"ssh",
+		map[string]interface{}{
+			"key": string(pubKey),
+		},
+		&resp,
+	); err != nil {
+		return tracerr.Wrap(err)
 	}
-	done()
+	// ensure key was returned
+	if resp["certificate"] == nil || resp["certificate"] == "" {
+		return fmt.Errorf("recieved invalid ssh certificate")
+	}
+	// make private key and save
+	out := sshCertificate([]byte(resp["certificate"].(string)))
+	if err := out.save(); err != nil {
+		return tracerr.Wrap(err)
+	}
 	return nil
 }
 
-// waitForSSH waits for a newly uploaded Platform.sh SSH key to be accepted.
-func (p *Project) waitForSSH(env *Environment, service string) error {
-	if env == nil {
-		return tracerr.Errorf("invalid environment")
-	}
-	done := output.Duration("Waiting for Platform.sh to accept new key. (This can take a while.)")
-	i := 0
-	for i = 0; i < sshWaitRetryCount; i++ {
-		time.Sleep(time.Second * sshWaitCheckIntveral)
-		if _, err := p.SSHCommand(env, service, "true"); err == nil {
-			break
+// SSHCertficiate returns the ssh certficiate to be used with Platform.sh.
+func (p *Project) SSHCertficiate() ([]byte, error) {
+	data, err := ioutil.ReadFile(filepath.Join(config.Path(), sshCertificateFile))
+	if err != nil {
+		// fetch if cert doesn't exist
+		if os.IsNotExist(err) {
+			done := output.Duration("Retrieve Platform.sh SSH certificate.")
+			if err := p.fetchSSHCertficiate(); err != nil {
+				return nil, tracerr.Wrap(err)
+			}
+			data, err = ioutil.ReadFile(filepath.Join(config.Path(), sshCertificateFile))
+			if err != nil {
+				return nil, tracerr.Wrap(err)
+			}
+			done()
+		} else {
+			return nil, tracerr.Wrap(err)
 		}
 	}
-	if i >= sshWaitRetryCount {
-		return tracerr.Errorf("timed out")
+	out := sshCertificate(data)
+	// fetch if cert expired
+	if !out.valid() {
+		done := output.Duration("Refresh Platform.sh SSH certificate.")
+		if err := p.fetchSSHCertficiate(); err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		data, err = ioutil.ReadFile(filepath.Join(config.Path(), sshCertificateFile))
+		if err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		out = sshCertificate(data)
+		done()
 	}
-	done()
-	return nil
+	return []byte(out), nil
+}
+
+// sshClientConfig returns the SSH client config for accessing a Platform.sh environment.
+func (p *Project) sshClientConfig(env *Environment, service string) (*ssh.ClientConfig, error) {
+	privKey, err := config.PrivateKey()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	signer, err := ssh.ParsePrivateKey(privKey)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	cert, err := p.SSHCertficiate()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	return &ssh.ClientConfig{
+		User: p.SSHUser(env, service),
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(certSigner),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}, nil
 }
 
 // openSSH opens SSH connection and returns client.
-func (p *Project) openSSH(env *Environment, service string) (*goph.Client, error) {
-	// load goph key auth, create key if not exist
-	auth, err := config.KeyAuth()
-	if err != nil {
-		if os.IsNotExist(err) {
-			if err := config.GenerateSSH(); err != nil {
-				return nil, tracerr.Wrap(err)
-			}
-			auth, err = config.KeyAuth()
-			if err != nil {
-				return nil, tracerr.Wrap(err)
-			}
-		} else {
-			return nil, tracerr.Wrap(err)
-		}
-	}
-	// open ssh connection
+func (p *Project) openSSH(env *Environment, service string) (*ssh.Client, error) {
 	sshURL := strings.Split(p.SSHUrl(env, service), "@")
-	client, err := goph.NewUnknown(
-		sshURL[0],
-		sshURL[1],
-		auth,
-	)
+	config, err := p.sshClientConfig(env, service)
 	if err != nil {
-		// handshake failed, upload ssh key to platform.sh api
-		if strings.Contains(err.Error(), "handshake failed") && !env.hasSSH {
-			if err := p.storeSSHKey(); err != nil {
-				return nil, tracerr.Wrap(err)
-			}
-			env.hasSSH = true
-			if err := p.waitForSSH(env, service); err != nil {
-				return nil, tracerr.Wrap(err)
-			}
-			// try again
-			client, err = goph.NewUnknown(
-				p.SSHUser(env, service),
-				env.EdgeHostname,
-				auth,
-			)
-			if err != nil {
-				return nil, tracerr.Wrap(err)
-			}
-		} else {
-			return nil, tracerr.Wrap(err)
-		}
+		return nil, tracerr.Wrap(err)
+	}
+	client, err := ssh.Dial("tcp", sshURL[1]+":22", config)
+	if err != nil {
+		return nil, tracerr.Wrap(err)
 	}
 	return client, nil
 }
@@ -173,14 +254,20 @@ func (p Project) SSHUser(env *Environment, service string) string {
 
 // SSHCommand sends a command to given Platform.sh environment over SSH and returns the output.
 func (p *Project) SSHCommand(env *Environment, service string, command string) ([]byte, error) {
-	// open ssh connection
+	// open ssh client
 	client, err := p.openSSH(env, service)
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-	// send command, return results
 	defer client.Close()
-	out, err := client.Run(command)
+	// start session
+	sess, err := client.NewSession()
+	if err != nil {
+		return nil, tracerr.Wrap(err)
+	}
+	defer sess.Close()
+	// run command
+	out, err := sess.Output(command)
 	return out, tracerr.Wrap(err)
 }
 
@@ -191,9 +278,25 @@ func (p *Project) SSHDownload(env *Environment, service string, path string) (st
 	if err != nil {
 		return "", tracerr.Wrap(err)
 	}
-	// prepare download
+	// open sftp connection
+	sftpClient, err := sftp.NewClient(client)
+	if err != nil {
+		return "", tracerr.Wrap(err)
+	}
+	defer sftpClient.Close()
+	sftpFile, err := sftpClient.Open(path)
+	if err != nil {
+		return "", tracerr.Wrap(err)
+	}
+	// open output file
 	outPath := filepath.Join(os.TempDir(), service+"-"+filepath.Base(path))
-	if err := client.Download(path, outPath); err != nil {
+	outFile, err := os.Create(outPath)
+	if err != nil {
+		return "", tracerr.Wrap(err)
+	}
+	defer outFile.Close()
+	// download
+	if _, err := sftpFile.WriteTo(outFile); err != nil {
 		return "", tracerr.Wrap(err)
 	}
 	return outPath, nil
@@ -201,17 +304,20 @@ func (p *Project) SSHDownload(env *Environment, service string, path string) (st
 
 // SSHTerminal creates an interactive SSH terminal.
 func (p *Project) SSHTerminal(env *Environment, service string) error {
-	// open ssh connection
+	output.Info(fmt.Sprintf("SSH in to Platform.sh environment %s-%s--%s.", p.ID, env.Name, service))
+	// open ssh client
+	clientConfig, err := p.sshClientConfig(env, service)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
 	sshURL := strings.Split(p.SSHUrl(env, service), "@")
-	output.Info(fmt.Sprintf("Open SSH terminal to %s.", sshURL[1]))
-	client, err := sshclient.DialWithKey(
-		sshURL[1]+":22",
-		sshURL[0],
-		config.PrivateKeyPath(),
+	client, err := sshclient.Dial(
+		"tcp", sshURL[1]+":22", clientConfig,
 	)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
+	defer client.Close()
 	// create interactive shell
 	// make raw
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -219,10 +325,8 @@ func (p *Project) SSHTerminal(env *Environment, service string) error {
 		return tracerr.Wrap(err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
-	// create terminal
-	if err := client.Terminal(&sshclient.TerminalConfig{
-		Term: "xterm",
-	}).Start(); err != nil {
+	// start
+	if err := client.Terminal(nil).Start(); err != nil {
 		return tracerr.Wrap(err)
 	}
 	return nil

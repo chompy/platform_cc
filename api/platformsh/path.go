@@ -20,7 +20,6 @@ package platformsh
 import (
 	"fmt"
 	"os"
-	"os/user"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -31,17 +30,6 @@ import (
 
 const platformShGitPattern = `^([a-z0-9]{12,})@git\.(([a-z0-9\-]+\.)?platform\.sh):([a-z0-9]{12,})\.git$`
 const gitConfigPath = ".git/config"
-
-func expandPath(path string) string {
-	if len(path) == 0 || path[0] != '~' {
-		return path
-	}
-	usr, err := user.Current()
-	if err != nil {
-		return path
-	}
-	return filepath.Join(usr.HomeDir, path[1:])
-}
 
 // parseProjectGit returns Platform.sh project id and host name from Git remote.
 func parseProjectGit(path string) (string, string, error) {
