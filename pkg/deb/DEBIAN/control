@@ -1,0 +1,7 @@
+Package: platformcc 
+Version: 2.2.0
+Section: devel 
+Priority: optional 
+Architecture: amd64 
+Maintainer: nathan@contextualcode.com
+Description: Tool for provisioning apps with Docker based on Platform.sh's spec.

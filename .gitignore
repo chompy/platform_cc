@@ -1,7 +1,9 @@
+*.deb
 *.json
 *.code-workspace
 aws_build_upload.sh
 platform_cc
 /build
+/pkg/deb/usr/bin/pcc
 .platform_cc.log
 /api/tests/data/sample*/.global

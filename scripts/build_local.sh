@@ -3,6 +3,9 @@
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 PCC_BIN_NAME="pcc"
 INSTALL_PATH=~/.pcc
+if [ -f "/usr/bin/$PCC_BIN_NAME" ]; then
+    INSTALL_PATH=/usr/bin
+fi
 
 # build
 cd $SCRIPTPATH/..
