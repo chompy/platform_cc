@@ -1,0 +1,7 @@
+# bash completion for pcc                              -*- shell-script -*-
+_platformcc()
+{
+    cmd=$(printf " %s" "${COMP_WORDS[@]:1}")
+    COMPREPLY+=($(pcc _ac "$cmd"))
+}
+complete -o default -F _platformcc pcc
