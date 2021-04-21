@@ -24,6 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/helloyi/go-sshclient"
+	"golang.org/x/term"
+
 	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
@@ -67,6 +70,12 @@ func (p *Project) storeSSHKey() error {
 		},
 		&res,
 	); err != nil {
+		// if error returns 'fingerprint already in use' then ssh key was previously uploaded
+		// and this should not be treated as an error
+		if res["title"] != nil && strings.Contains(res["title"].(string), "is already in use") {
+			done()
+			return nil
+		}
 		return tracerr.Wrap(err)
 	}
 	if res["value"] == nil || res["title"] == nil {
@@ -114,9 +123,10 @@ func (p *Project) openSSH(env *Environment, service string) (*goph.Client, error
 		}
 	}
 	// open ssh connection
+	sshURL := strings.Split(p.SSHUrl(env, service), "@")
 	client, err := goph.NewUnknown(
-		p.SSHUser(env, service),
-		env.EdgeHostname,
+		sshURL[0],
+		sshURL[1],
 		auth,
 	)
 	if err != nil {
@@ -147,11 +157,8 @@ func (p *Project) openSSH(env *Environment, service string) (*goph.Client, error
 
 // SSHUrl returns the SSH url for the environment.
 func (p Project) SSHUrl(env *Environment, service string) string {
-	return fmt.Sprintf(
-		"%s@%s",
-		p.SSHUser(env, service),
-		env.EdgeHostname,
-	)
+	urlSplit := strings.Split(strings.TrimPrefix(env.Links.SSH.HREF, "ssh://"), "@")
+	return fmt.Sprintf("%s--%s@%s", urlSplit[0], service, urlSplit[1])
 }
 
 // SSHUser returns the SSH username for given environment and service.
@@ -190,4 +197,33 @@ func (p *Project) SSHDownload(env *Environment, service string, path string) (st
 		return "", tracerr.Wrap(err)
 	}
 	return outPath, nil
+}
+
+// SSHTerminal creates an interactive SSH terminal.
+func (p *Project) SSHTerminal(env *Environment, service string) error {
+	// open ssh connection
+	sshURL := strings.Split(p.SSHUrl(env, service), "@")
+	output.Info(fmt.Sprintf("Open SSH terminal to %s.", sshURL[1]))
+	client, err := sshclient.DialWithKey(
+		sshURL[1]+":22",
+		sshURL[0],
+		config.PrivateKeyPath(),
+	)
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	// create interactive shell
+	// make raw
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
+	// create terminal
+	if err := client.Terminal(&sshclient.TerminalConfig{
+		Term: "xterm",
+	}).Start(); err != nil {
+		return tracerr.Wrap(err)
+	}
+	return nil
 }

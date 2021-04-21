@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/oauth2"
+
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
 	"github.com/ztrue/tracerr"
@@ -74,19 +76,29 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
-	// process response
 	defer resp.Body.Close()
+	// retrieve updated token
+	tok, err := client.Transport.(*oauth2.Transport).Source.Token()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	if err := saveToken(tok); err != nil {
+		return tracerr.Wrap(err)
+	}
+	// process response
 	rawResp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
 	output.LogDebug("Recieved Platform.sh API response.", string(rawResp))
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if respData != nil {
+			json.Unmarshal(rawResp, respData)
+		}
 		return tracerr.Errorf("platform.sh api returned status code %d", resp.StatusCode)
 	}
 	if respData != nil {

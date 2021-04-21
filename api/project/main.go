@@ -58,10 +58,10 @@ type Project struct {
 	relationships    []map[string]interface{}
 	containerHandler container.Interface
 	globalConfig     def.GlobalConfig
-	PlatformSH       *platformsh.Project
-	slot             int  // set volume slot
-	noCommit         bool // flag that signifies apps should not be committed
-	noBuild          bool // flag that signifies apps should not be built on start up
+	PlatformSH       *platformsh.Project `json:"-"`
+	slot             int                 // set volume slot
+	noCommit         bool                // flag that signifies apps should not be committed
+	noBuild          bool                // flag that signifies apps should not be built on start up
 }
 
 // LoadFromPath loads a project from its path.

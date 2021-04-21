@@ -33,7 +33,18 @@ type Environment struct {
 	Status       string `json:"status"`
 	MachineName  string `json:"machine_name"`
 	EdgeHostname string `json:"edge_hostname"`
-	hasSSH       bool
+	Links        struct {
+		SSHApp struct {
+			HREF string `json:"href"`
+		} `json:"pf:ssh:app"`
+		SSH struct {
+			HREF string `json:"href"`
+		} `json:"ssh"`
+		PublicURL struct {
+			HREF string `json:"href"`
+		} `json:"public-url"`
+	} `json:"_links"`
+	hasSSH bool
 }
 
 // GetEnvironment returns environment matching given name.

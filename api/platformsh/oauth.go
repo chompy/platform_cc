@@ -129,7 +129,6 @@ func loginServer(authURL string) (string, error) {
 	<-ctx.Done()
 	s.Shutdown(ctx)
 	return code, tracerr.Wrap(err)
-
 }
 
 // Login to Platform.sh API via oauth.

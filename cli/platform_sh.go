@@ -40,7 +40,7 @@ var platformShLoginCmd = &cobra.Command{
 }
 
 var platformShSshCmd = &cobra.Command{
-	Use: "ssh environment [-s service]",
+	Use: "ssh environment [-s service] [--pipe]",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			handleError(tracerr.Errorf("environment not provided"))
@@ -61,10 +61,15 @@ var platformShSshCmd = &cobra.Command{
 		if env == nil {
 			handleError(tracerr.Errorf("cannot find environment %s", args[0]))
 		}
-		// fetch ssh url
-		output.WriteStdout(
-			proj.PlatformSH.SSHUrl(env, proj.GetDefinitionName(def)),
-		)
+		// dump ssh url to term if pipe option provided
+		if checkFlag(cmd, "pipe") {
+			output.WriteStdout(
+				proj.PlatformSH.SSHUrl(env, proj.GetDefinitionName(def)) + "\n",
+			)
+			return
+		}
+		// tty
+		handleError(proj.PlatformSH.SSHTerminal(env, proj.GetDefinitionName(def)))
 	},
 }
 
@@ -102,6 +107,7 @@ var platformShSyncCmd = &cobra.Command{
 
 func init() {
 	platformShSshCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
+	platformShSshCmd.Flags().Bool("pipe", false, "return ssh url instead of creating interactive terminal")
 	platformShCmd.AddCommand(platformShLoginCmd)
 	platformShCmd.AddCommand(platformShSshCmd)
 	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")

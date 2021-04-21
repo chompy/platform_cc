@@ -20,12 +20,12 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v1.1.3
 	github.com/ztrue/tracerr v0.3.0
+	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/platformsh v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/project v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/router v0.0.1
-	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	golang.org/x/term v0.0.0-20210317153231-de623e64d2a6
 )

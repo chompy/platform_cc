@@ -92,6 +92,11 @@ func PrivateKey() ([]byte, error) {
 	return ioutil.ReadFile(pathTo(privateKeyPath))
 }
 
+// PrivateKeyPath returns path to the private key.
+func PrivateKeyPath() string {
+	return pathTo(privateKeyPath)
+}
+
 // PublicKey returns the public key.
 func PublicKey() ([]byte, error) {
 	return ioutil.ReadFile(pathTo(publicKeyPath))
