@@ -23,10 +23,15 @@ import (
 	"os"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/config"
+
 	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
+
+const pshSyncSSHCertPath = "/mnt/pcc_ssh_cert"
+const pshSyncSSHKeyPath = "/mnt/pcc_ssh_key"
 
 func (p *Project) platformSHSyncPreflight(envName string) error {
 	if p.PlatformSH == nil || p.PlatformSH.ID == "" {
@@ -100,6 +105,13 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 	}
 	certReader := bytes.NewReader(sshCert)
 
+	// get ssh key
+	sshKey, err := config.PrivateKey()
+	if err != nil {
+		return tracerr.Wrap(err)
+	}
+	keyReader := bytes.NewReader(sshKey)
+
 	// set volume mount strategy to ensure mount sync works
 	p.Options[OptionMountStrategy] = MountStrategyVolume
 	if err := p.Save(); err != nil {
@@ -110,16 +122,28 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 	for _, app := range p.Apps {
 		sshURL := p.PlatformSH.SSHUrl(env, app.Name)
 		cont := p.NewContainer(app)
-		if err := cont.Upload("/mnt/priv.cert", certReader); err != nil {
+		// upload ssh cert and key
+		if err := cont.Upload(pshSyncSSHCertPath, certReader); err != nil {
 			return tracerr.Wrap(err)
 		}
+		if err := cont.Upload(pshSyncSSHKeyPath, keyReader); err != nil {
+			return tracerr.Wrap(err)
+		}
+		// itterate mounts and rsync
 		for dest := range app.Mounts {
 			done2 := output.Duration(fmt.Sprintf("%s:%s", app.Name, dest))
 			if err := cont.Shell(
 				"root",
-				[]string{"sh", "-c",
+				[]string{
+					"ssh-agent",
+					"bash",
+					"-c",
 					fmt.Sprintf(
-						`chmod 0600 /mnt/priv.cert && rsync -avzh -e "ssh -i /mnt/priv.cert" %s:/app/%s /app/%s`,
+						`chmod 0600 %s && chmod 0600 %s && ssh-add %s && rsync -avzh -e "ssh -i %s" %s:/app/%s /app/%s`,
+						pshSyncSSHKeyPath,
+						pshSyncSSHCertPath,
+						pshSyncSSHKeyPath,
+						pshSyncSSHCertPath,
 						sshURL,
 						strings.TrimLeft(dest, "/"),
 						strings.TrimLeft(dest, "/"),
@@ -130,7 +154,8 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 			}
 			done2()
 		}
-		cont.Shell("root", []string{"rm", "/mnt/priv.cert"})
+		// remove ssh key
+		cont.Shell("root", []string{"bash", "-c", fmt.Sprintf("rm %s && rm %s", pshSyncSSHCertPath, pshSyncSSHKeyPath)})
 		// TODO workers
 	}
 	done()

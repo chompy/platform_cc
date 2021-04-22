@@ -327,7 +327,9 @@ func (p *Project) SSHTerminal(env *Environment, service string) error {
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	// start
 	if err := client.Terminal(nil).Start(); err != nil {
-		return tracerr.Wrap(err)
+		if !strings.Contains(err.Error(), "exited with status") {
+			return tracerr.Wrap(err)
+		}
 	}
 	return nil
 }
