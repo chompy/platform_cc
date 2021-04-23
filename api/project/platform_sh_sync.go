@@ -139,14 +139,14 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 					"bash",
 					"-c",
 					fmt.Sprintf(
-						`chmod 0600 %s && chmod 0600 %s && ssh-add %s && rsync -avzh -e "ssh -i %s" %s:/app/%s /app/%s`,
+						`chmod 0600 %s && chmod 0600 %s && ssh-add %s && rsync -avzh -e "ssh -i %s" %s:/app/%s/ /app/%s/`,
 						pshSyncSSHKeyPath,
 						pshSyncSSHCertPath,
 						pshSyncSSHKeyPath,
 						pshSyncSSHCertPath,
 						sshURL,
-						strings.TrimLeft(dest, "/"),
-						strings.TrimLeft(dest, "/"),
+						strings.Trim(dest, "/"),
+						strings.Trim(dest, "/"),
 					),
 				},
 			); err != nil {

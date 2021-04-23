@@ -38,13 +38,12 @@ var varCmd = &cobra.Command{
 }
 
 var varSetCmd = &cobra.Command{
-	Use:     "set key value",
-	Aliases: []string{"s"},
-	Short:   "Set a variable.",
+	Use:     "create name value",
+	Aliases: []string{"set", "update"},
+	Short:   "Create a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		if len(args) == 0 {
-			handleError(fmt.Errorf("missing variable key"))
+			handleError(fmt.Errorf("missing variable name"))
 		}
 		// fetch value
 		fi, _ := os.Stdin.Stat()
@@ -85,7 +84,7 @@ var varSetCmd = &cobra.Command{
 }
 
 var varGetCmd = &cobra.Command{
-	Use:     "get key",
+	Use:     "get name",
 	Aliases: []string{"g"},
 	Short:   "Get a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
