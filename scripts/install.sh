@@ -7,9 +7,7 @@ realpath() {
 BASE_URL="https://platform.cc/releases"
 VERSION_URL="$BASE_URL/version"
 DL_SCRIPTS=(
-    "$BASE_URL/send_log.sh|pcc_send_log|send-log"
     "$BASE_URL/uninstall.sh|pcc_uninstall|uninstall"
-    "$BASE_URL/install.sh|pcc_update|update"
 )
 INSTALL_PATH=~/.pcc
 PCC_BIN_NAME="pcc"

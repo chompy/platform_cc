@@ -208,10 +208,10 @@ Platform.cc generates its own SSH keypair on first load. This is used inside app
 You can find the Platform.cc generated key in... 
 
 ### Private
-`~/.config/platformcc/id_rsa`
+`~/.config/platformcc/pcc_ssh_private`
 
 ### Public
-`~/.config/platformcc/id_rsa.pub`
+`~/.config/platformcc/pcc_ssh_public`
 
 
 Platform.CC Specific Configurations
@@ -245,18 +245,18 @@ pcc project:slot:copy 1 2
 Container Commit
 ----------------
 
-By default Platform.CC makes a commit of the application containers once the build hooks are completed. This saves time as the build hooks won't have to be ran on every start up. However, it does appear to cause some issues in a few cases. We have included ways to bypass this functionality both with the 'disable_auto_commit' flag and with the `--no-commit` option on the project:start command.
+By default Platform.CC makes a commit of the application containers once the build hooks are completed. This saves time as the build hooks won't have to be ran on every start up. However, it does appear to cause some issues in a few cases. We have included ways to bypass this functionality both with the 'disable_auto_commit' flag and with the `--no-commit` option on the `project:start` command.
 
 You can force a re-build and re-commit when you run `project:start` or `project:restart` with the `--rebuild` flag.
 
 
+Self Update
+-----------
+
+You can update Platform.cc to the latest version with the `update` command.
+
 Share Logs
 ----------
 
-A script is included that will allow you to share your Platform.CC logs with ease.
+The `sharelog` command will upload the log for the current project and provide a URL to share it. This is useful for reporting bugs to a Platform.cc developer.
 
-```
-pcc_send_log
-```
-
-After running the command it will give you a URL that you can share.

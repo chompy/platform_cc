@@ -56,7 +56,6 @@ if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_SECRET_ACCESS_KEY" ]; then
     if [ "$VERSION" != "dev" ]; then
         echo "- Upload additional files..."
         upload "$ROOTPATH/version" "version"
-        upload "$ROOTPATH/scripts/send_log.sh" "send_log.sh"
         upload "$ROOTPATH/scripts/install.sh" "install.sh"
         upload "$ROOTPATH/scripts/uninstall.sh" "uninstall.sh"
         upload "$ROOTPATH/scripts/.pcc.bashrc" ".pcc.bashrc"

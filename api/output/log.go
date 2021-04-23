@@ -26,7 +26,8 @@ import (
 	"github.com/ztrue/tracerr"
 )
 
-const logPath = ".platform_cc.log"
+// LogPath is the path to the log file.
+const LogPath = ".platform_cc.log"
 const logMaxSize = 2097152 // 2MB
 const logOverageMax = logMaxSize * 2
 
@@ -34,7 +35,7 @@ func writeLogFile(msg string) {
 	if !Logging {
 		return
 	}
-	f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(LogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		Warn("Could not open log file, " + err.Error())
 		return
@@ -83,7 +84,7 @@ func LogError(err error) {
 // LogRotate trims the log file.
 func LogRotate() error {
 	// stat log file
-	s, err := os.Stat(logPath)
+	s, err := os.Stat(LogPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -98,11 +99,11 @@ func LogRotate() error {
 	}
 	// overage is too large, just delete file
 	if overage > logOverageMax {
-		return tracerr.Wrap(os.Remove(logPath))
+		return tracerr.Wrap(os.Remove(LogPath))
 	}
 
 	// open file
-	f, err := os.Open(logPath)
+	f, err := os.Open(LogPath)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
@@ -124,11 +125,11 @@ func LogRotate() error {
 	}
 	f.Close()
 	// delete old file
-	if err := os.Remove(logPath); err != nil {
+	if err := os.Remove(LogPath); err != nil {
 		return tracerr.Wrap(err)
 	}
 	// create new
-	f, err = os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err = os.OpenFile(LogPath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
