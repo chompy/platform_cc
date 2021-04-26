@@ -31,8 +31,8 @@ import (
 )
 
 var containerCmd = &cobra.Command{
-	Use:     "container [-s service]",
-	Aliases: []string{"cont", "c", "application", "app"},
+	Use:     "service [-s service]",
+	Aliases: []string{"container", "s", "application", "app"},
 	Short:   "Manage individual containers for applications, services, and workers.",
 }
 

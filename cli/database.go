@@ -25,8 +25,8 @@ import (
 )
 
 var databaseCmd = &cobra.Command{
-	Use:     "database [-s service] [-d database]",
-	Aliases: []string{"db", "mysql", "mariadb"},
+	Use:     "db [-s service] [-d database]",
+	Aliases: []string{"database", "mysql", "mariadb"},
 	Short:   "Manage database.",
 }
 
@@ -50,10 +50,10 @@ var databaseDumpCmd = &cobra.Command{
 	},
 }
 
-var databaseShellCmd = &cobra.Command{
-	Use:     "shell",
-	Aliases: []string{"sh", "sql"},
-	Short:   "Shell in to database.",
+var databaseSqlCmd = &cobra.Command{
+	Use:     "sql",
+	Aliases: []string{"shell", "sh"},
+	Short:   "Run SQL on database.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
@@ -72,6 +72,6 @@ func init() {
 	databaseCmd.PersistentFlags().StringP("database", "d", "", "name of database")
 	databaseCmd.PersistentFlags().StringP("service", "s", "", "name of service")
 	databaseCmd.AddCommand(databaseDumpCmd)
-	databaseCmd.AddCommand(databaseShellCmd)
+	databaseCmd.AddCommand(databaseSqlCmd)
 	RootCmd.AddCommand(databaseCmd)
 }

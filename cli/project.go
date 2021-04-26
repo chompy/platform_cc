@@ -29,13 +29,14 @@ import (
 
 var projectCmd = &cobra.Command{
 	Use:     "project",
-	Aliases: []string{"proj", "p"},
+	Aliases: []string{"proj", "p", "environment"},
 	Short:   "Manage project in current working directory.",
 }
 
 var projectStartCmd = &cobra.Command{
-	Use:   "start [--rebuild] [--no-build] [--no-router] [--no-commit] [--no-validate] [-s slot]",
-	Short: "Start a project.",
+	Use:     "start [--rebuild] [--no-build] [--no-router] [--no-commit] [--no-validate] [-s slot]",
+	Aliases: []string{"init"},
+	Short:   "Start a project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		projectStart(cmd, nil, -1)
 	},
@@ -53,8 +54,9 @@ var projectStopCmd = &cobra.Command{
 }
 
 var projectRestartCmd = &cobra.Command{
-	Use:   "restart [--rebuild] [--no-build] [--no-commit] [--no-validate]",
-	Short: "Restart a project.",
+	Use:     "restart [--rebuild] [--no-build] [--no-commit] [--no-validate]",
+	Short:   "Restart a project.",
+	Aliases: []string{"redeploy"},
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
@@ -128,8 +130,9 @@ var projectConfigJSONCmd = &cobra.Command{
 }
 
 var projectStatusCmd = &cobra.Command{
-	Use:   "status [--json]",
-	Short: "Display status of project containers.",
+	Use:     "status [--json]",
+	Aliases: []string{"list"},
+	Short:   "Display status of project containers.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output.Enable = false
 		proj, err := getProject(true)

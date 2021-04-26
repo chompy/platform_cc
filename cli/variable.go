@@ -40,7 +40,7 @@ var varCmd = &cobra.Command{
 var varSetCmd = &cobra.Command{
 	Use:     "create name value",
 	Aliases: []string{"set", "update"},
-	Short:   "Create a variable.",
+	Short:   "Create/set a variable.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			handleError(fmt.Errorf("missing variable name"))
