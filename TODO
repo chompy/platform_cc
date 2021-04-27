@@ -1,6 +1,3 @@
-- FEATURES
-    - Parse routes.pcc.yaml in addition to routes.yaml to make PCC specific routes possible.
-
 - BACKBURNER
     - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)
     - More tests, increase code coverage.

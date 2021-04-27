@@ -1,0 +1,7 @@
+https://dev.contextualcode.com/:
+    type: upstream
+    upstream: test_app:http
+
+https://contextualcode.com/:
+    type: redirect
+    to: https://dev.contextualcode.com/

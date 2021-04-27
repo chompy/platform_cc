@@ -45,36 +45,33 @@ func TestRoutes(t *testing.T) {
 		"https://contextualcode.com/",
 		"https://contextualcode-com." + internalDomainSuffix + "/",
 	}
+	routeMap := RoutesToMap(routes)
 	for _, path := range containsRoutes {
-		hasRoute := false
-		for _, route := range routes {
-			if route.Path == path {
-				hasRoute = true
-				if path == "http://contextualcode.com/" {
-					AssertEqual(
-						route.To,
-						"http://www.contextualcode.com/",
-						"unexpected redirect",
-						t,
-					)
-				} else if path == "http://contextualcode-com."+internalDomainSuffix+"/" {
-					AssertEqual(
-						route.To,
-						"http://www-contextualcode-com."+internalDomainSuffix+"/",
-						"unexpected redirect",
-						t,
-					)
-				}
-				break
-			}
-		}
 		AssertEqual(
-			hasRoute,
+			routeMap[path].Type != "",
 			true,
 			fmt.Sprintf("missing expected route '%s'", path),
 			t,
 		)
 	}
+	AssertEqual(
+		routeMap["https://contextualcode.com/"].To,
+		"https://www.contextualcode.com/",
+		"unexpected redirect",
+		t,
+	)
+	AssertEqual(
+		routeMap["https://contextualcode-com."+internalDomainSuffix+"/"].To,
+		"https://www-contextualcode-com."+internalDomainSuffix+"/",
+		"unexpected redirect",
+		t,
+	)
+	AssertEqual(
+		routeMap["https://www.contextualcode.com/"].Upstream,
+		"test_app:http",
+		"unexpected upstream",
+		t,
+	)
 }
 
 func TestRoutesRedirect(t *testing.T) {
@@ -135,6 +132,40 @@ func TestLargeRoutes(t *testing.T) {
 		len(routes[0].Validate()),
 		0,
 		"expected route to validate",
+		t,
+	)
+}
+
+func TestRouteOverride(t *testing.T) {
+	paths := []string{
+		path.Join("_test_data", "route_override", ".platform", "routes.yaml"),
+		path.Join("_test_data", "route_override", ".platform", "routes.pcc.yaml"),
+	}
+	routes, err := ParseRoutesYamlFiles(paths)
+	if err != nil {
+		t.Errorf("failed to parse routes yaml, %s", err)
+	}
+	routes, err = ExpandRoutes(routes, internalDomainSuffix)
+	if err != nil {
+		t.Errorf("failed to expand routes, %s", err)
+	}
+	routeMap := RoutesToMap(routes)
+	AssertEqual(
+		routeMap["https://www.contextualcode.com/"].Upstream,
+		"test_app:http",
+		"unexpected upstream for www.contextualcode.com",
+		t,
+	)
+	AssertEqual(
+		routeMap["https://dev.contextualcode.com/"].Upstream,
+		"test_app:http",
+		"unexpected upstream for dev.contextualcode.com",
+		t,
+	)
+	AssertEqual(
+		routeMap["https://contextualcode.com/"].To,
+		"https://dev.contextualcode.com/",
+		"unexpected redirect",
 		t,
 	)
 }

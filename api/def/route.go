@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package def
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -91,9 +92,6 @@ func ParseRoutesYaml(d []byte) ([]Route, error) {
 
 // ParseRoutesYamlFile opens the routes.yaml file and parses it.
 func ParseRoutesYamlFile(f string) ([]Route, error) {
-	done := output.Duration(
-		fmt.Sprintf("Parse routes at '%s.'", f),
-	)
 	d, err := ioutil.ReadFile(f)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -105,8 +103,45 @@ func ParseRoutesYamlFile(f string) ([]Route, error) {
 	if err != nil {
 		return r, tracerr.Wrap(err)
 	}
-	done()
 	return r, nil
+}
+
+// ParseRoutesYamlFiles reads multiple routes yaml files and merges them.
+func ParseRoutesYamlFiles(fileList []string) ([]Route, error) {
+	done := output.Duration(
+		fmt.Sprintf("Parse routes at '%s.'", strings.Join(fileList, ", ")),
+	)
+	out := make([]Route, 0)
+	for _, f := range fileList {
+		routes, err := ParseRoutesYamlFile(f)
+		if err != nil {
+			return nil, tracerr.Wrap(err)
+		}
+		for _, route := range routes {
+			hasOut := false
+			for i := range out {
+				if out[i].Path == route.Path {
+					// attempt to merge routes using json marshaling and unmarshaling
+					// because there is no other way to merge structs
+					routeJSON, err := json.Marshal(route)
+					if err != nil {
+						return nil, tracerr.Wrap(err)
+					}
+					if err := json.Unmarshal(routeJSON, &out[i]); err != nil {
+						return nil, tracerr.Wrap(err)
+					}
+					hasOut = true
+					break
+				}
+			}
+			if !hasOut {
+				out = append(out, route)
+			}
+		}
+
+	}
+	done()
+	return out, nil
 }
 
 // ExpandRoutes expands routes to include internal verisons and makes modifications for use with PCC.

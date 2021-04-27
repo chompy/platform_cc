@@ -40,8 +40,8 @@ import (
 
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
 var serviceYamlFilenames = []string{".platform/services.yaml", ".platform/services.pcc.yaml"}
+var routesYamlFilenames = []string{".platform/routes.yaml", ".platform/routes.pcc.yaml"}
 
-const routesYamlPath = ".platform/routes.yaml"
 const projectJSONFilename = ".platform_cc.json"
 const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
@@ -143,9 +143,17 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	}
 	// read routes yaml
 	if parseYaml {
-		o.Routes, err = def.ParseRoutesYamlFile(
-			filepath.Join(path, routesYamlPath),
-		)
+		routesYamlPaths := make([]string, 0)
+		for _, fn := range routesYamlFilenames {
+			routesYamlPaths = append(
+				routesYamlPaths,
+				filepath.Join(path, fn),
+			)
+			if o.HasFlag(DisableYamlOverrides) {
+				break
+			}
+		}
+		o.Routes, err = def.ParseRoutesYamlFiles(routesYamlPaths)
 		if err != nil {
 			return nil, tracerr.Wrap(err)
 		}
