@@ -49,7 +49,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 			}
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			name = d.Name
 			// put worker in application json list
@@ -178,7 +178,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 			build = d.Build
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			name = d.Name
 			appType = d.Type
@@ -186,7 +186,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 			mounts = d.Mounts
 			runtime = d.Runtime
 			workero := d
-			worker = &workero
+			worker = workero
 			appWeb = nil
 			break
 		}

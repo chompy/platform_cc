@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -37,7 +38,7 @@ func (p *Project) GetDefinitionName(d interface{}) string {
 		{
 			return d.Name
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			return d.Name
 		}
@@ -56,7 +57,7 @@ func (p *Project) GetDefinitionType(d interface{}) string {
 		{
 			return d.Type
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			return d.Type
 		}
@@ -87,7 +88,7 @@ func (p *Project) GetDefinitionHostName(d interface{}) string {
 // GetDefinitionStartCommand returns the start command for the given definition.
 func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 	switch d.(type) {
-	case def.App, def.AppWorker:
+	case def.App, *def.AppWorker:
 		{
 			uid, gid := p.getUID()
 			command := fmt.Sprintf(
@@ -114,7 +115,7 @@ func (p *Project) GetDefinitionContainerType(d interface{}) container.ObjectCont
 		{
 			return container.ObjectContainerApp
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			return container.ObjectContainerWorker
 		}
@@ -135,7 +136,7 @@ func (p *Project) GetDefinitionVolumes(d interface{}) map[string]string {
 			name = d.Name
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			name = d.Name
 			break
@@ -164,7 +165,7 @@ func (p *Project) GetDefinitionBinds(d interface{}) map[string]string {
 			path = d.Path
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			path = d.Path
 			break
@@ -191,7 +192,7 @@ func (p *Project) GetDefinitionEnvironmentVariables(d interface{}) map[string]st
 			vars = d.Variables
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			vars = d.Variables
 			break
@@ -217,7 +218,7 @@ func (p *Project) GetDefinitionVariables(d interface{}) map[string]interface{} {
 			out.Merge(d.Variables)
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			out.Merge(d.Variables)
 			break
@@ -237,7 +238,7 @@ func (p *Project) GetDefinitionRelationships(d interface{}) map[string][]map[str
 			rels = d.Relationships
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			rels = d.Relationships
 			break
@@ -253,7 +254,7 @@ func (p *Project) GetDefinitionRelationships(d interface{}) map[string][]map[str
 		out[name] = make([]map[string]interface{}, 0)
 		relSplit := strings.Split(rel, ":")
 		for _, v := range p.relationships {
-			if v["service"].(string) == relSplit[0] && v["rel"] == relSplit[1] {
+			if v["service"] != nil && v["service"].(string) == relSplit[0] && v["rel"] == relSplit[1] {
 				out[name] = append(out[name], v)
 			}
 		}
@@ -321,7 +322,7 @@ func (p *Project) GetDefinitionMountCommand(d interface{}) string {
 		{
 			mounts = d.Mounts
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			mounts = d.Mounts
 		}
@@ -416,7 +417,7 @@ func (p *Project) GetDefinitionStartOrder(defs []interface{}) ([]interface{}, er
 				rels = d.Relationships
 				break
 			}
-		case def.AppWorker:
+		case *def.AppWorker:
 			{
 				rels = d.Relationships
 				break
@@ -483,7 +484,7 @@ func (p *Project) GetDefinitionStartOrder(defs []interface{}) ([]interface{}, er
 				}
 				invalidOut = append(invalidOut, p.GetDefinitionName(def))
 			}
-			return nil, fmt.Errorf("one or more relationships are invalid: %s", strings.Join(invalidOut, ","))
+			return nil, tracerr.Errorf("one or more relationships are invalid: %s", strings.Join(invalidOut, ","))
 		}
 
 	}

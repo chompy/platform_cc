@@ -118,10 +118,32 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 		return tracerr.Wrap(err)
 	}
 
-	// itterate apps to sync mounts
-	for _, app := range p.Apps {
-		sshURL := p.PlatformSH.SSHUrl(env, app.Name)
-		cont := p.NewContainer(app)
+	// mount sync function
+	syncMount := func(di interface{}) error {
+		name := ""
+		sshURL := ""
+		cont := p.NewContainer(di)
+		var mounts map[string]*def.AppMount
+		switch d := di.(type) {
+		case def.App:
+			{
+				name = d.Name
+				sshURL = p.PlatformSH.SSHUrl(env, d.Name)
+				mounts = d.Mounts
+				break
+			}
+		case *def.AppWorker:
+			{
+				name = d.Name
+				sshURL = p.PlatformSH.SSHWorkerUrl(env, d.ParentApp, d.Name)
+				mounts = d.Mounts
+				break
+			}
+		default:
+			{
+				return tracerr.Errorf("invalid definition")
+			}
+		}
 		// upload ssh cert and key
 		if err := cont.Upload(pshSyncSSHCertPath, certReader); err != nil {
 			return tracerr.Wrap(err)
@@ -130,8 +152,8 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 			return tracerr.Wrap(err)
 		}
 		// itterate mounts and rsync
-		for dest := range app.Mounts {
-			done2 := output.Duration(fmt.Sprintf("%s:%s", app.Name, dest))
+		for dest := range mounts {
+			done2 := output.Duration(fmt.Sprintf("%s:%s", name, dest))
 			if err := cont.Shell(
 				"root",
 				[]string{
@@ -156,7 +178,22 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 		}
 		// remove ssh key
 		cont.Shell("root", []string{"bash", "-c", fmt.Sprintf("rm %s && rm %s", pshSyncSSHCertPath, pshSyncSSHKeyPath)})
-		// TODO workers
+		return nil
+	}
+
+	// itterate apps to sync mounts
+	for _, app := range p.Apps {
+		if err := syncMount(app); err != nil {
+			return tracerr.Wrap(err)
+		}
+		// itterate workers
+		if p.HasFlag(EnableWorkers) {
+			for _, worker := range app.Workers {
+				if err := syncMount(worker); err != nil {
+					return tracerr.Wrap(err)
+				}
+			}
+		}
 	}
 	done()
 	return nil

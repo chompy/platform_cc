@@ -161,3 +161,76 @@ dependencies:
 		t,
 	)
 }
+
+func TestWorkerInheritence(t *testing.T) {
+	d, e := ParseAppYamls([][]byte{[]byte(`
+name: app
+type: php:7.4
+mounts:
+    /test: test
+    /test2:
+        source_path: test2
+        source: service
+        service: files
+variables:
+    env:
+        TEST1: "Hello World"
+        TEST2: "1234"
+workers:
+    test1:
+        commands:
+            start: |
+                echo "TEST1"
+    test2:
+        commands:
+            start: |
+                echo "TEST2"
+        variables:
+            env:
+                TEST3: "abcd"
+        mounts:
+            /test3: test3
+
+`)}, nil)
+	if e != nil {
+		t.Errorf("failed to parse app yaml, %s", e)
+	}
+	// variables should be inherited from app if not set
+	AssertEqual(
+		d.Workers["test1"].Variables.GetString("env:TEST1"),
+		"Hello World",
+		"expected workers.test1.variables.env.test1",
+		t,
+	)
+	AssertEqual(
+		d.Workers["test1"].Variables.GetString("env:TEST2"),
+		"1234",
+		"expected workers.test1.variables.env.test2",
+		t,
+	)
+	AssertEqual(
+		d.Workers["test2"].Variables.GetString("env:TEST1"),
+		"",
+		"unexpected workers.test2.variables.env.test1",
+		t,
+	)
+	AssertEqual(
+		d.Workers["test2"].Variables.GetString("env:TEST3"),
+		"abcd",
+		"expected workers.test2.variables.env.test3",
+		t,
+	)
+	// mounts too
+	AssertEqual(
+		d.Workers["test1"].Mounts["/test"].SourcePath,
+		"test",
+		"expected workers.test1.mount./test3",
+		t,
+	)
+	AssertEqual(
+		d.Workers["test2"].Mounts["/test3"].SourcePath,
+		"test3",
+		"expected workers.test2.mount./test3",
+		t,
+	)
+}

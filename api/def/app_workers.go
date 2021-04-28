@@ -22,6 +22,7 @@ import "strings"
 // AppWorker defines a worker.
 type AppWorker struct {
 	Name          string               `json:"-"`
+	ParentApp     string               `json:"-"`
 	Path          string               `json:"-"`
 	Type          string               `json:"-"`
 	Runtime       AppRuntime           `json:"-"`

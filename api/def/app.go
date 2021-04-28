@@ -182,11 +182,25 @@ func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 	// transfer app attributes to its workers
 	for name, w := range o.Workers {
 		w.Name = name
+		w.ParentApp = o.Name
 		w.Type = o.Type
 		w.Runtime = o.Runtime
 		w.Dependencies = o.Dependencies
-		w.Variables = make(Variables)
-		mergeMaps(w.Variables, o.Variables)
+		if w.Size == "" {
+			w.Size = o.Size
+		}
+		if w.Disk == 0 {
+			w.Disk = o.Disk
+		}
+		if w.Relationships == nil || len(w.Relationships) == 0 {
+			w.Relationships = o.Relationships
+		}
+		if w.Mounts == nil || len(w.Mounts) == 0 {
+			w.Mounts = o.Mounts
+		}
+		if w.Variables == nil || len(w.Variables) == 0 {
+			w.Variables = o.Variables
+		}
 	}
 	// merge global variables
 	if global != nil {

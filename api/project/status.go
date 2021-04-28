@@ -34,7 +34,7 @@ func (p *Project) Status() []container.Status {
 		}
 		out = append(out, status)
 		for _, worker := range app.Workers {
-			wc := p.NewContainer(*worker)
+			wc := p.NewContainer(worker)
 			status, _ := c.containerHandler.ContainerStatus(wc.Config.GetContainerName())
 			if status.Name == "" {
 				status.Name = wc.Config.ObjectName

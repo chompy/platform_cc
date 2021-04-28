@@ -242,6 +242,12 @@ func (p Project) SSHUrl(env *Environment, service string) string {
 	return fmt.Sprintf("%s--%s@%s", urlSplit[0], service, urlSplit[1])
 }
 
+// SSHWorkerUrl returns the SSH url for a worker in the environment.
+func (p Project) SSHWorkerUrl(env *Environment, service string, worker string) string {
+	urlSplit := strings.Split(strings.TrimPrefix(env.Links.SSH.HREF, "ssh://"), "@")
+	return fmt.Sprintf("%s--%s--%s@%s", urlSplit[0], service, worker, urlSplit[1])
+}
+
 // SSHUser returns the SSH username for given environment and service.
 func (p Project) SSHUser(env *Environment, service string) string {
 	return fmt.Sprintf(

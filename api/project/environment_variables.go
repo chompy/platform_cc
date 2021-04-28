@@ -80,7 +80,7 @@ func (p *Project) GetPlatformApplication(d interface{}) string {
 			dependencies = d.Dependencies
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			disk = d.Disk
 			relationships = d.Relationships
@@ -142,7 +142,7 @@ func (p *Project) GetPlatformEnvironmentVariables(d interface{}) map[string]stri
 			name = d.Name
 			break
 		}
-	case def.AppWorker:
+	case *def.AppWorker:
 		{
 			name = d.Name
 			break
