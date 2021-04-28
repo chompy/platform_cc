@@ -255,6 +255,7 @@ Self Update
 
 You can update Platform.cc to the latest version with the `update` command.
 
+
 Share Logs
 ----------
 
