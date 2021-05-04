@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ztrue/tracerr"
 )
@@ -57,24 +58,47 @@ func (p *Project) GetEnvironment(name string) *Environment {
 }
 
 // Variables returns list of variables for given platform.sh environment.
-func (p *Project) Variables(env *Environment) (map[string]string, error) {
+func (p *Project) Variables(env *Environment, service string) (map[string]string, error) {
 	if env == nil {
 		return nil, tracerr.Errorf("invalid environment")
 	}
-	resp := make([]map[string]interface{}, 0)
+	// fetch project variables
+	projVarResp := make([]map[string]interface{}, 0)
+	p.request(
+		fmt.Sprintf("projects/%s/variables", p.ID),
+		nil,
+		&projVarResp,
+	)
+	// fetch environment variables
+	envVarResp := make([]map[string]interface{}, 0)
 	if err := p.request(
 		fmt.Sprintf("projects/%s/environments/%s/variables", p.ID, env.Name),
 		nil,
-		&resp,
+		&envVarResp,
 	); err != nil {
 		return nil, tracerr.Wrap(err)
 	}
+	// compile output
 	out := make(map[string]string)
-	for _, v := range resp {
-		if v["name"] == nil || v["value"] == nil {
+	for _, v := range append(projVarResp, envVarResp...) {
+		if v["name"] == nil {
 			continue
 		}
-		out[v["name"].(string)] = v["value"].(string)
+		name := v["name"].(string)
+		value := ""
+		if v["value"] != nil {
+			value = v["value"].(string)
+		}
+		// fetch var from environment if not found (i.e. sensitive)
+		if value == "" && strings.HasPrefix(name, "env:") {
+			envVarName := strings.TrimPrefix(name, "env:")
+			var err error
+			value, err = p.EnvironmentVariable(env, service, envVarName)
+			if err != nil {
+				return nil, tracerr.Wrap(err)
+			}
+		}
+		out[name] = value
 	}
 	return out, nil
 }

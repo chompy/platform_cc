@@ -58,7 +58,7 @@ func (p *Project) PlatformSHSyncVariables(envName string) error {
 	if env == nil {
 		return tracerr.Errorf("environment '%s' not found", envName)
 	}
-	vars, err := p.PlatformSH.Variables(env)
+	vars, err := p.PlatformSH.Variables(env, p.Apps[0].Name)
 	if err != nil {
 		return tracerr.Wrap(err)
 	}
