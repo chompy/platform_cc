@@ -1,3 +1,6 @@
+- projects:logs should label the container the log comes from.
+- platformsh:sync isn't copying all environment variables.
+
 - BACKBURNER
     - Show only relevant auto complete databases and services. (Currently displays all no matter the context.)
     - More tests, increase code coverage.

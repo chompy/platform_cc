@@ -19,6 +19,14 @@ package project
 
 // appContainerCmd is the application container start command.
 const appContainerCmd = `
+until [ -f /tmp/.ready1 ]; do sleep 1; done
+/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+runsvdir -P /etc/service &> /tmp/runsvdir.log &
+exec init
+`
+
+// appInitCmd is the initalization command for applications.
+const appInitCmd = `
 # INIT
 usermod -u %d app
 groupmod -g %d app
@@ -60,11 +68,8 @@ RpcServer(
 	root_factory=rootFactory
 )._accepter_greenlet.get();
 EOF
-# INIT SERVICE
-until [ -f /run/config.json ]; do sleep 1; done
+# CLEAN UP SERVICE
 rm -rf /etc/service/*
-/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
-runsvdir -P /etc/service &> /tmp/runsvdir.log &
 # PERMISSIONS
 chown -R web:web /run
 chown -R web /tmp
@@ -77,16 +82,13 @@ chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
 # BOOT
 /etc/platform/boot
-sleep 5
 chown -R web /tmp
 chmod -R 0755 /tmp
 touch /tmp/.ready1
-exec init
 `
 
 // appBuildCmd is the build command for applications.
 const appBuildCmd = `
-until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
 chown -R web /tmp
@@ -144,6 +146,14 @@ chmod +x /tmp/deploy.py
 
 // serviceContainerCmd is the service container start command.
 const serviceContainerCmd = `
+until [ -f /tmp/.ready1 ]; do sleep 1; done
+/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
+runsvdir -P /etc/service &> /tmp/runsvdir.log &
+exec init
+`
+
+// serviceInitCmd is the command to initalize a service.
+const serviceInitCmd = `
 umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
@@ -162,10 +172,7 @@ RpcServer(
 	root_factory=rootFactory
 )._accepter_greenlet.get();
 EOF
-until [ -f /run/config.json ]; do sleep 1; done
 rm -rf /etc/service/*
-/usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
-runsvdir -P /etc/service &> /tmp/runsvdir.log &
 mkdir -p /run/sshd
 chown -R app:app /run
 chown -R root:root /run/sshd
@@ -174,14 +181,11 @@ chown -Rf root:root /run/ssh/id
 chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
 /etc/platform/boot
-sleep 5
 touch /tmp/.ready1
-exec init
 `
 
 // serviceStartCmd is the command to start a service.
 const serviceStartCmd = `
-until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
 /etc/platform/start &
@@ -189,7 +193,6 @@ until [ -f /tmp/.ready2 ]; do sleep 1; done
 
 // serviceOpenCmd is the command to open a service.
 const serviceOpenCmd = `
-until [ -f /run/config.json ]; do sleep 1; done
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 until [ -f /tmp/.ready2 ]; do sleep 1; done
 echo '%s' | base64 -d | /etc/platform/commands/open

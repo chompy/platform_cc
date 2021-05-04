@@ -134,6 +134,9 @@ func Progress(msgs []string) func(i int, s ProgressMessageState, cur *int64, tot
 	progressPrintAll(msgs, states, progCur, progTotal)
 	wg := sync.Mutex{}
 	return func(i int, s ProgressMessageState, cur *int64, total *int64) {
+		if !IsTTY() {
+			return
+		}
 		wg.Lock()
 		defer wg.Unlock()
 		if i < 0 || i >= len(msgs) {
@@ -144,10 +147,6 @@ func Progress(msgs []string) func(i int, s ProgressMessageState, cur *int64, tot
 		states[i] = s
 		progCur[i] = cur
 		progTotal[i] = total
-		if !IsTTY() {
-			progressPrint(msgs, states, progCur, progTotal, i)
-			return
-		}
 		progressReprint(msgs, states, progCur, progTotal)
 		IndentLevel = currentIndent
 	}

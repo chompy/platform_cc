@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/ztrue/tracerr"
+	"golang.org/x/term"
 )
 
 const levelSpacer = "   "
@@ -43,11 +44,7 @@ var IndentLevel = 0
 
 // IsTTY returns true if running with a TTY.
 func IsTTY() bool {
-	fi, err := os.Stdout.Stat()
-	if err != nil {
-		return false
-	}
-	return fi.Mode()&os.ModeCharDevice != 0
+	return term.IsTerminal(int(os.Stdin.Fd()))
 }
 
 // WriteStdout writes a string to STDOUT.

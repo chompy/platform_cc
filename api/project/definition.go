@@ -90,15 +90,7 @@ func (p *Project) GetDefinitionStartCommand(d interface{}) []string {
 	switch d.(type) {
 	case def.App, *def.AppWorker:
 		{
-			uid, gid := p.getUID()
-			command := fmt.Sprintf(
-				appContainerCmd,
-				uid+1,
-				gid+1,
-				uid,
-				gid,
-			)
-			return []string{"bash", "--login", "-c", command}
+			return []string{"bash", "--login", "-c", appContainerCmd}
 		}
 	case def.Service:
 		{
@@ -275,6 +267,29 @@ func GetDefinitionEmptyRelationship(d interface{}) map[string]interface{} {
 		}
 	}
 	return map[string]interface{}{}
+}
+
+// GetDefinitionInitCommand returns the initalization command fdor the given definition.
+func (p *Project) GetDefinitionInitCommand(d interface{}) string {
+	switch d.(type) {
+	case def.App, *def.AppWorker:
+		{
+			uid, gid := p.getUID()
+			command := fmt.Sprintf(
+				appInitCmd,
+				uid+1,
+				gid+1,
+				uid,
+				gid,
+			)
+			return command
+		}
+	case def.Service:
+		{
+			return serviceInitCmd
+		}
+	}
+	return ""
 }
 
 // GetDefinitionBuildCommand returns build command for given definition.

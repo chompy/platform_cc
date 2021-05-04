@@ -28,8 +28,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/docker/docker/pkg/stdcopy"
+	"time"
 
 	"gitlab.com/contextualcode/platform_cc/api/container"
 
@@ -47,6 +46,7 @@ type Container struct {
 	Relationships     map[string][]map[string]interface{}
 	containerHandler  container.Interface
 	configJSON        []byte
+	initCommand       string
 	buildCommand      string
 	mountCommand      string
 	patchCommand      string
@@ -76,6 +76,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 		},
 		containerHandler:  p.containerHandler,
 		configJSON:        configJSON,
+		initCommand:       p.GetDefinitionInitCommand(d),
 		buildCommand:      p.GetDefinitionBuildCommand(d),
 		mountCommand:      p.GetDefinitionMountCommand(d),
 		patchCommand:      p.GetDefinitionPatch(d),
@@ -116,6 +117,17 @@ func (c Container) Start() error {
 		}
 		d2()
 	}
+	// run init command
+	d2 = output.Duration("Init container.")
+	if err := c.containerHandler.ContainerCommand(
+		c.Config.GetContainerName(),
+		"root",
+		[]string{"bash", "--login", "-c", c.initCommand},
+		os.Stdout,
+	); err != nil {
+		return tracerr.Wrap(err)
+	}
+	d2()
 	done()
 	return c.Log()
 }
@@ -387,43 +399,35 @@ func (c Container) Log() error {
 // LogStdout dumps container log to stdout.
 func (c Container) LogStdout(follow bool) error {
 	output.LogInfo(fmt.Sprintf("Read logs for container '%s.'", c.Config.GetContainerName()))
-	// get log stream
-	out, err := c.containerHandler.ContainerLog(c.Config.GetContainerName(), follow)
-	if err != nil {
-		return tracerr.Wrap(err)
+	// open logs
+	followOption := ""
+	if follow {
+		followOption = "-f"
 	}
-	defer out.Close()
-	var buf bytes.Buffer
-	// inline func, scan lines in buffer and output to stdout
-	scanLines := func() error {
-		scanner := bufio.NewScanner(&buf)
-		for scanner.Scan() {
-			output.ContainerLog(c.Config.GetContainerName(), scanner.Text())
-		}
-		if err := scanner.Err(); err != nil {
-			return tracerr.Wrap(err)
-		}
-		return nil
-	}
+	errChan := make(chan error)
+	go func(err chan error) {
+		err <- c.containerHandler.ContainerCommand(
+			c.Config.GetContainerName(), "root",
+			[]string{"sh", "-c", fmt.Sprintf("tail %s /var/log/*.log %s /var/log/*/*.log %s /tmp/*.log", followOption, followOption, followOption)},
+			os.Stdout,
+		)
+	}(errChan)
 	// follow logs
 	if follow {
-		go func() {
-			for {
-				err := scanLines()
-				if err != nil {
-					output.LogError(err)
-					return
-				}
-				buf.Reset()
-			}
-		}()
-	}
-	// copy to buf
-	_, err = stdcopy.StdCopy(&buf, &buf, out)
-	if err != nil {
+		err := <-errChan
 		return tracerr.Wrap(err)
 	}
-	return tracerr.Wrap(scanLines())
+	// wait a second for buffer to fill
+	select {
+	case err := <-errChan:
+		{
+			return tracerr.Wrap(err)
+		}
+	case <-time.After(time.Second):
+		{
+			return nil
+		}
+	}
 }
 
 // Commit commits the container.

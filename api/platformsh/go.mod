@@ -15,7 +15,7 @@ require (
 	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
-	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 )
