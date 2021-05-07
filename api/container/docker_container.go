@@ -229,7 +229,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 	}
 	ipAddress := ""
 	for name, network := range data.NetworkSettings.Networks {
-		if name == dockerNetworkName {
+		if name == "bridge" {
 			ipAddress = network.IPAddress
 			break
 		}
