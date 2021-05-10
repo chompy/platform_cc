@@ -25,7 +25,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 )
 
@@ -61,7 +61,7 @@ func GetUpstreamHost(proj *project.Project, upstream string, allowServices bool)
 			return fmt.Sprintf("%s:%d", proj.GetDefinitionHostName(serv), port), nil
 		}
 	}
-	return "", tracerr.Errorf("could not find upstream %s", upstream)
+	return "", errors.Wrapf(ErrUpstreamNotFound, "upstream %s not found", upstream)
 }
 
 // GenerateTemplateVars generates variables to inject in nginx template.
@@ -98,7 +98,7 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 					proj, route.Upstream, proj.HasFlag(project.EnableServiceRoutes),
 				)
 				if err != nil {
-					return nil, tracerr.Wrap(err)
+					return nil, errors.WithStack(err)
 				}
 			}
 			outHm["routes"] = append(
@@ -137,15 +137,15 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 func GenerateNginxConfig(proj *project.Project) ([]byte, error) {
 	t, err := template.New("nginx.conf").Parse(nginxServerTemplate)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	templateVars, err := GenerateTemplateVars(proj)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, templateVars); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return buf.Bytes(), nil
 }
@@ -154,7 +154,7 @@ func GenerateNginxConfig(proj *project.Project) ([]byte, error) {
 func GenerateRouteListJSON(proj *project.Project) ([]byte, error) {
 	templateVars, err := GenerateTemplateVars(proj)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return json.Marshal(templateVars)
 }

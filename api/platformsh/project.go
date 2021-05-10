@@ -20,7 +20,7 @@ package platformsh
 import (
 	"fmt"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -38,11 +38,11 @@ type Project struct {
 func LoadProjectFromPath(path string) (*Project, error) {
 	path, err := FindRoot(path)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	pid, host, err := parseProjectGit(path)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	output.Info(fmt.Sprintf("Found Platform.sh project '%s.'", pid))
 	return &Project{

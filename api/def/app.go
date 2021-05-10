@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -175,7 +175,7 @@ func ParseAppYamls(d [][]byte, global *GlobalConfig) (*App, error) {
 		Variables:     make(Variables),
 	}
 	if err := mergeYamls(d, o); err != nil {
-		return &App{}, tracerr.Wrap(err)
+		return &App{}, errors.WithStack(err)
 	}
 	// set defaults
 	o.SetDefaults()
@@ -220,13 +220,13 @@ func ParseAppYamlFiles(fileList []string, global *GlobalConfig) (*App, error) {
 		projectPlatformDir = filepath.Dir(f)
 		d, err := ioutil.ReadFile(f)
 		if err != nil {
-			return &App{}, tracerr.Wrap(err)
+			return &App{}, errors.WithStack(err)
 		}
 		byteList = append(byteList, d)
 	}
 	a, err := ParseAppYamls(byteList, global)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// append path to app def
 	a.Path, _ = filepath.Abs(filepath.Dir(fileList[0]))

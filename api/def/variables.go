@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 // Variables defines project variables which can be defined in multiple places.
@@ -31,7 +31,7 @@ type Variables map[string]interface{}
 
 func (v Variables) checkKey(name string) error {
 	if strings.Count(name, ":") > 1 {
-		return tracerr.Wrap(fmt.Errorf("variable name should only contain at most one colon (:)"))
+		return errors.WithStack(fmt.Errorf("variable name should only contain at most one colon (:)"))
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func (v *Variables) Merge(m Variables) {
 // Set sets a value.
 func (v *Variables) Set(key string, value interface{}) error {
 	if err := v.checkKey(key); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	(*v)[key] = value
 	return nil
@@ -109,7 +109,7 @@ func (v *Variables) unmarshalRawMap(data map[string]interface{}) error {
 				for sk, sv := range iv {
 					fullKey := fmt.Sprintf("%s:%s", k, sk)
 					if err := v.Set(fullKey, sv); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 				}
 				break
@@ -117,7 +117,7 @@ func (v *Variables) unmarshalRawMap(data map[string]interface{}) error {
 		default:
 			{
 				if err := v.Set(k, iv); err != nil {
-					return tracerr.Wrap(err)
+					return errors.WithStack(err)
 				}
 				break
 			}
@@ -130,16 +130,16 @@ func (v *Variables) unmarshalRawMap(data map[string]interface{}) error {
 func (v *Variables) UnmarshalJSON(data []byte) error {
 	umap := make(map[string]interface{})
 	if err := json.Unmarshal(data, &umap); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
-	return tracerr.Wrap(v.unmarshalRawMap(umap))
+	return errors.WithStack(v.unmarshalRawMap(umap))
 }
 
 // UnmarshalYAML implement Unmarshaler interface.
 func (v *Variables) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	umap := make(map[string]interface{})
 	if err := unmarshal(&umap); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
-	return tracerr.Wrap(v.unmarshalRawMap(umap))
+	return errors.WithStack(v.unmarshalRawMap(umap))
 }

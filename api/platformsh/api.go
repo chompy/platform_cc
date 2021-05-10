@@ -28,7 +28,7 @@ import (
 
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 const apiURL = "https://api.platform.sh/"
@@ -36,7 +36,7 @@ const apiURL = "https://api.platform.sh/"
 // check performs a check to ensure we're dealing with a valid platform.sh project.
 func (p *Project) check() error {
 	if p.ID == "" {
-		return tracerr.Errorf("platform.sh project id not found")
+		return errors.Wrap(ErrProjectNotFound, "platform.sh project id not found")
 	}
 	return nil
 }
@@ -51,7 +51,7 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 		var err error
 		rawPost, err = json.Marshal(post)
 		if err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	// create request
@@ -62,7 +62,7 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 		bytes.NewReader(rawPost),
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	output.LogDebug("Created Platform.sh API request.", map[string]interface{}{
@@ -74,35 +74,35 @@ func (p *Project) request(endpoint string, post map[string]interface{}, respData
 	// send request
 	client, err := GetAPIClient()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	// retrieve updated token
 	tok, err := client.Transport.(*oauth2.Transport).Source.Token()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := saveToken(tok); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// process response
 	rawResp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.LogDebug("Recieved Platform.sh API response.", string(rawResp))
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		if respData != nil {
 			json.Unmarshal(rawResp, respData)
 		}
-		return tracerr.Errorf("platform.sh api returned status code %d", resp.StatusCode)
+		return errors.Wrapf(ErrBadAPIResponse, "platform.sh api returned status code %d", resp.StatusCode)
 	}
 	if respData != nil {
-		return tracerr.Wrap(json.Unmarshal(rawResp, respData))
+		return errors.WithStack(json.Unmarshal(rawResp, respData))
 	}
 	return nil
 }
@@ -113,10 +113,10 @@ func (p *Project) FetchEnvironments() error {
 		return nil
 	}
 	if err := p.check(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := p.request("/projects/"+p.ID+"/environments", nil, &p.Environments); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -124,10 +124,10 @@ func (p *Project) FetchEnvironments() error {
 // Fetch populates project with API data.
 func (p *Project) Fetch() error {
 	if err := p.check(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := p.FetchEnvironments(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }

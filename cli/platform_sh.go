@@ -18,12 +18,14 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cli
 
 import (
+	"fmt"
+
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 	"gitlab.com/contextualcode/platform_cc/api/project"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/ztrue/tracerr"
 )
 
 var platformShCmd = &cobra.Command{
@@ -40,16 +42,13 @@ var platformShLoginCmd = &cobra.Command{
 }
 
 var platformShSshCmd = &cobra.Command{
-	Use: "ssh environment [-s service] [--pipe]",
+	Use: "ssh [-e environment] [-s service] [--pipe]",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			handleError(tracerr.Errorf("environment not provided"))
-		}
 		// fetch project
 		proj, err := getProject(true)
 		handleError(err)
 		if proj.PlatformSH == nil || proj.PlatformSH.ID == "" {
-			handleError(tracerr.Errorf("platform.sh project not found"))
+			handleError(errors.WithStack(platformsh.ErrProjectNotFound))
 		}
 		// get def
 		def, err := getDefFromCommand(cmd, proj)
@@ -57,10 +56,8 @@ var platformShSshCmd = &cobra.Command{
 		// fetch environments
 		handleError(proj.PlatformSH.FetchEnvironments())
 		// get psh environment
-		env := proj.PlatformSH.GetEnvironment(args[0])
-		if env == nil {
-			handleError(tracerr.Errorf("cannot find environment %s", args[0]))
-		}
+		env, err := getPlatformShEnvironment(cmd, proj)
+		handleError(err)
 		// dump ssh url to term if pipe option provided
 		if checkFlag(cmd, "pipe") {
 			output.WriteStdout(
@@ -74,30 +71,30 @@ var platformShSshCmd = &cobra.Command{
 }
 
 var platformShSyncCmd = &cobra.Command{
-	Use: "sync environment [--skip-variables] [--skip-mounts] [--skip-databases]",
+	Use: "sync [-e environment] [--skip-variables] [--skip-mounts] [--skip-databases]",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			handleError(tracerr.Errorf("environment not provided"))
-		}
 		proj, err := getProject(true)
 		handleError(err)
-
+		// get psh environment
+		env, err := getPlatformShEnvironment(cmd, proj)
+		handleError(err)
+		output.Info(fmt.Sprintf("Sync from %s (%s) environment.", env.Name, env.MachineName))
 		// set mount strat to volume
 		output.Info("Set mount strategy to volume.")
 		proj.Options[project.OptionMountStrategy] = project.MountStrategyVolume
 		handleError(proj.Save())
-
+		// perform sync tasks
 		if !checkFlag(cmd, "skip-variables") {
-			handleError(proj.PlatformSHSyncVariables(args[0]))
+			handleError(proj.PlatformSHSyncVariables(env.Name))
 		}
 		if !checkFlag(cmd, "skip-mounts") || !checkFlag(cmd, "skip-databases") {
 			handleError(proj.Start())
 		}
 		if !checkFlag(cmd, "skip-mounts") {
-			handleError(proj.PlatformSHSyncMounts(args[0]))
+			handleError(proj.PlatformSHSyncMounts(env.Name))
 		}
 		if !checkFlag(cmd, "skip-databases") {
-			handleError(proj.PlatformSHSyncDatabases(args[0]))
+			handleError(proj.PlatformSHSyncDatabases(env.Name))
 		}
 		if !checkFlag(cmd, "skip-mounts") || !checkFlag(cmd, "skip-databases") {
 			handleError(proj.Stop())
@@ -107,9 +104,11 @@ var platformShSyncCmd = &cobra.Command{
 
 func init() {
 	platformShSshCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
+	platformShSshCmd.PersistentFlags().StringP("environment", "e", "", "name of environment")
 	platformShSshCmd.Flags().Bool("pipe", false, "return ssh url instead of creating interactive terminal")
 	platformShCmd.AddCommand(platformShLoginCmd)
 	platformShCmd.AddCommand(platformShSshCmd)
+	platformShSyncCmd.PersistentFlags().StringP("environment", "e", "", "name of environment")
 	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")
 	platformShSyncCmd.Flags().Bool("skip-mounts", false, "Skip mount sync.")
 	platformShSyncCmd.Flags().Bool("skip-databases", false, "Skip database sync.")

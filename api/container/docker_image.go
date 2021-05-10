@@ -26,7 +26,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -57,7 +57,7 @@ func (d Docker) imagePullSingle(c Config, progress func(p imagePullProgress)) er
 		types.ImagePullOptions{},
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer r.Close()
 	for {

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 // Environment defines a Platform.sh environment.
@@ -60,7 +60,7 @@ func (p *Project) GetEnvironment(name string) *Environment {
 // Variables returns list of variables for given platform.sh environment.
 func (p *Project) Variables(env *Environment, service string) (map[string]string, error) {
 	if env == nil {
-		return nil, tracerr.Errorf("invalid environment")
+		return nil, errors.WithStack(ErrInvalidEnvironment)
 	}
 	// fetch project variables
 	projVarResp := make([]map[string]interface{}, 0)
@@ -76,7 +76,7 @@ func (p *Project) Variables(env *Environment, service string) (map[string]string
 		nil,
 		&envVarResp,
 	); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// compile output
 	out := make(map[string]string)
@@ -95,7 +95,7 @@ func (p *Project) Variables(env *Environment, service string) (map[string]string
 			var err error
 			value, err = p.EnvironmentVariable(env, service, envVarName)
 			if err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 		}
 		out[name] = value
@@ -106,27 +106,27 @@ func (p *Project) Variables(env *Environment, service string) (map[string]string
 // EnvironmentVariable returns the value of the given environment variable.
 func (p *Project) EnvironmentVariable(env *Environment, service string, name string) (string, error) {
 	if env == nil {
-		return "", tracerr.Errorf("invalid environment")
+		return "", errors.WithStack(ErrInvalidEnvironment)
 	}
 	out, err := p.SSHCommand(env, service, fmt.Sprintf("echo \"$%s\"", name))
-	return string(out), tracerr.Wrap(err)
+	return string(out), errors.WithStack(err)
 }
 
 func (p *Project) decodeMapEnvVar(env *Environment, service string, name string) (map[string]interface{}, error) {
 	// grab environment variable
 	v, err := p.EnvironmentVariable(env, service, name)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// decode base64
 	b64DecOut, err := base64.StdEncoding.DecodeString(v)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// decode json
 	out := make(map[string]interface{})
 	if err := json.Unmarshal(b64DecOut, &out); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return out, nil
 }

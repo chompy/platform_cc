@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -87,7 +87,7 @@ func (d Service) GetEmptyRelationship() map[string]interface{} {
 func ParseServiceYamls(d [][]byte) ([]Service, error) {
 	o := make(map[string]*Service)
 	if err := mergeYamls(d, o); err != nil {
-		return []Service{}, tracerr.Wrap(err)
+		return []Service{}, errors.WithStack(err)
 	}
 	// set defaults + transfer to new slice
 	oo := make([]Service, 0)
@@ -115,13 +115,13 @@ func ParseServiceYamlFiles(fileList []string) ([]Service, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		byteList = append(byteList, d)
 	}
 	a, err := ParseServiceYamls(byteList)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	done()
 	return a, nil

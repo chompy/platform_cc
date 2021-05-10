@@ -30,6 +30,7 @@ import (
 
 	"github.com/helloyi/go-sshclient"
 
+	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 
 	"golang.org/x/crypto/ssh"
@@ -37,8 +38,6 @@ import (
 	"golang.org/x/term"
 
 	"gitlab.com/contextualcode/platform_cc/api/config"
-
-	"github.com/ztrue/tracerr"
 )
 
 const sshAPIURL = "https://ssh.api.platform.sh/"
@@ -51,7 +50,7 @@ func (k sshCertificate) data() (map[string]interface{}, error) {
 	// parse cert
 	key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(k))
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// read raw data
 	data := key.Marshal()
@@ -114,7 +113,7 @@ func (k sshCertificate) valid() bool {
 
 // save stores the ssh private key.
 func (k sshCertificate) save() error {
-	return tracerr.Wrap(ioutil.WriteFile(
+	return errors.WithStack(ioutil.WriteFile(
 		filepath.Join(config.Path(), sshCertificateFile),
 		k,
 		0600,
@@ -130,7 +129,7 @@ func (p *Project) fetchSSHCertficiate() error {
 	// fetch pcc ssh public key
 	pubKey, err := config.PublicKey()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// make api request
 	resp := make(map[string]interface{})
@@ -141,7 +140,7 @@ func (p *Project) fetchSSHCertficiate() error {
 		},
 		&resp,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// ensure key was returned
 	if resp["certificate"] == nil || resp["certificate"] == "" {
@@ -150,7 +149,7 @@ func (p *Project) fetchSSHCertficiate() error {
 	// make private key and save
 	out := sshCertificate([]byte(resp["certificate"].(string)))
 	if err := out.save(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -163,15 +162,15 @@ func (p *Project) SSHCertficiate() ([]byte, error) {
 		if os.IsNotExist(err) {
 			done := output.Duration("Retrieve Platform.sh SSH certificate.")
 			if err := p.fetchSSHCertficiate(); err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 			data, err = ioutil.ReadFile(filepath.Join(config.Path(), sshCertificateFile))
 			if err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 			done()
 		} else {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 	out := sshCertificate(data)
@@ -179,11 +178,11 @@ func (p *Project) SSHCertficiate() ([]byte, error) {
 	if !out.valid() {
 		done := output.Duration("Refresh Platform.sh SSH certificate.")
 		if err := p.fetchSSHCertficiate(); err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		data, err = ioutil.ReadFile(filepath.Join(config.Path(), sshCertificateFile))
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		out = sshCertificate(data)
 		done()
@@ -195,23 +194,23 @@ func (p *Project) SSHCertficiate() ([]byte, error) {
 func (p *Project) sshClientConfig(env *Environment, service string) (*ssh.ClientConfig, error) {
 	privKey, err := config.PrivateKey()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	signer, err := ssh.ParsePrivateKey(privKey)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	cert, err := p.SSHCertficiate()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return &ssh.ClientConfig{
 		User: p.SSHUser(env, service),
@@ -227,11 +226,11 @@ func (p *Project) openSSH(env *Environment, service string) (*ssh.Client, error)
 	sshURL := strings.Split(p.SSHUrl(env, service), "@")
 	config, err := p.sshClientConfig(env, service)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	client, err := ssh.Dial("tcp", sshURL[1]+":22", config)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return client, nil
 }
@@ -263,18 +262,18 @@ func (p *Project) SSHCommand(env *Environment, service string, command string) (
 	// open ssh client
 	client, err := p.openSSH(env, service)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	defer client.Close()
 	// start session
 	sess, err := client.NewSession()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	defer sess.Close()
 	// run command
 	out, err := sess.Output(command)
-	return out, tracerr.Wrap(err)
+	return out, errors.WithStack(err)
 }
 
 // SSHDownload downloads given remote file local and returns path to downloaded file.
@@ -282,28 +281,28 @@ func (p *Project) SSHDownload(env *Environment, service string, path string) (st
 	// open ssh connection
 	client, err := p.openSSH(env, service)
 	if err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	// open sftp connection
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	defer sftpClient.Close()
 	sftpFile, err := sftpClient.Open(path)
 	if err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	// open output file
 	outPath := filepath.Join(os.TempDir(), service+"-"+filepath.Base(path))
 	outFile, err := os.Create(outPath)
 	if err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	defer outFile.Close()
 	// download
 	if _, err := sftpFile.WriteTo(outFile); err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	return outPath, nil
 }
@@ -314,27 +313,27 @@ func (p *Project) SSHTerminal(env *Environment, service string) error {
 	// open ssh client
 	clientConfig, err := p.sshClientConfig(env, service)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	sshURL := strings.Split(p.SSHUrl(env, service), "@")
 	client, err := sshclient.Dial(
 		"tcp", sshURL[1]+":22", clientConfig,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer client.Close()
 	// create interactive shell
 	// make raw
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	// start
 	if err := client.Terminal(nil).Start(); err != nil {
 		if !strings.Contains(err.Error(), "exited with status") {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	return nil

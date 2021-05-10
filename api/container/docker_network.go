@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -39,7 +39,7 @@ func (d Docker) createNetwork() error {
 		},
 	); err != nil {
 		if !strings.Contains(err.Error(), "exists") {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	return nil
@@ -53,7 +53,7 @@ func (d Docker) deleteNetwork() error {
 		dockerNetworkName,
 	)
 	if err != nil && !strings.Contains(err.Error(), "not found") {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil

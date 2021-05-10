@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -499,7 +499,7 @@ func (p *Project) GetDefinitionStartOrder(defs []interface{}) ([]interface{}, er
 				}
 				invalidOut = append(invalidOut, p.GetDefinitionName(def))
 			}
-			return nil, tracerr.Errorf("one or more relationships are invalid: %s", strings.Join(invalidOut, ","))
+			return nil, errors.Wrapf(ErrInvalidRelationship, "one or more relationships are invalid: %s", strings.Join(invalidOut, ","))
 		}
 
 	}

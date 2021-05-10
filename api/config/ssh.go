@@ -26,7 +26,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/crypto/ssh"
 )
@@ -38,18 +38,18 @@ const publicKeyPath = "pcc_ssh_public"
 func generateSSHKeyPair() (string, string, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return "", "", tracerr.Wrap(err)
+		return "", "", errors.WithStack(err)
 	}
 	// generate and write private key as PEM
 	var privKeyBuf strings.Builder
 	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
 	if err := pem.Encode(&privKeyBuf, privateKeyPEM); err != nil {
-		return "", "", tracerr.Wrap(err)
+		return "", "", errors.WithStack(err)
 	}
 	// generate and write public key
 	pub, err := ssh.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return "", "", tracerr.Wrap(err)
+		return "", "", errors.WithStack(err)
 	}
 	var pubKeyBuf strings.Builder
 	pubKeyBuf.Write(ssh.MarshalAuthorizedKey(pub))
@@ -61,11 +61,11 @@ func GenerateSSH() error {
 	done := output.Duration("Generate SSH keypair.")
 	pubKey, privKey, err := generateSSHKeyPair()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// init config directory
 	if err := initConfig(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// save private key
 	if err := ioutil.WriteFile(
@@ -73,7 +73,7 @@ func GenerateSSH() error {
 		[]byte(privKey),
 		0600,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// save public key
 	if err := ioutil.WriteFile(
@@ -81,7 +81,7 @@ func GenerateSSH() error {
 		[]byte(pubKey),
 		0600,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -93,12 +93,12 @@ func loadKey(path string) ([]byte, error) {
 		// generate if not exist
 		if os.IsNotExist(err) {
 			if err := GenerateSSH(); err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 		}
 		data, err = ioutil.ReadFile(path)
 	}
-	return data, tracerr.Wrap(err)
+	return data, errors.WithStack(err)
 }
 
 // PrivateKey returns the private key.

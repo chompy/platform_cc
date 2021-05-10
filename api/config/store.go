@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -44,11 +44,11 @@ func Load() (def.GlobalConfig, error) {
 			done()
 			return out, nil
 		}
-		return out, tracerr.Wrap(err)
+		return out, errors.WithStack(err)
 	}
 	// parse json
 	if err := json.Unmarshal(raw, &out); err != nil {
-		return out, tracerr.Wrap(err)
+		return out, errors.WithStack(err)
 	}
 	out.SetDefaults()
 	done()
@@ -60,16 +60,16 @@ func Save(c def.GlobalConfig) error {
 	done := output.Duration("Save global configuration.")
 	// init config directory
 	if err := initConfig(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// encode json
 	out, err := json.Marshal(c)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// write to file
 	if err := ioutil.WriteFile(pathTo(globalConfigPath), out, configPerm); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil

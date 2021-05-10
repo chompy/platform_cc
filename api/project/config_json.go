@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/config"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -65,7 +65,7 @@ func (p *Project) BuildConfigJSON(d interface{}) ([]byte, error) {
 	// get private key
 	privKey, err := config.PrivateKey()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	out := map[string]interface{}{
 		"primary_ip":    "127.0.0.1",

@@ -25,7 +25,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v2"
 )
@@ -97,11 +97,11 @@ func ParseRoutesYamlFile(f string) ([]Route, error) {
 		if os.IsNotExist(err) {
 			return []Route{}, nil
 		}
-		return []Route{}, tracerr.Wrap(err)
+		return []Route{}, errors.WithStack(err)
 	}
 	r, err := ParseRoutesYaml(d)
 	if err != nil {
-		return r, tracerr.Wrap(err)
+		return r, errors.WithStack(err)
 	}
 	return r, nil
 }
@@ -115,7 +115,7 @@ func ParseRoutesYamlFiles(fileList []string) ([]Route, error) {
 	for _, f := range fileList {
 		routes, err := ParseRoutesYamlFile(f)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		for _, route := range routes {
 			hasOut := false
@@ -125,10 +125,10 @@ func ParseRoutesYamlFiles(fileList []string) ([]Route, error) {
 					// because there is no other way to merge structs
 					routeJSON, err := json.Marshal(route)
 					if err != nil {
-						return nil, tracerr.Wrap(err)
+						return nil, errors.WithStack(err)
 					}
 					if err := json.Unmarshal(routeJSON, &out[i]); err != nil {
-						return nil, tracerr.Wrap(err)
+						return nil, errors.WithStack(err)
 					}
 					hasOut = true
 					break
@@ -186,14 +186,14 @@ func ExpandRoutes(inRoutes []Route, internalDomainSuffix string) ([]Route, error
 		var err error
 		route.Path, err = convertRoutePathToInternal(route.Path, internalDomainSuffix)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		// - if redirect routes to internal then fix it up
 		if route.To != "" &&
 			redirectMatchesRoute(copyRoutes, route.To) {
 			route.To, err = convertRoutePathToInternal(route.To, internalDomainSuffix)
 			if err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 		}
 		ri := route

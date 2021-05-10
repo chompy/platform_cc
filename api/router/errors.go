@@ -15,25 +15,10 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package container
+package router
 
-import (
-	"github.com/docker/docker/client"
-	"github.com/pkg/errors"
+import "github.com/pkg/errors"
+
+var (
+	ErrUpstreamNotFound = errors.New("upstream not found")
 )
-
-// Docker defines the Docker container handler.
-type Docker struct {
-	client *client.Client
-}
-
-// NewDocker creates a new Docker container handler.
-func NewDocker() (Docker, error) {
-	dockerClient, err := client.NewEnvClient()
-	if err != nil {
-		return Docker{}, errors.WithStack(err)
-	}
-	return Docker{
-		client: dockerClient,
-	}, nil
-}

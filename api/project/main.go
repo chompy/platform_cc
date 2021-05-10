@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/martinlindhe/base36"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/config"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
@@ -79,7 +79,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	// global config
 	gc, err := config.Load()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// build project
 	path, _ = filepath.Abs(path)
@@ -113,12 +113,12 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 	if parseYaml {
 		appYamlFiles := scanPlatformAppYaml(path, o.HasFlag(DisableYamlOverrides))
 		if len(appYamlFiles) == 0 {
-			return nil, tracerr.Wrap(fmt.Errorf("could not locate app yaml file"))
+			return nil, errors.WithStack(fmt.Errorf("could not locate app yaml file"))
 		}
 		for _, appYamlFileList := range appYamlFiles {
 			app, err := def.ParseAppYamlFiles(appYamlFileList, &gc)
 			if err != nil {
-				return nil, tracerr.Wrap(err)
+				return nil, errors.WithStack(err)
 			}
 			apps = append(apps, *app)
 		}
@@ -138,7 +138,7 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		}
 		o.Services, err = def.ParseServiceYamlFiles(serviceYamlPaths)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 	// read routes yaml
@@ -155,14 +155,14 @@ func LoadFromPath(path string, parseYaml bool) (*Project, error) {
 		}
 		o.Routes, err = def.ParseRoutesYamlFiles(routesYamlPaths)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 		o.Routes, err = def.ExpandRoutes(
 			o.Routes,
 			o.GetOption(OptionDomainSuffix),
 		)
 		if err != nil {
-			return nil, tracerr.Wrap(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 	if !parseYaml {
@@ -232,7 +232,7 @@ func (p *Project) Load() error {
 	if os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return json.Unmarshal(data, p)
 }
@@ -242,7 +242,7 @@ func (p *Project) Save() error {
 	output.LogDebug("Save project.", p.ID)
 	data, err := json.Marshal(p)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return ioutil.WriteFile(
 		filepath.Join(p.Path, projectJSONFilename),
@@ -256,7 +256,7 @@ func (p *Project) Start() error {
 	done := output.Duration("Start project.")
 	// pull images
 	if err := p.Pull(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// build list of services (apps, services, workers) that need to start
 	serviceList := make([]interface{}, 0)
@@ -275,14 +275,14 @@ func (p *Project) Start() error {
 	var err error
 	serviceList, err = p.GetDefinitionStartOrder(serviceList)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// itterate and start
 	for _, service := range serviceList {
 		// start
 		c := p.NewContainer(service)
 		if err := c.Start(); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		// container type specific operations
 		switch c.Config.ObjectType {
@@ -291,24 +291,24 @@ func (p *Project) Start() error {
 				// build
 				if !p.noBuild && !c.HasBuild() {
 					if err := c.Build(); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					if !p.noCommit {
 						if err := c.Commit(); err != nil {
-							return tracerr.Wrap(err)
+							return errors.WithStack(err)
 						}
 					}
 				}
 				// setup mounts
 				if err := c.SetupMounts(); err != nil {
-					return tracerr.Wrap(err)
+					return errors.WithStack(err)
 				}
 			}
 		}
 		// open + process relationships
 		rels, err := c.Open()
 		if err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		p.relationships = append(p.relationships, rels...)
 	}
@@ -316,7 +316,7 @@ func (p *Project) Start() error {
 	for _, service := range serviceList {
 		c := p.NewContainer(service)
 		if err := c.PostDeploy(); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	done()
@@ -329,7 +329,7 @@ func (p *Project) Stop() error {
 		fmt.Sprintf("Stop project '%s.'", p.ID),
 	)
 	if err := p.containerHandler.ProjectStop(p.ID); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -355,11 +355,11 @@ func (p *Project) Build(force bool) error {
 			continue
 		}
 		if err := c.Build(); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		if !p.noCommit {
 			if err := c.Commit(); err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 		}
 	}
@@ -376,7 +376,7 @@ func (p *Project) Deploy() error {
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		if err := c.Deploy(); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	done()
@@ -392,7 +392,7 @@ func (p *Project) PostDeploy() error {
 	for _, app := range p.Apps {
 		c := p.NewContainer(app)
 		if err := c.PostDeploy(); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	done()
@@ -403,7 +403,7 @@ func (p *Project) PostDeploy() error {
 func (p *Project) Purge() error {
 	done := output.Duration(fmt.Sprintf("Purge project '%s.'", p.ID))
 	if err := p.containerHandler.ProjectPurge(p.ID); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// TODO not sure if purge should really delete platform_cc.json
 	/*if err := os.Remove(
@@ -419,7 +419,7 @@ func (p *Project) Purge() error {
 func (p *Project) PurgeSlot() error {
 	done := output.Duration(fmt.Sprintf("Purge project '%s' slot %d.", p.ID, p.slot))
 	if err := p.containerHandler.ProjectPurgeSlot(p.ID, p.slot); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -445,7 +445,7 @@ func (p *Project) Pull() error {
 		containerConfigs = append(containerConfigs, c.Config)
 	}
 	if err := p.containerHandler.ImagePull(containerConfigs); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -507,7 +507,7 @@ func (p *Project) SetSlot(slot int) {
 
 // CopySlot copies the current slot to a given destination slot.
 func (p *Project) CopySlot(destSlot int) error {
-	return tracerr.Wrap(p.containerHandler.ProjectCopySlot(
+	return errors.WithStack(p.containerHandler.ProjectCopySlot(
 		p.ID, p.slot, destSlot,
 	))
 }

@@ -28,11 +28,11 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -40,7 +40,7 @@ import (
 func (d Docker) ProjectStop(pid string) error {
 	containers, err := d.listProjectContainers(pid)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return d.deleteContainers(containers)
 }
@@ -49,25 +49,25 @@ func (d Docker) ProjectStop(pid string) error {
 func (d Docker) ProjectPurge(pid string) error {
 	// stop
 	if err := d.ProjectStop(pid); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	time.Sleep(time.Second)
 	// delete volumes
 	vols, err := d.listProjectVolumes(pid)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := d.deleteVolumes(vols); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	time.Sleep(time.Second)
 	// delete images
 	images, err := d.listProjectImages(pid)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := d.deleteImages(images); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -76,15 +76,15 @@ func (d Docker) ProjectPurge(pid string) error {
 func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 	// stop
 	if err := d.ProjectStop(pid); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// delete volumes
 	vols, err := d.listProjectSlotVolumes(pid, slot)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := d.deleteVolumes(vols); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -93,7 +93,7 @@ func (d Docker) ProjectPurgeSlot(pid string, slot int) error {
 func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error {
 	// can't have same slots
 	if sourceSlot == destSlot {
-		return tracerr.New("source and destination slots cannot be the same")
+		return errors.Wrap(ErrInvalidSlot, "source and destination slots cannot be the same")
 	}
 	// purge dest slot in prep for copy
 	d.ProjectPurgeSlot(pid, destSlot)
@@ -102,7 +102,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 	// get list of source slot volumes
 	volList, err := d.listProjectSlotVolumes(pid, sourceSlot)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// create mounts for container, source and dest volumes for copy
 	mounts := make([]mount.Mount, 0)
@@ -146,7 +146,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		if strings.Contains(err.Error(), "already in use") {
 			return nil
 		}
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.LogDebug("Slot copy container created.", resp)
 	// start container
@@ -155,7 +155,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		resp.ID,
 		types.ContainerStartOptions{},
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	cleanup := func() {
 		timeout := time.Second
@@ -175,7 +175,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		},
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer attachResp.Close()
 	// capture interupt to stop container
@@ -190,7 +190,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 	}()
 	// pipe to stdout
 	if _, err := io.Copy(os.Stdout, attachResp.Reader); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil

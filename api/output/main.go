@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ztrue/tracerr"
 	"golang.org/x/term"
 )
 
@@ -119,34 +118,6 @@ func Duration(msg string) func() {
 		IndentLevel--
 	}
 	return done
-}
-
-// Error prints an error message to the terminal and then exists.
-func Error(err error) {
-	LogError(err)
-	if err == nil {
-		return
-	}
-	if !Verbose {
-		WriteStdout(colorError("\nERROR:\n" + err.Error() + "\n"))
-		os.Exit(1)
-	}
-	WriteStdout(colorError("\n=== ERROR ===\n"))
-	// is tty
-	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
-		tracerr.PrintSourceColor(err)
-		os.Exit(1)
-	}
-	tracerr.PrintSource(err)
-	os.Exit(1)
-}
-
-// ErrorText prints message using the error text color.
-func ErrorText(msg string) {
-	if !Enable {
-		return
-	}
-	levelMsg(colorError(msg))
 }
 
 // ContainerLog prints container log line to stdout.

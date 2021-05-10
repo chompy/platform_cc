@@ -18,8 +18,8 @@ replace gitlab.com/contextualcode/platform_cc/api/config => ../api/config
 
 require (
 	github.com/olekukonko/tablewriter v0.0.4
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
-	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1

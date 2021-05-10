@@ -26,7 +26,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/volume"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -50,7 +50,7 @@ func (d Docker) createNFSVolume(pid string, name string, path string, containerT
 		volCreateBody,
 	)
 	output.LogDebug("Created Docker NFS volume.", v)
-	return tracerr.Wrap(err)
+	return errors.WithStack(err)
 }
 
 // listProjectVolumes gets a list of all volumes for given project.
@@ -74,7 +74,7 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 		filterArgs,
 	)
 	if err != nil {
-		return volume.VolumesListOKBody{}, tracerr.Wrap(err)
+		return volume.VolumesListOKBody{}, errors.WithStack(err)
 	}
 	out := make([]*types.Volume, 0)
 	for _, v := range list.Volumes {

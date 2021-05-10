@@ -7,7 +7,7 @@ replace gitlab.com/contextualcode/platform_cc/api/output => ../output
 replace gitlab.com/contextualcode/platform_cc/api/def => ../def
 
 require (
-	github.com/ztrue/tracerr v0.3.0
+	github.com/pkg/errors v0.9.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b

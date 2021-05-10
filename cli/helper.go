@@ -23,11 +23,13 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/platformsh"
+
 	"golang.org/x/term"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -43,11 +45,11 @@ var workerPrefix = []string{"wor-", "w-", "worker-"}
 func getProject(parseYaml bool) (*project.Project, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	proj, err := project.LoadFromPath(cwd, parseYaml)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return proj, err
 }
@@ -63,7 +65,7 @@ func getDef(name string, proj *project.Project) (interface{}, error) {
 					return d, nil
 				}
 			}
-			return nil, tracerr.Errorf("could not find application definition for %s", name)
+			return nil, errors.Wrapf(ErrDefinitionNotFound, "application definition %s not found", name)
 		}
 	}
 	// find via service prefix
@@ -75,7 +77,7 @@ func getDef(name string, proj *project.Project) (interface{}, error) {
 					return d, nil
 				}
 			}
-			return nil, tracerr.Errorf("could not find service definition for %s", name)
+			return nil, errors.Wrapf(ErrDefinitionNotFound, "service definition %s not found", name)
 		}
 	}
 	// find via worker prefix
@@ -89,7 +91,7 @@ func getDef(name string, proj *project.Project) (interface{}, error) {
 					}
 				}
 			}
-			return nil, tracerr.Errorf("could not find service definition for %s", name)
+			return nil, errors.Wrapf(ErrDefinitionNotFound, "service definition %s not found", name)
 		}
 	}
 	// find from name with no prefix (order app > service > worker)
@@ -110,7 +112,7 @@ func getDef(name string, proj *project.Project) (interface{}, error) {
 			}
 		}
 	}
-	return nil, tracerr.Errorf("could not find definition for %s", name)
+	return nil, errors.Wrapf(ErrDefinitionNotFound, "definition %s not found", name)
 }
 
 // getDefFromCommand returns the definition for the current command.
@@ -136,6 +138,38 @@ func getService(cmd *cobra.Command, proj *project.Project, filterType []string) 
 		return def.Service{}, fmt.Errorf("no %s service was found", strings.Join(filterType, ","))
 	}
 	return def.Service{}, fmt.Errorf("service '%s' not found", name)
+}
+
+func getPlatformShEnvironment(cmd *cobra.Command, proj *project.Project) (*platformsh.Environment, error) {
+	if proj.PlatformSH == nil {
+		return nil, errors.WithStack(platformsh.ErrProjectNotFound)
+	}
+	if len(proj.PlatformSH.Environments) == 0 {
+		if err := proj.PlatformSH.FetchEnvironments(); err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+	if err := proj.PlatformSH.FetchEnvironments(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if len(proj.PlatformSH.Environments) == 0 {
+		return nil, errors.WithStack(platformsh.ErrEnvironmentNotFound)
+	}
+	envName := cmd.PersistentFlags().Lookup("environment").Value.String()
+	env := &proj.PlatformSH.Environments[0]
+	for _, e := range proj.PlatformSH.Environments {
+		if e.Name == "master" || e.Name == "main" {
+			env = &e
+			break
+		}
+	}
+	if envName != "" {
+		env = proj.PlatformSH.GetEnvironment(envName)
+	}
+	if env == nil {
+		return nil, errors.WithStack(platformsh.ErrEnvironmentNotFound)
+	}
+	return env, nil
 }
 
 // handleError handles an error.

@@ -15,7 +15,7 @@ replace gitlab.com/contextualcode/platform_cc/api/platformsh => ../platformsh
 replace gitlab.com/contextualcode/platform_cc/api/config => ../config
 
 require (
-	github.com/ztrue/tracerr v0.3.0
+	github.com/pkg/errors v0.9.1
 	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/container v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/def v0.0.1

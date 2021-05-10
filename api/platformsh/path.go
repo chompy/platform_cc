@@ -24,8 +24,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/vaughan0/go-ini"
-	"github.com/ztrue/tracerr"
 )
 
 const platformShGitPattern = `^([a-z0-9]{12,})@git\.(([a-z0-9\-]+\.)?platform\.sh):([a-z0-9]{12,})\.git$`
@@ -37,12 +37,12 @@ func parseProjectGit(path string) (string, string, error) {
 	// load git config file
 	conf, err := ini.LoadFile(projGitConfigPath)
 	if err != nil {
-		return "", "", tracerr.Wrap(err)
+		return "", "", errors.WithStack(err)
 	}
 	// compile regexp
 	gitMatchRegex, err := regexp.Compile(platformShGitPattern)
 	if err != nil {
-		return "", "", tracerr.Wrap(err)
+		return "", "", errors.WithStack(err)
 	}
 	// find git remote
 	for name, section := range conf {
@@ -60,7 +60,7 @@ func parseProjectGit(path string) (string, string, error) {
 func FindRoot(path string) (string, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		return "", tracerr.Wrap(err)
+		return "", errors.WithStack(err)
 	}
 	pathSplit := strings.Split(path, string(os.PathSeparator))
 	if pathSplit[0] == "" {

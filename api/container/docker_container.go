@@ -33,7 +33,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -60,7 +60,7 @@ func (d Docker) ContainerStart(c Config) error {
 				Force: true,
 			},
 		); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	// log start
@@ -94,7 +94,7 @@ func (d Docker) ContainerStart(c Config) error {
 			if err := d.createNFSVolume(
 				c.ProjectID, path.Base(k), k, c.ObjectType,
 			); err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 			mounts = append(mounts, mount.Mount{
 				Type:   mount.TypeVolume,
@@ -112,11 +112,11 @@ func (d Docker) ContainerStart(c Config) error {
 	// get port mappings
 	exposedPorts, portBinding, err := nat.ParsePortSpecs(c.Ports)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// create network
 	if err := d.createNetwork(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// check for committed image
 	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, c.GetContainerName())
@@ -152,7 +152,7 @@ func (d Docker) ContainerStart(c Config) error {
 		if strings.Contains(err.Error(), "already in use") {
 			return nil
 		}
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.LogDebug("Container created.", resp)
 	// attach container to project network
@@ -162,7 +162,7 @@ func (d Docker) ContainerStart(c Config) error {
 		resp.ID,
 		nil,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// start container
 	if err := d.client.ContainerStart(
@@ -170,9 +170,21 @@ func (d Docker) ContainerStart(c Config) error {
 		resp.ID,
 		types.ContainerStartOptions{},
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
+	return nil
+}
+
+// checkCommandExec checks the results of a command execution.
+func (d Docker) checkCommandExec(id string) error {
+	cInspect, err := d.client.ContainerExecInspect(context.Background(), id)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if cInspect.ExitCode != 0 {
+		return errors.Wrapf(ErrCommandExited, "command exited with error code %d", cInspect.ExitCode)
+	}
 	return nil
 }
 
@@ -193,7 +205,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.LogDebug("Container exec created.", resp.ID)
 	hresp, err := d.client.ContainerExecAttach(
@@ -202,7 +214,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// get command stdout
 	var buf bytes.Buffer
@@ -212,10 +224,10 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		mWriter = io.MultiWriter(&buf, out)
 	}
 	if _, err := io.Copy(mWriter, hresp.Reader); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.LogDebug("Container exec finished.", buf.String())
-	return nil
+	return errors.WithStack(d.checkCommandExec(resp.ID))
 }
 
 // ContainerStatus returns status of Docker container.
@@ -225,7 +237,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		id,
 	)
 	if err != nil {
-		return Status{Running: false, Slot: 0, State: "stopped", HasContainer: false}, tracerr.Wrap(err)
+		return Status{Running: false, Slot: 0, State: "stopped", HasContainer: false}, errors.WithStack(err)
 	}
 	ipAddress := ""
 	for name, network := range data.NetworkSettings.Networks {
@@ -270,7 +282,7 @@ func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
 			"path":         path,
 		},
 	)
-	return tracerr.Wrap(d.client.CopyToContainer(
+	return errors.WithStack(d.client.CopyToContainer(
 		context.Background(),
 		id,
 		path,
@@ -295,11 +307,11 @@ func (d Docker) ContainerDownload(id string, path string, w io.Writer) error {
 		path,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// copy tar to writer
 	if _, err := io.Copy(w, r); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -326,10 +338,10 @@ func (d Docker) ContainerCommit(id string) error {
 		id,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if !data.State.Running {
-		return tracerr.Errorf("container %s is not running", id)
+		return errors.Wrapf(ErrContainerNotRunning, "container %s is not running", id)
 	}
 	done := output.Duration(
 		fmt.Sprintf(
@@ -344,7 +356,7 @@ func (d Docker) ContainerCommit(id string) error {
 		types.ContainerCommitOptions{},
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// tag image
 	if err := d.client.ImageTag(
@@ -355,7 +367,7 @@ func (d Docker) ContainerCommit(id string) error {
 		d.client.ImageRemove(
 			context.Background(), idResp.ID, types.ImageRemoveOptions{Force: true},
 		)
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -372,12 +384,12 @@ func (d Docker) ContainerDeleteCommit(id string) error {
 	// ensure container isn't running
 	s, _ := d.ContainerStatus(id)
 	if s.Running {
-		return tracerr.New("cannot delete commit for running container")
+		return errors.Wrap(ErrCannotDeleteCommit, "cannot delete commit for running container")
 	}
 	// check for committed image
 	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, id)
 	if !d.hasImage(image) {
-		return tracerr.New(fmt.Sprintf("container %s has no comitted image", id))
+		return errors.Wrapf(ErrImageNotFound, "image not found for container %s", id)
 	}
 	// delete
 	if _, err := d.client.ImageRemove(
@@ -385,7 +397,7 @@ func (d Docker) ContainerDeleteCommit(id string) error {
 		image,
 		types.ImageRemoveOptions{Force: true},
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -447,7 +459,7 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			select {
 			case err := <-c:
 				{
-					if err != nil && !strings.Contains(err.Error(), "not running") {
+					if err != nil && !errors.Is(err, ErrCommandExited) && !strings.Contains(err.Error(), "not running") {
 						prog(i, output.ProgressMessageError, nil, nil)
 						output.LogError(err)
 						return

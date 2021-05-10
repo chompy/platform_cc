@@ -24,9 +24,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/config"
 
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gitlab.com/contextualcode/platform_cc/api/project"
@@ -85,23 +85,23 @@ func Start() error {
 	done := output.Duration("Start main router.")
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// load global config
 	gc, err := config.Load()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	HTTPPort = gc.Router.PortHTTP
 	HTTPSPort = gc.Router.PortHTTPS
 	// get container config and pull image
 	containerConf := GetContainerConfig()
 	if err := ch.ImagePull([]container.Config{containerConf}); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// start container
 	if err := ch.ContainerStart(containerConf); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// prepare tar
 	var buf bytes.Buffer
@@ -112,10 +112,10 @@ func Start() error {
 		Size: int64(len(routeListHTML)),
 		Mode: 0644,
 	}); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if _, err := tarball.Write([]byte(routeListHTML)); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// add nginx conf
 	if err := tarball.WriteHeader(&tar.Header{
@@ -123,13 +123,13 @@ func Start() error {
 		Size: int64(len(nginxBaseConf)),
 		Mode: 0644,
 	}); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if _, err := tarball.Write([]byte(nginxBaseConf)); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := tarball.Close(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// upload
 	if err := ch.ContainerUpload(
@@ -137,11 +137,11 @@ func Start() error {
 		"/",
 		&buf,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// reload nginx
 	if err := Reload(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -152,10 +152,10 @@ func Stop() error {
 	done := output.Duration("Stop main router.")
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := ch.ProjectStop("router"); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -165,10 +165,10 @@ func Stop() error {
 func Reload() error {
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
-	return tracerr.Wrap(ch.ContainerCommand(
+	return errors.WithStack(ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"nginx", "-s", "reload"},
@@ -180,10 +180,10 @@ func Reload() error {
 func ClearCertificates() error {
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
-	return tracerr.Wrap(ch.ContainerCommand(
+	return errors.WithStack(ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", "rm -rf /var/ssl/*"},
@@ -195,7 +195,7 @@ func ClearCertificates() error {
 func DumpCertificateCA() ([]byte, error) {
 	ch, err := getContainerHandler()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
 	var buf bytes.Buffer
@@ -205,7 +205,7 @@ func DumpCertificateCA() ([]byte, error) {
 		[]string{"sh", "-c", "cat /var/ssl/minica.pem && cat /var/ssl/minica-key.pem"},
 		&buf,
 	); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return buf.Bytes(), nil
 }
@@ -217,13 +217,13 @@ func AddProjectRoutes(p *project.Project) error {
 	)
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
 	// generate route nginx
 	routerNginxConf, err := GenerateNginxConfig(p)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// create tar
 	var buf bytes.Buffer
@@ -235,12 +235,12 @@ func AddProjectRoutes(p *project.Project) error {
 		Mode: 0644,
 	})
 	if _, err := tarball.Write(routerNginxConf); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// add route list json
 	routeJSON, err := GenerateRouteListJSON(p)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	tarball.WriteHeader(&tar.Header{
 		Name: fmt.Sprintf("/www/%s.json", p.ID),
@@ -248,10 +248,10 @@ func AddProjectRoutes(p *project.Project) error {
 		Mode: 0644,
 	})
 	if _, err := tarball.Write(routeJSON); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := tarball.Close(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// upload to container
 	if err := ch.ContainerUpload(
@@ -259,7 +259,7 @@ func AddProjectRoutes(p *project.Project) error {
 		"/",
 		&buf,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// add to project list + make ssl certifs
 	ch.ContainerCommand(
@@ -270,7 +270,7 @@ func AddProjectRoutes(p *project.Project) error {
 	)
 	// reload
 	if err := Reload(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -283,7 +283,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 	)
 	ch, err := getContainerHandler()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
 	// delete config file
@@ -294,13 +294,13 @@ func DeleteProjectRoutes(p *project.Project) error {
 		nil,
 	); err != nil {
 		if !strings.Contains(err.Error(), "No such container") {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		return nil
 	}
 	// reload nginx
 	if err := Reload(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// delete json file and remove project id from projects.txt
 	if err := ch.ContainerCommand(
@@ -310,7 +310,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		nil,
 	); err != nil {
 		if !strings.Contains(err.Error(), "No such container") {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		return nil
 	}

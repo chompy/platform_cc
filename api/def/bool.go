@@ -20,7 +20,7 @@ package def
 import (
 	"encoding/json"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 // Bool defines a boolean that can contain a default value.
@@ -53,7 +53,7 @@ func (d *Bool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (d *Bool) UnmarshalJSON(data []byte) error {
 	value := false
 	if err := json.Unmarshal(data, &value); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	d.value = value
 	d.isSet = true

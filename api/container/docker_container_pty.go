@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/term"
 )
@@ -35,7 +35,7 @@ import (
 func (d Docker) resizeShell(execID string) error {
 	w, h, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	resizeOpts := types.ResizeOptions{
 		Width:  uint(w),
@@ -46,14 +46,14 @@ func (d Docker) resizeShell(execID string) error {
 		execID,
 		resizeOpts,
 	)
-	return tracerr.Wrap(err)
+	return errors.WithStack(err)
 }
 
 // handleResizeShell resizes the given Docker process anytime the current terminal is resized.
 func (d Docker) handleResizeShell(execID string) error {
 	cw, ch, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	ticker := time.NewTicker(time.Millisecond * 100)
 	defer ticker.Stop()
@@ -68,11 +68,11 @@ func (d Docker) handleResizeShell(execID string) error {
 			{
 				w, h, err := term.GetSize(int(os.Stdin.Fd()))
 				if err != nil {
-					return tracerr.Wrap(err)
+					return errors.WithStack(err)
 				}
 				if cw != w || ch != h {
 					if err := d.resizeShell(execID); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					cw = w
 					ch = h
@@ -86,7 +86,7 @@ func (d Docker) handleResizeShell(execID string) error {
 func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Reader) error {
 	// ensure container is running
 	if status, _ := d.ContainerStatus(id); !status.Running {
-		return tracerr.Errorf("container %s is not running", id)
+		return errors.Wrapf(ErrContainerNotRunning, "container %s is not running", id)
 	}
 	// check stdin
 	hasStdin := true
@@ -113,7 +113,7 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 		execConfig,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	execConfig = types.ExecConfig{
 		User:         user,
@@ -132,7 +132,7 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 		execConfig,
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer hresp.Close()
 	// don't create interactive shell if stdin already exists
@@ -143,7 +143,7 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 		for {
 			n, err = io.Copy(hresp.Conn, stdin)
 			if err == nil {
-				return nil
+				return errors.WithStack(d.checkCommandExec(resp.ID))
 			}
 			if strings.Contains(err.Error(), "broken pipe") {
 				output.LogDebug(fmt.Sprintf("Copy stdin broken pipe after writing %d bytes.", n), resp.ID)
@@ -153,11 +153,11 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 					execConfig,
 				)
 				if err != nil {
-					return tracerr.Wrap(err)
+					return errors.WithStack(err)
 				}
 				continue
 			}
-			return tracerr.Wrap(err)
+			return errors.WithStack(d.checkCommandExec(resp.ID))
 		}
 	}
 	// create interactive shell
@@ -167,11 +167,11 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 	// make raw
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	// read/write connection to stdin and stdout
 	go func() { io.Copy(hresp.Conn, stdin) }()
 	io.Copy(os.Stdout, hresp.Reader)
-	return nil
+	return errors.WithStack(d.checkCommandExec(resp.ID))
 }

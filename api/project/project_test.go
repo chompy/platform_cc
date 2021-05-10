@@ -23,15 +23,12 @@ import (
 	"testing"
 
 	"gitlab.com/contextualcode/platform_cc/api/def"
-
-	"github.com/ztrue/tracerr"
 )
 
 func TestFromPath(t *testing.T) {
 	projectPath := path.Join("_test_data", "sample2")
 	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	def.AssertEqual(
@@ -46,7 +43,6 @@ func TestFromPathWithPCCAppYaml(t *testing.T) {
 	projectPath := path.Join("_test_data", "sample4")
 	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	def.AssertEqual(
@@ -186,7 +182,6 @@ func TestYAMLFunction(t *testing.T) {
 	projectPath := path.Join("_test_data", "sample5")
 	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	def.AssertEqual(

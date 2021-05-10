@@ -20,10 +20,11 @@ package output
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 // LogPath is the path to the log file.
@@ -78,7 +79,13 @@ func LogError(err error) {
 	if err == nil {
 		return
 	}
-	writeLogFile("[ERROR] " + tracerr.SprintSource(err))
+	out := fmt.Sprintf("[ERROR] %s\n\n%s", err.Error(), errorStackTrace(err))
+	if err, ok := err.(stackTracer); ok {
+		for _, f := range err.StackTrace() {
+			out += fmt.Sprintf("%+s:%d\n", f, f)
+		}
+	}
+	writeLogFile(out)
 }
 
 // LogRotate trims the log file.
@@ -89,7 +96,7 @@ func LogRotate() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// calculate how many bytes over size limit log file is
 	overage := s.Size() - logMaxSize
@@ -99,13 +106,13 @@ func LogRotate() error {
 	}
 	// overage is too large, just delete file
 	if overage > logOverageMax {
-		return tracerr.Wrap(os.Remove(LogPath))
+		return errors.WithStack(os.Remove(LogPath))
 	}
 
 	// open file
 	f, err := os.Open(LogPath)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 
 	// scan line by line for overage content
@@ -126,19 +133,19 @@ func LogRotate() error {
 	f.Close()
 	// delete old file
 	if err := os.Remove(LogPath); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// create new
 	f, err = os.OpenFile(LogPath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	defer f.Close()
 	if _, err := f.Write(trimmedContents); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := f.Sync(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }

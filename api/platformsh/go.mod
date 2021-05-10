@@ -10,9 +10,9 @@ replace gitlab.com/contextualcode/platform_cc/api/config => ../config
 
 require (
 	github.com/helloyi/go-sshclient v1.0.0
+	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
-	github.com/ztrue/tracerr v0.3.0
 	gitlab.com/contextualcode/platform_cc/api/config v0.0.1
 	gitlab.com/contextualcode/platform_cc/api/output v0.0.1
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b

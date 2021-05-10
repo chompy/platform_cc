@@ -24,7 +24,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
@@ -33,7 +32,6 @@ func TestStartStopProject(t *testing.T) {
 	projectPath := path.Join("_test_data", "sample2")
 	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	ch := container.NewDummy()
@@ -109,7 +107,6 @@ func TestStartMultipleProjects(t *testing.T) {
 	p1Path := path.Join("_test_data", "sample1")
 	p1, e := LoadFromPath(p1Path, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p1.SetContainerHandler(ch)
@@ -118,7 +115,6 @@ func TestStartMultipleProjects(t *testing.T) {
 	p2Path := path.Join("_test_data", "sample2")
 	p2, e := LoadFromPath(p2Path, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p2.SetContainerHandler(ch)
@@ -211,7 +207,6 @@ func TestStartProjectSlots(t *testing.T) {
 	pPath := path.Join("_test_data", "sample1")
 	p, e := LoadFromPath(pPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p.SetContainerHandler(ch)
@@ -281,7 +276,6 @@ func TestSlotCopy(t *testing.T) {
 	pPath := path.Join("_test_data", "sample1")
 	p, e := LoadFromPath(pPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p.SetContainerHandler(ch)
@@ -320,7 +314,6 @@ func TestProjectStatus(t *testing.T) {
 	projectPath := path.Join("_test_data", "sample1")
 	p, e := LoadFromPath(projectPath, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	ch := container.NewDummy()
@@ -367,7 +360,6 @@ func TestAllStatus(t *testing.T) {
 	p1Path := path.Join("_test_data", "sample1")
 	p1, e := LoadFromPath(p1Path, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p1.SetContainerHandler(ch)
@@ -376,7 +368,6 @@ func TestAllStatus(t *testing.T) {
 	p2Path := path.Join("_test_data", "sample2")
 	p2, e := LoadFromPath(p2Path, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p2.SetContainerHandler(ch)
@@ -404,7 +395,6 @@ func TestUpload(t *testing.T) {
 	path := path.Join("_test_data", "sample1")
 	p, e := LoadFromPath(path, true)
 	if e != nil {
-		tracerr.PrintSourceColor(e)
 		t.Errorf("failed to load project, %s", e)
 	}
 	p.SetContainerHandler(ch)

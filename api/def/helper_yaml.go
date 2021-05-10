@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"gopkg.in/yaml.v3"
 )
@@ -177,15 +177,15 @@ func mergeYamls(data [][]byte, def interface{}) error {
 	for _, raw := range data {
 		newData := YamlMerge{}
 		if err := yaml.Unmarshal(raw, &newData); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		mergeMaps(mapData, newData)
 	}
 	// marshal merged maps back in to yaml
 	defBytes, err := yaml.Marshal(mapData)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// unmarshal yaml back in to interface
-	return tracerr.Wrap(yaml.Unmarshal(defBytes, def))
+	return errors.WithStack(yaml.Unmarshal(defBytes, def))
 }

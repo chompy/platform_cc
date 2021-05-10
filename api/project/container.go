@@ -34,7 +34,7 @@ import (
 
 	"gitlab.com/contextualcode/platform_cc/api/output"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 )
 
@@ -93,7 +93,7 @@ func (c Container) Start() error {
 	)
 	// start container
 	if err := c.containerHandler.ContainerStart(c.Config); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// upload config.json
 	d2 := output.Duration("Upload config.json.")
@@ -101,7 +101,7 @@ func (c Container) Start() error {
 		"/run/config.json",
 		bytes.NewReader(c.configJSON),
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	d2()
 	// patch
@@ -113,7 +113,7 @@ func (c Container) Start() error {
 			[]string{"bash", "--login", "-c", c.patchCommand},
 			nil,
 		); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		d2()
 	}
@@ -125,7 +125,7 @@ func (c Container) Start() error {
 		[]string{"bash", "--login", "-c", c.initCommand},
 		os.Stdout,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	d2()
 	done()
@@ -146,7 +146,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		[]string{"bash", "--login", "-c", serviceStartCmd},
 		os.Stdout,
 	); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	d2()
 	// prepare relationships json
@@ -156,13 +156,13 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	}
 	relJSON, err := json.Marshal(relJSONData)
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	relB64 := base64.StdEncoding.EncodeToString(relJSON)
 	d2()
 	// enable authentication it requested
 	if err := c.openEnableAuthentication(); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	// open service and retrieve relationships
 	d2 = output.Duration("Open service.")
@@ -174,7 +174,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		[]string{"bash", "--login", "-c", cmd},
 		&openOutput,
 	); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 
 	d2()
@@ -187,13 +187,13 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	// get ip address
 	containerStatus, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	if !containerStatus.Running {
-		return nil, tracerr.New("container not running")
+		return nil, errors.WithStack(container.ErrContainerNotRunning)
 	}
 	if containerStatus.IPAddress == "" {
-		return nil, tracerr.New("container has no ip address")
+		return nil, errors.WithStack(ErrContainerNoIP)
 	}
 	out := make([]map[string]interface{}, 0)
 	for k, v := range data {
@@ -246,8 +246,8 @@ func (c Container) Build() error {
 		"root",
 		[]string{"bash", "--login", "-c", c.buildCommand},
 		os.Stdout,
-	); err != nil {
-		return tracerr.Wrap(err)
+	); err != nil && !errors.Is(err, container.ErrCommandExited) {
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -268,7 +268,7 @@ func (c Container) SetupMounts() error {
 		[]string{"sh", "-c", c.mountCommand},
 		os.Stdout,
 	); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -284,8 +284,8 @@ func (c Container) Deploy() error {
 		"root",
 		[]string{"bash", "--login", "-c", appDeployCmd},
 		os.Stdout,
-	); err != nil {
-		return tracerr.Wrap(err)
+	); err != nil && !errors.Is(err, container.ErrCommandExited) {
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -304,8 +304,8 @@ func (c Container) PostDeploy() error {
 		"root",
 		[]string{"bash", "--login", "-c", c.postDeployCommand},
 		os.Stdout,
-	); err != nil {
-		return tracerr.Wrap(err)
+	); err != nil && !errors.Is(err, container.ErrCommandExited) {
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -330,11 +330,11 @@ func (c Container) openEnableAuthentication() error {
 			desiredState.Configuration = serviceConfig
 			containerStatus, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 			if err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 			stateJSON, err := buildStateJSON(containerStatus.ID[0:12], currentState, desiredState)
 			if err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 			r := bytes.NewReader(stateJSON)
 			// issue service state update
@@ -344,7 +344,7 @@ func (c Container) openEnableAuthentication() error {
 				[]string{"bash", "--login", "-c", "/etc/platform/commands/on_service_state_update"},
 				r,
 			); err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 			done()
 			break
@@ -365,7 +365,7 @@ func (c Container) Shell(user string, cmd []string) error {
 	if len(cmd) == 0 {
 		cmd = []string{"bash", "--login"}
 	}
-	return tracerr.Wrap(c.containerHandler.ContainerShell(
+	return errors.WithStack(c.containerHandler.ContainerShell(
 		c.Config.GetContainerName(),
 		user,
 		cmd,
@@ -415,13 +415,13 @@ func (c Container) LogStdout(follow bool) error {
 	// follow logs
 	if follow {
 		err := <-errChan
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// wait a second for buffer to fill
 	select {
 	case err := <-errChan:
 		{
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	case <-time.After(time.Second):
 		{
@@ -432,12 +432,12 @@ func (c Container) LogStdout(follow bool) error {
 
 // Commit commits the container.
 func (c Container) Commit() error {
-	return tracerr.Wrap(c.containerHandler.ContainerCommit(c.Config.GetContainerName()))
+	return errors.WithStack(c.containerHandler.ContainerCommit(c.Config.GetContainerName()))
 }
 
 // DeleteCommit deletes the commit image.
 func (c Container) DeleteCommit() error {
-	return tracerr.Wrap(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
+	return errors.WithStack(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
 }
 
 // Upload uploads given reader to container as a single file at given path.
@@ -445,11 +445,11 @@ func (c Container) Upload(path string, reader io.ReadSeeker) error {
 	// get size
 	size, err := reader.Seek(0, io.SeekEnd)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	_, err = reader.Seek(0, io.SeekStart)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// build tar
 	var buf bytes.Buffer
@@ -461,26 +461,26 @@ func (c Container) Upload(path string, reader io.ReadSeeker) error {
 		Size:  size,
 	}
 	if err := tarball.WriteHeader(header); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if _, err := io.Copy(tarball, reader); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := tarball.Close(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := tarball.Close(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// upload
-	return tracerr.Wrap(c.UploadMulti(
+	return errors.WithStack(c.UploadMulti(
 		filepath.Dir(path), &buf,
 	))
 }
 
 // UploadMulti uploads given tarball reader to container.
 func (c Container) UploadMulti(path string, reader io.Reader) error {
-	return tracerr.Wrap(c.containerHandler.ContainerUpload(
+	return errors.WithStack(c.containerHandler.ContainerUpload(
 		c.Config.GetContainerName(),
 		path,
 		reader,
@@ -492,24 +492,24 @@ func (c Container) Download(path string, writer io.Writer) error {
 	// download
 	var buf bytes.Buffer
 	if err := c.DownloadMulti(path, &buf); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// untar file
 	tarball := tar.NewReader(&buf)
 	header, err := tarball.Next()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// copy to writer
 	if _, err := io.CopyN(writer, tarball, header.Size); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
 
 // DownloadMulti downloads container path and writes to given writer as tarball.
 func (c Container) DownloadMulti(path string, writer io.Writer) error {
-	return tracerr.Wrap(c.containerHandler.ContainerDownload(
+	return errors.WithStack(c.containerHandler.ContainerDownload(
 		c.Config.GetContainerName(),
 		path,
 		writer,

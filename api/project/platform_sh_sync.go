@@ -23,9 +23,11 @@ import (
 	"os"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/platformsh"
+
 	"gitlab.com/contextualcode/platform_cc/api/config"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -35,13 +37,13 @@ const pshSyncSSHKeyPath = "/mnt/pcc_ssh_key"
 
 func (p *Project) platformSHSyncPreflight(envName string) error {
 	if p.PlatformSH == nil || p.PlatformSH.ID == "" {
-		return tracerr.Errorf("platform.sh project not found")
+		return errors.WithStack(platformsh.ErrProjectNotFound)
 	}
 	if len(p.Apps) < 1 {
-		return tracerr.Errorf("project should have at least one application")
+		return errors.WithStack(ErrNoApplicationFound)
 	}
 	if err := p.PlatformSH.FetchEnvironments(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -49,36 +51,36 @@ func (p *Project) platformSHSyncPreflight(envName string) error {
 // PlatformSHSyncVariables syncs the given platform.sh environment's variables to the local project.
 func (p *Project) PlatformSHSyncVariables(envName string) error {
 
-	done := output.Duration(fmt.Sprintf("Sync variables from Platform.sh '%s' environment.", envName))
+	done := output.Duration("Sync variables.")
 
 	if err := p.platformSHSyncPreflight(envName); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	env := p.PlatformSH.GetEnvironment(envName)
 	if env == nil {
-		return tracerr.Errorf("environment '%s' not found", envName)
+		return errors.Wrapf(platformsh.ErrEnvironmentNotFound, "platform.sh environment '%s' not found", envName)
 	}
 	vars, err := p.PlatformSH.Variables(env, p.Apps[0].Name)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	for k, v := range vars {
 		if err := p.VarSet(k, v); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 	pvars, err := p.PlatformSH.PlatformVariables(env, p.Apps[0].Name)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	for k, v := range pvars {
 		if err := p.VarSet(k, def.InterfaceToString(v)); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 	}
 
 	if err := p.Save(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	done()
 	return nil
@@ -87,35 +89,35 @@ func (p *Project) PlatformSHSyncVariables(envName string) error {
 // PlatformSHSyncMounts syncs the given platform.sh environment's mounts to the local project.
 func (p *Project) PlatformSHSyncMounts(envName string) error {
 
-	done := output.Duration(fmt.Sprintf("Sync mounts from Platform.sh '%s' environment.", envName))
+	done := output.Duration("Sync mounts.")
 
 	// get psh environment
 	if err := p.platformSHSyncPreflight(envName); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	env := p.PlatformSH.GetEnvironment(envName)
 	if env == nil {
-		return tracerr.Errorf("environment '%s' not found", envName)
+		return errors.Wrapf(platformsh.ErrEnvironmentNotFound, "platform.sh environment '%s' not found", envName)
 	}
 
 	// get ssh cert
 	sshCert, err := p.PlatformSH.SSHCertficiate()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	certReader := bytes.NewReader(sshCert)
 
 	// get ssh key
 	sshKey, err := config.PrivateKey()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	keyReader := bytes.NewReader(sshKey)
 
 	// set volume mount strategy to ensure mount sync works
 	p.Options[OptionMountStrategy] = MountStrategyVolume
 	if err := p.Save(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 
 	// mount sync function
@@ -141,15 +143,15 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 			}
 		default:
 			{
-				return tracerr.Errorf("invalid definition")
+				return errors.WithStack(ErrInvalidDefinition)
 			}
 		}
 		// upload ssh cert and key
 		if err := cont.Upload(pshSyncSSHCertPath, certReader); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		if err := cont.Upload(pshSyncSSHKeyPath, keyReader); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		// itterate mounts and rsync
 		for dest := range mounts {
@@ -172,7 +174,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 					),
 				},
 			); err != nil {
-				return tracerr.Wrap(err)
+				return errors.WithStack(err)
 			}
 			done2()
 		}
@@ -184,13 +186,13 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 	// itterate apps to sync mounts
 	for _, app := range p.Apps {
 		if err := syncMount(app); err != nil {
-			return tracerr.Wrap(err)
+			return errors.WithStack(err)
 		}
 		// itterate workers
 		if p.HasFlag(EnableWorkers) {
 			for _, worker := range app.Workers {
 				if err := syncMount(worker); err != nil {
-					return tracerr.Wrap(err)
+					return errors.WithStack(err)
 				}
 			}
 		}
@@ -202,21 +204,21 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 // PlatformSHSyncDatabases syncs the given platform.sh environment's databases to the local project.
 func (p *Project) PlatformSHSyncDatabases(envName string) error {
 
-	done := output.Duration(fmt.Sprintf("Sync databases from Platform.sh '%s' environment.", envName))
+	done := output.Duration("Sync databases .")
 
 	// get psh environment
 	if err := p.platformSHSyncPreflight(envName); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	env := p.PlatformSH.GetEnvironment(envName)
 	if env == nil {
-		return tracerr.Errorf("environment '%s' not found", envName)
+		return errors.Wrapf(platformsh.ErrEnvironmentNotFound, "environment '%s' not found", envName)
 	}
 
 	// fetch relationships for dump passwords
 	relationships, err := p.PlatformSH.PlatformRelationships(env, p.Apps[0].Name)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 
 	// itterate services to find database services
@@ -233,7 +235,7 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 						env, p.Apps[0].Name,
 						p.GetPlatformSHDatabaseDumpCommand(service, db, relationships)+" | gzip > /tmp/db.sql.gz",
 					); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					done3()
 					// download dump
@@ -243,21 +245,21 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 						"/tmp/db.sql.gz",
 					)
 					if err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					// delete remote dump
 					if _, err := p.PlatformSH.SSHCommand(
 						env, p.Apps[0].Name,
 						"rm /tmp/db.sql.gz",
 					); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					done3()
 					// import dump
 					done3 = output.Duration("Import dump.")
 					dbOpen, err := os.Open(dbPath)
 					if err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					defer func() {
 						dbOpen.Close()
@@ -265,7 +267,7 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 					}()
 					cont := p.NewContainer(service)
 					if err := cont.Upload("/mnt/data/db.sql.gz", dbOpen); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					if err := cont.containerHandler.ContainerShell(
 						cont.Config.GetContainerName(),
@@ -273,7 +275,7 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 						[]string{"sh", "-c", fmt.Sprintf("zcat /mnt/data/db.sql.gz | %s && rm /mnt/data/db.sql.gz", p.GetDatabaseShellCommand(service, db))},
 						nil,
 					); err != nil {
-						return tracerr.Wrap(err)
+						return errors.WithStack(err)
 					}
 					done3()
 					done2()

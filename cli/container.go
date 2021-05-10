@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/def"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -104,7 +106,12 @@ var containerShellCmd = &cobra.Command{
 				"bash", "--login", "-c", strings.Join(args, " "),
 			}
 		}
-		handleError(c.Shell(user, shellCmd))
+		err = c.Shell(user, shellCmd)
+		if errors.Is(err, container.ErrCommandExited) {
+			// exit with error code
+			os.Exit(1)
+		}
+		handleError(err)
 	},
 }
 

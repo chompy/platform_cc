@@ -15,25 +15,13 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package container
+package project
 
-import (
-	"github.com/docker/docker/client"
-	"github.com/pkg/errors"
+import "github.com/pkg/errors"
+
+var (
+	ErrContainerNoIP       = errors.New("container has no ip address")
+	ErrInvalidRelationship = errors.New("one or more relationships are invalid")
+	ErrNoApplicationFound  = errors.New("project should have at least one application")
+	ErrInvalidDefinition   = errors.New("invalid definition")
 )
-
-// Docker defines the Docker container handler.
-type Docker struct {
-	client *client.Client
-}
-
-// NewDocker creates a new Docker container handler.
-func NewDocker() (Docker, error) {
-	dockerClient, err := client.NewEnvClient()
-	if err != nil {
-		return Docker{}, errors.WithStack(err)
-	}
-	return Docker{
-		client: dockerClient,
-	}, nil
-}

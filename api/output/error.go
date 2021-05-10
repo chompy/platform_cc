@@ -15,43 +15,47 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package config
+package output
 
 import (
+	"fmt"
 	"os"
-	"os/user"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
-const configPerm = 0766
-const userConfigPath = "~/.config/platformcc"
-
-func expandPath(path string) string {
-	if len(path) == 0 || path[0] != '~' {
-		return path
-	}
-	usr, err := user.Current()
-	if err != nil {
-		return path
-	}
-	return filepath.Join(usr.HomeDir, path[1:])
+type stackTracer interface {
+	StackTrace() errors.StackTrace
 }
 
-func initConfig() error {
-	err := os.MkdirAll(Path(), configPerm)
-	if os.IsExist(err) {
-		return nil
+func errorStackTrace(err error) string {
+	out := ""
+	if err, ok := err.(stackTracer); ok {
+		for _, f := range err.StackTrace() {
+			out += fmt.Sprintf("%+s:%d\n", f, f)
+		}
 	}
-	return errors.WithStack(err)
+	return out
 }
 
-func pathTo(name string) string {
-	return filepath.Join(Path(), name)
+// Error prints an error message to the terminal and then exists.
+func Error(err error) {
+	LogError(err)
+	if err == nil {
+		return
+	}
+	WriteStdout(colorError("\nERROR:\n" + err.Error() + "\n"))
+	if !Verbose {
+		os.Exit(1)
+	}
+	WriteStdout("\n" + Color(errorStackTrace(err), 36) + "\n")
+	os.Exit(1)
 }
 
-// Path returns the path to the config directory.
-func Path() string {
-	return expandPath(userConfigPath)
+// ErrorText prints message using the error text color.
+func ErrorText(msg string) {
+	if !Enable {
+		return
+	}
+	levelMsg(colorError(msg))
 }

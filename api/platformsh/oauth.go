@@ -31,9 +31,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/config"
 
-	"github.com/ztrue/tracerr"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 	"golang.org/x/oauth2"
 )
@@ -75,9 +75,9 @@ func generateRandom() string {
 func saveToken(t *oauth2.Token) error {
 	out, err := json.Marshal(t)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
-	return tracerr.Wrap(ioutil.WriteFile(
+	return errors.WithStack(ioutil.WriteFile(
 		filepath.Join(config.Path(), oauthTokenStore),
 		out, 0644,
 	))
@@ -88,12 +88,12 @@ func loadToken() (*oauth2.Token, error) {
 	rawData, err := ioutil.ReadFile(filepath.Join(config.Path(), oauthTokenStore))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, tracerr.Errorf("platform.sh api token not found, please use the platformsh:login command to generate it")
+			return nil, errors.WithStack(ErrMissingAPIToken)
 		}
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	if err := json.Unmarshal(rawData, t); err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return t, nil
 }
@@ -136,7 +136,7 @@ func loginServer(authURL string) (string, error) {
 	}()
 	<-ctx.Done()
 	s.Shutdown(ctx)
-	return code, tracerr.Wrap(err)
+	return code, errors.WithStack(err)
 }
 
 // Login to Platform.sh API via oauth.
@@ -163,7 +163,7 @@ func Login() error {
 	output.Info(fmt.Sprintf("Open %s in your browser to continue.", conf.RedirectURL))
 	code, err := loginServer(url)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// exchange code for token
 	tok, err := conf.Exchange(
@@ -172,11 +172,11 @@ func Login() error {
 		oauth2.SetAuthURLParam("code_verifier", codeVerify),
 	)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// save token
 	if err := saveToken(tok); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	output.Info("Login successful!")
 	return nil
@@ -187,7 +187,7 @@ func GetAPIClient() (*http.Client, error) {
 	conf := getOauthConfig()
 	tok, err := loadToken()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	return conf.Client(context.Background(), tok), nil
 }

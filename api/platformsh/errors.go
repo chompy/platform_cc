@@ -15,25 +15,14 @@ You should have received a copy of the GNU General Public License
 along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package container
+package platformsh
 
-import (
-	"github.com/docker/docker/client"
-	"github.com/pkg/errors"
+import "github.com/pkg/errors"
+
+var (
+	ErrProjectNotFound     = errors.New("platform.sh project not found")
+	ErrBadAPIResponse      = errors.New("platform.sh api returned unexpected response")
+	ErrMissingAPIToken     = errors.New("platform.sh api token not found, please use the platformsh:login command to generate it")
+	ErrInvalidEnvironment  = errors.New("invalid platform.sh environment")
+	ErrEnvironmentNotFound = errors.New("platform.sh environment not found")
 )
-
-// Docker defines the Docker container handler.
-type Docker struct {
-	client *client.Client
-}
-
-// NewDocker creates a new Docker container handler.
-func NewDocker() (Docker, error) {
-	dockerClient, err := client.NewEnvClient()
-	if err != nil {
-		return Docker{}, errors.WithStack(err)
-	}
-	return Docker{
-		client: dockerClient,
-	}, nil
-}

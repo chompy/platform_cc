@@ -19,28 +19,28 @@ package container
 
 import (
 	"github.com/docker/docker/api/types/mount"
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 )
 
 // AllStop stops all Platform.CC Docker containers.
 func (d Docker) AllStop() error {
 	containers, err := d.listAllContainers()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
-	return tracerr.Wrap(d.deleteContainers(containers))
+	return errors.WithStack(d.deleteContainers(containers))
 }
 
 // AllPurge deletes all Platform.CC Docker resources.
 func (d Docker) AllPurge(deleteGlobalVolumes bool) error {
 	// stop
 	if err := d.AllStop(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// delete volumes
 	volList, err := d.listAllVolumes()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// remove global volumes from deletion list if not flagged for deletion
 	if !deleteGlobalVolumes {
@@ -53,19 +53,19 @@ func (d Docker) AllPurge(deleteGlobalVolumes bool) error {
 		}
 	}
 	if err := d.deleteVolumes(volList); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// delete images
 	imgList, err := d.listAllImages()
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	if err := d.deleteImages(imgList); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	// delete network
 	if err := d.deleteNetwork(); err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -74,7 +74,7 @@ func (d Docker) AllPurge(deleteGlobalVolumes bool) error {
 func (d Docker) AllStatus() ([]Status, error) {
 	containers, err := d.listAllContainers()
 	if err != nil {
-		return nil, tracerr.Wrap(err)
+		return nil, errors.WithStack(err)
 	}
 	out := make([]Status, len(containers))
 	for i, c := range containers {

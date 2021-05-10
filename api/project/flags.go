@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ztrue/tracerr"
+	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
 
@@ -132,7 +132,7 @@ func (f *Flags) UnmarshalJSON(data []byte) error {
 	dMap := make(map[string]int)
 	err = json.Unmarshal(data, &dMap)
 	if err != nil {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 	*f = dMap
 	return nil
