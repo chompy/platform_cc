@@ -293,10 +293,9 @@ func DeleteProjectRoutes(p *project.Project) error {
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
 		nil,
 	); err != nil {
-		if !strings.Contains(err.Error(), "No such container") {
+		if !errors.Is(err, container.ErrContainerNotFound) && !errors.Is(err, container.ErrCommandExited) {
 			return errors.WithStack(err)
 		}
-		return nil
 	}
 	// reload nginx
 	if err := Reload(); err != nil {
@@ -309,7 +308,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		[]string{"sh", "-c", fmt.Sprintf("rm -rf /www/%s.json && sed -i \"/%s/d\" /www/projects.txt", p.ID, p.ID)},
 		nil,
 	); err != nil {
-		if !strings.Contains(err.Error(), "No such container") {
+		if !errors.Is(err, container.ErrContainerNotFound) && !errors.Is(err, container.ErrCommandExited) {
 			return errors.WithStack(err)
 		}
 		return nil

@@ -20,6 +20,7 @@ package container
 import "errors"
 
 var (
+	ErrContainerNotFound   = errors.New("container not found")
 	ErrContainerNotRunning = errors.New("container is not running")
 	ErrCannotDeleteCommit  = errors.New("cannot delete commit")
 	ErrImageNotFound       = errors.New("image not found")

@@ -32,6 +32,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
@@ -149,6 +150,9 @@ func (d Docker) ContainerStart(c Config) error {
 		c.GetContainerName(),
 	)
 	if err != nil {
+		if client.IsErrImageNotFound(err) {
+			return errors.WithStack(ErrImageNotFound)
+		}
 		if strings.Contains(err.Error(), "already in use") {
 			return nil
 		}
@@ -205,6 +209,9 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
+		if client.IsErrContainerNotFound(err) {
+			return errors.WithStack(ErrContainerNotFound)
+		}
 		return errors.WithStack(err)
 	}
 	output.LogDebug("Container exec created.", resp.ID)

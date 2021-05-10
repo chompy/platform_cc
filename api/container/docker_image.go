@@ -26,6 +26,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -57,6 +58,9 @@ func (d Docker) imagePullSingle(c Config, progress func(p imagePullProgress)) er
 		types.ImagePullOptions{},
 	)
 	if err != nil {
+		if client.IsErrImageNotFound(err) {
+			return errors.WithStack(ErrImageNotFound)
+		}
 		return errors.WithStack(err)
 	}
 	defer r.Close()
