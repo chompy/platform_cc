@@ -18,6 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package container
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -138,27 +139,44 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		output.LogDebug("Disable interactive shell, stdin present.", nil)
-		var n int64
-		var err error
-		for {
-			n, err = io.Copy(hresp.Conn, stdin)
-			if err == nil {
-				return errors.WithStack(d.checkCommandExec(resp.ID))
-			}
-			if strings.Contains(err.Error(), "broken pipe") {
-				output.LogDebug(fmt.Sprintf("Copy stdin broken pipe after writing %d bytes.", n), resp.ID)
-				hresp, err = d.client.ContainerExecAttach(
-					context.Background(),
-					resp.ID,
-					execConfig,
-				)
-				if err != nil {
-					return errors.WithStack(err)
+		// process stdin
+		errchan := make(chan error)
+		go func(errchan chan error) {
+			var n int64
+			var err error
+			for {
+
+				n, err = io.Copy(hresp.Conn, stdin)
+				if err == nil {
+					errchan <- errors.WithStack(d.checkCommandExec(resp.ID))
+					return
 				}
-				continue
+				if strings.Contains(err.Error(), "broken pipe") {
+					output.LogDebug(fmt.Sprintf("Copy stdin broken pipe after writing %d bytes.", n), resp.ID)
+					hresp, err = d.client.ContainerExecAttach(
+						context.Background(),
+						resp.ID,
+						execConfig,
+					)
+					if err != nil {
+						errchan <- errors.WithStack(err)
+						return
+					}
+					continue
+				}
+				errchan <- errors.WithStack(d.checkCommandExec(resp.ID))
+				return
 			}
-			return errors.WithStack(d.checkCommandExec(resp.ID))
+		}(errchan)
+		// pipe stdout
+		scanner := bufio.NewScanner(hresp.Reader)
+		for scanner.Scan() {
+			t := scanner.Bytes()
+			output.WriteStdout(string(t) + "\n")
 		}
+
+		err = <-errchan
+		return errors.WithStack(err)
 	}
 	// create interactive shell
 	// handle resizing
