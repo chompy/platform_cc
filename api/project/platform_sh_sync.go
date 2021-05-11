@@ -23,6 +23,7 @@ import (
 	"os"
 	"strings"
 
+	"gitlab.com/contextualcode/platform_cc/api/container"
 	"gitlab.com/contextualcode/platform_cc/api/platformsh"
 
 	"gitlab.com/contextualcode/platform_cc/api/config"
@@ -174,7 +175,10 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 					),
 				},
 			); err != nil {
-				return errors.WithStack(err)
+				if !errors.Is(err, container.ErrCommandExited) {
+					return errors.WithStack(err)
+				}
+				output.Warn("Mount sync exited with non zero code.")
 			}
 			done2()
 		}
