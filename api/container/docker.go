@@ -18,6 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package container
 
 import (
+	"strings"
+
 	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 )
@@ -31,9 +33,25 @@ type Docker struct {
 func NewDocker() (Docker, error) {
 	dockerClient, err := client.NewEnvClient()
 	if err != nil {
-		return Docker{}, errors.WithStack(err)
+		return Docker{}, errors.WithStack(convertDockerError(err))
 	}
 	return Docker{
 		client: dockerClient,
 	}, nil
+}
+
+// convertDockerError converts internal docker error to platform.cc error.
+func convertDockerError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if strings.Contains(err.Error(), "No such container") {
+		// container not found
+		return ErrContainerNotFound
+	} else if strings.Contains(err.Error(), "No such image") {
+		// imagen not found
+		return ErrImageNotFound
+	}
+	// nothing found, return original error
+	return err
 }

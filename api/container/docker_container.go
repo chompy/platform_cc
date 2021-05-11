@@ -209,10 +209,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		if client.IsErrContainerNotFound(err) {
-			return errors.WithStack(ErrContainerNotFound)
-		}
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	output.LogDebug("Container exec created.", resp.ID)
 	hresp, err := d.client.ContainerExecAttach(
@@ -221,7 +218,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	// get command stdout
 	var buf bytes.Buffer
@@ -244,7 +241,7 @@ func (d Docker) ContainerStatus(id string) (Status, error) {
 		id,
 	)
 	if err != nil {
-		return Status{Running: false, Slot: 0, State: "stopped", HasContainer: false}, errors.WithStack(err)
+		return Status{Running: false, Slot: 0, State: "stopped", HasContainer: false}, errors.WithStack(convertDockerError(err))
 	}
 	ipAddress := ""
 	for name, network := range data.NetworkSettings.Networks {
@@ -289,13 +286,13 @@ func (d Docker) ContainerUpload(id string, path string, r io.Reader) error {
 			"path":         path,
 		},
 	)
-	return errors.WithStack(d.client.CopyToContainer(
+	return errors.WithStack(convertDockerError(d.client.CopyToContainer(
 		context.Background(),
 		id,
 		path,
 		r,
 		types.CopyToContainerOptions{},
-	))
+	)))
 }
 
 // ContainerDownload downloads one or more files from container and write to writer as tarball.
@@ -314,7 +311,7 @@ func (d Docker) ContainerDownload(id string, path string, w io.Writer) error {
 		path,
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	// copy tar to writer
 	if _, err := io.Copy(w, r); err != nil {
@@ -326,7 +323,7 @@ func (d Docker) ContainerDownload(id string, path string, w io.Writer) error {
 // ContainerLog returns a reader containing log data for a Docker container.
 func (d Docker) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 	output.LogDebug(fmt.Sprintf("Read logs for container '%s.'", id), nil)
-	return d.client.ContainerLogs(
+	rc, err := d.client.ContainerLogs(
 		context.Background(),
 		id,
 		types.ContainerLogsOptions{
@@ -335,6 +332,7 @@ func (d Docker) ContainerLog(id string, follow bool) (io.ReadCloser, error) {
 			Follow:     follow,
 		},
 	)
+	return rc, errors.WithStack(convertDockerError(err))
 }
 
 // ContainerCommit stores a Docker container's state as an image.
@@ -345,7 +343,7 @@ func (d Docker) ContainerCommit(id string) error {
 		id,
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	if !data.State.Running {
 		return errors.Wrapf(ErrContainerNotRunning, "container %s is not running", id)
@@ -363,7 +361,7 @@ func (d Docker) ContainerCommit(id string) error {
 		types.ContainerCommitOptions{},
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	// tag image
 	if err := d.client.ImageTag(
@@ -374,7 +372,7 @@ func (d Docker) ContainerCommit(id string) error {
 		d.client.ImageRemove(
 			context.Background(), idResp.ID, types.ImageRemoveOptions{Force: true},
 		)
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	done()
 	return nil
@@ -404,7 +402,7 @@ func (d Docker) ContainerDeleteCommit(id string) error {
 		image,
 		types.ImageRemoveOptions{Force: true},
 	); err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	done()
 	return nil
@@ -415,13 +413,14 @@ func (d Docker) listProjectContainers(pid string) ([]types.Container, error) {
 	output.LogDebug(fmt.Sprintf("List containers for project '%s.'", pid), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
-	return d.client.ContainerList(
+	c, err := d.client.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{
 			Filters: filterArgs,
 			All:     true,
 		},
 	)
+	return c, errors.WithStack(convertDockerError(err))
 }
 
 // listAllContainers gets a list of all active Platform.CC containers.
@@ -429,13 +428,14 @@ func (d Docker) listAllContainers() ([]types.Container, error) {
 	output.LogDebug("List all Platform.CC containers.", nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
-	return d.client.ContainerList(
+	c, err := d.client.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{
 			Filters: filterArgs,
 			All:     true,
 		},
 	)
+	return c, errors.WithStack(convertDockerError(err))
 }
 
 // deleteContainers deletes all provided containers.
@@ -486,7 +486,7 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 						&timeout,
 					); err != nil && !strings.Contains(err.Error(), "not running") {
 						prog(i, output.ProgressMessageError, nil, nil)
-						output.LogError(err)
+						output.LogError(convertDockerError(err))
 						return
 					}
 					break
@@ -501,7 +501,7 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 				},
 			); err != nil {
 				prog(i, output.ProgressMessageError, nil, nil)
-				output.LogError(err)
+				output.LogError(convertDockerError(err))
 				return
 			}
 			prog(i, output.ProgressMessageDone, nil, nil)

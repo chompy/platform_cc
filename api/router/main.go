@@ -293,7 +293,11 @@ func DeleteProjectRoutes(p *project.Project) error {
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
 		nil,
 	); err != nil {
-		if !errors.Is(err, container.ErrContainerNotFound) && !errors.Is(err, container.ErrCommandExited) {
+		if errors.Is(err, container.ErrContainerNotFound) {
+			output.LogDebug("Router not running.", nil)
+			done()
+			return nil
+		} else if !errors.Is(err, container.ErrCommandExited) {
 			return errors.WithStack(err)
 		}
 	}
@@ -311,7 +315,6 @@ func DeleteProjectRoutes(p *project.Project) error {
 		if !errors.Is(err, container.ErrContainerNotFound) && !errors.Is(err, container.ErrCommandExited) {
 			return errors.WithStack(err)
 		}
-		return nil
 	}
 	done()
 	return nil

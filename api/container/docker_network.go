@@ -39,7 +39,7 @@ func (d Docker) createNetwork() error {
 		},
 	); err != nil {
 		if !strings.Contains(err.Error(), "exists") {
-			return errors.WithStack(err)
+			return errors.WithStack(convertDockerError(err))
 		}
 	}
 	return nil
@@ -53,7 +53,7 @@ func (d Docker) deleteNetwork() error {
 		dockerNetworkName,
 	)
 	if err != nil && !strings.Contains(err.Error(), "not found") {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	done()
 	return nil

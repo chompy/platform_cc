@@ -146,7 +146,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		if strings.Contains(err.Error(), "already in use") {
 			return nil
 		}
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	output.LogDebug("Slot copy container created.", resp)
 	// start container
@@ -155,7 +155,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		resp.ID,
 		types.ContainerStartOptions{},
 	); err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	cleanup := func() {
 		timeout := time.Second
@@ -175,7 +175,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		},
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	defer attachResp.Close()
 	// capture interupt to stop container

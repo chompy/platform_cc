@@ -246,8 +246,11 @@ func (c Container) Build() error {
 		"root",
 		[]string{"bash", "--login", "-c", c.buildCommand},
 		os.Stdout,
-	); err != nil && !errors.Is(err, container.ErrCommandExited) {
-		return errors.WithStack(err)
+	); err != nil {
+		if !errors.Is(err, container.ErrCommandExited) {
+			return errors.WithStack(err)
+		}
+		output.Warn("Build exited with non zero code.")
 	}
 	done()
 	return nil
@@ -284,8 +287,11 @@ func (c Container) Deploy() error {
 		"root",
 		[]string{"bash", "--login", "-c", appDeployCmd},
 		os.Stdout,
-	); err != nil && !errors.Is(err, container.ErrCommandExited) {
-		return errors.WithStack(err)
+	); err != nil {
+		if !errors.Is(err, container.ErrCommandExited) {
+			return errors.WithStack(err)
+		}
+		output.Warn("Deploy exited with non zero code.")
 	}
 	done()
 	return nil
@@ -304,8 +310,11 @@ func (c Container) PostDeploy() error {
 		"root",
 		[]string{"bash", "--login", "-c", c.postDeployCommand},
 		os.Stdout,
-	); err != nil && !errors.Is(err, container.ErrCommandExited) {
-		return errors.WithStack(err)
+	); err != nil {
+		if !errors.Is(err, container.ErrCommandExited) {
+			return errors.WithStack(err)
+		}
+		output.Warn("Post deploy exited with non zero code.")
 	}
 	done()
 	return nil

@@ -50,7 +50,7 @@ func (d Docker) createNFSVolume(pid string, name string, path string, containerT
 		volCreateBody,
 	)
 	output.LogDebug("Created Docker NFS volume.", v)
-	return errors.WithStack(err)
+	return errors.WithStack(convertDockerError(err))
 }
 
 // listProjectVolumes gets a list of all volumes for given project.
@@ -58,10 +58,11 @@ func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 	output.LogDebug(fmt.Sprintf("List volumes for project %s (all slots).", pid), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
-	return d.client.VolumeList(
+	v, err := d.client.VolumeList(
 		context.Background(),
 		filterArgs,
 	)
+	return v, errors.WithStack(convertDockerError(err))
 }
 
 // listProjectSlotVolumes gets a list of all volumes for given project slot.
@@ -74,7 +75,7 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 		filterArgs,
 	)
 	if err != nil {
-		return volume.VolumesListOKBody{}, errors.WithStack(err)
+		return volume.VolumesListOKBody{}, errors.WithStack(convertDockerError(err))
 	}
 	out := make([]*types.Volume, 0)
 	for _, v := range list.Volumes {
@@ -91,10 +92,11 @@ func (d Docker) listAllVolumes() (volume.VolumesListOKBody, error) {
 	output.LogDebug("List all volumes.", nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
-	return d.client.VolumeList(
+	v, err := d.client.VolumeList(
 		context.Background(),
 		filterArgs,
 	)
+	return v, errors.WithStack(convertDockerError(err))
 }
 
 // deleteVolumes deletes given Docker volumes.
@@ -119,7 +121,7 @@ func (d Docker) deleteVolumes(volList volume.VolumesListOKBody) error {
 				true,
 			); err != nil {
 				prog(i, output.ProgressMessageError, nil, nil)
-				output.Warn(err.Error())
+				output.Warn(convertDockerError(err).Error())
 				return
 			}
 			prog(i, output.ProgressMessageDone, nil, nil)

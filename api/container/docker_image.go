@@ -26,7 +26,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"gitlab.com/contextualcode/platform_cc/api/output"
 )
@@ -58,10 +57,7 @@ func (d Docker) imagePullSingle(c Config, progress func(p imagePullProgress)) er
 		types.ImagePullOptions{},
 	)
 	if err != nil {
-		if client.IsErrImageNotFound(err) {
-			return errors.WithStack(ErrImageNotFound)
-		}
-		return errors.WithStack(err)
+		return errors.WithStack(convertDockerError(err))
 	}
 	defer r.Close()
 	for {
@@ -144,24 +140,26 @@ func (d Docker) listProjectImages(pid string) ([]types.ImageSummary, error) {
 			fmt.Sprintf(containerNamingPrefix, pid),
 		),
 	)
-	return d.client.ImageList(
+	i, err := d.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{
 			Filters: filterArgs,
 		},
 	)
+	return i, errors.WithStack(convertDockerError(err))
 }
 
 // listAllImages returns list of all Platform.CC Docker images.
 func (d Docker) listAllImages() ([]types.ImageSummary, error) {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("reference", dockerCommitTagPrefix+"*")
-	return d.client.ImageList(
+	i, err := d.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{
 			Filters: filterArgs,
 		},
 	)
+	return i, errors.WithStack(convertDockerError(err))
 }
 
 // deleteImages deletes given Docker images.
@@ -186,7 +184,7 @@ func (d Docker) deleteImages(images []types.ImageSummary) error {
 				types.ImageRemoveOptions{Force: true},
 			); err != nil {
 				prog(i, output.ProgressMessageError, nil, nil)
-				output.Warn(err.Error())
+				output.Warn(convertDockerError(err).Error())
 				return
 			}
 			prog(i, output.ProgressMessageDone, nil, nil)
@@ -210,7 +208,7 @@ func (d Docker) serviceTypeFromImage(name string) string {
 		name,
 	)
 	if err != nil {
-		output.LogError(err)
+		output.LogError(convertDockerError(err))
 		return ""
 	}
 	if len(inspectImage.RepoTags) > 0 {
@@ -225,7 +223,7 @@ func (d Docker) serviceTypeFromImage(name string) string {
 		inspectImage.Parent,
 	)
 	if err != nil {
-		output.LogError(err)
+		output.LogError(convertDockerError(err))
 		return ""
 	}
 	if len(parentInspectImage.RepoTags) > 0 {
