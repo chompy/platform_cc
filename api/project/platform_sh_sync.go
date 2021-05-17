@@ -157,7 +157,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 		// itterate mounts and rsync
 		for dest := range mounts {
 			done2 := output.Duration(fmt.Sprintf("%s:%s", name, dest))
-			if err := cont.Shell(
+			if _, err := cont.Shell(
 				"root",
 				[]string{
 					"ssh-agent",
@@ -273,7 +273,7 @@ func (p *Project) PlatformSHSyncDatabases(envName string) error {
 					if err := cont.Upload("/mnt/data/db.sql.gz", dbOpen); err != nil {
 						return errors.WithStack(err)
 					}
-					if err := cont.containerHandler.ContainerShell(
+					if _, err := cont.containerHandler.ContainerShell(
 						cont.Config.GetContainerName(),
 						"root",
 						[]string{"sh", "-c", fmt.Sprintf("zcat /mnt/data/db.sql.gz | %s && rm /mnt/data/db.sql.gz", p.GetDatabaseShellCommand(service, db))},

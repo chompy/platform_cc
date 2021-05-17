@@ -43,10 +43,11 @@ var databaseDumpCmd = &cobra.Command{
 			handleError(fmt.Errorf("must provide a database to dump"))
 		}
 		c := proj.NewContainer(service)
-		handleError(c.Shell(
+		_, err = c.Shell(
 			"root",
 			[]string{"sh", "-c", proj.GetDatabaseDumpCommand(service, database)},
-		))
+		)
+		handleError(err)
 	},
 }
 
@@ -61,10 +62,11 @@ var databaseSqlCmd = &cobra.Command{
 		handleError(err)
 		database := databaseCmd.PersistentFlags().Lookup("database").Value.String()
 		c := proj.NewContainer(service)
-		handleError(c.Shell(
+		_, err = c.Shell(
 			"root",
 			[]string{"sh", "-c", proj.GetDatabaseShellCommand(service, database)},
-		))
+		)
+		handleError(err)
 	},
 }
 

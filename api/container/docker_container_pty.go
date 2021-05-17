@@ -32,6 +32,11 @@ import (
 	"golang.org/x/term"
 )
 
+type exitResult struct {
+	code  int
+	error error
+}
+
 // resizeShell resizes the given Docker process to match the current term.
 func (d Docker) resizeShell(execID string) error {
 	w, h, err := term.GetSize(int(os.Stdin.Fd()))
@@ -84,10 +89,10 @@ func (d Docker) handleResizeShell(execID string) error {
 }
 
 // ContainerShell creates an interactive shell in given container.
-func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Reader) error {
+func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Reader) (int, error) {
 	// ensure container is running
 	if status, _ := d.ContainerStatus(id); !status.Running {
-		return errors.Wrapf(ErrContainerNotRunning, "container %s is not running", id)
+		return -1, errors.Wrapf(ErrContainerNotRunning, "container %s is not running", id)
 	}
 	// check stdin
 	hasStdin := true
@@ -114,7 +119,7 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 		execConfig,
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
 	execConfig = types.ExecConfig{
 		User:         user,
@@ -133,22 +138,22 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 		execConfig,
 	)
 	if err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
 	defer hresp.Close()
 	// don't create interactive shell if stdin already exists
 	if hasStdin {
 		output.LogDebug("Disable interactive shell, stdin present.", nil)
 		// process stdin
-		errchan := make(chan error)
-		go func(errchan chan error) {
+		exit := make(chan exitResult)
+		go func(exit chan exitResult) {
 			var n int64
 			var err error
 			for {
-
 				n, err = io.Copy(hresp.Conn, stdin)
 				if err == nil {
-					errchan <- errors.WithStack(d.checkCommandExec(resp.ID))
+					code, err := d.checkCommandExec(resp.ID)
+					exit <- exitResult{code, errors.WithStack(err)}
 					return
 				}
 				if strings.Contains(err.Error(), "broken pipe") {
@@ -159,24 +164,24 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 						execConfig,
 					)
 					if err != nil {
-						errchan <- errors.WithStack(err)
+						exit <- exitResult{-1, errors.WithStack(err)}
 						return
 					}
 					continue
 				}
-				errchan <- errors.WithStack(d.checkCommandExec(resp.ID))
+				code, err := d.checkCommandExec(resp.ID)
+				exit <- exitResult{code, errors.WithStack(err)}
 				return
 			}
-		}(errchan)
+		}(exit)
 		// pipe stdout
 		scanner := bufio.NewScanner(hresp.Reader)
 		for scanner.Scan() {
 			t := scanner.Bytes()
 			output.WriteStdout(string(t) + "\n")
 		}
-
-		err = <-errchan
-		return errors.WithStack(err)
+		res := <-exit
+		return res.code, errors.WithStack(res.error)
 	}
 	// create interactive shell
 	// handle resizing
@@ -185,11 +190,12 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 	// make raw
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 	// read/write connection to stdin and stdout
 	go func() { io.Copy(hresp.Conn, stdin) }()
 	io.Copy(os.Stdout, hresp.Reader)
-	return errors.WithStack(d.checkCommandExec(resp.ID))
+	code, err := d.checkCommandExec(resp.ID)
+	return code, errors.WithStack(err)
 }

@@ -24,6 +24,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 // DummyContainer is a dummy container.
@@ -125,19 +127,19 @@ func (d Dummy) ContainerStart(c Config) error {
 }
 
 // ContainerCommand runs dummy command.
-func (d Dummy) ContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+func (d Dummy) ContainerCommand(id string, user string, cmd []string, out io.Writer) (int, error) {
 	c := d.GetContainer(id)
 	if c == nil {
-		return fmt.Errorf("container %s not running", id)
+		return -1, errors.WithStack(ErrContainerNotRunning)
 	}
 	d.Tracker.Sync.Lock()
 	defer d.Tracker.Sync.Unlock()
 	c.CommandHistory = append(c.CommandHistory, strings.Join(cmd, " "))
-	return nil
+	return 0, nil
 }
 
 // ContainerShell runs dummy shell.
-func (d Dummy) ContainerShell(id string, user string, cmd []string, stdin io.Reader) error {
+func (d Dummy) ContainerShell(id string, user string, cmd []string, stdin io.Reader) (int, error) {
 	return d.ContainerCommand(id, user, cmd, nil)
 }
 

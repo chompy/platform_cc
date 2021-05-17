@@ -168,12 +168,15 @@ func Reload() error {
 		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
-	return errors.WithStack(ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"nginx", "-s", "reload"},
 		nil,
-	))
+	); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // ClearCertificates deletes all certificates files generates by minica.
@@ -183,12 +186,15 @@ func ClearCertificates() error {
 		return errors.WithStack(err)
 	}
 	containerConf := GetContainerConfig()
-	return errors.WithStack(ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", "rm -rf /var/ssl/*"},
 		nil,
-	))
+	); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // DumpCertificateCA returns the CA certificate.
@@ -199,7 +205,7 @@ func DumpCertificateCA() ([]byte, error) {
 	}
 	containerConf := GetContainerConfig()
 	var buf bytes.Buffer
-	if err := ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", "cat /var/ssl/minica.pem && cat /var/ssl/minica-key.pem"},
@@ -287,7 +293,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 	}
 	containerConf := GetContainerConfig()
 	// delete config file
-	if err := ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"rm", "-rf", fmt.Sprintf("/routes/%s.conf", p.ID)},
@@ -306,7 +312,7 @@ func DeleteProjectRoutes(p *project.Project) error {
 		return errors.WithStack(err)
 	}
 	// delete json file and remove project id from projects.txt
-	if err := ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", fmt.Sprintf("rm -rf /www/%s.json && sed -i \"/%s/d\" /www/projects.txt", p.ID, p.ID)},

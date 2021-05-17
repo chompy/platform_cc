@@ -106,12 +106,13 @@ var containerShellCmd = &cobra.Command{
 				"bash", "--login", "-c", strings.Join(args, " "),
 			}
 		}
-		err = c.Shell(user, shellCmd)
+		code, err := c.Shell(user, shellCmd)
 		if errors.Is(err, container.ErrCommandExited) {
 			// exit with error code
-			os.Exit(1)
+			os.Exit(code)
 		}
 		handleError(err)
+		os.Exit(code)
 	},
 }
 

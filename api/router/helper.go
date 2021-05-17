@@ -37,7 +37,7 @@ func ListActiveProjects() ([]string, error) {
 	}
 	containerConf := GetContainerConfig()
 	var buf bytes.Buffer
-	if err := ch.ContainerCommand(
+	if _, err := ch.ContainerCommand(
 		containerConf.GetContainerName(),
 		"root",
 		[]string{"cat", "/www/projects.txt"},
@@ -98,7 +98,7 @@ func ListActiveRoutes() ([]def.Route, error) {
 	out := make([]def.Route, 0)
 	for _, pid := range projectIDs {
 		var buf bytes.Buffer
-		if err := ch.ContainerCommand(
+		if _, err := ch.ContainerCommand(
 			containerConf.GetContainerName(),
 			"root",
 			[]string{"cat", fmt.Sprintf("/www/%s.json", pid)},

@@ -24,8 +24,8 @@ import (
 // Interface defines methods used to interact with container.
 type Interface interface {
 	ContainerStart(c Config) error
-	ContainerCommand(id string, user string, cmd []string, out io.Writer) error
-	ContainerShell(id string, user string, cmd []string, stdin io.Reader) error
+	ContainerCommand(id string, user string, cmd []string, out io.Writer) (int, error)
+	ContainerShell(id string, user string, cmd []string, stdin io.Reader) (int, error)
 	ContainerStatus(id string) (Status, error)
 	ContainerUpload(id string, path string, r io.Reader) error
 	ContainerDownload(id string, path string, w io.Writer) error

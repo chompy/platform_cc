@@ -107,7 +107,7 @@ func (c Container) Start() error {
 	// patch
 	if c.patchCommand != "" {
 		d2 = output.Duration("Patch container.")
-		if err := c.containerHandler.ContainerCommand(
+		if _, err := c.containerHandler.ContainerCommand(
 			c.Config.GetContainerName(),
 			"root",
 			[]string{"bash", "--login", "-c", c.patchCommand},
@@ -119,7 +119,7 @@ func (c Container) Start() error {
 	}
 	// run init command
 	d2 = output.Duration("Init container.")
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", c.initCommand},
@@ -140,7 +140,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	)
 	// start service
 	d2 := output.Duration("Start service.")
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", serviceStartCmd},
@@ -168,7 +168,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 	d2 = output.Duration("Open service.")
 	var openOutput bytes.Buffer
 	cmd := fmt.Sprintf(serviceOpenCmd, relB64)
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", cmd},
@@ -216,7 +216,7 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 // HasBuild returns true if container has been built.
 func (c Container) HasBuild() bool {
 	var buf bytes.Buffer
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", "[ -f /config/built ] && echo 'YES'"},
@@ -241,7 +241,7 @@ func (c Container) Build() error {
 		fmt.Sprintf("Building %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
 	// run command
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", c.buildCommand},
@@ -265,7 +265,7 @@ func (c Container) SetupMounts() error {
 		fmt.Sprintf("Set up mounts for %s '%s' using '%s' strategy.", c.Config.ObjectType.TypeName(), c.Name, c.mountStrategy),
 	)
 	// run command
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"sh", "-c", c.mountCommand},
@@ -282,7 +282,7 @@ func (c Container) Deploy() error {
 	done := output.Duration(
 		fmt.Sprintf("Running deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", appDeployCmd},
@@ -305,7 +305,7 @@ func (c Container) PostDeploy() error {
 	done := output.Duration(
 		fmt.Sprintf("Running post-deploy hook for %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
-	if err := c.containerHandler.ContainerCommand(
+	if _, err := c.containerHandler.ContainerCommand(
 		c.Config.GetContainerName(),
 		"root",
 		[]string{"bash", "--login", "-c", c.postDeployCommand},
@@ -347,7 +347,7 @@ func (c Container) openEnableAuthentication() error {
 			}
 			r := bytes.NewReader(stateJSON)
 			// issue service state update
-			if err := c.containerHandler.ContainerShell(
+			if _, err := c.containerHandler.ContainerShell(
 				c.Config.GetContainerName(),
 				"root",
 				[]string{"bash", "--login", "-c", "/etc/platform/commands/on_service_state_update"},
@@ -363,7 +363,7 @@ func (c Container) openEnableAuthentication() error {
 }
 
 // Shell accesses the container shell.
-func (c Container) Shell(user string, cmd []string) error {
+func (c Container) Shell(user string, cmd []string) (int, error) {
 	output.Info(
 		fmt.Sprintf(
 			"Access shell for %s '%s.'",
@@ -374,12 +374,13 @@ func (c Container) Shell(user string, cmd []string) error {
 	if len(cmd) == 0 {
 		cmd = []string{"bash", "--login"}
 	}
-	return errors.WithStack(c.containerHandler.ContainerShell(
+	code, err := c.containerHandler.ContainerShell(
 		c.Config.GetContainerName(),
 		user,
 		cmd,
 		nil,
-	))
+	)
+	return code, errors.WithStack(err)
 }
 
 // Log outputs container logs to log file.
@@ -415,11 +416,12 @@ func (c Container) LogStdout(follow bool) error {
 	}
 	errChan := make(chan error)
 	go func(err chan error) {
-		err <- c.containerHandler.ContainerCommand(
+		_, e := c.containerHandler.ContainerCommand(
 			c.Config.GetContainerName(), "root",
 			[]string{"sh", "-c", fmt.Sprintf("tail %s /var/log/*.log %s /var/log/*/*.log %s /tmp/*.log", followOption, followOption, followOption)},
 			os.Stdout,
 		)
+		err <- e
 	}(errChan)
 	// follow logs
 	if follow {

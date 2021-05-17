@@ -181,19 +181,19 @@ func (d Docker) ContainerStart(c Config) error {
 }
 
 // checkCommandExec checks the results of a command execution.
-func (d Docker) checkCommandExec(id string) error {
+func (d Docker) checkCommandExec(id string) (int, error) {
 	cInspect, err := d.client.ContainerExecInspect(context.Background(), id)
 	if err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
 	if cInspect.ExitCode != 0 {
-		return errors.Wrapf(ErrCommandExited, "command exited with error code %d", cInspect.ExitCode)
+		return cInspect.ExitCode, errors.Wrapf(ErrCommandExited, "command exited with error code %d", cInspect.ExitCode)
 	}
-	return nil
+	return cInspect.ExitCode, nil
 }
 
 // ContainerCommand runs a command inside a Docker container.
-func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Writer) error {
+func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Writer) (int, error) {
 	execConfig := types.ExecConfig{
 		User:         user,
 		Tty:          true,
@@ -209,7 +209,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		return errors.WithStack(convertDockerError(err))
+		return -1, errors.WithStack(convertDockerError(err))
 	}
 	output.LogDebug("Container exec created.", resp.ID)
 	hresp, err := d.client.ContainerExecAttach(
@@ -218,7 +218,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		execConfig,
 	)
 	if err != nil {
-		return errors.WithStack(convertDockerError(err))
+		return -1, errors.WithStack(convertDockerError(err))
 	}
 	// get command stdout
 	var buf bytes.Buffer
@@ -228,10 +228,11 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 		mWriter = io.MultiWriter(&buf, out)
 	}
 	if _, err := io.Copy(mWriter, hresp.Reader); err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
 	output.LogDebug("Container exec finished.", buf.String())
-	return errors.WithStack(d.checkCommandExec(resp.ID))
+	exitCode, err := d.checkCommandExec(resp.ID)
+	return exitCode, errors.WithStack(err)
 }
 
 // ContainerStatus returns status of Docker container.
@@ -459,9 +460,10 @@ func (d Docker) deleteContainers(containers []types.Container) error {
 			// once they exit
 			c := make(chan error, 1)
 			go func() {
-				c <- d.ContainerCommand(
+				_, err := d.ContainerCommand(
 					cid, "root", []string{"sh", "-c", "/etc/platform/shutdown || true && rm -f /routes/* && nginx -s stop || true"}, nil,
 				)
+				c <- err
 			}()
 			select {
 			case err := <-c:
