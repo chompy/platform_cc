@@ -1,0 +1,8 @@
+variables:
+    env:
+        TEST_ENV: 'no'
+        TEST_ENV_TWO: "hello world"
+
+runtime:
+    extensions:
+        - pdo_mysql

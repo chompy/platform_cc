@@ -1,0 +1,3045 @@
+.cache_disabled: &cache_disabled
+    enabled: true
+.cache_assets: &cache_assets
+    enabled: true
+    cookies: []
+    headers: []
+    default_ttl: 3600
+.cache_content: &cache_content
+    enabled: true
+    cookies: ['/^eZSESS.*/', '/^mf_.*/', 'eZSESSID', 'PHPSESSID', 'hide_donate_banner']
+    headers: ['Accept', 'Accept-Language']
+    default_ttl: 60
+.cache_session: &cache_session
+    enabled: true
+    cookies: ['/^eZSESS.*/', '/^mf_.*/', 'eZSESSID', 'PHPSESSID', 'hide_donate_banner']
+    headers: ['Accept', 'Accept-Language']
+    default_ttl: 0
+
+.route_assets: &route_assets
+    type: upstream
+    upstream: app:http
+    cache: *cache_assets
+    redirects:
+        paths:
+            ^/images/docstudio/(.*)$:
+                to: "https://apps.mla.org/images/docstudio/$1"
+                regexp: true
+
+.route_session: &route_session
+    type: upstream
+    upstream: app:http
+    cache: *cache_session
+
+.global_redirects: &global_redirects
+    ^/(.*)index.php/(.*):
+        to: "/$2"
+        regexp: true
+
+.bulletin_redirects: &bulletin_redirects
+    ^/adefl_bulletin_c_ade_(.*)_(.*)$:
+        to: "https://ade.mla.org/bulletin/article/ade.$1.$2"
+        regexp: true
+    ^/adefl_bulletin_t_ade(.*)_0:
+        to: "https://ade.mla.org/bulletin/issue/ade.$1"
+        regexp: true
+    ^/adefl_bulletin_ade_main:
+        to: "https://ade.mla.org/ADE-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_ade_latest:
+        to: "https://ade.mla.org/ADE-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_ade:
+        to: "https://ade.mla.org/ADE-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_ade_browse:
+        to: "https://ade.mla.org/ADE-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_c_adfl_(.*)_(.*)_(.*)$:
+        to: "https://adfl.mla.org/bulletin/article/adfl.$1.$2.$3"
+        regexp: true
+    ^/adefl_bulletin_t_adfl(.*)_(.*):
+        to: "https://adfl.mla.org/bulletin/issue/adfl.$1.$2"
+        regexp: true
+    ^/adefl_bulletin_adfl_main:
+        to: "https://adfl.mla.org/ADFL-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_adfl_latest:
+        to: "https://adfl.mla.org/ADFL-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_adfl:
+        to: "https://adfl.mla.org/ADFL-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_adfl_browse:
+        to: "https://adfl.mla.org/ADFL-Bulletin"
+        regexp: true
+    ^/adefl_bulletin_adfl_about:
+        to: "https://adfl.mla.org/ADFL-Bulletin"
+        regexp: true
+
+.other_redirects: &other_redirects
+    ^/store/(CID77/)?PID4$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Afro-American-Literature"
+        regexp: true
+    ^/store/(CID2/)?PID5$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/American-Indian-Literatures"
+        regexp: true
+    ^/store/(CID2/)?PID91$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Asian-American-Literature"
+        regexp: true
+    ^/store/(CID25/)?PID94$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/A-Bibliography-of-Stylistics-and-Related-Criticism-1967-83"
+        regexp: true
+    ^/store/(CID22/)?PID96$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Chairing-the-Foreign-Language-and-Literature-Department-Part-1"
+        regexp: true
+    ^/store/(CID22/)?PID97$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Chairing-the-Foreign-Language-and-Literature-Department-Part-2"
+        regexp: true
+    ^/store/(CID59/)?PID102$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Contemporary-Critical-Theory"
+        regexp: true
+    ^/store/(CID6/)?PID103$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Contending-with-Words"
+        regexp: true
+    ^/store/(CID52/)?PID104$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Courage-and-Tools"
+        regexp: true
+    ^/store/(CID36/)?PID108$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Disability-Studies-Enabling-the-Humanities"
+        regexp: true
+    ^/store/(CID6/)?PID109$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Discourse"
+        regexp: true
+    ^/store/(CID25/)?PID110$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Double-Minorities-of-Spain"
+        regexp: true
+    ^/store/(CID22/)?PID113$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/The-English-Coalition-Conference"
+        regexp: true
+    ^/store/(CID5/)?PID120$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/First-Line-Index-of-English-Poetry"
+        regexp: true
+    ^/store/(CID22/)?PID121$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/The-Future-of-Doctoral-Studies-in-English"
+        regexp: true
+    ^/store/(CID12/)?PID122$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/German-Studies-in-the-United-States"
+        regexp: true
+    ^/store/(CID25/)?PID123$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Guide-to-Reference-Works-for-the-Study-of-the-Spanish-Language-and-Literature-and-Spanish-American-Literature-2nd-edition"
+        regexp: true
+    ^/store/(CID25/)?PID124$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/A-Guide-to-Serial-Bibliographies-for-Modern-Literatures-2nd-edition"
+        regexp: true
+    ^/store/(CID6/)?PID125$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Helping-Students-Write-Well"
+        regexp: true
+    ^/store/(CID52/)?PID130$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Language-Gender-and-Professional-Writing"
+        regexp: true
+    ^/store/(CID6/)?PID133$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Into-the-Field"
+        regexp: true
+    ^/store/(CID25/)?PID140$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Introduction-to-Scholarship-2nd-edition"
+        regexp: true
+    ^/store/(CID22/)?PID141$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Junior-Faculty-Development"
+        regexp: true
+    ^/store/(CID14/)?PID142$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Language-Variation-in-North-American-English"
+        regexp: true
+    ^/store/(CID14/)?PID145$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Leo-Spitzer-on-Language-and-Literature"
+        regexp: true
+    ^/store/(CID14/)?PID150$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/A-Linguistic-Guide-to-Language-Learning-2nd-edition"
+        regexp: true
+    ^/store/(CID30/)?PID153$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Literature-as-Exploration-5th-edition"
+        regexp: true
+    ^/store/(CID4/)?PID164$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/On-Compiling-an-Annotated-Bibliography-2nd-edition"
+        regexp: true
+    ^/store/(CID6/)?PID168$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Perspectives-on-Research-and-Scholarship-in-Composition"
+        regexp: true
+    ^/store/(CID22/)?PID171$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Preparing-a-Nation-s-Teachers"
+        regexp: true
+    ^/store/(CID2/)?PID172$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Professions-of-Desire"
+        regexp: true
+    ^/store/(CID28/)?PID173$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Recovering-Spain-s-Feminist-Tradition"
+        regexp: true
+    ^/store/(CID2/)?PID174$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Redefining-American-Literary-History"
+        regexp: true
+    ^/store/(CID2/)?PID175$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Redrawing-the-Boundaries"
+        regexp: true
+    ^/store/(CID25/)?PID176$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/The-Relations-of-Literature-and-Science"
+        regexp: true
+    ^/store/(CID2/)?PID179$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/A-Resource-Guide-to-Asian-American-Literature"
+        regexp: true
+    ^/store/(CID6/)?PID182$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/The-Right-to-Literacy"
+        regexp: true
+    ^/store/(CID4/)?PID183$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Scholarly-Editing"
+        regexp: true
+    ^/store/(CID8/)?PID185$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Spanish-Golden-Age-Drama"
+        regexp: true
+    ^/store/(CID2/)?PID188$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Studies-in-American-Indian-Literature"
+        regexp: true
+    ^/store/(CID2/)?PID199$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Teaching-Women-s-Literature-from-a-Regional-Perspective"
+        regexp: true
+    ^/store/(CID6/)?PID200$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Technical-Writing"
+        regexp: true
+    ^/store/(CID59/)?PID201$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Textual-Analysis"
+        regexp: true
+    ^/store/(CID2/)?PID203$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Three-American-Literatures"
+        regexp: true
+    ^/store/(CID24/)?PID205$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Translating-Literature"
+        regexp: true
+    ^/store/(CID24/)?PID206$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Transliteration-of-Modern-Russian-for-English-Language-Publications"
+        regexp: true
+    ^/store/(CID6/)?PID214$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/What-Is-English."
+        regexp: true
+    ^/store/(CID2/)?PID215$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Women-s-Personal-Narratives"
+        regexp: true
+    ^/store/(CID6/)?PID220$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Reading-Sites"
+        regexp: true
+    ^/store/(CID25/)?PID221$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Chaucer-s-Fame-in-England"
+        regexp: true
+    ^/store/(CID7/)?PID236$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Using-TACT-with-Electronic-Texts"
+        regexp: true
+    ^/store/(CID22/)?PID249$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Academic-Collective-Bargaining"
+        regexp: true
+    ^/store/(CID2/)?PID250$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/A-Research-Guide-for-Undergraduate-Students-Sixth-Edition"
+        regexp: true
+    ^/store/(CID4/)?PID301$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Electronic-Textual-Editing"
+        regexp: true
+    ^/store/(CID52/)?PID306$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Diversifying-the-Discourse"
+        regexp: true
+    ^/store/(CID6/)?PID308$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Disciplinary-Identities"
+        regexp: true
+    ^/store/(CID30/)?PID313$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Integrating-Literature-and-Writing-Instruction"
+        regexp: true
+    ^/store/(CID4/)?PID317$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Introduction-to-Scholarship-in-Modern-Languages-and-Literatures-Third-Edition"
+        regexp: true
+    ^/store/(CID25/)?PID341$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/MLA-Style-Manual-and-Guide-to-Scholarly-Publishing-Third-Edition"
+        regexp: true
+    ^/store/(CID22/)?PID345$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Academic-Cultures-Professional-Preparation-and-the-Teaching-Life"
+        regexp: true
+    ^/store/(CID24/)?PID363$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/MLA-Handbook-for-Writers-of-Research-Papers-Seventh-Edition"
+        regexp: true
+    ^/store/(CID4/)?PID370$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/An-Introduction-to-Bibliographical-and-Textual-Studies.-4th-ed."
+        regexp: true
+    ^/store/(CID22/)?PID386$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/The-Chair-s-Reference"
+        regexp: true
+    ^/store/(CID22/)?PID394$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Power-Race-and-Gender-in-Academe"
+        regexp: true
+    ^/store/(CID51/)?PID436$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Studies-on-Canadian-Literature"
+        regexp: true
+    ^/store/(CID35/)?PID437$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/MLA-Shopping-Bag"
+        regexp: true
+    ^/store/(CID7/)?PID451$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Literary-Studies-in-the-Digital-Age-An-Evolving-Anthology"
+        regexp: true
+    ^/store/(CID75/)?PID458$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/List-of-2014-MLA-Members"
+        regexp: true
+    ^/store/(CID30/)?PID481$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Service-Learning-and-Literary-Studies-in-English"
+        regexp: true
+    ^/store/(CID25/)?PID474$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Literary-Research-Guide-Sixth-Edition"
+        regexp: true
+    ^/store/(CID5/)?PID8$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Antony-and-Cleopatra"
+        regexp: true
+    ^/store/(CID5/)?PID90$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/As-You-Like-It"
+        regexp: true
+    ^/store/(CID27/)?PID127$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Henry-the-Fourth-Part-One"
+        regexp: true
+    ^/store/(CID27/)?PID128$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Henry-the-Fourth-Part-Two"
+        regexp: true
+    ^/store/(CID27/)?PID129$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/The-Life-and-Death-of-King-Richard-II"
+        regexp: true
+    ^/store/(CID5/)?PID156$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Measure-for-Measure"
+        regexp: true
+    ^/store/(CID5/)?PID207$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Twelfth-Night-or-What-You-Will"
+        regexp: true
+    ^/store/(CID8/)?PID222$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/The-Winter-s-Tale"
+        regexp: true
+    ^/store/(CID38/)?PID238$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/Five-Volume-Set-of-Variorum-Editions"
+        regexp: true
+    ^/store/(CID5/)?PID435$:
+        to: "https://www.mla.org/Publications/Bookstore/A-New-Variorum-Edition-of-Shakespeare/The-Comedy-of-Errors"
+        regexp: true
+    ^/store/(CID76/)?PID9$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Achebe-s-Things-Fall-Apart"
+        regexp: true
+    ^/store/(CID5/)?PID10$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Arthurian-Tradition"
+        regexp: true
+    ^/store/(CID30/)?PID11$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Atwood-s-The-Handmaid-s-Tale-and-Other-Works"
+        regexp: true
+    ^/store/(CID5/)?PID12$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Austen-s-Pride-and-Prejudice"
+        regexp: true
+    ^/store/(CID11/)?PID13$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Balzac-s-Old-Goriot"
+        regexp: true
+    ^/store/(CID18/)?PID14$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Baudelaire-s-Flowers-of-Evil"
+        regexp: true
+    ^/store/(CID8/)?PID15$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Beckett-s-Waiting-for-Godot"
+        regexp: true
+    ^/store/(CID5/)?PID16$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Beowulf"
+        regexp: true
+    ^/store/(CID5/)?PID17$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Blake-s-Songs-of-Innocence-and-of-Experience"
+        regexp: true
+    ^/store/(CID16/)?PID18$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Boccaccio-s-Decameron"
+        regexp: true
+    ^/store/(CID5/)?PID19$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-British-Women-Poets-of-the-Romantic-Period"
+        regexp: true
+    ^/store/(CID5/)?PID20$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Charlotte-Bronte-s-Jane-Eyre"
+        regexp: true
+    ^/store/(CID5/)?PID21$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Byron-s-Poetry"
+        regexp: true
+    ^/store/(CID11/)?PID22$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Camus-s-The-Plague"
+        regexp: true
+    ^/store/(CID2/)?PID23$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Cather-s-My-Antonia"
+        regexp: true
+    ^/store/(CID23/)?PID24$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Cervantes-Don-Quixote"
+        regexp: true
+    ^/store/(CID5/)?PID25$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Chaucer-s-Canterbury-Tales-First-Edition"
+        regexp: true
+    ^/store/(CID2/)?PID26$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Chopin-s-The-Awakening"
+        regexp: true
+    ^/store/(CID5/)?PID27$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Coleridge-s-Poetry-and-Prose"
+        regexp: true
+    ^/store/(CID5/)?PID28$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Conrad-s-Heart-of-Darkness-and-The-Secret-Sharer"
+        regexp: true
+    ^/store/(CID16/)?PID29$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Dante-s-Divine-Comedy"
+        regexp: true
+    ^/store/(CID5/)?PID30$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Dickens-David-Copperfield"
+        regexp: true
+    ^/store/(CID2/)?PID31$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Dickinson-s-Poetry"
+        regexp: true
+    ^/store/(CID77/)?PID32$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Narrative-of-the-Life-of-Frederick-Douglass"
+        regexp: true
+    ^/store/(CID5/)?PID33$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Eliot-s-Middlemarch"
+        regexp: true
+    ^/store/(CID2/)?PID34$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Eliot-s-Poetry-and-Plays"
+        regexp: true
+    ^/store/(CID5/)?PID35$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shorter-Elizabethan-Poetry"
+        regexp: true
+    ^/store/(CID77/)?PID36$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Ellison-s-Invisible-Man"
+        regexp: true
+    ^/store/(CID5/)?PID37$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-English-Renaissance-Drama"
+        regexp: true
+    ^/store/(CID3/)?PID38$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Dramas-of-Euripides"
+        regexp: true
+    ^/store/(CID2/)?PID39$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Faulkner-s-The-Sound-and-the-Fury"
+        regexp: true
+    ^/store/(CID11/)?PID40$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Flaubert-s-Madame-Bovary"
+        regexp: true
+    ^/store/(CID23/)?PID41$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Garcia-Marquez-s-One-Hundred-Years-of-Solitude"
+        regexp: true
+    ^/store/(CID2/)?PID42$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Gilman-s-The-Yellow-Wall-Paper-and-Herland"
+        regexp: true
+    ^/store/(CID8/)?PID43$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Goethe-s-Faust"
+        regexp: true
+    ^/store/(CID2/)?PID44$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Gothic-Fiction"
+        regexp: true
+    ^/store/(CID3/)?PID45$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Hebrew-Bible-as-Literature-in-Translation"
+        regexp: true
+    ^/store/(CID3/)?PID46$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Homer-s-Iliad-and-Odyssey"
+        regexp: true
+    ^/store/(CID8/)?PID47$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Ibsen-s-A-Doll-House"
+        regexp: true
+    ^/store/(CID5/)?PID48$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Samuel-Johnson"
+        regexp: true
+    ^/store/(CID5/)?PID49$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Joyce-s-Ulysses"
+        regexp: true
+    ^/store/(CID12/)?PID50$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Kafka-s-Short-Fiction"
+        regexp: true
+    ^/store/(CID5/)?PID51$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Keats-s-Poetry"
+        regexp: true
+    ^/store/(CID2/)?PID52$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Kingston-s-The-Woman-Warrior"
+        regexp: true
+    ^/store/(CID11/)?PID53$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Lafayette-s-The-Princess-of-Cleves"
+        regexp: true
+    ^/store/(CID5/)?PID54$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Lessing-s-The-Golden-Notebook"
+        regexp: true
+    ^/store/(CID5/)?PID55$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-D.-H.-Lawrence"
+        regexp: true
+    ^/store/(CID12/)?PID56$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Mann-s-Death-in-Venice-and-Other-Short-Fiction"
+        regexp: true
+    ^/store/(CID5/)?PID57$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Medieval-English-Drama"
+        regexp: true
+    ^/store/(CID2/)?PID58$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Melville-s-Moby-Dick"
+        regexp: true
+    ^/store/(CID5/)?PID59$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Metaphysical-Poets"
+        regexp: true
+    ^/store/(CID2/)?PID60$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Miller-s-Death-of-a-Salesman"
+        regexp: true
+    ^/store/(CID5/)?PID61$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Milton-s-Paradise-Lost-First-Edition"
+        regexp: true
+    ^/store/(CID8/)?PID62$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Moliere-s-Tartuffe-and-Other-Plays"
+        regexp: true
+    ^/store/(CID2/)?PID63$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Momaday-s-The-Way-to-Rainy-Mountain"
+        regexp: true
+    ^/store/(CID10/)?PID64$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Montaigne-s-Essays"
+        regexp: true
+    ^/store/(CID77/)?PID65$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Novels-of-Toni-Morrison"
+        regexp: true
+    ^/store/(CID57/)?PID66$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Murasaki-Shikibu-s-The-Tale-of-Genji"
+        regexp: true
+    ^/store/(CID5/)?PID67$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Pope-s-Poetry"
+        regexp: true
+    ^/store/(CID11/)?PID68$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Proust-s-Fiction-and-Criticism"
+        regexp: true
+    ^/store/(CID9/)?PID69$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Rousseau-s-Confessions-and-Reveries-of-the-Solitary-Walker"
+        regexp: true
+    ^/store/(CID5/)?PID70$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeare-s-Hamlet"
+        regexp: true
+    ^/store/(CID5/)?PID71$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeare-s-King-Lear"
+        regexp: true
+    ^/store/(CID5/)?PID72$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeare-s-Romeo-and-Juliet"
+        regexp: true
+    ^/store/(CID5/)?PID73$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeare-s-The-Tempest-and-Other-Late-Romances"
+        regexp: true
+    ^/store/(CID5/)?PID74$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shelley-s-Frankenstein"
+        regexp: true
+    ^/store/(CID5/)?PID75$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shelley-s-Poetry"
+        regexp: true
+    ^/store/(CID5/)?PID76$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Sir-Gawain-and-the-Green-Knight"
+        regexp: true
+    ^/store/(CID5/)?PID77$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Spenser-s-Faerie-Queene"
+        regexp: true
+    ^/store/(CID11/)?PID78$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Stendhal-s-The-Red-and-the-Black"
+        regexp: true
+    ^/store/(CID5/)?PID79$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Sterne-s-Tristram-Shandy"
+        regexp: true
+    ^/store/(CID77/)?PID80$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Stowe-s-Uncle-Tom-s-Cabin"
+        regexp: true
+    ^/store/(CID5/)?PID81$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Swift-s-Gulliver-s-Travels"
+        regexp: true
+    ^/store/(CID2/)?PID82$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Thoreau-s-Walden-and-Other-Works"
+        regexp: true
+    ^/store/(CID18/)?PID83$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Tolstoy-s-Anna-Karenina"
+        regexp: true
+    ^/store/(CID3/)?PID84$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Vergil-s-Aeneid"
+        regexp: true
+    ^/store/(CID9/)?PID85$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Voltaire-s-Candide"
+        regexp: true
+    ^/store/(CID2/)?PID86$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Whitman-s-Leaves-of-Grass"
+        regexp: true
+    ^/store/(CID5/)?PID87$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Woolf-s-To-the-Lighthouse"
+        regexp: true
+    ^/store/(CID5/)?PID88$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Wordsworth-s-Poetry"
+        regexp: true
+    ^/store/(CID77/)?PID89$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Wright-s-Native-Son"
+        regexp: true
+    ^/store/(CID5/)?PID219$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Austen-s-Emma"
+        regexp: true
+    ^/store/(CID2/)?PID228$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Louise-Erdrich"
+        regexp: true
+    ^/store/(CID5/)?PID239$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Defoe-s-Robinson-Crusoe"
+        regexp: true
+    ^/store/(CID39/)?PID240$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Henry-James-s-Daisy-Miller-and-The-Turn-of-the-Screw"
+        regexp: true
+    ^/store/(CID27/)?PID244$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeare-s-Othello"
+        regexp: true
+    ^/store/(CID39/)?PID245$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-DeLillo-s-White-Noise"
+        regexp: true
+    ^/store/(CID39/)?PID246$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Novels-of-Samuel-Richardson"
+        regexp: true
+    ^/store/(CID28/)?PID247$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Early-Modern-Spanish-Drama"
+        regexp: true
+    ^/store/(CID39/)?PID248$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Emily-Brontes-Wuthering-Heights"
+        regexp: true
+    ^/store/(CID30/)?PID307$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Collodi-s-Pinocchio-and-Its-Adaptations"
+        regexp: true
+    ^/store/(CID30/)?PID309$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Song-of-Roland"
+        regexp: true
+    ^/store/(CID5/)?PID312$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Chaucers-Troilus-and-Criseyde-and-the-Shorter-Poems"
+        regexp: true
+    ^/store/(CID2/)?PID316$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Wiesel-s-Night"
+        regexp: true
+    ^/store/(CID39/)?PID318$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Marguerite-de-Navarre-s-Heptameron"
+        regexp: true
+    ^/store/(CID5/)?PID322$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Milton-s-Shorter-Poetry-and-Prose"
+        regexp: true
+    ^/store/(CID28/)?PID329$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Puig-s-Kiss-of-the-Spider-Woman"
+        regexp: true
+    ^/store/(CID28/)?PID330$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Sor-Juana-Ines-de-la-Cruz"
+        regexp: true
+    ^/store/(CID12/)?PID333$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Grass-s-The-Tin-Drum"
+        regexp: true
+    ^/store/(CID39/)?PID336$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Pynchon-s-The-Crying-of-Lot-49-and-Other-Works"
+        regexp: true
+    ^/store/(CID2/)?PID344$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Nabokov-s-Lolita"
+        regexp: true
+    ^/store/(CID5/)?PID353$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Oscar-Wilde"
+        regexp: true
+    ^/store/(CID39/)?PID355$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Writings-of-Bartolome-de-Las-Casas"
+        regexp: true
+    ^/store/(CID39/)?PID360$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Lazarillo-de-Tormes-and-the-Picaresque-Tradition"
+        regexp: true
+    ^/store/(CID39/)?PID361$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Poe-s-Prose-and-Poetry"
+        regexp: true
+    ^/store/(CID39/)?PID366$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Dickens-s-Bleak-House"
+        regexp: true
+    ^/store/(CID39/)?PID367$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Fitzgerald-s-The-Great-Gatsby"
+        regexp: true
+    ^/store/(CID39/)?PID372$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Duras-s-Ourika"
+        regexp: true
+    ^/store/(CID39/)?PID373$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Teresa-of-Avila-and-the-Spanish-Mystics"
+        regexp: true
+    ^/store/(CID39/)?PID376$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Scotts-Waverley-Novels"
+        regexp: true
+    ^/store/(CID39/)?PID380$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Hurston-s-Their-Eyes-Were-Watching-God-and-Other-Works"
+        regexp: true
+    ^/store/(CID39/)?PID382$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Woolfs-Mrs.-Dalloway"
+        regexp: true
+    ^/store/(CID39/)?PID406$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Ovid-and-the-Ovidian-Tradition"
+        regexp: true
+    ^/store/(CID39/)?PID416$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Tim-OBrien"
+        regexp: true
+    ^/store/(CID39/)?PID423$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Faulkners-As-I-Lay-Dying"
+        regexp: true
+    ^/store/(CID39/)?PID424$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Poetry-of-John-Gower"
+        regexp: true
+    ^/store/(CID39/)?PID426$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-H.D.-s-Poetry-and-Prose"
+        regexp: true
+    ^/store/(CID39/)?PID428$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Franois-Rabelais"
+        regexp: true
+    ^/store/(CID39/)?PID434$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Naguib-Mahfouz"
+        regexp: true
+    ^/store/(CID39/)?PID446$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Ngugi-wa-Thiong-o"
+        regexp: true
+    ^/store/(CID39/)?PID447$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-The-Story-of-the-Stone-Dream-of-the-Red-Chamber"
+        regexp: true
+    ^/store/(CID39/)?PID449$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Robert-Louis-Stevenson"
+        regexp: true
+    ^/store/(CID39/)?PID454$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Italo-Calvino"
+        regexp: true
+    ^/store/(CID39/)?PID457$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Carmen-Martn-Gaite"
+        regexp: true
+    ^/store/(CID39/)?PID461$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-John-Dryden"
+        regexp: true
+    ^/store/(CID39/)?PID462$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Shakespeares-The-Taming-of-the-Shrew"
+        regexp: true
+    ^/store/(CID39/)?PID463$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Behns-Oroonoko"
+        regexp: true
+    ^/store/(CID39/)?PID468$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Coetzees-Disgrace-and-Other-Works"
+        regexp: true
+    ^/store/(CID39/)?PID472$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Petrarch-s-Canzoniere-and-the-Petrarchan-Tradition"
+        regexp: true
+    ^/store/(CID39/)?PID477$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Austen-s-Mansfield-Park"
+        regexp: true
+    ^/store/(CID39/)?PID478$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-the-Works-of-Primo-Levi"
+        regexp: true
+    ^/store/(CID39/)?PID469$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Chaucer-s-Canterbury-Tales-Second-Edition"
+        regexp: true
+    ^/store/(CID39/)?PID448$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Milton-s-Paradise-Lost-Second-Edition"
+        regexp: true
+    ^/store/(CID39/)?PID483$:
+        to: "https://www.mla.org/Publications/Bookstore/Approaches-to-Teaching-World-Literature/Approaches-to-Teaching-Cervantes-s-Don-Quixote-Second-Edition"
+        regexp: true
+    ^/store/(CID24/)?PID131$:
+        to: "https://www.mla.org/Publications/Bookstore/Copublished-with-Houghton-Mifflin/Line-by-Line-How-to-Edit-Your-Own-Writing"
+        regexp: true
+    ^/store/(CID11/)?PID93$:
+        to: "https://www.mla.org/Publications/Bookstore/Index-Society-Fund-Publications/Bibliography-of-Seventeenth-Century-French-Prose-Fiction"
+        regexp: true
+    ^/store/(CID5/)?PID95$:
+        to: "https://www.mla.org/Publications/Bookstore/Index-Society-Fund-Publications/British-Newspapers-and-Periodicals-1641-1700"
+        regexp: true
+    ^/store/(CID5/)?PID210$:
+        to: "https://www.mla.org/Publications/Bookstore/Index-Society-Fund-Publications/Victorian-Novels-in-Serial"
+        regexp: true
+    ^/store/(CID12/)?PID136$:
+        to: "https://www.mla.org/Publications/Bookstore/Introductions-to-Older-Languages/An-Introduction-to-the-Gothic-Language"
+        regexp: true
+    ^/store/(CID13/)?PID137$:
+        to: "https://www.mla.org/Publications/Bookstore/Introductions-to-Older-Languages/An-Introduction-to-Old-Irish"
+        regexp: true
+    ^/store/(CID11/)?PID138$:
+        to: "https://www.mla.org/Publications/Bookstore/Introductions-to-Older-Languages/An-Introduction-to-Old-Occitan"
+        regexp: true
+    ^/store/(CID13/)?PID401$:
+        to: "https://www.mla.org/Publications/Bookstore/Introductions-to-Older-Languages/An-Introduction-to-Old-French"
+        regexp: true
+    ^/store/(CID8/)?PID1$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Adelheit-von-Rastenberg-An-English-Translation"
+        regexp: true
+    ^/store/(CID8/)?PID2$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Adelheit-von-Rastenberg-The-Original-German-Text"
+        regexp: true
+    ^/store/(CID31/)?PID7$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/An-Anthology-of-Modern-Urdu-Poetry"
+        regexp: true
+    ^/store/(CID9/)?PID100$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Claire-d-Albe-An-English-Translation"
+        regexp: true
+    ^/store/(CID9/)?PID101$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Claire-d-Albe-The-Original-French-Text"
+        regexp: true
+    ^/store/(CID8/)?PID106$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Daemmerung-Schauspiel-in-fuenf-Akten"
+        regexp: true
+    ^/store/(CID31/)?PID107$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Descent"
+        regexp: true
+    ^/store/(CID18/)?PID112$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/El-encaje-roto-y-otros-cuentos"
+        regexp: true
+    ^/store/(CID76/)?PID117$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Essential-Encounters"
+        regexp: true
+    ^/store/(CID56/)?PID143$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/La-signorina-e-altri-racconti"
+        regexp: true
+    ^/store/(CID9/)?PID146$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Letters-from-a-Peruvian-Woman"
+        regexp: true
+    ^/store/(CID9/)?PID147$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Lettres-d-une-Peruvienne"
+        regexp: true
+    ^/store/(CID9/)?PID148$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Letters-of-Mistress-Henley-Published-by-Her-Friend"
+        regexp: true
+    ^/store/(CID9/)?PID149$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Lettres-de-Mistriss-Henley-publiees-par-son-amie"
+        regexp: true
+    ^/store/(CID11/)?PID154$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Mademoiselle-Giraud-ma-femme"
+        regexp: true
+    ^/store/(CID11/)?PID155$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Mademoiselle-Giraud-My-Wife"
+        regexp: true
+    ^/store/(CID23/)?PID162$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Nigilistka"
+        regexp: true
+    ^/store/(CID23/)?PID163$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Nihilist-Girl"
+        regexp: true
+    ^/store/(CID64/)?PID165$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Opgang"
+        regexp: true
+    ^/store/(CID76/)?PID166$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Ourika-An-English-Translation"
+        regexp: true
+    ^/store/(CID76/)?PID167$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Ourika-The-Original-French-Text"
+        regexp: true
+    ^/store/(CID76/)?PID177$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Rencontres-essentielles"
+        regexp: true
+    ^/store/(CID56/)?PID184$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/The-Signorina-and-Other-Stories"
+        regexp: true
+    ^/store/(CID9/)?PID186$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/The-Story-of-Ernestine"
+        regexp: true
+    ^/store/(CID9/)?PID187$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Histoire-d-Ernestine"
+        regexp: true
+    ^/store/(CID18/)?PID202$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Torn-Lace-and-Other-Stories"
+        regexp: true
+    ^/store/(CID8/)?PID208$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Twilight-A-Drama-in-Five-Acts"
+        regexp: true
+    ^/store/(CID11/)?PID230$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/The-Story-of-the-Marquise-Marquis-de-Banneville"
+        regexp: true
+    ^/store/(CID11/)?PID231$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Histoire-de-la-Marquise-Marquis-de-Banneville"
+        regexp: true
+    ^/store/(CID11/)?PID234$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Monsieur-Venus-A-Materialist-Novel"
+        regexp: true
+    ^/store/(CID11/)?PID235$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Monsieur-Venus-Roman-materialiste"
+        regexp: true
+    ^/store/(CID21/)?PID241$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Beauty-and-Love"
+        regexp: true
+    ^/store/(CID21/)?PID242$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Huesn-ue-Ask"
+        regexp: true
+    ^/store/(CID56/)?PID310$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Letter-to-My-Mother"
+        regexp: true
+    ^/store/(CID56/)?PID311$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Lettera-alla-madre"
+        regexp: true
+    ^/store/(CID43/)?PID323$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Three-Women"
+        regexp: true
+    ^/store/(CID43/)?PID324$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Trois-femmes"
+        regexp: true
+    ^/store/(CID28/)?PID326$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/An-Anthology-of-Spanish-American-Modernismo"
+        regexp: true
+    ^/store/(CID28/)?PID327$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Personality-Disorders-and-Other-Stories-English-translation"
+        regexp: true
+    ^/store/(CID28/)?PID328$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Trastornos-de-caracter-y-otros-cuentos-Spanish-text"
+        regexp: true
+    ^/store/(CID11/)?PID351$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/An-Anthology-of-Nineteenth-Century-Women-s-Poetry-from-France"
+        regexp: true
+    ^/store/(CID77/)?PID357$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/T-T_sarah_1"
+        regexp: true
+    ^/store/(CID43/)?PID365$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/An-Anthology-of-Nineteenth-Century-Women-s-Poetry-from-Spain"
+        regexp: true
+    ^/store/(CID31/)?PID368$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/An-Anthology-of-Modern-Italian-Poetry"
+        regexp: true
+    ^/store/(CID43/)?PID384$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Confessions-of-a-Poisoner-Written-by-Herself"
+        regexp: true
+    ^/store/(CID43/)?PID385$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Bekenntnisse-einer-Giftmischerin-von-ihr-selbst-geschrieben"
+        regexp: true
+    ^/store/(CID43/)?PID403$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Gabriel-An-English-Translation"
+        regexp: true
+    ^/store/(CID43/)?PID404$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Gabriel-The-Original-French-Text"
+        regexp: true
+    ^/store/(CID43/)?PID470$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Don-Quixote-A-Dramatic-Adaptation"
+        regexp: true
+    ^/store/(CID43/)?PID471$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/Don-Kikhot-A-Dramatic-Adaptation"
+        regexp: true
+    ^/store/(CID77/)?PID358$:
+        to: "https://www.mla.org/Publications/Bookstore/MLA-Texts-and-Translations/T-T_sarah_2"
+        regexp: true
+    ^/store/(CID44/)?PID190$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Children-s-Literature"
+        regexp: true
+    ^/store/(CID59/)?PID191$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Contemporary-Theory-to-Undergraduates"
+        regexp: true
+    ^/store/(CID30/)?PID193$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Literature-and-Medicine"
+        regexp: true
+    ^/store/(CID30/)?PID194$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Literature-and-Other-Arts"
+        regexp: true
+    ^/store/(CID30/)?PID195$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Oral-Traditions"
+        regexp: true
+    ^/store/(CID5/)?PID196$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Shakespeare-through-Performance"
+        regexp: true
+    ^/store/(CID2/)?PID197$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-the-Literatures-of-Early-America"
+        regexp: true
+    ^/store/(CID5/)?PID198$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Tudor-and-Stuart-Women-Writers"
+        regexp: true
+    ^/store/(CID2/)?PID224$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-the-Representation-of-the-Holocaust"
+        regexp: true
+    ^/store/(CID28/)?PID314$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Representations-of-the-Spanish-Civil-War"
+        regexp: true
+    ^/store/(CID2/)?PID325$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Nineteenth-Century-American-Poetry"
+        regexp: true
+    ^/store/(CID30/)?PID332$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Life-Writing-Texts"
+        regexp: true
+    ^/store/(CID44/)?PID346$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-North-American-Environmental-Literature"
+        regexp: true
+    ^/store/(CID30/)?PID369$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-World-Literature"
+        regexp: true
+    ^/store/(CID44/)?PID381$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-the-African-Novel"
+        regexp: true
+    ^/store/(CID44/)?PID383$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Literature-and-Language-Online"
+        regexp: true
+    ^/store/(CID44/)?PID390$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-the-Graphic-Novel"
+        regexp: true
+    ^/store/(CID44/)?PID392$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Early-Modern-English-Prose"
+        regexp: true
+    ^/store/(CID44/)?PID395$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Italian-American-Literature-Film-and-Popular-Culture"
+        regexp: true
+    ^/store/(CID44/)?PID414$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-British-Women-Playwrights-of-the-Restoration-and-Eighteenth-Century"
+        regexp: true
+    ^/store/(CID44/)?PID417$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Narrative-Theory"
+        regexp: true
+    ^/store/(CID44/)?PID421$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Law-and-Literature"
+        regexp: true
+    ^/store/(CID44/)?PID425$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-French-Women-Writers-of-the-Renaissance-and-Reformation"
+        regexp: true
+    ^/store/(CID44/)?PID429$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Seventeenth-and-Eighteenth-Century-French-Women-Writers"
+        regexp: true
+    ^/store/(CID44/)?PID438$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Film"
+        regexp: true
+    ^/store/(CID44/)?PID443$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Anglophone-Caribbean-Literature"
+        regexp: true
+    ^/store/(CID44/)?PID480$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-Early-Modern-English-Literature-from-the-Archives"
+        regexp: true
+    ^/store/(CID44/)?PID484$:
+        to: "https://www.mla.org/Publications/Bookstore/Options-for-Teaching/Teaching-the-Latin-American-Boom"
+        regexp: true
+    ^/store/(CID6/)?PID92$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Assessment-of-Writing"
+        regexp: true
+    ^/store/(CID6/)?PID119$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Feminism-and-Composition-Studies"
+        regexp: true
+    ^/store/(CID6/)?PID151$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Literacy-and-Computers"
+        regexp: true
+    ^/store/(CID6/)?PID216$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Writing-in-Multicultural-Settings"
+        regexp: true
+    ^/store/(CID6/)?PID217$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Writing-Teaching-and-Learning-in-the-Disciplines"
+        regexp: true
+    ^/store/(CID6/)?PID218$:
+        to: "https://www.mla.org/Publications/Bookstore/Research-and-Scholarship-in-Composition/Writing-Theory-and-Critical-Theory"
+        regexp: true
+    ^/store/(CID5/)?PID6$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/Anglo-Irish-Literature"
+        regexp: true
+    ^/store/(CID5/)?PID115$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/The-English-Romantic-Poets-4th-edition"
+        regexp: true
+    ^/store/(CID2/)?PID204$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/The-Transcendentalists"
+        regexp: true
+    ^/store/(CID5/)?PID209$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/Victorian-Fiction"
+        regexp: true
+    ^/store/(CID5/)?PID212$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/Victorian-Periodicals"
+        regexp: true
+    ^/store/(CID5/)?PID213$:
+        to: "https://www.mla.org/Publications/Bookstore/Reviews-of-Research/Victorian-Prose"
+        regexp: true
+    ^/store/(CID2/)?PID118$:
+        to: "https://www.mla.org/Publications/Bookstore/Selected-Bibliographies-in-Language-and-Literature/The-Female-Bildungsroman-in-English"
+        regexp: true
+    ^/store/(CID25/)?PID169$:
+        to: "https://www.mla.org/Publications/Bookstore/Selected-Bibliographies-in-Language-and-Literature/Portuguese-Language-and-Luso-Brazilian-Literature"
+        regexp: true
+    ^/store/(CID28/)?PID105$:
+        to: "https://www.mla.org/Publications/Bookstore/Teaching-Languages-Literatures-and-Cultures/Cultural-Studies-in-the-Curriculum"
+        regexp: true
+    ^/store/(CID14/)?PID144$:
+        to: "https://www.mla.org/Publications/Bookstore/Teaching-Languages-Literatures-and-Cultures/Learning-Foreign-and-Second-Languages"
+        regexp: true
+    ^/store/(CID11/)?PID232$:
+        to: "https://www.mla.org/Publications/Bookstore/Teaching-Languages-Literatures-and-Cultures/Modern-French-Literary-Studies-in-the-Classroom"
+        regexp: true
+    ^/store/(CID48/)?PID243$:
+        to: "https://www.mla.org/Publications/Bookstore/Teaching-Languages-Literatures-and-Cultures/Remapping-the-Foreign-Language-Curriculum"
+        regexp: true
+    ^/store/(CID2/)?PID226$:
+        to: "https://www.mla.org/Publications/Bookstore/World-Literatures-Reimagined/Brazilian-Narrative-Traditions-in-a-Comparative-Context"
+        regexp: true
+    ^/store/(CID67/)?PID356$:
+        to: "https://www.mla.org/Publications/Bookstore/World-Literatures-Reimagined/Tales-of-Crossed-Destinies"
+        regexp: true
+    ^/store/(CID67/)?PID420$:
+        to: "https://www.mla.org/Publications/Bookstore/World-Literatures-Reimagined/Contemporary-Galician-Cultural-Studies"
+        regexp: true
+    ^/store/(CID70/)?PID466$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-January-2014"
+        regexp: true
+    ^/store/(CID70/)?PID467$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-March-2014"
+        regexp: true
+    ^/store/(CID70/)?PID475$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-May-2014"
+        regexp: true
+    ^/store/(CID70/)?PID476$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-October-2014"
+        regexp: true
+    ^/store/(CID70/)?PID479$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-November-2014"
+        regexp: true
+    ^/store/(CID70/)?PID482$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-January-2015"
+        regexp: true
+    ^/store/(CID70/)?PID486$:
+        to: "https://www.mla.org/Publications/Bookstore/PMLA/PMLA.-March-2015"
+        regexp: true
+    ^/store/(CID72/)?PID398$:
+        to: "https://www.mla.org/Publications/Bookstore/Profession/Profession-2009"
+        regexp: true
+    ^/store/(CID72/)?PID418$:
+        to: "https://www.mla.org/Publications/Bookstore/Profession/Profession-2010"
+        regexp: true
+    ^/store/(CID72/)?PID433$:
+        to: "https://www.mla.org/Publications/Bookstore/Profession/Profession-2011"
+        regexp: true
+    ^/store/(CID72/)?PID450$:
+        to: "https://www.mla.org/Publications/Bookstore/Profession/Profession-2012"
+        regexp: true
+    ^/store/(CID72/)?PID465$:
+        to: "https://www.mla.org/Publications/Bookstore/Profession/Profession-2013"
+        regexp: true
+    ^/store/(CID22/)?PID98$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/Chairing-the-Foreign-Language-and-Literature-Department-Parts-1-and-2"
+        regexp: true
+    ^/store/(CID73/)?PID116$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/The-English-Romantic-Poets-Collection"
+        regexp: true
+    ^/store/(CID73/)?PID157$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/Medieval-English-Literature-Collection"
+        regexp: true
+    ^/store/(CID73/)?PID409$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/Nineteenth-Century-American-Literature-Collection"
+        regexp: true
+    ^/store/(CID73/)?PID410$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/African-American-Literature-Collection"
+        regexp: true
+    ^/store/(CID73/)?PID411$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/Nineteenth-Century-French-Literature-Collection"
+        regexp: true
+    ^/store/(CID73/)?PID412$:
+        to: "https://www.mla.org/Publications/Bookstore/Specially-Priced-Sets2/Works-by-William-Shakespeare-Collection"
+        regexp: true
+    ^/store/(CID22/)?PID3$:
+        to: "https://www.mla.org/Publications/Bookstore/Nonseries/Advocacy-in-the-Classroom"
+        regexp: true
+    ^(/pdf/.*)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^/images/docstudio/(.*)$:
+        to: "https://apps.mla.org/images/docstudio/$1"
+        regexp: true
+    ^(/scripts/.*)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/css/default.css)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_searchres)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_part)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_sub)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_type)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_for)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_div)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_dg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_alit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_ss)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mtgs_openpublic)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_se)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_soc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_ln)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_res)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_detail)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_dropdowns)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_access)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_all)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_duallogin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_archive)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_archive_org)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_addevent)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_mysessions)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_mysessions_details)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_details_print)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_blog_index)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_kwd)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_arch)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_day)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_part)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_subject)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_type)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_pres)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_browse_recent)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_details)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_schedule)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_myschedule)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_blog_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_listings_blog_preview)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_part)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/program_survey)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/public_sessions_2016)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitmap)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform2)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform3)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/booth_availability)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform4)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/terms_and_conditions)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform_paycc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibitform_paycheck)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mla_exhibitor_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibit_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibit_balance)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_exhibit_badge)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_browse_list)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_browse)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/search_tips)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_org)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_queue)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_blank_xml)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_promo)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cfp_details)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/submit_calls)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/callsforpapers)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/onsite_reg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/onsite_reg_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/onsite_reg_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/onsite_reg_badge)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_bookhotel)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_paycc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_paycheck)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_error)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_already_reg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_adefl)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_menu)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/scoringguide_specsessions)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_view)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_4)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_3)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_panelist_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_2)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_form_1)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/tour_ssp_header)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_success)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_discussion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_mla)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form4_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_social)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_social)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_social)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_social)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_main_special)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_special)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form2_special)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form3_special)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_special)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_waiver_funds)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_funds_request)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_funds)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_view_waiver)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_waiver_request)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_waiver_na)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_funds_na)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_division)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_amerlit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_progs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_social)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_invites)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_na_waiver)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_na_funds)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_alias)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_alias_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_edit_fields)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_edit_subs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_review_score)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_review_download)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_review_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_navigation)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_review_summary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_admin_plenary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/aa_appl_err)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_copresenter)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_deadline_passed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_netscape)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_papers4_plus)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_panelist_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_member_search_detail)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_join_invitation)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_form1)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_form2)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_form3)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_view)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_directory)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_view_allied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_popup)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_popup1822)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_shared_form4)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ssp_form1_intro)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_avupdate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_directory)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_contactreview)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_contactform)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_aa_appl_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_aa_appl_complete)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_aa_appl_return)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_aa_appl_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/2526_october)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_cmt)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_cmt_pf)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_admin_cat)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_admin_doc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exc_documents_nonextjs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_documents)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_documents_nonextjs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/daoc_documents)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_list)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_submit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_comments)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_post)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_upload)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_prop_upload_complete)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_english)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_eng_rev)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_eng_cfm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_open)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_opn_rev)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cn_da_org_opn_cfm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/comment_preview)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/06rescomments_index)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/commsugg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/commsugg_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_svp)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_ec)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_sid)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_sid_contest)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rdlist)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_dece)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_contest)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_dece_contest)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_summary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_thanks)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_denied)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_candidate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_nominations)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_ratification)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_instructions)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_dgece)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_progress)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_exit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_sidlist)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/scnsl)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/scnsl_2013)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop_details)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop_print)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bib_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bib_printdiv)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bib_details)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bookrequest)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bookrequest_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bookrequest_form_rg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bookrequest_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bookrequest_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exam_copy)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_req_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_book)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_payment)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_admin_request)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/excp_admin_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_admin_new)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_admin_renew)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_admin_reinstate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_admin_changes)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_config)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_contact)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_langs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_degrees)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_langs_all)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_fields)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chair_update_faculty)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_data)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_survey)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/acad_work_ipeds)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_contact)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_langs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_reg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_summary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_nolangs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_branch)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/all_other_lang_pdf)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_changereport)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/about_search_flsurvey)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/aggregate_enrollment)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/nces_id)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/commonly_used_abbrev)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/flsurvey_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/staffsurvey_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/staffsurvey_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_gradstudent)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_nontenure)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_unemployed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_international)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/grants_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_search_eng)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_results_eng)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_search_fl)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_institutions)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_position)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_dept)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_eng)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_dept_view)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_fl)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_both)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_no_vacancy)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_billing)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_dept_contact)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_interview_edit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_interview_admin_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_interview_admin_browse)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_interview_admin_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_interview_admin_dept)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_new_interfolio)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_no_vacancy)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_advertised)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_filled)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_exit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_jil_ad)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/survey_hiring_jil_dept_view)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_listing)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_saved_jobs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_howto)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_search_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_subscribe_edit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_subscribe_edit_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_db_error)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_offline)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_login_chair)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/jil_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mlajil_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mlajil_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mlajil_catrnk)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mlajil_status)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/mlajil_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chrsearch_1)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chrsearch_res)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chrsearch_detail)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chrsearch_advanced)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^/map_data_results(.*)$:
+        to: "https://apps.mla.org/map_data_results$1"
+        regexp: true
+    ^(/map_data_refine)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_ordered)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_primary)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_snapshot)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_langlist)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_states)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/map_data_results_compare)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_pending)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_chair_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_chairs_records_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_chair_record_search_res)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chairs_manager_edit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_login_redirect)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_login_redirect)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_renew)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_renew)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_paycheck)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_paycheck)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_paycc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_paycc)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_joint)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_joint_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_joint_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_edit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_renew)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_renewck)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_config_ade)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_config_adfl)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_nojoint)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_error)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_error)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_student_reg)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_affiliate_landing_select)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_affiliate_landing)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_affiliate_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_join_affiliate_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/chairs_manager)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_search_res)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_admin_newchair)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_css)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adfl_css)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_affiliate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_chair_search_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_chair_search)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_chair_search_res)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ade_join_chair_update)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_chair_search_contact)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_chairs_add)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/adefl_join_closed)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/members_by_affil)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cdr_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cdr_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/cdr_exit)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/nm_registration)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/nm_login)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/nm_confirm)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/nm_changepw)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/login_dual)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop_xml_browse)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop_xml_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/member_search_detail)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/da_docs)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_prog)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_mem)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_nonmem)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/login_chair)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/enroll_data_comb)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/commsugg_clip_main)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/commsugg_clip_nominate)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/join_invite)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/orginfo_queue)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/req_allied_checklist)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/2011_7yr_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/2010_7yr_review)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/dop_user_guide)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bib_xml_browse)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/bib_xml_results)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_excursion)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/conv_reg_program)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/paypal_interstitial)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/2016_housing_form)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/exhibit_ad_policy)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/2016_exhibitor_terms)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/div_disc_grp_to_forum)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_1)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_2)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_3)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_4)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_5)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_6)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/ballot_rd_7)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/forum_executive)$:
+        to: "https://apps.mla.org$1"
+        regexp: true
+    ^(/spring05_nlpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/summer05nlpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall06pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/fall05nl_callspdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter05callspdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter0506pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/spring_06_nl)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer06pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall06)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter06linkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2003_nl_fall)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2003_nl_winter)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2004_nl_spring)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2004_nl_summer)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2004_nl_fall)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/2004_nl_winter)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring07linkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring07nolinkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter06nolinkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring03pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter02pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall02pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer02pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring02pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter01pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall01pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer01pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring01pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer03pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_sum03pdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer07_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_summer07_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nlfall07_linkspdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nlfall07_nolinkspdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/winter07_nlpdfnolink)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/winter07_nlpdflinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring08_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_spring08_nolink)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/08summer_nllinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/08summer_nl_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall08pdf_link)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_fall08pdf_nolink)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter08linkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_winter08nolinkpdf)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/summer09_nl_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/spring09_nl_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/fall09_nl_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_41-2_summer09)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/winter09_nl_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/fall09_nl_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/winter09_nl_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-1_links)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-1_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-2_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-3_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-4)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-1)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-1_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_42-4_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-2_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-3_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-4)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_43-4_nolinks)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_44-1)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_44-2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_44-3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_44-4)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_45-1)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_45-2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_45-3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_45-4)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_46-1)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_46-2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_46-3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_46-4)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_47-1)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_47_2)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+    ^(/nl_47_3)$:
+        to: "https://www.mla.org/Membership/MLA-Newsletter"
+        regexp: true
+
+https://www.mla.org:
+    type: upstream
+    upstream: app:http
+    cache: *cache_content
+    redirects:
+        paths:
+            # machform
+            /src/ThinkCreative/MachformBundle/Lib/machform/data/(.*):
+                to: "/ezpublish_legacy/var/storage/machform/data/$1"
+                regexp: true
+
+            <<: *global_redirects
+
+            <<: *bulletin_redirects
+
+            <<: *other_redirects
+
+https://admin.mla.org:
+    type: upstream
+    upstream: app:http
+    cache: *cache_disabled
+    redirects:
+        paths:
+            # machform
+            /src/ThinkCreative/MachformBundle/Lib/machform/data/(.*):
+                to: "/ezpublish_legacy/var/storage/machform/data/$1"
+                regexp: true
+
+            <<: *global_redirects
+
+https://ade.mla.org/.well-known/acme-challenge:
+    type: upstream
+    upstream: app:http
+https://ade.mla.org:
+    type: redirect
+    to: https://www.ade.mla.org
+https://adfl.mla.org/.well-known/acme-challenge:
+    type: upstream
+    upstream: app:http
+https://adfl.mla.org:
+    type: redirect
+    to: https://www.adfl.mla.org
+
+
+
+
+https://www.mla.org/_fragment: *route_session
+https://www.mla.org/user: *route_session
+https://www.mla.org/login: *route_session
+https://www.mla.org/member: *route_session
+https://www.mla.org/join: *route_session
+https://www.mla.org/ajax: *route_session
+https://www.mla.org/shop: *route_session
+https://www.mla.org/Membership/Join-Renew: *route_session
+https://www.mla.org/Member-Search: *route_session
+
+https://www.mla.org/assetic: *route_assets
+https://www.mla.org/bundles: *route_assets
+https://www.mla.org/css: *route_assets
+https://www.mla.org/design: *route_assets
+https://www.mla.org/extension: *route_assets
+https://www.mla.org/images: *route_assets
+https://www.mla.org/javascript: *route_assets
+https://www.mla.org/js: *route_assets
+https://www.mla.org/share: *route_assets
+https://www.mla.org/var: *route_assets
+
+https://www.ade.mla.org:
+    type: upstream
+    upstream: app:http
+    cache: *cache_content
+    redirects:
+        paths:
+            # ade-specific
+            /bulletin/frames_search.htm:
+                to: "/ADE-Bulletin"
+                prefix: false
+            /bulletin/frames_browse.htm:
+                to: "/ADE-Bulletin"
+                prefix: false
+            /bulletin/index.htm:
+                to: "/ADE-Bulletin"
+                prefix: false
+            /bulletin/frames_about.htm:
+                to: "/ADE-Bulletin"
+                prefix: false
+
+            # machform
+            /src/ThinkCreative/MachformBundle/Lib/machform/data/(.*):
+                to: "/ezpublish_legacy/var/storage/machform/data/$1"
+                regexp: true
+
+            <<: *global_redirects
+
+            <<: *bulletin_redirects
+
+            <<: *other_redirects
+
+https://www.ade.mla.org/_fragment: *route_session
+https://www.ade.mla.org/login: *route_session
+https://www.ade.mla.org/member: *route_session
+https://www.ade.mla.org/ajax: *route_session
+
+https://www.ade.mla.org/assetic: *route_assets
+https://www.ade.mla.org/bundles: *route_assets
+https://www.ade.mla.org/css: *route_assets
+https://www.ade.mla.org/design: *route_assets
+https://www.ade.mla.org/extension: *route_assets
+https://www.ade.mla.org/images: *route_assets
+https://www.ade.mla.org/javascript: *route_assets
+https://www.ade.mla.org/js: *route_assets
+https://www.ade.mla.org/share: *route_assets
+https://www.ade.mla.org/var: *route_assets
+
+https://www.adfl.mla.org:
+    type: upstream
+    upstream: app:http
+    cache: *cache_content
+    redirects:
+        paths:
+            # adfl-specific
+            /bulletin/index.htm:
+                to: "/ADFL-Bulletin"
+                prefix: false
+            /bulletin/frames_about.htm:
+                to: "/ADFL-Bulletin"
+                prefix: false
+
+            # machform
+            /src/ThinkCreative/MachformBundle/Lib/machform/data/(.*):
+                to: "/ezpublish_legacy/var/storage/machform/data/$1"
+                regexp: true
+
+            <<: *global_redirects
+
+            <<: *bulletin_redirects
+
+            <<: *other_redirects
+
+https://www.adfl.mla.org/_fragment: *route_session
+https://www.adfl.mla.org/login: *route_session
+https://www.adfl.mla.org/member: *route_session
+https://www.adfl.mla.org/ajax: *route_session
+
+https://www.adfl.mla.org/assetic: *route_assets
+https://www.adfl.mla.org/bundles: *route_assets
+https://www.adfl.mla.org/css: *route_assets
+https://www.adfl.mla.org/design: *route_assets
+https://www.adfl.mla.org/extension: *route_assets
+https://www.adfl.mla.org/images: *route_assets
+https://www.adfl.mla.org/javascript: *route_assets
+https://www.adfl.mla.org/js: *route_assets
+https://www.adfl.mla.org/share: *route_assets
+https://www.adfl.mla.org/var: *route_assets
+
+http://health.mla.ccplatform.net/:
+    type: upstream
+    upstream: app:http
+    cache: *cache_disabled

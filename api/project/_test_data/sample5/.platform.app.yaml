@@ -1,6 +1,0 @@
-name: test_app
-type: php:7.4
-hooks:
-    build: !include
-        type: string
-        path: build.sh
