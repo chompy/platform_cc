@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/helloyi/go-sshclient"
 
@@ -37,7 +37,7 @@ import (
 
 	"golang.org/x/term"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
 )
 
 const sshAPIURL = "https://ssh.api.platform.sh/"
@@ -241,8 +241,8 @@ func (p Project) SSHUrl(env *Environment, service string) string {
 	return fmt.Sprintf("%s--%s@%s", urlSplit[0], service, urlSplit[1])
 }
 
-// SSHWorkerUrl returns the SSH url for a worker in the environment.
-func (p Project) SSHWorkerUrl(env *Environment, service string, worker string) string {
+// SSHWorkerURL returns the SSH url for a worker in the environment.
+func (p Project) SSHWorkerURL(env *Environment, service string, worker string) string {
 	urlSplit := strings.Split(strings.TrimPrefix(env.Links.SSH.HREF, "ssh://"), "@")
 	return fmt.Sprintf("%s--%s--%s@%s", urlSplit[0], service, worker, urlSplit[1])
 }

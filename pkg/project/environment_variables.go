@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 const entropySalt = "Dyt+&&*^dKfD9,$rZRA$|I^DLKr%<By"

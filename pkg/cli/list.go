@@ -21,7 +21,7 @@ import (
 	"sort"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/spf13/cobra"
 )

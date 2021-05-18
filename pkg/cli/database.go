@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 var databaseCmd = &cobra.Command{
@@ -51,7 +51,7 @@ var databaseDumpCmd = &cobra.Command{
 	},
 }
 
-var databaseSqlCmd = &cobra.Command{
+var databaseSQLCmd = &cobra.Command{
 	Use:     "sql",
 	Aliases: []string{"shell", "sh"},
 	Short:   "Run SQL on database.",
@@ -74,6 +74,6 @@ func init() {
 	databaseCmd.PersistentFlags().StringP("database", "d", "", "name of database")
 	databaseCmd.PersistentFlags().StringP("service", "s", "", "name of service")
 	databaseCmd.AddCommand(databaseDumpCmd)
-	databaseCmd.AddCommand(databaseSqlCmd)
+	databaseCmd.AddCommand(databaseSQLCmd)
 	RootCmd.AddCommand(databaseCmd)
 }

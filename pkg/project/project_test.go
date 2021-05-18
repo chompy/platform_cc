@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 func TestFromPath(t *testing.T) {

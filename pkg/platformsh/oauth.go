@@ -32,21 +32,21 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 	"golang.org/x/oauth2"
 )
 
 const oauthTokenStore = "psh_api_token"
 const oauthPort = 31698
-const oauthClientId = "platform-cli"
+const oauthClientID = "platform-cli"
 const oauthAuthURL = "https://auth.api.platform.sh/oauth2/authorize"
 const oauthTokenURL = "https://accounts.platform.sh/oauth2/token"
 
 func getOauthConfig() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID: oauthClientId,
+		ClientID: oauthClientID,
 		Scopes:   []string{"offline_access"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  oauthAuthURL,

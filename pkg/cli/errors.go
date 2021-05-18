@@ -20,5 +20,6 @@ package cli
 import "errors"
 
 var (
+	// ErrDefinitionNotFound is an error returns when a service definition is not found.
 	ErrDefinitionNotFound = errors.New("definition not found")
 )

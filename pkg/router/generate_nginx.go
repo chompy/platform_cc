@@ -26,7 +26,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 // GetUpstreamHost retrieves upstream hostname from upstream value in route.

@@ -20,9 +20,14 @@ package platformsh
 import "github.com/pkg/errors"
 
 var (
-	ErrProjectNotFound     = errors.New("platform.sh project not found")
-	ErrBadAPIResponse      = errors.New("platform.sh api returned unexpected response")
-	ErrMissingAPIToken     = errors.New("platform.sh api token not found, please use the platformsh:login command to generate it")
-	ErrInvalidEnvironment  = errors.New("invalid platform.sh environment")
+	// ErrProjectNotFound is an error returned when a Platform.sh project is not found.
+	ErrProjectNotFound = errors.New("platform.sh project not found")
+	// ErrBadAPIResponse is an error returned when an unexpected response is returned from the Platform.sh API.
+	ErrBadAPIResponse = errors.New("platform.sh api returned unexpected response")
+	// ErrMissingAPIToken is an error returned when the Platform.sh API token is missing.
+	ErrMissingAPIToken = errors.New("platform.sh api token not found, please use the platformsh:login command to generate it")
+	// ErrInvalidEnvironment is an error returned when an invalid Platform.sh environment is specified.
+	ErrInvalidEnvironment = errors.New("invalid platform.sh environment")
+	// ErrEnvironmentNotFound is an error returned when a specified Platform.sh environment is not found.
 	ErrEnvironmentNotFound = errors.New("platform.sh environment not found")
 )

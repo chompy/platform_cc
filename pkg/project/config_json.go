@@ -22,9 +22,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 // BuildConfigJSON makes config.json for container runtime.

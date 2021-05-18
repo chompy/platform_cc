@@ -20,8 +20,12 @@ package project
 import "github.com/pkg/errors"
 
 var (
-	ErrContainerNoIP       = errors.New("container has no ip address")
+	// ErrContainerNoIP is an error returned when a container has no IP address.
+	ErrContainerNoIP = errors.New("container has no ip address")
+	// ErrInvalidRelationship is an error returned when Platform.sh relationships are invalid.
 	ErrInvalidRelationship = errors.New("one or more relationships are invalid")
-	ErrNoApplicationFound  = errors.New("project should have at least one application")
-	ErrInvalidDefinition   = errors.New("invalid definition")
+	// ErrNoApplicationFound is an error returned when a project has no applications.
+	ErrNoApplicationFound = errors.New("project should have at least one application")
+	// ErrInvalidDefinition is an error returned when a service definition is invalid.
+	ErrInvalidDefinition = errors.New("invalid definition")
 )

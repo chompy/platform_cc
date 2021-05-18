@@ -23,14 +23,14 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/platformsh"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/platformsh"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 const pshSyncSSHCertPath = "/mnt/pcc_ssh_cert"
@@ -138,7 +138,7 @@ func (p *Project) PlatformSHSyncMounts(envName string) error {
 		case *def.AppWorker:
 			{
 				name = d.Name
-				sshURL = p.PlatformSH.SSHWorkerUrl(env, d.ParentApp, d.Name)
+				sshURL = p.PlatformSH.SSHWorkerURL(env, d.ParentApp, d.Name)
 				mounts = d.Mounts
 				break
 			}

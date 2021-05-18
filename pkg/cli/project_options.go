@@ -21,10 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 
 	"github.com/spf13/cobra"
 )

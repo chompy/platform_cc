@@ -18,10 +18,10 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package cli
 
 import (
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/router"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/router"
 )
 
 var routerCertificatesCmd = &cobra.Command{

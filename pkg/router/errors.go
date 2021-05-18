@@ -20,5 +20,6 @@ package router
 import "github.com/pkg/errors"
 
 var (
+	// ErrUpstreamNotFound is an error returned when a route upstream is not found.
 	ErrUpstreamNotFound = errors.New("upstream not found")
 )

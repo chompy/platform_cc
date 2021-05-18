@@ -23,18 +23,18 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/platformsh"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/platformsh"
 
 	"golang.org/x/term"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
-	"gitlab.com/contextualcode/platform_cc/pkg/router"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/router"
 )
 
 var appPrefix = []string{"app-", "a-", "application-"}

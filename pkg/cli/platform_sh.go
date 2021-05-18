@@ -20,9 +20,9 @@ package cli
 import (
 	"fmt"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
-	"gitlab.com/contextualcode/platform_cc/pkg/platformsh"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/platformsh"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -41,7 +41,7 @@ var platformShLoginCmd = &cobra.Command{
 	},
 }
 
-var platformShSshCmd = &cobra.Command{
+var platformShSSHCmd = &cobra.Command{
 	Use: "ssh [-e environment] [-s service] [--pipe]",
 	Run: func(cmd *cobra.Command, args []string) {
 		// fetch project
@@ -103,11 +103,11 @@ var platformShSyncCmd = &cobra.Command{
 }
 
 func init() {
-	platformShSshCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
-	platformShSshCmd.PersistentFlags().StringP("environment", "e", "", "name of environment")
-	platformShSshCmd.Flags().Bool("pipe", false, "return ssh url instead of creating interactive terminal")
+	platformShSSHCmd.PersistentFlags().StringP("service", "s", "", "name of service/application/worker")
+	platformShSSHCmd.PersistentFlags().StringP("environment", "e", "", "name of environment")
+	platformShSSHCmd.Flags().Bool("pipe", false, "return ssh url instead of creating interactive terminal")
 	platformShCmd.AddCommand(platformShLoginCmd)
-	platformShCmd.AddCommand(platformShSshCmd)
+	platformShCmd.AddCommand(platformShSSHCmd)
 	platformShSyncCmd.PersistentFlags().StringP("environment", "e", "", "name of environment")
 	platformShSyncCmd.Flags().Bool("skip-variables", false, "Skip variable sync.")
 	platformShSyncCmd.Flags().Bool("skip-mounts", false, "Skip mount sync.")

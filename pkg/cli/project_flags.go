@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"sort"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 var projectFlagCmd = &cobra.Command{
