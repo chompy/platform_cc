@@ -30,12 +30,12 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 // Container contains information needed to run a container.

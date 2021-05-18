@@ -25,7 +25,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 const shareLogUpload = "https://pastebin.chompy.me/documents"

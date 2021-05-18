@@ -25,11 +25,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 // HTTPPort is the port to accept HTTP requests on.

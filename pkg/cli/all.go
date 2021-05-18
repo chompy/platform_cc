@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/router"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/router"
 )
 
 var allCmd = &cobra.Command{

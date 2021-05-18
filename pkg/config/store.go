@@ -23,8 +23,8 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 const globalConfigPath = "config.json"

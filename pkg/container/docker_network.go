@@ -23,7 +23,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 const dockerNetworkName = "pcc"

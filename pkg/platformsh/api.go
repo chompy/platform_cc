@@ -26,7 +26,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
 	"github.com/pkg/errors"
 )

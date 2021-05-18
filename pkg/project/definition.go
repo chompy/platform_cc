@@ -24,8 +24,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 const containerMntPath = "/mnt"

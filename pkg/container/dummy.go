@@ -178,7 +178,7 @@ func (d Dummy) ContainerUpload(id string, path string, r io.Reader) error {
 	return nil
 }
 
-// ContainerUpload uploads to dummy container.
+// ContainerDownload uploads to dummy container.
 func (d Dummy) ContainerDownload(id string, path string, w io.Writer) error {
 	c := d.GetContainer(id)
 	if c == nil {

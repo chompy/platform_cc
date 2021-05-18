@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 // FlagInt defines flag for enabled features. This is the old version that uses bitmasks.
@@ -107,9 +107,12 @@ const (
 )
 
 const (
-	FlagSourceLocal  = "project"
+	// FlagSourceLocal defines a flag specific to the project.
+	FlagSourceLocal = "project"
+	// FlagSourceGlobal defines a flag set for all projects.
 	FlagSourceGlobal = "global"
-	FlagSourceNone   = "unset"
+	// FlagSourceNone defines a flag that has not been set.
+	FlagSourceNone = "unset"
 )
 
 // UnmarshalJSON implements Unmarshaler interface.
@@ -241,7 +244,7 @@ func (p *Project) HasFlag(name string) bool {
 	return false
 }
 
-// Source returns the source of the given flag.
+// FlagSource returns the source of the given flag.
 func (p *Project) FlagSource(name string) string {
 	// check local project flag
 	if p.Flags.IsSet(name) {

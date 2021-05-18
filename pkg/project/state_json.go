@@ -20,7 +20,7 @@ package project
 import (
 	"encoding/json"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 type serviceState struct {

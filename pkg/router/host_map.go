@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 // HostRoute contains all routes mapped to a host.

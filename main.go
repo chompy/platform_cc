@@ -18,8 +18,8 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
-	"gitlab.com/contextualcode/platform_cc/pkg/cli"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/cli"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 var version string

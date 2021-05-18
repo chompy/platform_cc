@@ -31,11 +31,11 @@ import (
 
 	"github.com/martinlindhe/base36"
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/config"
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
-	"gitlab.com/contextualcode/platform_cc/pkg/platformsh"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/config"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/platformsh"
 )
 
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}

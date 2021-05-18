@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 // ReplaceDefault replaces {default} in given path with project id + domain suffix.

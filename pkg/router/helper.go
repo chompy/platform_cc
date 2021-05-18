@@ -24,9 +24,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
 )
 
 // ListActiveProjects returns list of project ids of projects current loaded in to the router.

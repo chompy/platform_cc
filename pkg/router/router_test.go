@@ -22,8 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/contextualcode/platform_cc/pkg/def"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/def"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 // TestGenerateNginx tests the generation of nginx config.

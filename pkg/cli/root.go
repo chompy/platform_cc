@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
 )
 
 // RootCmd is the top level command.

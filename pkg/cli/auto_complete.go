@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gitlab.com/contextualcode/platform_cc/pkg/output"
-	"gitlab.com/contextualcode/platform_cc/pkg/project"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/output"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/project"
 )
 
 // listCommandAliases returns a list of every possible command combination with aliases.

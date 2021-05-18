@@ -18,7 +18,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 package project
 
 import (
-	"gitlab.com/contextualcode/platform_cc/pkg/container"
+	"gitlab.com/contextualcode/platform_cc/v2/pkg/container"
 )
 
 // Status returns list of container status
