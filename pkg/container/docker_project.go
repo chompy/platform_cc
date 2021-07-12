@@ -180,7 +180,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 	}
 	defer attachResp.Close()
 	// capture interupt to stop container
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT)
 	go func() {
 		<-c
