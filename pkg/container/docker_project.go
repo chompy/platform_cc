@@ -140,6 +140,7 @@ func (d Docker) ProjectCopySlot(pid string, sourceSlot int, destSlot int) error 
 		cConfig,
 		cHostConfig,
 		&network.NetworkingConfig{},
+		nil,
 		fmt.Sprintf(containerNamingPrefix, pid)+"slotcopy",
 	)
 	if err != nil {

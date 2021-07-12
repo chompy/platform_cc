@@ -135,7 +135,9 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 	hresp, err := d.client.ContainerExecAttach(
 		context.Background(),
 		resp.ID,
-		execConfig,
+		types.ExecStartCheck{
+			Tty: !hasStdin,
+		},
 	)
 	if err != nil {
 		return -1, errors.WithStack(err)
@@ -161,7 +163,9 @@ func (d Docker) ContainerShell(id string, user string, cmd []string, stdin io.Re
 					hresp, err = d.client.ContainerExecAttach(
 						context.Background(),
 						resp.ID,
-						execConfig,
+						types.ExecStartCheck{
+							Tty: !hasStdin,
+						},
 					)
 					if err != nil {
 						exit <- exitResult{-1, errors.WithStack(err)}

@@ -31,7 +31,7 @@ type Docker struct {
 
 // NewDocker creates a new Docker container handler.
 func NewDocker() (Docker, error) {
-	dockerClient, err := client.NewEnvClient()
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return Docker{}, errors.WithStack(convertDockerError(err))
 	}

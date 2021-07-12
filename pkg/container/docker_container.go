@@ -147,10 +147,11 @@ func (d Docker) ContainerStart(c Config) error {
 		cConfig,
 		cHostConfig,
 		&network.NetworkingConfig{},
+		nil,
 		c.GetContainerName(),
 	)
 	if err != nil {
-		if client.IsErrImageNotFound(err) {
+		if client.IsErrNotFound(err) {
 			return errors.WithStack(ErrImageNotFound)
 		}
 		if strings.Contains(err.Error(), "already in use") {
@@ -206,7 +207,14 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 	resp, err := d.client.ContainerExecCreate(
 		context.Background(),
 		id,
-		execConfig,
+		types.ExecConfig{
+			User:         user,
+			Tty:          true,
+			AttachStdin:  true,
+			AttachStderr: true,
+			AttachStdout: true,
+			Cmd:          cmd,
+		},
 	)
 	if err != nil {
 		return -1, errors.WithStack(convertDockerError(err))
@@ -215,7 +223,9 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 	hresp, err := d.client.ContainerExecAttach(
 		context.Background(),
 		resp.ID,
-		execConfig,
+		types.ExecStartCheck{
+			Tty: true,
+		},
 	)
 	if err != nil {
 		return -1, errors.WithStack(convertDockerError(err))

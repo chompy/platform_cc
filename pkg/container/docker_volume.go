@@ -35,7 +35,7 @@ func (d Docker) createNFSVolume(pid string, name string, path string, containerT
 	path = strings.TrimLeft(path, "/")
 	pathString := fmt.Sprintf(":/System/Volumes/Data/%s", path)
 	output.LogDebug("NFS mount path.", pathString)
-	volCreateBody := volume.VolumesCreateBody{
+	volCreateBody := volume.VolumeCreateBody{
 		Name:   getMountName(pid, name, containerType),
 		Driver: "local",
 		DriverOpts: map[string]string{
@@ -54,7 +54,7 @@ func (d Docker) createNFSVolume(pid string, name string, path string, containerT
 }
 
 // listProjectVolumes gets a list of all volumes for given project.
-func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error) {
+func (d Docker) listProjectVolumes(pid string) (volume.VolumeListOKBody, error) {
 	output.LogDebug(fmt.Sprintf("List volumes for project %s (all slots).", pid), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
@@ -66,7 +66,7 @@ func (d Docker) listProjectVolumes(pid string) (volume.VolumesListOKBody, error)
 }
 
 // listProjectSlotVolumes gets a list of all volumes for given project slot.
-func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesListOKBody, error) {
+func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumeListOKBody, error) {
 	output.LogDebug(fmt.Sprintf("List volumes for project %s in slot %d.", pid, slot), nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", fmt.Sprintf(containerNamingPrefix+"*", pid))
@@ -75,7 +75,7 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 		filterArgs,
 	)
 	if err != nil {
-		return volume.VolumesListOKBody{}, errors.WithStack(convertDockerError(err))
+		return volume.VolumeListOKBody{}, errors.WithStack(convertDockerError(err))
 	}
 	out := make([]*types.Volume, 0)
 	for _, v := range list.Volumes {
@@ -88,7 +88,7 @@ func (d Docker) listProjectSlotVolumes(pid string, slot int) (volume.VolumesList
 }
 
 // listAllVolumes gets a list of all volumes used by Platform.CC.
-func (d Docker) listAllVolumes() (volume.VolumesListOKBody, error) {
+func (d Docker) listAllVolumes() (volume.VolumeListOKBody, error) {
 	output.LogDebug("List all volumes.", nil)
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("name", "pcc-*")
@@ -100,7 +100,7 @@ func (d Docker) listAllVolumes() (volume.VolumesListOKBody, error) {
 }
 
 // deleteVolumes deletes given Docker volumes.
-func (d Docker) deleteVolumes(volList volume.VolumesListOKBody) error {
+func (d Docker) deleteVolumes(volList volume.VolumeListOKBody) error {
 	// prepare progress output
 	output.LogDebug("Delete Docker volumes.", volList)
 	msgs := make([]string, len(volList.Volumes))
