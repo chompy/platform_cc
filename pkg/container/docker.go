@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/docker/cli/cli/connhelper"
 	"github.com/docker/docker/client"
@@ -48,10 +49,11 @@ func NewDocker() (Docker, error) {
 }
 
 func getDockerOpts() ([]client.Opt, error) {
+	timeout := client.WithTimeout(time.Second * 900) // 15 minutes
 	// standard docker environment
 	host := os.Getenv("DOCKER_HOST")
 	if !strings.HasPrefix(host, "ssh://") {
-		return []client.Opt{client.FromEnv}, nil
+		return []client.Opt{client.FromEnv, timeout}, nil
 	}
 	// use ssh
 	// https://stackoverflow.com/a/57933792
@@ -71,6 +73,7 @@ func getDockerOpts() ([]client.Opt, error) {
 		client.WithHTTPClient(httpClient),
 		client.WithHost(helper.Host),
 		client.WithDialContext(helper.Dialer),
+		timeout,
 	)
 	version := os.Getenv("DOCKER_API_VERSION")
 	if version != "" {
