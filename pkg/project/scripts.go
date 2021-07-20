@@ -94,6 +94,10 @@ timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
 touch /tmp/.ready2
 chown -R web /tmp
 chmod -R 0755 /tmp
+# UPDATE COMPOSER
+if [ -f /usr/bin/composer ]; then
+	composer self-update -q -n
+fi
 # NOTE: we don't want the builder method move_source_directory to execute in PCC
 # TODO this could break in the future....
 if [ -f /etc/platform/flavor.d/composer.py ]; then
