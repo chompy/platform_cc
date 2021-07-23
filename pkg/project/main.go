@@ -282,6 +282,11 @@ func (p *Project) Start() error {
 		// start
 		c := p.NewContainer(service)
 		if err := c.Start(); err != nil {
+			if errors.Is(err, ErrContainerRunning) {
+				output.Info(fmt.Sprintf("Container '%s' is already running.", c.Config.GetContainerName()))
+				output.IndentLevel--
+				continue
+			}
 			return errors.WithStack(err)
 		}
 		// container type specific operations

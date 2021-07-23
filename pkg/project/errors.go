@@ -28,4 +28,6 @@ var (
 	ErrNoApplicationFound = errors.New("project should have at least one application")
 	// ErrInvalidDefinition is an error returned when a service definition is invalid.
 	ErrInvalidDefinition = errors.New("invalid definition")
+	// ErrContainerRunning is returned when attempting to start an already running container.
+	ErrContainerRunning = errors.New("container already running")
 )

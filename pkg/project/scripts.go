@@ -90,7 +90,8 @@ touch /tmp/.ready1
 // appBuildCmd is the build command for applications.
 const appBuildCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
-until [ -f /tmp/.ready2 ]; do sleep 1; done
+timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
+touch /tmp/.ready2
 chown -R web /tmp
 chmod -R 0755 /tmp
 # NOTE: we don't want the builder method move_source_directory to execute in PCC
@@ -187,13 +188,15 @@ touch /tmp/.ready1
 // serviceStartCmd is the command to start a service.
 const serviceStartCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
-until [ -f /tmp/.ready2 ]; do sleep 1; done
+timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
+touch /tmp/.ready2
 /etc/platform/start &
 `
 
 // serviceOpenCmd is the command to open a service.
 const serviceOpenCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
-until [ -f /tmp/.ready2 ]; do sleep 1; done
+timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
+touch /tmp/.ready2
 echo '%s' | base64 -d | /etc/platform/commands/open
 `

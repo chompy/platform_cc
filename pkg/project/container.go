@@ -91,6 +91,11 @@ func (c Container) Start() error {
 	done := output.Duration(
 		fmt.Sprintf("Start %s '%s.'", c.Config.ObjectType.TypeName(), c.Name),
 	)
+	// ensure container isn't already running
+	containerStatus, _ := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
+	if containerStatus.Running {
+		return errors.WithStack(ErrContainerRunning)
+	}
 	// start container
 	if err := c.containerHandler.ContainerStart(c.Config); err != nil {
 		return errors.WithStack(err)
@@ -448,7 +453,15 @@ func (c Container) Commit() error {
 
 // DeleteCommit deletes the commit image.
 func (c Container) DeleteCommit() error {
-	return errors.WithStack(c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName()))
+	err := c.containerHandler.ContainerDeleteCommit(c.Config.GetContainerName())
+	if err != nil {
+		if errors.Is(err, container.ErrImageNotFound) {
+			output.Warn(err.Error())
+			return nil
+		}
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // Upload uploads given reader to container as a single file at given path.
