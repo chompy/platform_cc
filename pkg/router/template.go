@@ -95,11 +95,11 @@ server {
 		location ~* {
 			proxy_pass http://{{ .upstream }};
 			proxy_set_header X-Client-IP $server_addr;
-			proxy_set_header X-Forwarded-Host $host;
+			proxy_set_header X-Forwarded-Host {{ .original_host }};
 			proxy_set_header X-Forwarded-Port $server_port;
 			proxy_set_header X-Forwarded-Proto $scheme;
-			proxy_set_header X-Forwarded-Server $host;
-			proxy_set_header Host $host;
+			proxy_set_header X-Forwarded-Server {{ .original_host }};
+			proxy_set_header Host {{ .original_host }};
 			proxy_set_header X-Forwarded-For $remote_addr;
 		}
 	}
