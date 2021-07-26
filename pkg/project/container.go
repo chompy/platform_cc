@@ -40,18 +40,19 @@ import (
 
 // Container contains information needed to run a container.
 type Container struct {
-	Config            container.Config
-	Name              string
-	Definition        interface{}
-	Relationships     map[string][]map[string]interface{}
-	containerHandler  container.Interface
-	configJSON        []byte
-	initCommand       string
-	buildCommand      string
-	mountCommand      string
-	patchCommand      string
-	mountStrategy     string
-	postDeployCommand string
+	Config                container.Config
+	Name                  string
+	Definition            interface{}
+	Relationships         map[string][]map[string]interface{}
+	containerHandler      container.Interface
+	configJSON            []byte
+	initCommand           string
+	buildCommand          string
+	mountCommand          string
+	patchCommand          string
+	postBuildPatchCommand string
+	mountStrategy         string
+	postDeployCommand     string
 }
 
 // NewContainer creates a new container.
@@ -74,14 +75,15 @@ func (p *Project) NewContainer(d interface{}) Container {
 			WorkingDir:   def.AppDir,
 			EnableOSXNFS: p.Flags.IsOn(EnableOSXNFSMounts),
 		},
-		containerHandler:  p.containerHandler,
-		configJSON:        configJSON,
-		initCommand:       p.GetDefinitionInitCommand(d),
-		buildCommand:      p.GetDefinitionBuildCommand(d),
-		mountCommand:      p.GetDefinitionMountCommand(d),
-		patchCommand:      p.GetDefinitionPatch(d),
-		mountStrategy:     p.GetOption(OptionMountStrategy),
-		postDeployCommand: p.GetDefinitionPostDeployCommand(d),
+		containerHandler:      p.containerHandler,
+		configJSON:            configJSON,
+		initCommand:           p.GetDefinitionInitCommand(d),
+		buildCommand:          p.GetDefinitionBuildCommand(d),
+		mountCommand:          p.GetDefinitionMountCommand(d),
+		patchCommand:          p.GetDefinitionPatch(d),
+		postBuildPatchCommand: p.GetDefinitionPostBuildPatch(d),
+		mountStrategy:         p.GetOption(OptionMountStrategy),
+		postDeployCommand:     p.GetDefinitionPostDeployCommand(d),
 	}
 	return o
 }
@@ -258,6 +260,19 @@ func (c Container) Build() error {
 		output.Warn("Build exited with non zero code.")
 	}
 	done()
+	// post build patch
+	if c.postBuildPatchCommand != "" {
+		d2 := output.Duration("Post build patch.")
+		if _, err := c.containerHandler.ContainerCommand(
+			c.Config.GetContainerName(),
+			"root",
+			[]string{"bash", "--login", "-c", c.postBuildPatchCommand},
+			nil,
+		); err != nil {
+			return errors.WithStack(err)
+		}
+		d2()
+	}
 	return nil
 }
 
