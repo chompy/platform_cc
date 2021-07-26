@@ -101,20 +101,15 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 					return nil, errors.WithStack(err)
 				}
 			}
-			oURL, err := url.Parse(route.OriginalURL)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
 			outHm["routes"] = append(
 				outHm["routes"].([]map[string]interface{}),
 				map[string]interface{}{
-					"path":          path,
-					"type":          route.Type,
-					"upstream":      upstreamHost,
-					"to":            route.To,
-					"redirects":     redirects,
-					"route":         route,
-					"original_host": oURL.Hostname(),
+					"path":      path,
+					"type":      route.Type,
+					"upstream":  upstreamHost,
+					"to":        route.To,
+					"redirects": redirects,
+					"route":     route,
 				},
 			)
 		}
