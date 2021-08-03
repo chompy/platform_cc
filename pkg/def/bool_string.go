@@ -34,6 +34,11 @@ func (d *BoolString) SetDefaults() {
 	}
 }
 
+// IsSet returns true if the value is set.
+func (d BoolString) IsSet() bool {
+	return d.isSet
+}
+
 // IsString returns true if current value is string.
 func (d BoolString) IsString() bool {
 	return d.stringVal != ""

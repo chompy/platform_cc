@@ -45,6 +45,9 @@ func (d *AppWebLocation) SetDefaults() {
 	d.Allow.SetDefaults()
 	d.RequestBuffering.SetDefaults()
 	for i := range d.Rules {
+		if !d.Rules[i].Passthru.IsSet() {
+			d.Rules[i].Passthru = d.Passthru
+		}
 		d.Rules[i].SetDefaults()
 	}
 }
