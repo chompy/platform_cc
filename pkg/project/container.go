@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,9 +104,10 @@ func (c Container) Start() error {
 		return errors.WithStack(err)
 	}
 	// upload config.json
+	log.Println(string(c.configJSON))
 	d2 := output.Duration("Upload config.json.")
 	if err := c.Upload(
-		"/run/config.json",
+		"/config.json",
 		bytes.NewReader(c.configJSON),
 	); err != nil {
 		return errors.WithStack(err)

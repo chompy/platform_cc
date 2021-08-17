@@ -81,6 +81,7 @@ chown -Rf root:root /run/ssh/id
 chmod -Rf -rwx /run/ssh/id
 rm -f /run/rsa_hostkey
 # BOOT
+cp /config.json /run/config.json
 /etc/platform/boot
 chown -R web /tmp
 chmod -R 0755 /tmp
@@ -152,6 +153,8 @@ chmod +x /tmp/deploy.py
 // serviceContainerCmd is the service container start command.
 const serviceContainerCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
+chown -R app:app /run
+chmod -R 0777 /run
 /usr/bin/python2.7 /tmp/fake-rpc.py &> /tmp/fake-rpc.log &
 runsvdir -P /etc/service &> /tmp/runsvdir.log &
 exec init
@@ -184,7 +187,9 @@ chown -R root:root /run/sshd
 chmod -R -rwx /run/sshd
 chown -Rf root:root /run/ssh/id
 chmod -Rf -rwx /run/ssh/id
+chmod -R 0777 /run
 rm -f /run/rsa_hostkey
+cp /config.json /run/config.json
 /etc/platform/boot
 touch /tmp/.ready1
 `
@@ -194,6 +199,8 @@ const serviceStartCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
 touch /tmp/.ready2
+chown -R app:app /run
+chmod -R 0777 /run
 /etc/platform/start &
 `
 
@@ -202,5 +209,7 @@ const serviceOpenCmd = `
 until [ -f /tmp/.ready1 ]; do sleep 1; done
 timeout 1m bash -c 'until [ -f /tmp/.ready2 ]; do sleep 1; done'
 touch /tmp/.ready2
+chown -R app:app /run
+chmod -R 0777 /run
 echo '%s' | base64 -d | /etc/platform/commands/open
 `

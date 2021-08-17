@@ -74,6 +74,12 @@ func (d Docker) ContainerStart(c Config) error {
 	)
 	// get mounts
 	mounts := make([]mount.Mount, 0)
+	mounts = append(mounts, mount.Mount{
+		Type:     "bind",
+		Source:   "/sys/fs/cgroup",
+		Target:   "/sys/fs/cgroup",
+		ReadOnly: true,
+	})
 	// volumes
 	for k, v := range c.Volumes {
 		if k == "" || v == "" {
@@ -137,7 +143,8 @@ func (d Docker) ContainerStart(c Config) error {
 	}
 	cHostConfig := &container.HostConfig{
 		AutoRemove:   false,
-		Privileged:   true,
+		CapAdd:       []string{"SYS_ADMIN"},
+		Tmpfs:        map[string]string{"/tmp": "", "/run": "", "/run/lock": ""},
 		Mounts:       mounts,
 		PortBindings: portBinding,
 	}
