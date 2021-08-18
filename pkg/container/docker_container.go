@@ -143,6 +143,7 @@ func (d Docker) ContainerStart(c Config) error {
 	}
 	cHostConfig := &container.HostConfig{
 		AutoRemove:   false,
+		Privileged:   true,
 		CapAdd:       []string{"SYS_ADMIN"},
 		Tmpfs:        map[string]string{"/tmp": "exec,mode=777", "/run": "exec,mode=777"},
 		Mounts:       mounts,
