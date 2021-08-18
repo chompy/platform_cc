@@ -75,7 +75,7 @@ func (d Docker) ContainerStart(c Config) error {
 	// get mounts
 	mounts := make([]mount.Mount, 0)
 	mounts = append(mounts, mount.Mount{
-		Type:     "bind",
+		Type:     mount.TypeBind,
 		Source:   "/sys/fs/cgroup",
 		Target:   "/sys/fs/cgroup",
 		ReadOnly: true,
@@ -144,7 +144,7 @@ func (d Docker) ContainerStart(c Config) error {
 	cHostConfig := &container.HostConfig{
 		AutoRemove:   false,
 		CapAdd:       []string{"SYS_ADMIN"},
-		Tmpfs:        map[string]string{"/tmp": "", "/run": "", "/run/lock": ""},
+		Tmpfs:        map[string]string{"/tmp": "exec,mode=777", "/run": "exec,mode=777"},
 		Mounts:       mounts,
 		PortBindings: portBinding,
 	}

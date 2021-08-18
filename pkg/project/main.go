@@ -261,6 +261,10 @@ func (p *Project) Start() error {
 	// build list of services (apps, services, workers) that need to start
 	serviceList := make([]interface{}, 0)
 	for _, s := range p.Services {
+		// ignore network storage service as it is not needed by pcc
+		if s.GetTypeName() == "network-storage" {
+			continue
+		}
 		serviceList = append(serviceList, s)
 	}
 	for _, a := range p.Apps {
