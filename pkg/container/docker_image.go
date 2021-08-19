@@ -97,27 +97,19 @@ func (d Docker) ImagePull(c []Config) error {
 		}
 	}
 	prog := output.Progress(msgs)
-	// simultaneously pull images
 	outputEnabled := output.Enable
-	var wg sync.WaitGroup
+	output.Enable = false
+	defer func() { output.Enable = outputEnabled }()
 	for i, c := range c {
-		wg.Add(1)
-		go func(i int, c Config) {
-			defer wg.Done()
-			defer func() { output.Enable = outputEnabled }()
-			output.Enable = false
-			imagePullProg := func(p imagePullProgress) {
-				prog(i, output.ProgressMessageWait, &p.Detail.Current, &p.Detail.Total)
-			}
-			if err := d.imagePullSingle(c, imagePullProg); err != nil {
-				prog(i, output.ProgressMessageError, nil, nil)
-				output.LogError(err)
-				return
-			}
-			prog(i, output.ProgressMessageDone, nil, nil)
-		}(i, c)
+		imagePullProg := func(p imagePullProgress) {
+			prog(i, output.ProgressMessageWait, &p.Detail.Current, &p.Detail.Total)
+		}
+		if err := d.imagePullSingle(c, imagePullProg); err != nil {
+			prog(i, output.ProgressMessageError, nil, nil)
+			return errors.WithStack(err)
+		}
+		prog(i, output.ProgressMessageDone, nil, nil)
 	}
-	wg.Wait()
 	return nil
 }
 
