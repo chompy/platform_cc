@@ -80,7 +80,7 @@ var projectPullCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
-		defaultRegistry := cmd.Flags().Lookup("default").Value.String()
+		defaultRegistry := cmd.Flags().Lookup("registry").Value.String()
 		handleError(proj.SetDefaultRegistry(defaultRegistry))
 		handleError(proj.Pull())
 	},
