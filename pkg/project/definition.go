@@ -69,7 +69,7 @@ func (p *Project) GetDefinitionType(d interface{}) string {
 	return ""
 }
 
-// GetDefinitionImage returns the container image for the given definition.
+// GetDefinitionImages returns the container image for the given definition.
 func (p *Project) GetDefinitionImages(d interface{}) []string {
 	typeName := strings.Split(p.GetDefinitionType(d), ":")
 	out := make([]string, 0)
