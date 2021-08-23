@@ -70,9 +70,18 @@ func (p *Project) GetDefinitionType(d interface{}) string {
 }
 
 // GetDefinitionImage returns the container image for the given definition.
-func (p *Project) GetDefinitionImage(d interface{}) string {
+func (p *Project) GetDefinitionImages(d interface{}) []string {
 	typeName := strings.Split(p.GetDefinitionType(d), ":")
-	return fmt.Sprintf("%s%s-%s", platformShDockerImagePrefix, typeName[0], typeName[1])
+	out := make([]string, 0)
+	if registries[defaultRegistry] != "" {
+		out = append(out, fmt.Sprintf("%s/%s-%s", registries[defaultRegistry], typeName[0], typeName[1]))
+	}
+	for _, dockerRegistry := range registries {
+		if dockerRegistry != registries[defaultRegistry] {
+			out = append(out, fmt.Sprintf("%s/%s-%s", dockerRegistry, typeName[0], typeName[1]))
+		}
+	}
+	return out
 }
 
 // GetDefinitionHostName returns the host name for the container of the given definition.

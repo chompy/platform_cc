@@ -161,7 +161,7 @@ func (d Dummy) ContainerStatus(id string) (Status, error) {
 		IPAddress:    "1.1.1.1",
 		HasContainer: true,
 		Slot:         c.Config.Slot,
-		Image:        c.Config.Image,
+		Image:        c.Config.Images[0],
 		State:        "running",
 	}, nil
 }

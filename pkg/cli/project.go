@@ -75,11 +75,13 @@ var projectRestartCmd = &cobra.Command{
 }
 
 var projectPullCmd = &cobra.Command{
-	Use:   "pull",
+	Use:   "pull [--registry]",
 	Short: "Pull all Docker images for project.",
 	Run: func(cmd *cobra.Command, args []string) {
 		proj, err := getProject(true)
 		handleError(err)
+		defaultRegistry := cmd.Flags().Lookup("default").Value.String()
+		handleError(proj.SetDefaultRegistry(defaultRegistry))
 		handleError(proj.Pull())
 	},
 }
@@ -271,6 +273,7 @@ func init() {
 	projectRestartCmd.Flags().Bool("no-commit", false, "don't commit the container after being built")
 	projectRestartCmd.Flags().Bool("no-validate", false, "don't validate the project config files")
 	projectRoutesCmd.Flags().Bool("json", false, "JSON output")
+	projectPullCmd.Flags().String("registry", "cc", "set default registry (cc, psh)")
 	projectCmd.AddCommand(projectStartCmd)
 	projectCmd.AddCommand(projectStopCmd)
 	projectCmd.AddCommand(projectRestartCmd)

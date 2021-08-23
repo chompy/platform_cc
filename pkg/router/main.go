@@ -66,7 +66,7 @@ nginx -g "daemon off;"
 		Volumes: map[string]string{
 			"_global": "/var/pcc_global",
 		},
-		Image:      "docker.io/contextualcode/platform_cc_router:latest",
+		Images:     []string{"docker.io/contextualcode/platform_cc_router:latest"},
 		WorkingDir: "/routes",
 		Ports: []string{
 			fmt.Sprintf("%d:80/tcp", HTTPPort),

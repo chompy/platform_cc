@@ -128,7 +128,15 @@ func (d Docker) ContainerStart(c Config) error {
 	// check for committed image
 	image := fmt.Sprintf("%s%s", dockerCommitTagPrefix, c.GetContainerName())
 	if c.NoCommit || !d.hasImage(image) {
-		image = c.Image
+		for _, i := range c.Images {
+			if d.hasImage(i) {
+				image = i
+				break
+			}
+		}
+		if image == "" {
+			return errors.WithStack(ErrImageNotFound)
+		}
 	}
 	// create container
 	cConfig := &container.Config{

@@ -27,7 +27,7 @@ type Config struct {
 	ObjectType   ObjectContainerType
 	ObjectName   string
 	Command      []string
-	Image        string
+	Images       []string
 	Volumes      map[string]string
 	Binds        map[string]string
 	Env          map[string]string

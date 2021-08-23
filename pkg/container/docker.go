@@ -92,7 +92,7 @@ func convertDockerError(err error) error {
 	if strings.Contains(err.Error(), "No such container") {
 		// container not found
 		return ErrContainerNotFound
-	} else if strings.Contains(err.Error(), "No such image") {
+	} else if strings.Contains(err.Error(), "No such image") || strings.Contains(err.Error(), "manifest unknown") {
 		// imagen not found
 		return ErrImageNotFound
 	}

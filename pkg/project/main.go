@@ -41,9 +41,13 @@ import (
 var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
 var serviceYamlFilenames = []string{".platform/services.yaml", ".platform/services.pcc.yaml"}
 var routesYamlFilenames = []string{".platform/routes.yaml", ".platform/routes.pcc.yaml"}
+var registries = map[string]string{
+	"cc":  "registry.gitlab.com/contextualcode/platform_cc",
+	"psh": "docker.registry.platform.sh",
+}
+var defaultRegistry = "cc"
 
 const projectJSONFilename = ".platform_cc.json"
-const platformShDockerImagePrefix = "docker.registry.platform.sh/"
 
 // Project defines a platform.sh/cc project.
 type Project struct {
@@ -529,6 +533,15 @@ func (p *Project) SetNoCommit() {
 // SetNoBuild sets the no build flag.
 func (p *Project) SetNoBuild() {
 	p.noBuild = true
+}
+
+// SetDefaultRegistry sets the default registry.
+func (p *Project) SetDefaultRegistry(registry string) error {
+	if registries[registry] == "" {
+		return errors.WithStack(ErrRegistryNotDefined)
+	}
+	defaultRegistry = registry
+	return nil
 }
 
 // Validate returns list of validation errors for project.

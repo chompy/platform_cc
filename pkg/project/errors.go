@@ -30,4 +30,6 @@ var (
 	ErrInvalidDefinition = errors.New("invalid definition")
 	// ErrContainerRunning is returned when attempting to start an already running container.
 	ErrContainerRunning = errors.New("container already running")
+	// ErrRegistryNotDefined is returned when a registry is not defined.
+	ErrRegistryNotDefined = errors.New("registry not defined")
 )

@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -44,18 +45,31 @@ func (d Docker) imagePullSingle(c Config, progress func(p imagePullProgress)) er
 	done := output.Duration(
 		fmt.Sprintf("Pull Docker container image for '%s.'", c.GetContainerName()),
 	)
-	output.LogDebug(
-		"Pull container image.",
-		map[string]interface{}{
-			"container_id": c.GetContainerName(),
-			"image":        c.Image,
-		},
-	)
-	r, err := d.client.ImagePull(
-		context.Background(),
-		c.Image,
-		types.ImagePullOptions{},
-	)
+	var r io.ReadCloser
+	var err error
+	for _, image := range c.Images {
+		r, err = d.client.ImagePull(
+			context.Background(),
+			image,
+			types.ImagePullOptions{},
+		)
+		if err != nil {
+			err = convertDockerError(err)
+			if errors.Is(err, ErrImageNotFound) {
+				continue
+			}
+			return errors.WithStack(err)
+		}
+		err = nil
+		output.LogDebug(
+			"Pull container image.",
+			map[string]interface{}{
+				"container_id": c.GetContainerName(),
+				"image":        image,
+			},
+		)
+		break
+	}
 	if err != nil {
 		return errors.WithStack(convertDockerError(err))
 	}
@@ -86,13 +100,15 @@ func (d Docker) ImagePull(c []Config) error {
 	for _, cc := range c {
 		hasImage := false
 		for _, image := range images {
-			if image == cc.Image {
-				hasImage = true
-				break
+			for _, matchImage := range cc.Images {
+				if matchImage == image {
+					hasImage = true
+					break
+				}
 			}
 		}
 		if !hasImage {
-			images = append(images, cc.Image)
+			images = append(images, cc.Images...)
 			msgs = append(msgs, cc.GetHumanName())
 		}
 	}

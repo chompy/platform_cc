@@ -68,7 +68,7 @@ func (p *Project) NewContainer(d interface{}) Container {
 			ObjectType:   p.GetDefinitionContainerType(d),
 			ObjectName:   p.GetDefinitionName(d),
 			Command:      p.GetDefinitionStartCommand(d),
-			Image:        p.GetDefinitionImage(d),
+			Images:       p.GetDefinitionImages(d),
 			Volumes:      p.GetDefinitionVolumes(d),
 			Binds:        p.GetDefinitionBinds(d),
 			Env:          p.GetDefinitionEnvironmentVariables(d),
@@ -353,9 +353,9 @@ func (c Container) openEnableAuthentication() error {
 			done := output.Duration("Enable authentication.")
 			// build state json
 			currentState := getDefaultServiceState()
-			currentState.Image = c.Config.Image
+			currentState.Image = c.Config.Images[0]
 			desiredState := getDefaultServiceState()
-			desiredState.Image = c.Config.Image
+			desiredState.Image = c.Config.Images[0]
 			desiredState.Configuration = serviceConfig
 			containerStatus, err := c.containerHandler.ContainerStatus(c.Config.GetContainerName())
 			if err != nil {

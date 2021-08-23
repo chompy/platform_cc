@@ -86,7 +86,7 @@ var allStatusCmd = &cobra.Command{
 			if s.Slot > 0 {
 				slot = fmt.Sprintf("%d", s.Slot)
 			}
-			if s.ProjectID == "" && s.Name == "" && s.Image == router.GetContainerConfig().Image {
+			if s.ProjectID == "" && s.Name == "" && s.Image == router.GetContainerConfig().Images[0] {
 				s.ProjectID = "-"
 				s.Name = "router"
 				slot = "n/a"
