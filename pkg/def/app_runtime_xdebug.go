@@ -17,7 +17,7 @@ along with Platform.CC.  If not, see <https://www.gnu.org/licenses/>.
 
 package def
 
-// AppRuntimeExtension defines an extension (PHP).
+// AppRuntimeXdebug defines xdebug config.
 type AppRuntimeXdebug struct {
 	IdeKey string `yaml:"idekey" json:"idekey"`
 }
