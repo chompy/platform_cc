@@ -22,6 +22,7 @@ type AppRuntime struct {
 	RequestTerminateTimeout int                    `yaml:"request_terminate_timeout" json:"-"`
 	Extensions              []*AppRuntimeExtension `yaml:"extensions" json:"extensions"`
 	DisabledExtensions      []string               `yaml:"disabled_extensions" json:"disabled_extensions,omitempty"`
+	Xdebug                  AppRuntimeXdebug       `yaml:"xdebug" json:"xdebug"`
 }
 
 // SetDefaults sets the default values.

@@ -42,7 +42,7 @@ var appYamlFilenames = []string{".platform.app.yaml", ".platform.app.pcc.yaml"}
 var serviceYamlFilenames = []string{".platform/services.yaml", ".platform/services.pcc.yaml"}
 var routesYamlFilenames = []string{".platform/routes.yaml", ".platform/routes.pcc.yaml"}
 var registries = map[string]string{
-	"cc":  "registry.gitlab.com/contextualcode/platform_cc",
+	"cc":  "docker.registry.platform.sh",
 	"psh": "docker.registry.platform.sh",
 }
 var defaultRegistry = "cc"
