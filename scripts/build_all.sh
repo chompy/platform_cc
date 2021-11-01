@@ -3,7 +3,7 @@
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 ROOTPATH="$SCRIPTPATH/.."
 VERSION=`cat $ROOTPATH/version`
-PLATFORMS=("darwin/amd64" "windows/amd64" "linux/amd64")
+PLATFORMS=("darwin/amd64" "darwin/arm64 " "windows/amd64" "linux/amd64")
 RELEASE_BUCKET="platform-cc-releases"
 
 # prepare build directory

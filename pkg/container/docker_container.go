@@ -107,6 +107,7 @@ func (d Docker) ContainerStart(c Config) error {
 				Type:   mount.TypeVolume,
 				Source: getMountName(c.ProjectID, path.Base(k), c.ObjectType),
 				Target: v,
+				//Consistency: mount.ConsistencyDelegated,
 			})
 			continue
 		}
@@ -114,6 +115,7 @@ func (d Docker) ContainerStart(c Config) error {
 			Type:   mount.TypeBind,
 			Source: k,
 			Target: v,
+			//Consistency: mount.ConsistencyDelegated,
 		})
 	}
 	// get port mappings
@@ -223,14 +225,7 @@ func (d Docker) ContainerCommand(id string, user string, cmd []string, out io.Wr
 	resp, err := d.client.ContainerExecCreate(
 		context.Background(),
 		id,
-		types.ExecConfig{
-			User:         user,
-			Tty:          true,
-			AttachStdin:  true,
-			AttachStderr: true,
-			AttachStdout: true,
-			Cmd:          cmd,
-		},
+		execConfig,
 	)
 	if err != nil {
 		return -1, errors.WithStack(convertDockerError(err))

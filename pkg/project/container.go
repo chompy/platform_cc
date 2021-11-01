@@ -153,7 +153,8 @@ func (c Container) Open() ([]map[string]interface{}, error) {
 		[]string{"bash", "--login", "-c", serviceStartCmd},
 		os.Stdout,
 	); err != nil {
-		return nil, errors.WithStack(err)
+		output.Warn(err.Error())
+		//return nil, errors.WithStack(err)
 	}
 	d2()
 	// prepare relationships json
