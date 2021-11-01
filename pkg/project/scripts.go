@@ -28,10 +28,16 @@ exec init
 // appInitCmd is the initalization command for applications.
 const appInitCmd = `
 # INIT
+mkdir -p /tmp/fakehome
+usermod -d /tmp/fakehome app
 usermod -u %d app
 groupmod -g %d app
+usermod -d /mnt app
+usermod -d /tmp/fakehome web
 usermod -u %d web
 groupmod -g %d web
+usermod -d /app web
+rm -r /tmp/fakehome
 umount /etc/hosts
 umount /etc/resolv.conf
 mkdir -p /run/shared /run/rpc_pipefs/nfs
@@ -128,11 +134,9 @@ if builder.execute_build_hook:
 EOF
 chown -R web /tmp/cache
 chmod -R 0755 /tmp/cache
-chown -R web /app
 echo '%s' | base64 -d | /usr/bin/python2.7 /tmp/build.py
 chown -R web /tmp
 chmod -R 0755 /tmp
-chown -R web /app
 touch /config/built
 `
 
