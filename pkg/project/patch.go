@@ -39,15 +39,6 @@ const ensureDirPatch = `
 	echo "from .util import ensure_dir"|cat - /usr/lib/python2.7/dist-packages/platformsh/agent/service.py > /tmp/out && mv /tmp/out /usr/lib/python2.7/dist-packages/platformsh/agent/service.py
 `
 
-// contextualCodePatch is a patch to fix the platformsh matcher bundle to appropiately match platform.cc routes.
-const contextualCodePatch = `
-if [ -d /app/vendor/contextualcode/platformsh-siteaccess-matcher-bundle ]; then
-	cd /app/vendor/contextualcode
-	rm -r platformsh-siteaccess-matcher-bundle
-	git clone https://gitlab.com/contextualcode/platformsh-siteaccess-matcher-bundle.git -b platform_cc
-fi
-`
-
 // patchMap is a map of service types to their patch command.
 var patchMap = map[string]string{
 	"elasticsearch:*": elasticsearchPatch,
@@ -56,9 +47,7 @@ var patchMap = map[string]string{
 }
 
 // postBuildPatchMap is a map of service types to their post-build patch command.
-var postBuildPatchMap = map[string]string{
-	"php:*": contextualCodePatch,
-}
+var postBuildPatchMap = map[string]string{}
 
 // WildcardCompare tests if original string matches test string with wildcard.
 func wildcardCompare(original string, test string) bool {
