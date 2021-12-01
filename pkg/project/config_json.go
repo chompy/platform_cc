@@ -233,6 +233,7 @@ func (p *Project) buildConfigAppJSON(d interface{}) map[string]interface{} {
 		"cron_minimum_interval": "1",
 		"dependencies":          dependencies,
 		"configuration":         configuration,
+		"runtime":               runtime,
 		"project_info": map[string]interface{}{
 			"ssh_key": privKey,
 		},
