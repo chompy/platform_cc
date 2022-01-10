@@ -83,6 +83,13 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 			if path == "/" {
 				hasDefaultPath = true
 			}
+			hasPath := false
+			for _, route := range outHm["routes"].([]map[string]interface{}) {
+				if route["path"].(string) == path {
+					hasPath = true
+					break
+				}
+			}
 			redirects := make([]map[string]interface{}, 0)
 			for k, v := range route.Redirects.Paths {
 				redirects = append(redirects, map[string]interface{}{
@@ -101,17 +108,19 @@ func GenerateTemplateVars(proj *project.Project) ([]map[string]interface{}, erro
 					return nil, errors.WithStack(err)
 				}
 			}
-			outHm["routes"] = append(
-				outHm["routes"].([]map[string]interface{}),
-				map[string]interface{}{
-					"path":      path,
-					"type":      route.Type,
-					"upstream":  upstreamHost,
-					"to":        route.To,
-					"redirects": redirects,
-					"route":     route,
-				},
-			)
+			if !hasPath {
+				outHm["routes"] = append(
+					outHm["routes"].([]map[string]interface{}),
+					map[string]interface{}{
+						"path":      path,
+						"type":      route.Type,
+						"upstream":  upstreamHost,
+						"to":        route.To,
+						"redirects": redirects,
+						"route":     route,
+					},
+				)
+			}
 		}
 		if !hasDefaultPath {
 			to := proj.ReplaceDefault(
